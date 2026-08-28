@@ -236,3 +236,80 @@ export async function updateOrderStatus(
   }
   return { error: null };
 }
+
+/**
+ * Fetch a single order by order number or ID
+ */
+export async function fetchOrderByNumber(orderNumberOrId: string): Promise<DbOrder | null> {
+  try {
+    const trimmed = orderNumberOrId.trim();
+    let query = supabase
+      .from("orders")
+      .select("*, order_items(*)");
+
+    if (trimmed.startsWith("ORD-")) {
+      query = query.eq("order_number", trimmed);
+    } else if (trimmed.includes("-")) {
+      query = query.eq("id", trimmed);
+    } else {
+      query = query.or(`order_number.eq.${trimmed},order_number.eq.ORD-${trimmed}`);
+    }
+
+    const { data, error } = await query.maybeSingle();
+    if (error || !data) return null;
+    return data as DbOrder;
+  } catch (e) {
+    console.error("Error fetching order by number:", e);
+    return null;
+  }
+}
+
+/**
+ * Subscribe to realtime updates for a specific user's orders
+ */
+export function subscribeToUserOrdersRealtime(userId: string, onUpdate: () => void) {
+  const channel = supabase
+    .channel(`user-orders-${userId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "orders",
+        filter: `user_id=eq.${userId}`,
+      },
+      () => {
+        onUpdate();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+
+/**
+ * Subscribe to realtime updates for all orders or a specific order
+ */
+export function subscribeToOrdersRealtime(onUpdate: (payload: any) => void) {
+  const channel = supabase
+    .channel("public-orders-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "orders",
+      },
+      (payload) => {
+        onUpdate(payload);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+

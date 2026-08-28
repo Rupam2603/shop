@@ -13,6 +13,7 @@ interface NavBarProps {
   user?: { role: string; name: string; email: string } | null;
   onLogout?: () => void;
   onProfile?: () => void;
+  onTrackOrder?: (orderNumber?: string) => void;
 }
 
 function SearchIcon() {
@@ -57,11 +58,7 @@ function CartIcon() {
 function AccountIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <path
-        d="M10 10C12.2091 10 14 8.20914 14 6C14 3.79086 12.2091 2 10 2C7.79086 2 6 3.79086 6 6C6 8.20914 7.79086 10 10 10Z"
-        stroke="#006A39"
-        strokeWidth="1.5"
-      />
+      <circle cx="10" cy="6" r="4" stroke="#006A39" strokeWidth="1.5" />
       <path
         d="M2 18C2 14.6863 5.58172 12 10 12C14.4183 12 18 14.6863 18 18"
         stroke="#006A39"
@@ -72,12 +69,13 @@ function AccountIcon() {
   );
 }
 
-const navLinks: { label: string; page: Page }[] = [
+const navLinks: { label: string; page: Page; isTrack?: boolean }[] = [
   { label: "Home", page: "home" },
   { label: "OTC & Wellness", page: "medicines" },
   { label: "Lab Tests", page: "lab-tests" },
   { label: "Consult", page: "consult" },
   { label: "Offers", page: "offers" },
+  { label: "🚚 Track Order", page: "home", isTrack: true },
   { label: "My Profile", page: "profile" },
 ];
 
@@ -87,7 +85,7 @@ const ROLE_COLORS: Record<string, string> = {
   admin: "#073b4c",
 };
 
-export default function NavBar({ activePage, onNavigate, user, onLogout, onProfile }: NavBarProps) {
+export default function NavBar({ activePage, onNavigate, user, onLogout, onProfile, onTrackOrder }: NavBarProps) {
   const { itemCount, openCart } = useCart();
   const [searchValue, setSearchValue] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -145,7 +143,13 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
       .slice(0, 6);
   }, [searchValue, dbProducts]);
 
-  const handleNavClick = (page: Page) => {
+  const handleNavClick = (page: Page, isTrack?: boolean) => {
+    if (isTrack) {
+      onTrackOrder?.();
+      setMobileMenuOpen(false);
+      setIsSearchOpen(false);
+      return;
+    }
     onNavigate(page);
     setMobileMenuOpen(false);
     setIsSearchOpen(false);
@@ -309,12 +313,12 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
 
           {/* Desktop Navigation links */}
           <nav className="hidden md:flex items-center gap-1 lg:gap-2">
-            {navLinks.map(({ label, page }) => (
+            {navLinks.map(({ label, page, isTrack }) => (
               <button
-                key={page}
-                onClick={() => handleNavClick(page)}
-                className={`relative px-3 py-2 text-xs sm:text-sm font-semibold transition-colors rounded-lg ${
-                  activePage === page
+                key={label}
+                onClick={() => handleNavClick(page, isTrack)}
+                className={`relative px-3 py-2 text-xs sm:text-sm font-semibold transition-colors rounded-lg cursor-pointer ${
+                  !isTrack && activePage === page
                     ? "text-[#006a39]"
                     : "text-[#3e4a3f] hover:text-[#006a39]"
                 }`}
@@ -434,18 +438,18 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
             </div>
 
             <nav className="flex flex-col gap-1">
-              {navLinks.map(({ label, page }) => (
+              {navLinks.map(({ label, page, isTrack }) => (
                 <button
-                  key={page}
-                  onClick={() => handleNavClick(page)}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                    activePage === page
+                  key={label}
+                  onClick={() => handleNavClick(page, isTrack)}
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-colors cursor-pointer ${
+                    !isTrack && activePage === page
                       ? "bg-[#e8f5ee] text-[#006a39]"
                       : "text-[#3e4a3f] hover:bg-[#f8fafb]"
                   }`}
                 >
                   <span>{label}</span>
-                  {activePage === page && (
+                  {!isTrack && activePage === page && (
                     <span className="w-2 h-2 rounded-full bg-[#006a39]" />
                   )}
                 </button>

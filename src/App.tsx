@@ -10,6 +10,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ProfilePage from "./pages/ProfilePage";
 import CartDrawer from "./components/CartDrawer";
 import CheckoutModal from "./components/CheckoutModal";
+import OrderTrackingModal from "./components/OrderTrackingModal";
 import { useAuth, toLegacyUser } from "./contexts/AuthContext";
 import { parseHashToState, pushPageState, replacePageState } from "./lib/navigation";
 
@@ -81,6 +82,10 @@ export default function App() {
   const [activePage, setActivePage] = useState<Page>(() => parseHashToState().page);
   const [initialCategory, setInitialCategory] = useState<string>(() => parseHashToState().category);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [trackingModal, setTrackingModal] = useState<{ open: boolean; orderNumber: string | null }>({
+    open: false,
+    orderNumber: null,
+  });
 
   useEffect(() => {
     const current = parseHashToState();
@@ -116,6 +121,10 @@ export default function App() {
     setInitialCategory(category);
     setActivePage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const openTracking = (orderNumber?: string) => {
+    setTrackingModal({ open: true, orderNumber: orderNumber || null });
   };
 
   // ── Show spinner while resolving the session ───────────────────────────────
@@ -159,6 +168,7 @@ export default function App() {
           user={currentUser}
           onUpdateUser={handleUpdateUser}
           onNavigate={navigateTo}
+          onTrackOrder={openTracking}
         />
       );
     }
@@ -172,6 +182,7 @@ export default function App() {
         user={currentUser}
         onLogout={signOut}
         onProfile={() => navigateTo("profile")}
+        onTrackOrder={openTracking}
       />
       <main className="flex-1">{renderPage()}</main>
       <Footer />
@@ -186,14 +197,28 @@ export default function App() {
       <CheckoutModal
         open={checkoutOpen}
         onClose={() => setCheckoutOpen(false)}
-        onOrderSuccess={() => {
-          navigateTo("profile");
+        onOrderSuccess={(_orderId, orderNum) => {
+          if (orderNum) {
+            openTracking(orderNum);
+          } else {
+            navigateTo("profile");
+          }
         }}
         user={{
           name: currentUser.name,
           email: currentUser.email,
           phone: currentUser.phone,
         }}
+      />
+
+      {/* Real-Time Order Tracking Modal */}
+      <OrderTrackingModal
+        isOpen={trackingModal.open}
+        onClose={() => setTrackingModal({ open: false, orderNumber: null })}
+        initialOrderNumber={trackingModal.orderNumber}
+        userRole={currentUser.role}
+        userPhone={currentUser.phone}
+        userName={currentUser.name}
       />
     </div>
   );

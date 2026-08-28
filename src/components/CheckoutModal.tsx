@@ -8,7 +8,7 @@ import { useModalBackHandler } from "../lib/navigation";
 interface CheckoutModalProps {
   open: boolean;
   onClose: () => void;
-  onOrderSuccess: (orderId: string) => void;
+  onOrderSuccess: (orderId: string, orderNumber?: string) => void;
   user: { name: string; email: string; phone?: string };
 }
 
@@ -155,21 +155,22 @@ export default function CheckoutModal({
             <p className="text-xs text-[#6d7a6f] max-w-sm mb-6 leading-relaxed">
               We&apos;ve received your order and our pharmacy partner is preparing your items. You will receive real-time delivery notifications.
             </p>
-            <div className="flex gap-3 w-full">
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
               <button
                 onClick={() => {
                   onClose();
-                  onOrderSuccess(orderPlaced.id);
+                  onOrderSuccess?.(orderPlaced.id, orderPlaced.orderNumber);
                 }}
-                className="flex-1 py-3 bg-[#006a39] text-white font-bold text-sm rounded-xl hover:bg-[#005a30] transition-colors"
+                className="flex-1 py-3 bg-[#006a39] text-white font-bold text-sm rounded-xl hover:bg-[#005a30] transition-colors flex items-center justify-center gap-2 shadow-sm cursor-pointer"
               >
-                View Order History
+                <span>🚚</span>
+                <span>Track Live Order</span>
               </button>
               <button
                 onClick={onClose}
-                className="px-6 py-3 border border-[#d5dcd3] text-[#073b4c] font-bold text-sm rounded-xl hover:bg-[#f0f4f0] transition-colors"
+                className="px-6 py-3 border border-[#d5dcd3] text-[#073b4c] font-bold text-sm rounded-xl hover:bg-[#f0f4f0] transition-colors cursor-pointer"
               >
-                Done
+                Close
               </button>
             </div>
           </div>

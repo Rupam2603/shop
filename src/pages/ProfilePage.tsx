@@ -13,6 +13,7 @@ import { fetchUserLabBookings, DbLabBooking } from "../lib/labTests";
 import { fetchUserReviews, submitReview, type DbReview } from "../lib/reviews";
 import { useModalBackHandler } from "../lib/navigation";
 import { StarRow } from "../components/ProductModal";
+import { printOrDownloadInvoice, InvoiceOrderData } from "../lib/invoiceGenerator";
 
 type ProfileSection = "profile" | "addresses" | "orders" | "lab-tests" | "reviews" | "security";
 
@@ -60,10 +61,12 @@ export default function ProfilePage({
   user,
   onUpdateUser,
   onNavigate,
+  onTrackOrder,
 }: {
   user: CurrentUser;
   onUpdateUser: (updates: Partial<CurrentUser>) => void;
   onNavigate: (page: Page) => void;
+  onTrackOrder?: (orderNumber?: string) => void;
 }) {
   const [section, setSection] = useState<ProfileSection>("profile");
   const [dbAddresses, setDbAddresses] = useState<DbAddress[]>([]);
@@ -543,14 +546,14 @@ export default function ProfilePage({
                     const st = orderStatusStyle(o.status);
                     return (
                       <div key={o.id} className="bg-white rounded-2xl border border-[#e4ede2] p-5 hover:shadow-sm transition-shadow">
-                        <div className="flex items-start justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2.5 mb-2 flex-wrap">
                               <span className="font-mono text-sm font-bold" style={{ color: accent }}>{o.id}</span>
                               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ color: st.color, backgroundColor: st.bg }}>{o.status}</span>
                               <span className="text-[#9aa89b] text-xs">{o.date}</span>
                             </div>
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2 mb-3">
                               {o.items.map((item) => (
                                 <div key={item} className="flex items-center gap-1.5 bg-[#f8fafb] border border-[#e4ede2] px-2.5 py-1 rounded-lg">
                                   <span className="text-xs text-[#073b4c] font-medium">{item}</span>
@@ -575,8 +578,42 @@ export default function ProfilePage({
                                 </div>
                               ))}
                             </div>
+
+                            {/* Tracking & Invoice Actions */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <button
+                                onClick={() => onTrackOrder?.(o.id)}
+                                className="flex items-center gap-1.5 bg-[#006a39] hover:bg-[#005a30] text-white text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95"
+                              >
+                                <span>🚚</span>
+                                <span>Track Live Status</span>
+                              </button>
+
+                              <button
+                                onClick={() =>
+                                  printOrDownloadInvoice({
+                                    id: o.id,
+                                    customer: user.name || "Customer",
+                                    phone: user.phone || "+91 98765 00000",
+                                    role: user.role,
+                                    shopName: user.shopName,
+                                    items: o.items.length,
+                                    amount: o.total,
+                                    status: o.status,
+                                    date: o.date,
+                                    payment: "UPI",
+                                  })
+                                }
+                                className="flex items-center gap-1 bg-[#f0f7ee] hover:bg-[#c3dec0] text-[#006a39] text-xs font-bold px-3 py-1.5 rounded-xl transition-all border border-[#c3dec0] cursor-pointer"
+                                title="Download / Print Invoice Bill PDF"
+                              >
+                                <span>🧾</span>
+                                <span>Invoice PDF</span>
+                              </button>
+                            </div>
                           </div>
-                          <div className="text-right shrink-0">
+
+                          <div className="text-left sm:text-right shrink-0">
                             <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xl">₹{o.total.toLocaleString()}</p>
                             <span className="inline-block text-[11px] text-[#9aa89b] mt-1">Verified Order</span>
                           </div>
