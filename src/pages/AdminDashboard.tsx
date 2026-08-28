@@ -8,13 +8,14 @@ import {
   updateProductStock as dbUpdateStock,
 } from "../lib/products";
 import { fetchAllOrders, updateOrderStatus as dbUpdateOrderStatus, DbOrder } from "../lib/orders";
+import { fetchAllLabBookings, updateLabBookingStatus as dbUpdateLabBookingStatus, DbLabBooking } from "../lib/labTests";
 
 interface Props {
   user: CurrentUser;
   onLogout: () => void;
 }
 
-type AdminTab = "dashboard" | "products" | "inventory" | "orders" | "revenue" | "settings";
+type AdminTab = "dashboard" | "products" | "inventory" | "orders" | "lab-tests" | "revenue" | "settings";
 
 type Product = {
   id: number;
@@ -144,6 +145,7 @@ const TAB_ITEMS: { id: AdminTab; label: string; icon: React.ReactElement }[] = [
   { id: "products", label: "Products", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 1L17 5V13L9 17L1 13V5L9 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M9 9L17 5M9 9L1 5M9 9V17" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg> },
   { id: "inventory", label: "Inventory", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 13L5 15L9 13L13 15L17 13V5L13 3L9 5L5 3L1 5V13Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M9 5V13M5 3V15M13 3V15" stroke="currentColor" strokeWidth="1.5" /></svg> },
   { id: "orders", label: "Orders", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 1H14C15.1 1 16 1.9 16 3V17L13 15.5L9 17L5 15.5L2 17V3C2 1.9 2.9 1 4 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M5 6H13M5 9H13M5 12H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg> },
+  { id: "lab-tests", label: "Lab Bookings", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M9 3H6v6L2 15c-.83 1.39-.83 3.08 0 4.47C2.83 20.86 4.33 22 6 22h12c1.67 0 3.17-1.14 4-2.53.83-1.39.83-3.08 0-4.47L18 9V3h-3M9 3v6l-4 6h14L15 9V3M9 3h6"/></svg> },
   { id: "revenue", label: "Revenue", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 13L5 9L8 11L12 6L17 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M1 17H17M13 2H17V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg> },
   { id: "settings", label: "Settings", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 11.5C10.38 11.5 11.5 10.38 11.5 9C11.5 7.62 10.38 6.5 9 6.5C7.62 6.5 6.5 7.62 6.5 9C6.5 10.38 7.62 11.5 9 11.5Z" stroke="currentColor" strokeWidth="1.5" /><path d="M15.1 9C15.1 8.71 15.07 8.43 15.04 8.15L16.86 6.74L14.86 3.26L12.74 4.22C12.27 3.87 11.77 3.57 11.22 3.34L10.9 1H7.1L6.78 3.34C6.23 3.57 5.73 3.87 5.26 4.22L3.14 3.26L1.14 6.74L2.96 8.15C2.93 8.43 2.9 8.71 2.9 9C2.9 9.29 2.93 9.57 2.96 9.85L1.14 11.26L3.14 14.74L5.26 13.78C5.73 14.13 6.23 14.43 6.78 14.66L7.1 17H10.9L11.22 14.66C11.77 14.43 12.27 14.13 12.74 13.78L14.86 14.74L16.86 11.26L15.04 9.85C15.07 9.57 15.1 9.29 15.1 9Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg> },
 ];
@@ -515,8 +517,26 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       }
     });
 
+    fetchAllLabBookings().then((data) => {
+      if (mounted && data) {
+        setDbLabBookings(data);
+      }
+    });
+
     return () => { mounted = false; };
   }, []);
+
+  const [dbLabBookings, setDbLabBookings] = useState<DbLabBooking[]>([]);
+
+  const handleUpdateLabBookingStatus = async (
+    bookingId: string,
+    newStatus: DbLabBooking["status"]
+  ) => {
+    setDbLabBookings((prev) =>
+      prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b))
+    );
+    await dbUpdateLabBookingStatus(bookingId, newStatus);
+  };
 
   const liveOrders = useMemo(() => {
     if (dbOrders.length > 0) {
@@ -760,6 +780,12 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               filter={orderFilter}
               setFilter={setOrderFilter}
               onUpdateStatus={handleUpdateOrderStatus}
+            />
+          )}
+          {activeTab === "lab-tests" && (
+            <LabBookingsTab
+              bookings={dbLabBookings}
+              onUpdateStatus={handleUpdateLabBookingStatus}
             />
           )}
           {activeTab === "revenue" && <RevenueTab />}
@@ -1199,6 +1225,136 @@ function OrdersTab({
           </table>
         </div>
         {orders.length === 0 && <div className="py-16 text-center text-[#9aa89b] text-sm">No orders match this filter.</div>}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Lab Bookings Tab ─── */
+function LabBookingsTab({
+  bookings,
+  onUpdateStatus,
+}: {
+  bookings: DbLabBooking[];
+  onUpdateStatus?: (bookingId: string, status: DbLabBooking["status"]) => void;
+}) {
+  const [filter, setFilter] = useState("All");
+  const [search, setSearch] = useState("");
+
+  const FILTERS = ["All", "Scheduled", "Sample Collected", "Processing", "Report Generated", "Completed", "Cancelled"];
+
+  const filtered = useMemo(() => {
+    return bookings.filter((b) => {
+      const matchFilter = filter === "All" || b.status === filter;
+      const q = search.toLowerCase();
+      const matchSearch =
+        search.trim() === "" ||
+        b.booking_number.toLowerCase().includes(q) ||
+        b.patient_name.toLowerCase().includes(q) ||
+        b.patient_phone.includes(q) ||
+        b.package_name.toLowerCase().includes(q);
+      return matchFilter && matchSearch;
+    });
+  }, [bookings, filter, search]);
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+          {FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0"
+              style={
+                filter === f
+                  ? { backgroundColor: "#073b4c", color: "white" }
+                  : { backgroundColor: "white", color: "#6d7a6f", border: "1px solid #e4ede2" }
+              }
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative w-full sm:w-72">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa89b]">
+            <path d="M13 13L10 10M11.5 6.5C11.5 9.26 9.26 11.5 6.5 11.5C3.74 11.5 1.5 9.26 1.5 6.5C1.5 3.74 3.74 1.5 6.5 1.5C9.26 1.5 11.5 3.74 11.5 6.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search patient, booking ID, phone…"
+            className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-white border border-[#e4ede2] rounded-xl focus:outline-none focus:border-[#073b4c]"
+          />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm" style={{ minWidth: "900px" }}>
+            <thead>
+              <tr className="border-b border-[#e4ede2] bg-[#f8fafb]">
+                {["Booking ID", "Patient", "Package", "Collection Slot", "Address", "Amount", "Payment", "Status", "Update Status"].map((h) => (
+                  <th key={h} className="text-left px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px] whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((b) => (
+                <tr key={b.id} className="border-b border-[#f0f4f0] last:border-0 hover:bg-[#fafcfa] transition-colors">
+                  <td className="px-4 py-3.5 font-mono text-xs text-[#006a39] font-bold whitespace-nowrap">{b.booking_number}</td>
+                  <td className="px-4 py-3.5">
+                    <p className="font-semibold text-[#073b4c] text-xs">{b.patient_name}</p>
+                    <p className="text-[#9aa89b] text-[10px]">{b.patient_age}y, {b.patient_gender} · {b.patient_phone}</p>
+                  </td>
+                  <td className="px-4 py-3.5 max-w-[200px]">
+                    <p className="text-xs text-[#073b4c] font-medium truncate">{b.package_name}</p>
+                  </td>
+                  <td className="px-4 py-3.5 whitespace-nowrap">
+                    <p className="text-xs font-semibold text-[#073b4c]">{b.collection_date}</p>
+                    <p className="text-[#9aa89b] text-[10px]">{b.collection_time_slot}</p>
+                  </td>
+                  <td className="px-4 py-3.5 max-w-[180px]">
+                    <p className="text-xs text-[#6d7a6f] truncate">{b.collection_address.line1}, {b.collection_address.city}</p>
+                  </td>
+                  <td className="px-4 py-3.5 font-['Manrope',sans-serif] font-bold text-[#073b4c] whitespace-nowrap">
+                    ₹{Number(b.total_amount).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3.5 whitespace-nowrap">
+                    <span className="text-[10px] bg-[#f0f4f0] text-[#6d7a6f] px-2 py-0.5 rounded font-medium">{b.payment_method.split(" ")[0]}</span>
+                  </td>
+                  <td className="px-4 py-3.5 whitespace-nowrap">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      b.status === "Scheduled" ? "bg-[#fef3c7] text-[#b45309]" :
+                      b.status === "Sample Collected" ? "bg-[#e0f2fe] text-[#0369a1]" :
+                      b.status === "Report Generated" || b.status === "Completed" ? "bg-[#d1fae5] text-[#047857]" :
+                      "bg-[#fee2e2] text-[#b91c1c]"
+                    }`}>
+                      {b.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3.5 whitespace-nowrap">
+                    <select
+                      value={b.status}
+                      onChange={(e) => onUpdateStatus?.(b.id, e.target.value as DbLabBooking["status"])}
+                      className="text-xs font-semibold bg-[#f8fafb] border border-[#e4ede2] rounded-lg px-2 py-1 text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                    >
+                      <option value="Scheduled">Scheduled</option>
+                      <option value="Sample Collected">Sample Collected</option>
+                      <option value="Processing">Processing in Lab</option>
+                      <option value="Report Generated">Report Generated</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {filtered.length === 0 && <div className="py-16 text-center text-[#9aa89b] text-sm">No lab bookings found.</div>}
       </div>
     </div>
   );

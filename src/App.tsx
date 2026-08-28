@@ -118,7 +118,7 @@ export default function App() {
   const renderPage = () => {
     switch (activePage) {
       case "home":      return <HomePage onNavigate={navigateTo} userRole={currentUser.role} />;
-      case "lab-tests": return <LabTestsPage />;
+      case "lab-tests": return <LabTestsPage user={currentUser} />;
       case "medicines": return <MedicinesPage initialCategory={initialCategory} userRole={currentUser.role} />;
       case "offers":    return <OffersPage />;
       case "consult":   return <ConsultPage />;

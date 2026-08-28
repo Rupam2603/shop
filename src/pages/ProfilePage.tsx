@@ -9,8 +9,9 @@ import {
   DbAddress,
 } from "../lib/addresses";
 import { fetchUserOrders, DbOrder } from "../lib/orders";
+import { fetchUserLabBookings, DbLabBooking } from "../lib/labTests";
 
-type ProfileSection = "profile" | "addresses" | "orders" | "security";
+type ProfileSection = "profile" | "addresses" | "orders" | "lab-tests" | "security";
 
 const CUSTOMER_ORDERS = [
   { id: "ORD-3041", date: "Aug 28, 2026", status: "Processing", total: 212,  items: ["Volini Spray 249ml", "Dettol Antiseptic 60ml", "Eno Lemon Sachet 5g"] },
@@ -64,6 +65,7 @@ export default function ProfilePage({
   const [section, setSection] = useState<ProfileSection>("profile");
   const [dbAddresses, setDbAddresses] = useState<DbAddress[]>([]);
   const [dbOrders, setDbOrders] = useState<DbOrder[]>([]);
+  const [dbLabBookings, setDbLabBookings] = useState<DbLabBooking[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -72,6 +74,9 @@ export default function ProfilePage({
     });
     fetchUserOrders().then((data) => {
       if (mounted) setDbOrders(data);
+    });
+    fetchUserLabBookings().then((data) => {
+      if (mounted) setDbLabBookings(data);
     });
     return () => { mounted = false; };
   }, []);
@@ -226,6 +231,7 @@ export default function ProfilePage({
     { id: "profile",   label: "My Profile",       icon: <svg width="16" height="18" viewBox="0 0 16 18" fill="none"><path d="M8 9C10.21 9 12 7.21 12 5C12 2.79 10.21 1 8 1C5.79 1 4 2.79 4 5C4 7.21 5.79 9 8 9ZM8 11C5.33 11 0 12.34 0 15V17H16V15C16 12.34 10.67 11 8 11Z" fill="currentColor"/></svg> },
     { id: "addresses", label: "Saved Addresses",  badge: addresses.length || undefined, icon: <svg width="16" height="20" viewBox="0 0 16 20" fill="none"><path d="M8 0C4.13 0 1 3.13 1 7C1 12.25 8 20 8 20C8 20 15 12.25 15 7C15 3.13 11.87 0 8 0ZM8 9.5C6.62 9.5 5.5 8.38 5.5 7C5.5 5.62 6.62 4.5 8 4.5C9.38 4.5 10.5 5.62 10.5 7C10.5 8.38 9.38 9.5 8 9.5Z" fill="currentColor"/></svg> },
     { id: "orders",    label: "Order History",    badge: orders.length, icon: <svg width="16" height="18" viewBox="0 0 16 18" fill="none"><path d="M3 0H13C14.1 0 15 0.9 15 2V16L12 14.5L8 16L4 14.5L1 16V2C1 0.9 1.9 0 3 0ZM4 5H12M4 8H12M4 11H8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/></svg> },
+    { id: "lab-tests", label: "Lab Bookings",     badge: dbLabBookings.length || undefined, icon: <svg width="16" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M9 3H6v6L2 15c-.83 1.39-.83 3.08 0 4.47C2.83 20.86 4.33 22 6 22h12c1.67 0 3.17-1.14 4-2.53.83-1.39.83-3.08 0-4.47L18 9V3h-3M9 3v6l-4 6h14L15 9V3M9 3h6"/></svg> },
     { id: "security",  label: "Security",         icon: <svg width="16" height="18" viewBox="0 0 16 18" fill="none"><path d="M8 0L0 4V9C0 13.55 3.4 17.74 8 19C12.6 17.74 16 13.55 16 9V4L8 0ZM7 13L4 10L5.41 8.59L7 10.17L10.59 6.58L12 8L7 13Z" fill="currentColor"/></svg> },
   ];
 
@@ -540,6 +546,97 @@ export default function ProfilePage({
                             <button className="text-xs font-semibold mt-1.5 hover:underline transition-colors" style={{ color: accent }}>
                               View Details →
                             </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ════ LAB BOOKINGS ════ */}
+          {section === "lab-tests" && (
+            <div className="flex flex-col gap-5">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl">Lab Test Bookings</h2>
+                  <p className="text-[#9aa89b] text-sm mt-0.5">
+                    {dbLabBookings.length} scheduled / past home collection{dbLabBookings.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+                <button
+                  onClick={() => onNavigate("lab-tests")}
+                  className="px-4 py-2 rounded-xl text-white text-xs sm:text-sm font-bold hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: accent }}
+                >
+                  + Book New Test
+                </button>
+              </div>
+
+              {dbLabBookings.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-[#e4ede2] py-16 flex flex-col items-center gap-3 text-center px-4">
+                  <div className="w-14 h-14 rounded-2xl bg-[#f0fdf4] text-[#006a39] flex items-center justify-center">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 3H6v6L2 15c-.83 1.39-.83 3.08 0 4.47C2.83 20.86 4.33 22 6 22h12c1.67 0 3.17-1.14 4-2.53.83-1.39.83-3.08 0-4.47L18 9V3h-3M9 3v6l-4 6h14L15 9V3M9 3h6"/></svg>
+                  </div>
+                  <p className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg">No Lab Test Bookings Yet</p>
+                  <p className="text-[#9aa89b] text-xs sm:text-sm max-w-sm">
+                    Book certified pathology tests from home with free sample pickup and 24-hour smart digital reports.
+                  </p>
+                  <button
+                    onClick={() => onNavigate("lab-tests")}
+                    className="mt-2 px-5 py-2.5 rounded-xl text-white text-xs sm:text-sm font-bold hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: accent }}
+                  >
+                    Browse Health Packages
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {dbLabBookings.map((b) => {
+                    const isCompleted = b.status === "Completed" || b.status === "Report Generated";
+                    return (
+                      <div key={b.id} className="bg-white rounded-2xl border border-[#e4ede2] p-5 hover:shadow-xs transition-shadow">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2.5 mb-2 flex-wrap">
+                              <span className="font-mono text-sm font-bold text-[#006a39]">{b.booking_number}</span>
+                              <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                                b.status === "Scheduled" ? "bg-[#fef3c7] text-[#b45309]" :
+                                b.status === "Sample Collected" ? "bg-[#e0f2fe] text-[#0369a1]" :
+                                b.status === "Report Generated" || b.status === "Completed" ? "bg-[#d1fae5] text-[#047857]" :
+                                "bg-[#fee2e2] text-[#b91c1c]"
+                              }`}>
+                                {b.status}
+                              </span>
+                              <span className="text-[#9aa89b] text-xs">
+                                Booked on {new Date(b.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                              </span>
+                            </div>
+
+                            <h3 className="font-bold text-[#073b4c] text-base">{b.package_name}</h3>
+                            <p className="text-[#6d7a6f] text-xs mt-1">
+                              <strong>Patient:</strong> {b.patient_name} ({b.patient_age} yrs, {b.patient_gender}) · 📞 {b.patient_phone}
+                            </p>
+                            <p className="text-[#6d7a6f] text-xs mt-0.5">
+                              <strong>Sample Collection:</strong> 🗓️ {b.collection_date} ({b.collection_time_slot})
+                            </p>
+                            <p className="text-[#9aa89b] text-[11px] mt-0.5">
+                              📍 {b.collection_address.line1}, {b.collection_address.city} - {b.collection_address.pincode}
+                            </p>
+                          </div>
+
+                          <div className="text-left sm:text-right shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-[#f0f4f0]">
+                            <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xl">₹{Number(b.total_amount).toLocaleString()}</p>
+                            <span className="inline-block text-[10px] text-[#6d7a6f] font-semibold bg-[#f0f4f0] px-2 py-0.5 rounded-md mt-1">
+                              {b.payment_method}
+                            </span>
+                            {isCompleted && (
+                              <button className="block w-full sm:w-auto text-xs font-bold text-[#006a39] mt-2 underline">
+                                📥 Download Report
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
