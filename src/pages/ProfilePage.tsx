@@ -230,7 +230,7 @@ export default function ProfilePage({
   const NAV_ITEMS: { id: ProfileSection; label: string; badge?: number; icon: React.ReactElement }[] = [
     { id: "profile",   label: "My Profile",       icon: <svg width="16" height="18" viewBox="0 0 16 18" fill="none"><path d="M8 9C10.21 9 12 7.21 12 5C12 2.79 10.21 1 8 1C5.79 1 4 2.79 4 5C4 7.21 5.79 9 8 9ZM8 11C5.33 11 0 12.34 0 15V17H16V15C16 12.34 10.67 11 8 11Z" fill="currentColor"/></svg> },
     { id: "addresses", label: "Saved Addresses",  badge: addresses.length || undefined, icon: <svg width="16" height="20" viewBox="0 0 16 20" fill="none"><path d="M8 0C4.13 0 1 3.13 1 7C1 12.25 8 20 8 20C8 20 15 12.25 15 7C15 3.13 11.87 0 8 0ZM8 9.5C6.62 9.5 5.5 8.38 5.5 7C5.5 5.62 6.62 4.5 8 4.5C9.38 4.5 10.5 5.62 10.5 7C10.5 8.38 9.38 9.5 8 9.5Z" fill="currentColor"/></svg> },
-    { id: "orders",    label: "Order History",    badge: orders.length, icon: <svg width="16" height="18" viewBox="0 0 16 18" fill="none"><path d="M3 0H13C14.1 0 15 0.9 15 2V16L12 14.5L8 16L4 14.5L1 16V2C1 0.9 1.9 0 3 0ZM4 5H12M4 8H12M4 11H8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/></svg> },
+    { id: "orders",    label: "Order History",    badge: displayOrders.length || undefined, icon: <svg width="16" height="18" viewBox="0 0 16 18" fill="none"><path d="M3 0H13C14.1 0 15 0.9 15 2V16L12 14.5L8 16L4 14.5L1 16V2C1 0.9 1.9 0 3 0ZM4 5H12M4 8H12M4 11H8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/></svg> },
     { id: "lab-tests", label: "Lab Bookings",     badge: dbLabBookings.length || undefined, icon: <svg width="16" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M9 3H6v6L2 15c-.83 1.39-.83 3.08 0 4.47C2.83 20.86 4.33 22 6 22h12c1.67 0 3.17-1.14 4-2.53.83-1.39.83-3.08 0-4.47L18 9V3h-3M9 3v6l-4 6h14L15 9V3M9 3h6"/></svg> },
     { id: "security",  label: "Security",         icon: <svg width="16" height="18" viewBox="0 0 16 18" fill="none"><path d="M8 0L0 4V9C0 13.55 3.4 17.74 8 19C12.6 17.74 16 13.55 16 9V4L8 0ZM7 13L4 10L5.41 8.59L7 10.17L10.59 6.58L12 8L7 13Z" fill="currentColor"/></svg> },
   ];
@@ -267,7 +267,7 @@ export default function ProfilePage({
                   <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-white text-2xl sm:text-3xl">
-                    {user.name[0].toUpperCase()}
+                    {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
                   </div>
                 )}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -368,7 +368,7 @@ export default function ProfilePage({
                     <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-white text-xl sm:text-2xl">
-                      {user.name[0].toUpperCase()}
+                      {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
                     </div>
                   )}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

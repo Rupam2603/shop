@@ -74,6 +74,7 @@ const navLinks: { label: string; page: Page }[] = [
   { label: "Lab Tests", page: "lab-tests" },
   { label: "Consult", page: "consult" },
   { label: "Offers", page: "offers" },
+  { label: "My Profile", page: "profile" },
 ];
 
 const ROLE_COLORS: Record<string, string> = {
@@ -187,17 +188,17 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
             <div className="flex items-center gap-1.5 sm:gap-2.5 pl-1.5 sm:pl-3 border-l border-[#e2e8df]">
               <button
                 onClick={() => { onProfile?.(); setMobileMenuOpen(false); }}
-                className="flex items-center gap-2 group"
+                className="flex items-center gap-2 group cursor-pointer"
                 title="View profile"
               >
                 <div
                   className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-['Manrope',sans-serif] font-bold text-xs sm:text-sm text-white shrink-0 group-hover:ring-2 group-hover:ring-offset-1 transition-all"
                   style={{ backgroundColor: ROLE_COLORS[user.role] ?? "#073b4c" }}
                 >
-                  {user.name[0].toUpperCase()}
+                  {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
                 </div>
                 <div className="hidden lg:flex flex-col leading-none text-left">
-                  <span className="text-xs font-bold text-[#073b4c] group-hover:underline">{user.name}</span>
+                  <span className="text-xs font-bold text-[#073b4c] group-hover:underline">{user.name || "My Account"}</span>
                   <span className="text-[10px] text-[#9aa89b] capitalize mt-0.5">{user.role}</span>
                 </div>
               </button>
@@ -248,7 +249,7 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
                   className="w-8 h-8 rounded-full flex items-center justify-center font-['Manrope',sans-serif] font-bold text-sm text-white shrink-0"
                   style={{ backgroundColor: ROLE_COLORS[user.role] ?? "#073b4c" }}
                 >
-                  {user.name[0].toUpperCase()}
+                  {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-[#073b4c] truncate">{user.name}</p>

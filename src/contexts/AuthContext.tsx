@@ -293,18 +293,40 @@ export interface LegacyCurrentUser {
 
 export function toLegacyUser(appUser: AppUser): LegacyCurrentUser {
   const { authUser, profile } = appUser;
+  const rawMeta = authUser?.user_metadata || {};
+  const name =
+    profile?.full_name ||
+    rawMeta.full_name ||
+    authUser?.email?.split("@")[0] ||
+    "User";
+
+  const safeRole: UserRole =
+    profile?.role === "admin"
+      ? "admin"
+      : profile?.role === "retailer"
+      ? "retailer"
+      : "customer";
+
+  const joinedDate = profile?.created_at
+    ? new Date(profile.created_at).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : new Date().toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+
   return {
-    role: profile.role,
-    email: authUser.email ?? "",
-    name: profile.full_name,
-    phone: profile.phone ?? undefined,
-    profileImage: profile.avatar_url ?? undefined,
-    shopName: profile.shop_name ?? undefined,
+    role: safeRole,
+    email: authUser?.email ?? "",
+    name,
+    phone: profile?.phone || rawMeta.phone || undefined,
+    profileImage: profile?.avatar_url || rawMeta.avatar_url || undefined,
+    shopName: profile?.shop_name || rawMeta.shop_name || undefined,
     addresses: [],
-    joinedDate: new Date(profile.created_at).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }),
+    joinedDate,
   };
 }

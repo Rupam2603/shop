@@ -707,7 +707,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         <div className="p-4 border-t border-white/10">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 rounded-full bg-[#006a39] flex items-center justify-center text-white font-bold text-sm shrink-0">
-              {user.name[0]}
+              {(user?.name?.[0] || user?.email?.[0] || "A").toUpperCase()}
             </div>
             <div className="min-w-0">
               <p className="text-white text-sm font-semibold leading-none truncate">{user.name}</p>
