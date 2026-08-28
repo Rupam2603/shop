@@ -19,6 +19,7 @@ interface AuthContextValue {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (opts: SignUpOptions) => Promise<{ error: string | null; emailConfirmationRequired: boolean }>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Pick<Profile, "full_name" | "phone" | "shop_name" | "avatar_url">>) => Promise<{ error: string | null }>;
 }
@@ -178,6 +179,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  // ── Reset Password ──────────────────────────────────────────────────────────
+  const resetPassword = useCallback(async (email: string): Promise<{ error: string | null }> => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+      if (error) return { error: friendlyAuthError(error) };
+      return { error: null };
+    } catch (err) {
+      return { error: (err as Error).message || "Failed to send reset link." };
+    }
+  }, []);
+
   // ── Sign Out ─────────────────────────────────────────────────────────────────
   const signOut = useCallback(async () => {
     setLoading(true);
@@ -212,7 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <AuthContext.Provider value={{ appUser, loading, signIn, signUp, signOut, updateProfile }}>
+    <AuthContext.Provider value={{ appUser, loading, signIn, signUp, resetPassword, signOut, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
