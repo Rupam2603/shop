@@ -75,17 +75,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profile = await fetchProfile(user);
       if (profile) {
         setAppUser({ authUser: user, profile });
+        setLoading(false);
       } else {
-        // Profile may not exist yet (trigger latency on first signup).
-        // Retry once after a short delay.
-        setTimeout(async () => {
-          const retried = await fetchProfile(user);
-          setAppUser(retried ? { authUser: user, profile: retried } : null);
-          setLoading(false);
-        }, 1500);
-        return;
+        // If profile query fails or trigger hasn't completed yet,
+        // construct profile from user_metadata so the user is never locked out.
+        const meta = user.user_metadata || {};
+        const safeRole: UserRole = meta.role === "admin" ? "admin" : meta.role === "retailer" ? "retailer" : "customer";
+        const fallbackProfile: Profile = {
+          id: user.id,
+          full_name: meta.full_name || user.email?.split("@")[0] || "User",
+          role: safeRole,
+          phone: meta.phone ?? null,
+          shop_name: meta.shop_name ?? null,
+          avatar_url: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        setAppUser({ authUser: user, profile: fallbackProfile });
+        setLoading(false);
+
+        // Attempt background insert if missing
+        supabase
+          .from("profiles")
+          .upsert({
+            id: user.id,
+            full_name: fallbackProfile.full_name,
+            role: safeRole,
+            phone: fallbackProfile.phone,
+            shop_name: fallbackProfile.shop_name,
+          })
+          .then(({ data: upserted }) => {
+            if (upserted) {
+              setAppUser({ authUser: user, profile: upserted as Profile });
+            }
+          });
       }
-      setLoading(false);
     },
     [fetchProfile]
   );
@@ -111,15 +136,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(
     async (email: string, password: string): Promise<{ error: string | null }> => {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setLoading(false);
         return { error: friendlyAuthError(error) };
       }
-      // onAuthStateChange will handle the rest
+      if (data.user) {
+        await hydrateUser(data.user);
+      }
       return { error: null };
     },
-    []
+    [hydrateUser]
   );
 
   // ── Sign Up ──────────────────────────────────────────────────────────────────
@@ -152,31 +179,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // If email confirmation is required, the session will be null
       const emailConfirmationRequired = !data.session;
 
-      // Update the profile with the role/shop after trigger creates it
-      // We do this server-side via the trigger with metadata, but also
-      // try to patch the role if email confirmation isn't needed.
       if (data.session && data.user) {
-        // Give trigger ~500ms to run, then patch role/shop_name
-        setTimeout(async () => {
-          await supabase
-            .from("profiles")
-            .update({
-              full_name: opts.fullName,
-              phone: opts.phone ?? null,
-              shop_name: opts.shopName ?? null,
-            })
-            .eq("id", data.user!.id);
-        }, 800);
-      }
-
-      if (emailConfirmationRequired) {
+        await hydrateUser(data.user);
+      } else {
         setLoading(false);
       }
-      // else onAuthStateChange fires and hydrateUser handles state
 
       return { error: null, emailConfirmationRequired };
     },
-    []
+    [hydrateUser]
   );
 
   // ── Reset Password ──────────────────────────────────────────────────────────
