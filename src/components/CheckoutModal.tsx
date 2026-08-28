@@ -231,13 +231,14 @@ export default function CheckoutModal({
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-[#073b4c] uppercase block mb-1">Phone *</label>
+                      <label className="text-[10px] font-bold text-[#073b4c] uppercase block mb-1">Phone Number *</label>
                       <input
                         type="tel"
                         value={newAddr.phone}
-                        onChange={(e) => setNewAddr({ ...newAddr, phone: e.target.value })}
+                        onChange={(e) => setNewAddr({ ...newAddr, phone: e.target.value.replace(/[^0-9+]/g, "") })}
                         className="w-full bg-white border border-[#d5dcd3] rounded-lg px-3 py-2 text-xs text-[#073b4c] focus:outline-none focus:border-[#006a39]"
-                        placeholder="+91 XXXXX XXXXX"
+                        placeholder="9876543210 (10-digit number)"
+                        maxLength={15}
                       />
                     </div>
                   </div>

@@ -236,8 +236,8 @@ export default function LabBookingModal({
                 <input
                   type="tel"
                   value={patientPhone}
-                  onChange={(e) => setPatientPhone(e.target.value)}
-                  placeholder="+91 98765 43210"
+                  onChange={(e) => setPatientPhone(e.target.value.replace(/[^0-9+]/g, ""))}
+                  placeholder="9876543210 (10-digit number)"
                   className="w-full bg-[#f8fafb] border border-[#e4ede2] rounded-xl px-3.5 py-2.5 text-[#073b4c] focus:outline-none focus:border-[#006a39]"
                 />
               </div>

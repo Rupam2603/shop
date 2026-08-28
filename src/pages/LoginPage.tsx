@@ -462,9 +462,9 @@ export default function LoginPage() {
                     onFocus={(e) => (e.target.style.borderColor = cfg.accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Phone</label>
-                  <input type="tel" value={signupPhone} onChange={(e) => setSignupPhone(e.target.value)}
-                    placeholder="+91 XXXXX XXXXX" className={FIELD_CLS}
+                  <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Phone Number</label>
+                  <input type="tel" value={signupPhone} onChange={(e) => setSignupPhone(e.target.value.replace(/[^0-9+]/g, ""))}
+                    placeholder="9876543210 (10-digit number)" className={FIELD_CLS}
                     onFocus={(e) => (e.target.style.borderColor = cfg.accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
                 </div>
                 {selectedRole === "retailer" && (

@@ -397,7 +397,7 @@ export default function ProfilePage({
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Phone Number</label>
-                  <input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="+91 XXXXX XXXXX" className={INPUT_CLS}
+                  <input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value.replace(/[^0-9+]/g, ""))} placeholder="9876543210 (10-digit number)" className={INPUT_CLS}
                     onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
                 </div>
                 {user.role === "retailer" && (
@@ -754,8 +754,8 @@ export default function ProfilePage({
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Phone Number</label>
-                  <input type="tel" value={addrModal.form.phone ?? ""} onChange={(e) => setAddrField("phone", e.target.value)}
-                    placeholder="+91 XXXXX XXXXX" className={INPUT_CLS}
+                  <input type="tel" value={addrModal.form.phone ?? ""} onChange={(e) => setAddrField("phone", e.target.value.replace(/[^0-9+]/g, ""))}
+                    placeholder="9876543210 (10-digit number)" className={INPUT_CLS}
                     onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
                 </div>
               </div>
