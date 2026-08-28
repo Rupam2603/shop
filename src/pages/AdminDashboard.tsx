@@ -1317,7 +1317,7 @@ function LabBookingsTab({
                     <p className="text-[#9aa89b] text-[10px]">{b.collection_time_slot}</p>
                   </td>
                   <td className="px-4 py-3.5 max-w-[180px]">
-                    <p className="text-xs text-[#6d7a6f] truncate">{b.collection_address.line1}, {b.collection_address.city}</p>
+                    <p className="text-xs text-[#6d7a6f] truncate">{b.collection_address?.line1 || "Address"}, {b.collection_address?.city || ""}</p>
                   </td>
                   <td className="px-4 py-3.5 font-['Manrope',sans-serif] font-bold text-[#073b4c] whitespace-nowrap">
                     ₹{Number(b.total_amount).toLocaleString()}

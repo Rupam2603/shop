@@ -499,7 +499,7 @@ export default function ProfilePage({
                 <div>
                   <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl">Order History</h2>
                   <p className="text-[#9aa89b] text-sm mt-0.5">
-                    {orders.length} orders · ₹{totalSpent.toLocaleString()} total spent
+                    {displayOrders.length} orders · ₹{totalSpent.toLocaleString()} total spent
                   </p>
                 </div>
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -623,7 +623,7 @@ export default function ProfilePage({
                               <strong>Sample Collection:</strong> 🗓️ {b.collection_date} ({b.collection_time_slot})
                             </p>
                             <p className="text-[#9aa89b] text-[11px] mt-0.5">
-                              📍 {b.collection_address.line1}, {b.collection_address.city} - {b.collection_address.pincode}
+                              📍 {b.collection_address?.line1 || "Address"}, {b.collection_address?.city || ""} {b.collection_address?.pincode ? `- ${b.collection_address.pincode}` : ""}
                             </p>
                           </div>
 
