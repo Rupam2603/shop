@@ -22,7 +22,7 @@ export default function CheckoutModal({
 
   const { items, subtotal, savings, clearCart } = useCart();
   const { appUser } = useAuth();
-  const isRetailer = appUser?.role === "retailer";
+  const isRetailer = appUser?.profile?.role === "retailer";
   const [addresses, setAddresses] = useState<DbAddress[]>([]);
   const [selectedAddrId, setSelectedAddrId] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<"UPI" | "Card" | "COD">("UPI");

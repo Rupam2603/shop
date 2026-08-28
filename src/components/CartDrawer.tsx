@@ -13,7 +13,7 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
   const { items, itemCount, subtotal, savings, isCartOpen, closeCart, updateQuantity, removeFromCart } =
     useCart();
   const { appUser } = useAuth();
-  const isRetailer = appUser?.role === "retailer";
+  const isRetailer = appUser?.profile?.role === "retailer";
   const [dbProducts, setDbProducts] = useState<DbProduct[]>([]);
 
   useModalBackHandler(isCartOpen, closeCart, "cart");

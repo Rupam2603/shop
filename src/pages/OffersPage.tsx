@@ -312,7 +312,7 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
                     id: (p as any).id || nameToId(p.name),
                     dbId: (p as any).dbId,
                     name: p.name,
-                    sub: p.sub || p.brand,
+                    sub: (p as any).sub || p.brand,
                     price: p.price,
                     orig: p.orig || "",
                     disc: p.disc || "",

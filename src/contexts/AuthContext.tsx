@@ -207,7 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: null };
         }
 
-        if (expectedRole === "admin" && userRole !== "admin") {
+        if (expectedRole === "admin") {
           await supabase.auth.signOut();
           setAppUser(null);
           setLoading(false);

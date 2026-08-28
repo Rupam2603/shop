@@ -31,6 +31,7 @@ interface CartContextValue {
       brand: string;
       category_name?: string;
       cat?: string;
+      sub?: string;
       customer_price?: number;
       price?: string | number;
       mrp?: number;
