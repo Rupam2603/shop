@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Page } from "../App";
 import ProductDetailModal, { nameToId, type PopupProduct } from "../components/ProductModal";
+import { useCart } from "../contexts/CartContext";
 import imgHeroBg from "@/imports/SubhOneHomeYourWellnessPartner/ebb34ae9c328f1310a1fb45e38080c80fbd47637.png";
 import imgProduct1 from "@/imports/SubhOneHomeYourWellnessPartner/ed2cee3d70ea8b6d972ea44b1746b961d47ff5b3.png";
 import imgProduct2 from "@/imports/SubhOneHomeYourWellnessPartner/a57c492ebf391250fdba394a1ec646ea8a83b1ed.png";
@@ -169,7 +170,19 @@ const FLASH = [
   { img: imgProduct4, badge: "35% OFF", color: "#ba1a1a", name: "Hansaplast Washproof Band-Aid", sub: "First Aid",             price: "₹195", orig: "₹300", cat: "First Aid & Antiseptics",         brand: "Hansaplast",  disc: "35%" },
 ];
 
-function MiniCard({ p, accent, onClick }: { p: { name: string; sub: string; price: string; orig: string; disc: string; img: string }; accent: string; onClick: () => void }) {
+function MiniCard({
+  p,
+  accent,
+  category,
+  onClick,
+  onAddToCart,
+}: {
+  p: { name: string; sub: string; price: string; orig: string; disc: string; img: string };
+  accent: string;
+  category?: string;
+  onClick: () => void;
+  onAddToCart?: () => void;
+}) {
   return (
     <div onClick={onClick} className="w-[155px] sm:w-[185px] lg:w-auto shrink-0 snap-start bg-white rounded-2xl border border-[#e4ede2] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer">
       <div className="relative bg-[#f8fafb] h-32 sm:h-36 overflow-hidden">
@@ -188,7 +201,15 @@ function MiniCard({ p, accent, onClick }: { p: { name: string; sub: string; pric
             <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-base">{p.price}</span>
             {p.orig && <span className="text-[#9aa89b] text-[10px] sm:text-xs line-through ml-1">MRP {p.orig}</span>}
           </div>
-          <button onClick={(e) => e.stopPropagation()} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shrink-0 hover:opacity-90 transition-opacity" style={{ backgroundColor: accent }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToCart?.();
+            }}
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shrink-0 hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: accent }}
+            title="Add to cart"
+          >
             <PlusIcon />
           </button>
         </div>
@@ -197,7 +218,17 @@ function MiniCard({ p, accent, onClick }: { p: { name: string; sub: string; pric
   );
 }
 
-function CategorySection({ item, onViewAll, onProductClick }: { item: typeof ALL_CATEGORIES[0]; onViewAll: () => void; onProductClick: (p: PopupProduct) => void }) {
+function CategorySection({
+  item,
+  onViewAll,
+  onProductClick,
+  onAddToCart,
+}: {
+  item: typeof ALL_CATEGORIES[0];
+  onViewAll: () => void;
+  onProductClick: (p: PopupProduct) => void;
+  onAddToCart: (p: typeof ALL_CATEGORIES[0]["products"][0], cat: string) => void;
+}) {
   return (
     <section className="flex flex-col gap-3 sm:gap-4">
       <div className="flex items-center justify-between gap-3 px-3.5 sm:px-5 py-3 sm:py-4 rounded-2xl" style={{ backgroundColor: item.lightBg }}>
@@ -221,6 +252,7 @@ function CategorySection({ item, onViewAll, onProductClick }: { item: typeof ALL
             key={p.name}
             p={p}
             accent={item.accent}
+            category={item.cat}
             onClick={() => onProductClick({
               id: nameToId(p.name),
               name: p.name,
@@ -232,6 +264,7 @@ function CategorySection({ item, onViewAll, onProductClick }: { item: typeof ALL
               brand: p.name.split(" ")[0],
               img: p.img,
             })}
+            onAddToCart={() => onAddToCart(p, item.cat)}
           />
         ))}
         <button
@@ -252,7 +285,21 @@ function CategorySection({ item, onViewAll, onProductClick }: { item: typeof ALL
 export default function HomePage({ onNavigate, userRole }: HomePageProps) {
   const countdown = useCountdown(2 * 3600 + 45 * 60 + 12);
   const isRetailer = userRole === "retailer";
+  const { addToCart } = useCart();
   const [selectedProduct, setSelectedProduct] = useState<PopupProduct | null>(null);
+
+  const handleAddToCartFromCategory = (p: typeof ALL_CATEGORIES[0]["products"][0], cat: string) => {
+    addToCart({
+      id: nameToId(p.name),
+      name: p.name,
+      sub: p.sub,
+      cat,
+      brand: p.name.split(" ")[0],
+      price: p.price,
+      orig: p.orig,
+      img: p.img,
+    });
+  };
 
   return (
     <div className="bg-[#f5fbf2] min-h-screen">
@@ -315,7 +362,13 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
 
         {/* Category sections */}
         {ALL_CATEGORIES.map((item) => (
-          <CategorySection key={item.cat} item={item} onViewAll={() => onNavigate("medicines", item.cat)} onProductClick={setSelectedProduct} />
+          <CategorySection
+            key={item.cat}
+            item={item}
+            onViewAll={() => onNavigate("medicines", item.cat)}
+            onProductClick={setSelectedProduct}
+            onAddToCart={handleAddToCartFromCategory}
+          />
         ))}
 
         <div className="border-t border-[#dee4db]" />
@@ -354,7 +407,23 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
                       <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-lg">{p.price}</span>
                       {p.orig && <span className="text-[#9aa89b] text-[10px] sm:text-xs line-through">MRP {p.orig}</span>}
                     </div>
-                    <button onClick={(e) => e.stopPropagation()} className="w-7 h-7 sm:w-8 sm:h-8 bg-[#e9f0e7] rounded-full flex items-center justify-center hover:bg-[#006a39] hover:text-white text-[#006a39] transition-colors" aria-label="Add to cart">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart({
+                          id: nameToId(p.name),
+                          name: p.name,
+                          sub: p.sub,
+                          cat: p.cat,
+                          brand: p.brand,
+                          price: p.price,
+                          orig: p.orig,
+                          img: p.img,
+                        });
+                      }}
+                      className="w-7 h-7 sm:w-8 sm:h-8 bg-[#e9f0e7] rounded-full flex items-center justify-center hover:bg-[#006a39] hover:text-white text-[#006a39] transition-colors"
+                      aria-label="Add to cart"
+                    >
                       <PlusIcon />
                     </button>
                   </div>

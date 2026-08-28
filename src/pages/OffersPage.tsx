@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useCart } from "../contexts/CartContext";
 import imgMainFeatured from "@/imports/HealthSupplementsSubhOne/12180d12bdb759cb4c1126433eb9617bcf5f0e37.png";
 import imgVitamins from "@/imports/HealthSupplementsSubhOne/82fde6fb40fb3f0de4e0ae8e660633ef3205b656.png";
 import imgAyurveda from "@/imports/HealthSupplementsSubhOne/5bf6c30bcdaa73c2f154fa0056e19083a2be7538.png";
@@ -89,6 +90,7 @@ function CartIcon() {
 }
 
 export default function OffersPage() {
+  const { addToCart } = useCart();
   const [activeTab, setActiveTab] = useState("All Supplements");
   const [wishlist, setWishlist] = useState<number[]>([]);
 
@@ -230,7 +232,20 @@ export default function OffersPage() {
                     <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg leading-6">
                       {p.price}
                     </span>
-                    <button className="w-8 h-8 sm:w-9 sm:h-9 bg-[#006a39] rounded-lg flex items-center justify-center hover:bg-[#005a30] transition-colors shrink-0" aria-label="Add to cart">
+                    <button
+                      onClick={() =>
+                        addToCart({
+                          name: p.name,
+                          brand: p.brand,
+                          cat: "Energy, Hydration & Supplements",
+                          price: p.price,
+                          img: p.img,
+                        })
+                      }
+                      className="w-8 h-8 sm:w-9 sm:h-9 bg-[#006a39] rounded-lg flex items-center justify-center hover:bg-[#005a30] transition-colors shrink-0 text-white"
+                      aria-label="Add to cart"
+                      title="Add to Cart"
+                    >
                       <CartIcon />
                     </button>
                   </div>

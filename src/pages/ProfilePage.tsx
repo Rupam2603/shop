@@ -1,5 +1,14 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import type { CurrentUser, Address, Page } from "../App";
+import {
+  fetchUserAddresses,
+  createAddress as dbCreateAddress,
+  updateAddress as dbUpdateAddress,
+  deleteAddress as dbDeleteAddress,
+  setDefaultAddress as dbSetDefaultAddress,
+  DbAddress,
+} from "../lib/addresses";
+import { fetchUserOrders, DbOrder } from "../lib/orders";
 
 type ProfileSection = "profile" | "addresses" | "orders" | "security";
 
@@ -53,11 +62,50 @@ export default function ProfilePage({
   onNavigate: (page: Page) => void;
 }) {
   const [section, setSection] = useState<ProfileSection>("profile");
+  const [dbAddresses, setDbAddresses] = useState<DbAddress[]>([]);
+  const [dbOrders, setDbOrders] = useState<DbOrder[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    fetchUserAddresses().then((data) => {
+      if (mounted) setDbAddresses(data);
+    });
+    fetchUserOrders().then((data) => {
+      if (mounted) setDbOrders(data);
+    });
+    return () => { mounted = false; };
+  }, []);
 
   const accent = user.role === "retailer" ? "#006a39" : "#0369a1";
-  const addresses = user.addresses ?? [];
-  const orders = user.role === "retailer" ? RETAILER_ORDERS : CUSTOMER_ORDERS;
-  const totalSpent = orders.filter((o) => o.status !== "Cancelled").reduce((s, o) => s + o.total, 0);
+
+  // Combine live db addresses with fallback to legacy user.addresses
+  const addresses: Address[] = dbAddresses.length > 0
+    ? dbAddresses.map((a) => ({
+        id: a.id,
+        label: a.label,
+        name: a.name,
+        phone: a.phone,
+        line1: a.line1,
+        line2: a.line2 || undefined,
+        city: a.city,
+        state: a.state,
+        pincode: a.pincode,
+        isDefault: a.is_default,
+      }))
+    : user.addresses ?? [];
+
+  // Combine live orders with fallback
+  const displayOrders = dbOrders.length > 0
+    ? dbOrders.map((o) => ({
+        id: o.order_number,
+        date: new Date(o.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+        status: o.status,
+        total: Number(o.total_amount),
+        items: o.order_items?.map((item) => `${item.product_name} ×${item.quantity}`) || ["Order items"],
+      }))
+    : user.role === "retailer" ? RETAILER_ORDERS : CUSTOMER_ORDERS;
+
+  const totalSpent = displayOrders.filter((o) => o.status !== "Cancelled").reduce((s, o) => s + o.total, 0);
 
   // ── Profile tab state ──
   const [editName, setEditName] = useState(user.name);
@@ -94,37 +142,69 @@ export default function ProfilePage({
   const openEditAddr = (idx: number) => setAddrModal({ open: true, mode: "edit", idx, form: { ...addresses[idx] } });
   const closeAddrModal = () => setAddrModal((p) => ({ ...p, open: false }));
 
-  const saveAddress = () => {
+  const saveAddress = async () => {
     const f = addrModal.form as Address;
     if (!f.name?.trim() || !f.line1?.trim() || !f.city?.trim() || !f.pincode?.trim()) return;
-    let updated = [...addresses];
-    const entry: Address = { ...f, id: f.id || Date.now().toString() };
-    if (entry.isDefault) updated = updated.map((a) => ({ ...a, isDefault: false }));
+
     if (addrModal.mode === "add") {
-      if (updated.length === 0) entry.isDefault = true;
-      updated.push(entry);
+      const { data } = await dbCreateAddress({
+        label: f.label || "Home",
+        name: f.name,
+        phone: f.phone || "",
+        line1: f.line1,
+        line2: f.line2 || null,
+        city: f.city,
+        state: f.state,
+        pincode: f.pincode,
+        is_default: addresses.length === 0 || !!f.isDefault,
+      });
+      if (data) {
+        setDbAddresses((prev) => [...prev, data]);
+      }
     } else if (addrModal.idx !== null) {
-      updated[addrModal.idx] = entry;
+      const target = addresses[addrModal.idx];
+      if (target?.id) {
+        const { data } = await dbUpdateAddress(target.id, {
+          label: f.label,
+          name: f.name,
+          phone: f.phone,
+          line1: f.line1,
+          line2: f.line2 || null,
+          city: f.city,
+          state: f.state,
+          pincode: f.pincode,
+          is_default: f.isDefault,
+        });
+        if (data) {
+          setDbAddresses((prev) => prev.map((a) => a.id === target.id ? data : a));
+        }
+      }
     }
-    onUpdateUser({ addresses: updated });
     closeAddrModal();
   };
 
-  const deleteAddress = (idx: number) => {
-    const updated = addresses.filter((_, i) => i !== idx);
-    if (addresses[idx].isDefault && updated.length > 0) updated[0] = { ...updated[0], isDefault: true };
-    onUpdateUser({ addresses: updated });
+  const deleteAddress = async (idx: number) => {
+    const target = addresses[idx];
+    if (target?.id) {
+      setDbAddresses((prev) => prev.filter((a) => a.id !== target.id));
+      await dbDeleteAddress(target.id);
+    }
   };
 
-  const setDefaultAddr = (idx: number) =>
-    onUpdateUser({ addresses: addresses.map((a, i) => ({ ...a, isDefault: i === idx })) });
+  const setDefaultAddr = async (idx: number) => {
+    const target = addresses[idx];
+    if (target?.id) {
+      setDbAddresses((prev) => prev.map((a) => ({ ...a, is_default: a.id === target.id })));
+      await dbSetDefaultAddress(target.id);
+    }
+  };
 
   const setAddrField = (key: string, val: string | boolean) =>
     setAddrModal((p) => ({ ...p, form: { ...p.form, [key]: val } }));
 
   // ── Orders tab state ──
   const [orderFilter, setOrderFilter] = useState("All");
-  const filteredOrders = orderFilter === "All" ? orders : orders.filter((o) => o.status === orderFilter);
+  const filteredOrders = orderFilter === "All" ? displayOrders : displayOrders.filter((o) => o.status === orderFilter);
 
   // ── Security tab state ──
   const [curPass, setCurPass]   = useState("");

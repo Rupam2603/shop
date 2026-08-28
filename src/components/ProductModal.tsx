@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useCart } from "../contexts/CartContext";
 
 export interface PopupProduct {
   id: number;
@@ -134,6 +135,7 @@ export default function ProductDetailModal({
   isRetailer: boolean;
   onClose: () => void;
 }) {
+  const { addToCart } = useCart();
   const [qty, setQty] = useState(1);
   const reviews = useMemo(() => getProductReviews(product.id), [product.id]);
   const avgRating = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
@@ -321,6 +323,10 @@ export default function ProductDetailModal({
                 </button>
               </div>
               <button
+                onClick={() => {
+                  addToCart(product, qty);
+                  onClose();
+                }}
                 className="flex-1 py-2.5 rounded-xl text-white font-bold text-xs sm:text-sm hover:opacity-90 active:scale-[0.98] transition-all"
                 style={{ backgroundColor: accentColor }}
               >

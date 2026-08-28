@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import ProductDetailModal, { CAT_COLORS, HSN_BY_CAT, retailerPrice, PopupProduct } from "../components/ProductModal";
 import { fetchProducts, DbProduct } from "../lib/products";
+import { useCart } from "../contexts/CartContext";
 
 const U = (id: string) => `https://images.unsplash.com/${id}?w=300&q=80`;
 
@@ -162,6 +163,7 @@ function Collapsible({ title, children, defaultOpen = true }: { title: string; c
 }
 
 export default function MedicinesPage({ initialCategory = "All", userRole }: { initialCategory?: string; userRole?: string }) {
+  const { addToCart } = useCart();
   const isRetailer = userRole === "retailer";
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -415,7 +417,10 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
                           <p className="text-[#c0ccc0] text-[9px] mt-0.5">HSN: {HSN_BY_CAT[p.cat] ?? "—"}</p>
                         </div>
                         <button
-                          onClick={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(p);
+                          }}
                           className="w-full mt-1 py-1.5 rounded-xl text-white text-[10px] font-bold tracking-[0.4px] hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-1"
                           style={{ backgroundColor: accentColor }}
                         >

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useCart } from "../contexts/CartContext";
 
 type Page = "home" | "medicines" | "lab-tests" | "consult" | "offers" | "profile";
 
@@ -82,6 +83,7 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 export default function NavBar({ activePage, onNavigate, user, onLogout, onProfile }: NavBarProps) {
+  const { itemCount, openCart } = useCart();
   const [searchValue, setSearchValue] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -98,18 +100,17 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4">
         {/* Mobile Hamburger Button */}
         <button
-          type="button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 rounded-lg text-[#073b4c] hover:bg-[#f0f7f0] transition-colors focus:outline-none"
+          className="md:hidden p-2 rounded-lg text-[#073b4c] hover:bg-[#f0f7f0] transition-colors"
           aria-label="Toggle navigation menu"
         >
           {mobileMenuOpen ? (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           ) : (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="12" x2="21" y2="12" />
               <line x1="3" y1="6" x2="21" y2="6" />
               <line x1="3" y1="18" x2="21" y2="18" />
@@ -120,41 +121,47 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
         {/* Logo */}
         <button
           onClick={() => handleNavClick("home")}
-          className="shrink-0 font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-xl sm:text-2xl leading-8 tracking-tight"
+          className="flex items-center gap-2 cursor-pointer focus:outline-none"
         >
-          SubhOne
+          <div className="w-8 h-8 rounded-lg bg-[#006a39] flex items-center justify-center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" fill="white" />
+            </svg>
+          </div>
+          <span className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-xl sm:text-2xl tracking-tight">
+            SubhOne
+          </span>
         </button>
 
-        {/* Search */}
-        <div className="flex-1 max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl relative mx-1 sm:mx-2">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <SearchIcon />
+        {/* Search bar */}
+        <div className="hidden md:flex flex-1 max-w-[420px] mx-2 lg:mx-6">
+          <div className="relative w-full">
+            <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-[#6d7a6f]">
+              <SearchIcon />
+            </div>
+            <input
+              type="text"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              placeholder="Search medicines, health products, brands…"
+              className="w-full pl-10 pr-4 py-2 bg-[#f0f4f0] border border-transparent rounded-full text-xs sm:text-sm text-[#073b4c] placeholder:text-[#6d7a6f] focus:outline-none focus:bg-white focus:border-[#006a39] transition-all"
+            />
           </div>
-          <input
-            type="text"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            placeholder="Search medicines, tests..."
-            className="w-full bg-[#f8fafb] rounded-lg pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 text-xs sm:text-sm text-[#073b4c] border border-[#e2e8df] focus:outline-none focus:border-[#006a39] focus:ring-1 focus:ring-[#006a39] transition-colors"
-          />
         </div>
 
-        {/* Nav links - desktop */}
-        <nav className="hidden md:flex items-center gap-4 lg:gap-6">
+        {/* Desktop Navigation links */}
+        <nav className="hidden md:flex items-center gap-1 lg:gap-2">
           {navLinks.map(({ label, page }) => (
             <button
               key={page}
               onClick={() => handleNavClick(page)}
-              className={`relative pb-0.5 text-xs lg:text-sm font-bold tracking-[0.5px] transition-colors whitespace-nowrap ${
+              className={`relative px-3 py-2 text-xs sm:text-sm font-semibold transition-colors rounded-lg ${
                 activePage === page
                   ? "text-[#006a39]"
                   : "text-[#3e4a3f] hover:text-[#006a39]"
               }`}
             >
               {label}
-              {activePage === page && (
-                <span className="absolute -bottom-px left-0 right-0 h-0.5 bg-[#006a39] rounded-full" />
-              )}
             </button>
           ))}
         </nav>
@@ -164,11 +171,17 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
           <button className="hidden sm:flex p-2 rounded-full hover:bg-[#f0f7f0] transition-colors relative text-[#006a39]" title="Location">
             <LocationIcon />
           </button>
-          <button className="p-2 rounded-full hover:bg-[#f0f7f0] transition-colors relative text-[#006a39]" title="Cart">
+          <button
+            onClick={openCart}
+            className="p-2 rounded-full hover:bg-[#f0f7f0] transition-colors relative text-[#006a39]"
+            title="Shopping Cart"
+          >
             <CartIcon />
-            <span className="absolute top-1 right-1 bg-[#0f9d58] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
-              2
-            </span>
+            {itemCount > 0 && (
+              <span className="absolute top-1 right-1 bg-[#0f9d58] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                {itemCount}
+              </span>
+            )}
           </button>
           {user ? (
             <div className="flex items-center gap-1.5 sm:gap-2.5 pl-1.5 sm:pl-3 border-l border-[#e2e8df]">

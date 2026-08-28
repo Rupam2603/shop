@@ -8,6 +8,8 @@ import OffersPage from "./pages/OffersPage";
 import LoginPage from "./pages/LoginPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import ProfilePage from "./pages/ProfilePage";
+import CartDrawer from "./components/CartDrawer";
+import CheckoutModal from "./components/CheckoutModal";
 import { useAuth, toLegacyUser } from "./contexts/AuthContext";
 
 export type Page = "home" | "medicines" | "lab-tests" | "consult" | "offers" | "profile";
@@ -77,6 +79,7 @@ export default function App() {
   const { appUser, loading, signOut, updateProfile } = useAuth();
   const [activePage, setActivePage] = useState<Page>("home");
   const [initialCategory, setInitialCategory] = useState<string>("All");
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const navigateTo = (page: Page, category = "All") => {
     setInitialCategory(category);
@@ -140,6 +143,26 @@ export default function App() {
       />
       <main className="flex-1">{renderPage()}</main>
       <Footer />
+
+      {/* Cart Drawer */}
+      <CartDrawer
+        onCheckout={() => setCheckoutOpen(true)}
+        onBrowse={() => navigateTo("medicines")}
+      />
+
+      {/* Checkout Modal */}
+      <CheckoutModal
+        open={checkoutOpen}
+        onClose={() => setCheckoutOpen(false)}
+        onOrderSuccess={() => {
+          navigateTo("profile");
+        }}
+        user={{
+          name: currentUser.name,
+          email: currentUser.email,
+          phone: currentUser.phone,
+        }}
+      />
     </div>
   );
 }

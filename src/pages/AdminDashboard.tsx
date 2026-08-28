@@ -7,6 +7,7 @@ import {
   deleteProduct as dbDeleteProduct,
   updateProductStock as dbUpdateStock,
 } from "../lib/products";
+import { fetchAllOrders, updateOrderStatus as dbUpdateOrderStatus, DbOrder } from "../lib/orders";
 
 interface Props {
   user: CurrentUser;
@@ -441,9 +442,6 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [invFilter, setInvFilter] = useState("All");
   const [invSearch, setInvSearch] = useState("");
 
-  // Orders state
-  const [orderFilter, setOrderFilter] = useState("All");
-
   // Settings state
   const [settings, setSettings] = useState<Settings>({
     storeName: "SubhOne Healthcare", phone: "+91 98765 43210",
@@ -482,12 +480,11 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     return list;
   }, [products, invFilter, invSearch]);
 
-  const filteredOrders = useMemo(() => {
-    if (orderFilter === "All") return MOCK_ORDERS;
-    return MOCK_ORDERS.filter((o) => o.status === orderFilter);
-  }, [orderFilter]);
+  // Orders state
+  const [orderFilter, setOrderFilter] = useState("All");
+  const [dbOrders, setDbOrders] = useState<DbOrder[]>([]);
 
-  // Fetch live products on mount
+  // Fetch live products & orders on mount
   useEffect(() => {
     let mounted = true;
     fetchProducts().then((data) => {
@@ -511,8 +508,50 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         );
       }
     });
+
+    fetchAllOrders().then((data) => {
+      if (mounted && data) {
+        setDbOrders(data);
+      }
+    });
+
     return () => { mounted = false; };
   }, []);
+
+  const liveOrders = useMemo(() => {
+    if (dbOrders.length > 0) {
+      return dbOrders.map((o) => ({
+        id: o.order_number,
+        dbId: o.id,
+        customer: o.customer_name,
+        phone: o.customer_phone,
+        items: o.order_items?.length || 1,
+        amount: Number(o.total_amount),
+        status: o.status,
+        date: new Date(o.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+        payment: o.payment_method,
+      }));
+    }
+    return MOCK_ORDERS.map((o) => ({ ...o, dbId: "" }));
+  }, [dbOrders]);
+
+  const filteredOrders = useMemo(() => {
+    if (orderFilter === "All") return liveOrders;
+    return liveOrders.filter((o) => o.status === orderFilter);
+  }, [liveOrders, orderFilter]);
+
+  const handleUpdateOrderStatus = async (
+    orderId: string,
+    newStatus: "Processing" | "Shipped" | "Delivered" | "Cancelled"
+  ) => {
+    setDbOrders((prev) =>
+      prev.map((o) => (o.id === orderId || o.order_number === orderId ? { ...o, status: newStatus } : o))
+    );
+    const target = dbOrders.find((o) => o.id === orderId || o.order_number === orderId);
+    if (target?.id) {
+      await dbUpdateOrderStatus(target.id, newStatus);
+    }
+  };
 
   const openAdd = () => { setForm(emptyForm(categories[0])); setModal({ open: true, mode: "add" }); };
   const openEdit = (p: Product) => { setForm({ ...p }); setModal({ open: true, mode: "edit" }); };
@@ -715,7 +754,14 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               lowStockCount={lowStockCount} outOfStockCount={outOfStockCount} allCount={products.length}
             />
           )}
-          {activeTab === "orders" && <OrdersTab orders={filteredOrders} filter={orderFilter} setFilter={setOrderFilter} />}
+          {activeTab === "orders" && (
+            <OrdersTab
+              orders={filteredOrders}
+              filter={orderFilter}
+              setFilter={setOrderFilter}
+              onUpdateStatus={handleUpdateOrderStatus}
+            />
+          )}
           {activeTab === "revenue" && <RevenueTab />}
           {activeTab === "settings" && <SettingsTab settings={settings} setSettings={setSettings} categories={categories} addCategory={addCategory} />}
         </main>
@@ -1063,14 +1109,45 @@ function InventoryTab({ products, filter, setFilter, search, setSearch, stockEdi
 }
 
 /* ─── Orders Tab ─── */
-function OrdersTab({ orders, filter, setFilter }: { orders: typeof MOCK_ORDERS; filter: string; setFilter: (v: string) => void }) {
+function OrdersTab({
+  orders,
+  filter,
+  setFilter,
+  onUpdateStatus,
+}: {
+  orders: {
+    id: string;
+    dbId: string;
+    customer: string;
+    phone: string;
+    items: number;
+    amount: number;
+    status: string;
+    date: string;
+    payment: string;
+  }[];
+  filter: string;
+  setFilter: (v: string) => void;
+  onUpdateStatus?: (
+    orderId: string,
+    newStatus: "Processing" | "Shipped" | "Delivered" | "Cancelled"
+  ) => void;
+}) {
   const FILTERS = ["All", "Processing", "Shipped", "Delivered", "Cancelled"];
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
         {FILTERS.map((f) => (
-          <button key={f} onClick={() => setFilter(f)} className="px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap shrink-0"
-            style={filter === f ? { backgroundColor: "#073b4c", color: "white" } : { backgroundColor: "white", color: "#6d7a6f", border: "1px solid #e4ede2" }}>
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className="px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap shrink-0"
+            style={
+              filter === f
+                ? { backgroundColor: "#073b4c", color: "white" }
+                : { backgroundColor: "white", color: "#6d7a6f", border: "1px solid #e4ede2" }
+            }
+          >
             {f}
           </button>
         ))}
@@ -1080,7 +1157,7 @@ function OrdersTab({ orders, filter, setFilter }: { orders: typeof MOCK_ORDERS; 
           <table className="w-full text-sm" style={{ minWidth: "760px" }}>
             <thead>
               <tr className="border-b border-[#e4ede2] bg-[#f8fafb]">
-                {["Order ID", "Customer", "Phone", "Items", "Amount", "Payment", "Status", "Date"].map((h) => (
+                {["Order ID", "Customer", "Phone", "Items", "Amount", "Payment", "Status", "Date", "Action"].map((h) => (
                   <th key={h} className="text-left px-5 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px] whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -1098,6 +1175,23 @@ function OrdersTab({ orders, filter, setFilter }: { orders: typeof MOCK_ORDERS; 
                     <td className="px-5 py-3.5"><span className="text-xs bg-[#f0f4f0] text-[#6d7a6f] px-2 py-0.5 rounded font-medium">{o.payment}</span></td>
                     <td className="px-5 py-3.5"><span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ color: st.color, backgroundColor: st.bg }}>{o.status}</span></td>
                     <td className="px-5 py-3.5 text-[#9aa89b] text-xs">{o.date}</td>
+                    <td className="px-5 py-3.5">
+                      <select
+                        value={o.status}
+                        onChange={(e) =>
+                          onUpdateStatus?.(
+                            o.dbId || o.id,
+                            e.target.value as "Processing" | "Shipped" | "Delivered" | "Cancelled"
+                          )
+                        }
+                        className="text-xs font-semibold bg-[#f8fafb] border border-[#e4ede2] rounded-lg px-2 py-1 text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                      >
+                        <option value="Processing">Processing</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                    </td>
                   </tr>
                 );
               })}
