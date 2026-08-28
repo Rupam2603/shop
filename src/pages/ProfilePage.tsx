@@ -299,8 +299,8 @@ export default function ProfilePage({
             {/* Quick stats */}
             <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3 pb-1 w-full sm:w-auto">
               {[
-                { label: "Total Orders",   value: orders.length },
-                { label: "Delivered",      value: orders.filter((o) => o.status === "Delivered").length },
+                { label: "Total Orders",   value: displayOrders.length },
+                { label: "Delivered",      value: displayOrders.filter((o) => o.status === "Delivered").length },
                 { label: "Addresses",      value: addresses.length },
                 { label: "Total Spent",    value: "₹" + totalSpent.toLocaleString() },
               ].map((s) => (
