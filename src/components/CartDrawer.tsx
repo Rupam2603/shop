@@ -1,5 +1,6 @@
 import React from "react";
 import { useCart } from "../contexts/CartContext";
+import { useAuth } from "../contexts/AuthContext";
 
 interface CartDrawerProps {
   onCheckout: () => void;
@@ -9,11 +10,13 @@ interface CartDrawerProps {
 export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
   const { items, itemCount, subtotal, savings, isCartOpen, closeCart, updateQuantity, removeFromCart } =
     useCart();
+  const { appUser } = useAuth();
+  const isRetailer = appUser?.role === "retailer";
 
   if (!isCartOpen) return null;
 
-  const FREE_DELIVERY_THRESHOLD = 499;
-  const isFreeDelivery = subtotal >= FREE_DELIVERY_THRESHOLD;
+  const FREE_DELIVERY_THRESHOLD = 150;
+  const isFreeDelivery = isRetailer || subtotal >= FREE_DELIVERY_THRESHOLD;
   const amountNeeded = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
   const deliveryFee = items.length === 0 ? 0 : isFreeDelivery ? 0 : 40;
   const totalAmount = subtotal + deliveryFee;
@@ -52,7 +55,14 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
           {/* Free Delivery Bar */}
           {items.length > 0 && (
             <div className="bg-[#f0fdf4] border-b border-[#bbf7d0] px-5 py-2.5">
-              {isFreeDelivery ? (
+              {isRetailer ? (
+                <p className="text-xs text-[#047857] font-semibold flex items-center gap-1.5">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M7 0C3.13 0 0 3.13 0 7C0 10.87 3.13 14 7 14C10.87 14 14 10.87 14 7C14 3.13 10.87 0 7 0ZM5.6 10.5L2.1 7L3.08 6.02L5.6 8.54L10.92 3.22L11.9 4.2L5.6 10.5Z" fill="#047857" />
+                  </svg>
+                  <span>✨ <strong>Retailer Benefit:</strong> FREE Delivery on every order!</span>
+                </p>
+              ) : isFreeDelivery ? (
                 <p className="text-xs text-[#047857] font-semibold flex items-center gap-1.5">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path d="M7 0C3.13 0 0 3.13 0 7C0 10.87 3.13 14 7 14C10.87 14 14 10.87 14 7C14 3.13 10.87 0 7 0ZM5.6 10.5L2.1 7L3.08 6.02L5.6 8.54L10.92 3.22L11.9 4.2L5.6 10.5Z" fill="#047857" />
@@ -62,7 +72,7 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
               ) : (
                 <div>
                   <p className="text-xs text-[#073b4c] mb-1.5">
-                    Add <strong className="text-[#006a39]">₹{amountNeeded}</strong> more for <strong>FREE Delivery</strong>
+                    Add <strong className="text-[#006a39]">₹{amountNeeded}</strong> more for <strong>FREE Delivery</strong> (orders above ₹150)
                   </p>
                   <div className="w-full h-1.5 bg-[#e4ede2] rounded-full overflow-hidden">
                     <div

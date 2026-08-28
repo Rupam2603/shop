@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useCart } from "../contexts/CartContext";
+import { useAuth } from "../contexts/AuthContext";
 import { fetchUserAddresses, DbAddress, createAddress } from "../lib/addresses";
 import { placeOrder } from "../lib/orders";
 
@@ -17,6 +18,8 @@ export default function CheckoutModal({
   user,
 }: CheckoutModalProps) {
   const { items, subtotal, savings, clearCart } = useCart();
+  const { appUser } = useAuth();
+  const isRetailer = appUser?.role === "retailer";
   const [addresses, setAddresses] = useState<DbAddress[]>([]);
   const [selectedAddrId, setSelectedAddrId] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<"UPI" | "Card" | "COD">("UPI");
@@ -56,8 +59,8 @@ export default function CheckoutModal({
 
   if (!open) return null;
 
-  const FREE_DELIVERY_THRESHOLD = 499;
-  const deliveryFee = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : 40;
+  const FREE_DELIVERY_THRESHOLD = 150;
+  const deliveryFee = isRetailer || subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : 40;
   const finalTotal = subtotal + deliveryFee;
 
   const handlePlaceOrder = async () => {

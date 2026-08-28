@@ -344,7 +344,9 @@ export default function ProductDetailModal({
 
             <p className="text-[11px] sm:text-xs text-[#047857] font-medium mt-3 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#047857] inline-block" />
-              Ready to ship within 24 hours · Free delivery on orders above ₹499
+              {isRetailer
+                ? "Ready to ship within 24 hours · FREE Delivery on all retailer orders"
+                : "Ready to ship within 24 hours · Free delivery on orders above ₹150"}
             </p>
           </div>
         </div>
