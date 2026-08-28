@@ -69,89 +69,89 @@ const CAT_ACCENT: Record<string, string> = {
 };
 
 const INITIAL_PRODUCTS: Product[] = [
-  { id: 1,  name: "Volini Gel 15g",               category: "Pain Relief & Balms",              brand: "Volini",      sku: "VLN-001", hsn: "3004", mrp: 15,  customerPrice: 11,  retailerPrice: 10,  stock: 145, details: "15g gel tube"                  },
-  { id: 2,  name: "Volini Spray 249ml",            category: "Pain Relief & Balms",              brand: "Volini",      sku: "VLN-002", hsn: "3004", mrp: 249, customerPrice: 177, retailerPrice: 151, stock: 67,  details: "249ml spray can"               },
-  { id: 3,  name: "Amrutanjan Strong Balm 44g",    category: "Pain Relief & Balms",              brand: "Amrutanjan",  sku: "AMR-001", hsn: "3004", mrp: 44,  customerPrice: 36,  retailerPrice: 32,  stock: 92,  details: "44g balm jar"                  },
-  { id: 4,  name: "Zandu Balm 45ml",               category: "Pain Relief & Balms",              brand: "Zandu",       sku: "ZAN-001", hsn: "3004", mrp: 45,  customerPrice: 40,  retailerPrice: 35,  stock: 8,   details: "45ml roll-on bottle"           },
-  { id: 5,  name: "Moov Chain 15g",                category: "Pain Relief & Balms",              brand: "Moov",        sku: "MOV-001", hsn: "3004", mrp: 15,  customerPrice: 13,  retailerPrice: 11,  stock: 231, details: "15g roll-on applicator"        },
-  { id: 6,  name: "Glucon D Orange 415g Jar",      category: "Energy, Hydration & Supplements",  brand: "Glucon D",    sku: "GLD-001", hsn: "2106", mrp: 415, customerPrice: 332, retailerPrice: 272, stock: 203, details: "415g storage jar"              },
-  { id: 7,  name: "Glucon D Regular 65g",          category: "Energy, Hydration & Supplements",  brand: "Glucon D",    sku: "GLD-002", hsn: "2106", mrp: 65,  customerPrice: 50,  retailerPrice: 44,  stock: 312, details: "65g refill pack"               },
-  { id: 8,  name: "Dabur Honey 125g",              category: "Energy, Hydration & Supplements",  brand: "Dabur",       sku: "DBR-001", hsn: "2106", mrp: 125, customerPrice: 105, retailerPrice: 89,  stock: 78,  details: "125g squeeze bottle"           },
-  { id: 9,  name: "Chyawanprash 860g",             category: "Energy, Hydration & Supplements",  brand: "Dabur",       sku: "DBR-002", hsn: "2106", mrp: 860, customerPrice: 671, retailerPrice: 550, stock: 3,   details: "860g glass jar"                },
-  { id: 10, name: "Cipla ORS Powder Box",          category: "Energy, Hydration & Supplements",  brand: "Cipla",       sku: "CPL-001", hsn: "2106", mrp: 978, customerPrice: 250, retailerPrice: 205, stock: 34,  details: "Box of 21 sachets"             },
-  { id: 11, name: "Sugar Free Gold 40 Tabs",       category: "Energy, Hydration & Supplements",  brand: "Zydus",       sku: "SGF-001", hsn: "2106", mrp: 40,  customerPrice: 32,  retailerPrice: 28,  stock: 156, details: "40 tablets strip"              },
-  { id: 12, name: "Electrol Powder Sachet",        category: "Energy, Hydration & Supplements",  brand: "Electrol",    sku: "ELC-001", hsn: "2106", mrp: 23,  customerPrice: 16,  retailerPrice: 14,  stock: 187, details: "Single 22g sachet"             },
-  { id: 13, name: "Dettol Antiseptic 250ml",       category: "First Aid & Antiseptics",          brand: "Dettol",      sku: "DTL-001", hsn: "3808", mrp: 155, customerPrice: 131, retailerPrice: 111, stock: 287, details: "250ml bottle"                  },
-  { id: 14, name: "Dettol Antiseptic 550ml",       category: "First Aid & Antiseptics",          brand: "Dettol",      sku: "DTL-002", hsn: "3808", mrp: 259, customerPrice: 223, retailerPrice: 183, stock: 145, details: "550ml bottle"                  },
-  { id: 15, name: "Dettol Antiseptic 60ml",        category: "First Aid & Antiseptics",          brand: "Dettol",      sku: "DTL-003", hsn: "3808", mrp: 30,  customerPrice: 27,  retailerPrice: 24,  stock: 312, details: "60ml pocket bottle"            },
-  { id: 16, name: "Hansaplast Regular Band-Aid",   category: "First Aid & Antiseptics",          brand: "Hansaplast",  sku: "HNS-001", hsn: "3808", mrp: 240, customerPrice: 165, retailerPrice: 140, stock: 62,  details: "Box of 20 strips"              },
-  { id: 17, name: "Hansaplast Washproof Band-Aid", category: "First Aid & Antiseptics",          brand: "Hansaplast",  sku: "HNS-002", hsn: "3808", mrp: 300, customerPrice: 195, retailerPrice: 166, stock: 9,   details: "Box of 20 waterproof strips"  },
-  { id: 18, name: "Eno Lemon 30 Pcs Pack",         category: "Antacids, Digestion & Laxatives",  brand: "Eno",         sku: "ENO-001", hsn: "3004", mrp: 230, customerPrice: 230, retailerPrice: 189, stock: 89,  details: "Pack of 30 sachets"            },
-  { id: 19, name: "Eno Lemon Sachet 5g",           category: "Antacids, Digestion & Laxatives",  brand: "Eno",         sku: "ENO-002", hsn: "3004", mrp: 9,   customerPrice: 8,   retailerPrice: 7,   stock: 543, details: "5g single sachet"              },
-  { id: 20, name: "Zandu Nityam Tablets",          category: "Antacids, Digestion & Laxatives",  brand: "Zandu",       sku: "ZAN-002", hsn: "3004", mrp: 99,  customerPrice: 61,  retailerPrice: 52,  stock: 0,   details: "Strip of 10 tablets"           },
-  { id: 21, name: "Softovac SF 229g",              category: "Antacids, Digestion & Laxatives",  brand: "Softovac",    sku: "SFT-001", hsn: "3004", mrp: 229, customerPrice: 150, retailerPrice: 128, stock: 23,  details: "229g powder jar"               },
-  { id: 22, name: "Baidya Isabgol 360g",           category: "Antacids, Digestion & Laxatives",  brand: "Baidya",      sku: "BDY-001", hsn: "3004", mrp: 360, customerPrice: 305, retailerPrice: 250, stock: 7,   details: "360g powder jar"               },
-  { id: 23, name: "Kayam Churna 115g",             category: "Antacids, Digestion & Laxatives",  brand: "Kayam",       sku: "KYM-001", hsn: "3004", mrp: 115, customerPrice: 93,  retailerPrice: 79,  stock: 44,  details: "115g powder"                   },
-  { id: 24, name: "Nycil Cool Powder 130g",        category: "Skin Care, Powders & Ointments",   brand: "Nycil",       sku: "NYC-001", hsn: "3304", mrp: 130, customerPrice: 104, retailerPrice: 88,  stock: 198, details: "130g dusting powder"           },
-  { id: 25, name: "Candid Dusting Powder 174g",    category: "Skin Care, Powders & Ointments",   brand: "Candid",      sku: "CND-001", hsn: "3304", mrp: 174, customerPrice: 122, retailerPrice: 104, stock: 5,   details: "174g powder tin"               },
-  { id: 26, name: "Boroline Antiseptic Cream 45g", category: "Skin Care, Powders & Ointments",   brand: "Boroline",    sku: "BRL-001", hsn: "3304", mrp: 45,  customerPrice: 39,  retailerPrice: 34,  stock: 267, details: "45g cream tube"                },
-  { id: 27, name: "Ring Guard Cream 96g",          category: "Skin Care, Powders & Ointments",   brand: "Ring Guard",  sku: "RNG-001", hsn: "3304", mrp: 96,  customerPrice: 78,  retailerPrice: 66,  stock: 41,  details: "96g cream tube"                },
-  { id: 28, name: "Love Nature Hair Oil 299ml",    category: "Personal Care, Hygiene & Others",  brand: "Love Nature", sku: "LVN-001", hsn: "3305", mrp: 299, customerPrice: 165, retailerPrice: 140, stock: 73,  details: "299ml bottle"                  },
-  { id: 29, name: "Jac Body Oil 275ml",            category: "Personal Care, Hygiene & Others",  brand: "Jac",         sku: "JAC-001", hsn: "3305", mrp: 275, customerPrice: 193, retailerPrice: 164, stock: 56,  details: "275ml bottle"                  },
-  { id: 30, name: "Dettol Hand Sanitizer 30ml",    category: "Personal Care, Hygiene & Others",  brand: "Dettol",      sku: "DTL-004", hsn: "3305", mrp: 30,  customerPrice: 26,  retailerPrice: 23,  stock: 334, details: "30ml pocket bottle"            },
-  { id: 31, name: "Vicks Cough Drops 130 Pcs",     category: "Personal Care, Hygiene & Others",  brand: "Vicks",       sku: "VCK-001", hsn: "3305", mrp: 100, customerPrice: 100, retailerPrice: 85,  stock: 88,  details: "Pack of 130 drops"             },
-  { id: 32, name: "Morisons Baby Nipple",          category: "Baby Care",                        brand: "Morisons",    sku: "MRS-001", hsn: "3924", mrp: 30,  customerPrice: 21,  retailerPrice: 18,  stock: 17,  details: "Single silicone nipple"        },
-  { id: 33, name: "Morisons Feeding Bottle",       category: "Baby Care",                        brand: "Morisons",    sku: "MRS-002", hsn: "3924", mrp: 72,  customerPrice: 72,  retailerPrice: 61,  stock: 29,  details: "250ml capacity bottle"         },
-  { id: 34, name: "Surgical Face Mask 75pc",       category: "Medical Supplies & General",       brand: "Generic",     sku: "SRG-001", hsn: "9018", mrp: 75,  customerPrice: 75,  retailerPrice: 64,  stock: 412, details: "Box of 75 masks, 3-ply"        },
-  { id: 35, name: "Surgical Face Mask 100pc",      category: "Medical Supplies & General",       brand: "Generic",     sku: "SRG-002", hsn: "9018", mrp: 100, customerPrice: 100, retailerPrice: 85,  stock: 287, details: "Box of 100 masks, 3-ply"       },
-  { id: 36, name: "Glandiner Oil 145ml",           category: "Medical Supplies & General",       brand: "Glandiner",   sku: "GLD-003", hsn: "9018", mrp: 145, customerPrice: 120, retailerPrice: 102, stock: 64,  details: "145ml massage oil bottle"      },
+  { id: 1, name: "Volini Gel 15g", category: "Pain Relief & Balms", brand: "Volini", sku: "VLN-001", hsn: "3004", mrp: 15, customerPrice: 11, retailerPrice: 10, stock: 145, details: "15g gel tube" },
+  { id: 2, name: "Volini Spray 249ml", category: "Pain Relief & Balms", brand: "Volini", sku: "VLN-002", hsn: "3004", mrp: 249, customerPrice: 177, retailerPrice: 151, stock: 67, details: "249ml spray can" },
+  { id: 3, name: "Amrutanjan Strong Balm 44g", category: "Pain Relief & Balms", brand: "Amrutanjan", sku: "AMR-001", hsn: "3004", mrp: 44, customerPrice: 36, retailerPrice: 32, stock: 92, details: "44g balm jar" },
+  { id: 4, name: "Zandu Balm 45ml", category: "Pain Relief & Balms", brand: "Zandu", sku: "ZAN-001", hsn: "3004", mrp: 45, customerPrice: 40, retailerPrice: 35, stock: 8, details: "45ml roll-on bottle" },
+  { id: 5, name: "Moov Chain 15g", category: "Pain Relief & Balms", brand: "Moov", sku: "MOV-001", hsn: "3004", mrp: 15, customerPrice: 13, retailerPrice: 11, stock: 231, details: "15g roll-on applicator" },
+  { id: 6, name: "Glucon D Orange 415g Jar", category: "Energy, Hydration & Supplements", brand: "Glucon D", sku: "GLD-001", hsn: "2106", mrp: 415, customerPrice: 332, retailerPrice: 272, stock: 203, details: "415g storage jar" },
+  { id: 7, name: "Glucon D Regular 65g", category: "Energy, Hydration & Supplements", brand: "Glucon D", sku: "GLD-002", hsn: "2106", mrp: 65, customerPrice: 50, retailerPrice: 44, stock: 312, details: "65g refill pack" },
+  { id: 8, name: "Dabur Honey 125g", category: "Energy, Hydration & Supplements", brand: "Dabur", sku: "DBR-001", hsn: "2106", mrp: 125, customerPrice: 105, retailerPrice: 89, stock: 78, details: "125g squeeze bottle" },
+  { id: 9, name: "Chyawanprash 860g", category: "Energy, Hydration & Supplements", brand: "Dabur", sku: "DBR-002", hsn: "2106", mrp: 860, customerPrice: 671, retailerPrice: 550, stock: 3, details: "860g glass jar" },
+  { id: 10, name: "Cipla ORS Powder Box", category: "Energy, Hydration & Supplements", brand: "Cipla", sku: "CPL-001", hsn: "2106", mrp: 978, customerPrice: 250, retailerPrice: 205, stock: 34, details: "Box of 21 sachets" },
+  { id: 11, name: "Sugar Free Gold 40 Tabs", category: "Energy, Hydration & Supplements", brand: "Zydus", sku: "SGF-001", hsn: "2106", mrp: 40, customerPrice: 32, retailerPrice: 28, stock: 156, details: "40 tablets strip" },
+  { id: 12, name: "Electrol Powder Sachet", category: "Energy, Hydration & Supplements", brand: "Electrol", sku: "ELC-001", hsn: "2106", mrp: 23, customerPrice: 16, retailerPrice: 14, stock: 187, details: "Single 22g sachet" },
+  { id: 13, name: "Dettol Antiseptic 250ml", category: "First Aid & Antiseptics", brand: "Dettol", sku: "DTL-001", hsn: "3808", mrp: 155, customerPrice: 131, retailerPrice: 111, stock: 287, details: "250ml bottle" },
+  { id: 14, name: "Dettol Antiseptic 550ml", category: "First Aid & Antiseptics", brand: "Dettol", sku: "DTL-002", hsn: "3808", mrp: 259, customerPrice: 223, retailerPrice: 183, stock: 145, details: "550ml bottle" },
+  { id: 15, name: "Dettol Antiseptic 60ml", category: "First Aid & Antiseptics", brand: "Dettol", sku: "DTL-003", hsn: "3808", mrp: 30, customerPrice: 27, retailerPrice: 24, stock: 312, details: "60ml pocket bottle" },
+  { id: 16, name: "Hansaplast Regular Band-Aid", category: "First Aid & Antiseptics", brand: "Hansaplast", sku: "HNS-001", hsn: "3808", mrp: 240, customerPrice: 165, retailerPrice: 140, stock: 62, details: "Box of 20 strips" },
+  { id: 17, name: "Hansaplast Washproof Band-Aid", category: "First Aid & Antiseptics", brand: "Hansaplast", sku: "HNS-002", hsn: "3808", mrp: 300, customerPrice: 195, retailerPrice: 166, stock: 9, details: "Box of 20 waterproof strips" },
+  { id: 18, name: "Eno Lemon 30 Pcs Pack", category: "Antacids, Digestion & Laxatives", brand: "Eno", sku: "ENO-001", hsn: "3004", mrp: 230, customerPrice: 230, retailerPrice: 189, stock: 89, details: "Pack of 30 sachets" },
+  { id: 19, name: "Eno Lemon Sachet 5g", category: "Antacids, Digestion & Laxatives", brand: "Eno", sku: "ENO-002", hsn: "3004", mrp: 9, customerPrice: 8, retailerPrice: 7, stock: 543, details: "5g single sachet" },
+  { id: 20, name: "Zandu Nityam Tablets", category: "Antacids, Digestion & Laxatives", brand: "Zandu", sku: "ZAN-002", hsn: "3004", mrp: 99, customerPrice: 61, retailerPrice: 52, stock: 0, details: "Strip of 10 tablets" },
+  { id: 21, name: "Softovac SF 229g", category: "Antacids, Digestion & Laxatives", brand: "Softovac", sku: "SFT-001", hsn: "3004", mrp: 229, customerPrice: 150, retailerPrice: 128, stock: 23, details: "229g powder jar" },
+  { id: 22, name: "Baidya Isabgol 360g", category: "Antacids, Digestion & Laxatives", brand: "Baidya", sku: "BDY-001", hsn: "3004", mrp: 360, customerPrice: 305, retailerPrice: 250, stock: 7, details: "360g powder jar" },
+  { id: 23, name: "Kayam Churna 115g", category: "Antacids, Digestion & Laxatives", brand: "Kayam", sku: "KYM-001", hsn: "3004", mrp: 115, customerPrice: 93, retailerPrice: 79, stock: 44, details: "115g powder" },
+  { id: 24, name: "Nycil Cool Powder 130g", category: "Skin Care, Powders & Ointments", brand: "Nycil", sku: "NYC-001", hsn: "3304", mrp: 130, customerPrice: 104, retailerPrice: 88, stock: 198, details: "130g dusting powder" },
+  { id: 25, name: "Candid Dusting Powder 174g", category: "Skin Care, Powders & Ointments", brand: "Candid", sku: "CND-001", hsn: "3304", mrp: 174, customerPrice: 122, retailerPrice: 104, stock: 5, details: "174g powder tin" },
+  { id: 26, name: "Boroline Antiseptic Cream 45g", category: "Skin Care, Powders & Ointments", brand: "Boroline", sku: "BRL-001", hsn: "3304", mrp: 45, customerPrice: 39, retailerPrice: 34, stock: 267, details: "45g cream tube" },
+  { id: 27, name: "Ring Guard Cream 96g", category: "Skin Care, Powders & Ointments", brand: "Ring Guard", sku: "RNG-001", hsn: "3304", mrp: 96, customerPrice: 78, retailerPrice: 66, stock: 41, details: "96g cream tube" },
+  { id: 28, name: "Love Nature Hair Oil 299ml", category: "Personal Care, Hygiene & Others", brand: "Love Nature", sku: "LVN-001", hsn: "3305", mrp: 299, customerPrice: 165, retailerPrice: 140, stock: 73, details: "299ml bottle" },
+  { id: 29, name: "Jac Body Oil 275ml", category: "Personal Care, Hygiene & Others", brand: "Jac", sku: "JAC-001", hsn: "3305", mrp: 275, customerPrice: 193, retailerPrice: 164, stock: 56, details: "275ml bottle" },
+  { id: 30, name: "Dettol Hand Sanitizer 30ml", category: "Personal Care, Hygiene & Others", brand: "Dettol", sku: "DTL-004", hsn: "3305", mrp: 30, customerPrice: 26, retailerPrice: 23, stock: 334, details: "30ml pocket bottle" },
+  { id: 31, name: "Vicks Cough Drops 130 Pcs", category: "Personal Care, Hygiene & Others", brand: "Vicks", sku: "VCK-001", hsn: "3305", mrp: 100, customerPrice: 100, retailerPrice: 85, stock: 88, details: "Pack of 130 drops" },
+  { id: 32, name: "Morisons Baby Nipple", category: "Baby Care", brand: "Morisons", sku: "MRS-001", hsn: "3924", mrp: 30, customerPrice: 21, retailerPrice: 18, stock: 17, details: "Single silicone nipple" },
+  { id: 33, name: "Morisons Feeding Bottle", category: "Baby Care", brand: "Morisons", sku: "MRS-002", hsn: "3924", mrp: 72, customerPrice: 72, retailerPrice: 61, stock: 29, details: "250ml capacity bottle" },
+  { id: 34, name: "Surgical Face Mask 75pc", category: "Medical Supplies & General", brand: "Generic", sku: "SRG-001", hsn: "9018", mrp: 75, customerPrice: 75, retailerPrice: 64, stock: 412, details: "Box of 75 masks, 3-ply" },
+  { id: 35, name: "Surgical Face Mask 100pc", category: "Medical Supplies & General", brand: "Generic", sku: "SRG-002", hsn: "9018", mrp: 100, customerPrice: 100, retailerPrice: 85, stock: 287, details: "Box of 100 masks, 3-ply" },
+  { id: 36, name: "Glandiner Oil 145ml", category: "Medical Supplies & General", brand: "Glandiner", sku: "GLD-003", hsn: "9018", mrp: 145, customerPrice: 120, retailerPrice: 102, stock: 64, details: "145ml massage oil bottle" },
 ];
 
 const MOCK_REVENUE_HISTORY = [
-  { date: "Aug 28, 2026", orders: 23, revenue: 14283, upi: 8234,  card: 3849, cod: 2200 },
-  { date: "Aug 27, 2026", orders: 19, revenue: 12847, upi: 6420,  card: 4190, cod: 2237 },
-  { date: "Aug 26, 2026", orders: 25, revenue: 16734, upi: 9340,  card: 5120, cod: 2274 },
-  { date: "Aug 25, 2026", orders: 21, revenue: 13920, upi: 7840,  card: 3980, cod: 2100 },
-  { date: "Aug 24, 2026", orders: 17, revenue: 10560, upi: 5823,  card: 2940, cod: 1797 },
+  { date: "Aug 28, 2026", orders: 23, revenue: 14283, upi: 8234, card: 3849, cod: 2200 },
+  { date: "Aug 27, 2026", orders: 19, revenue: 12847, upi: 6420, card: 4190, cod: 2237 },
+  { date: "Aug 26, 2026", orders: 25, revenue: 16734, upi: 9340, card: 5120, cod: 2274 },
+  { date: "Aug 25, 2026", orders: 21, revenue: 13920, upi: 7840, card: 3980, cod: 2100 },
+  { date: "Aug 24, 2026", orders: 17, revenue: 10560, upi: 5823, card: 2940, cod: 1797 },
   { date: "Aug 23, 2026", orders: 29, revenue: 18492, upi: 10234, card: 6010, cod: 2248 },
-  { date: "Aug 22, 2026", orders: 22, revenue: 15103, upi: 8470,  card: 4320, cod: 2313 },
+  { date: "Aug 22, 2026", orders: 22, revenue: 15103, upi: 8470, card: 4320, cod: 2313 },
 ];
 
 const MOCK_ORDERS = [
-  { id: "ORD-2847", customer: "Priya Sharma",   phone: "98765 43210", items: 3, amount: 763,  status: "Delivered",  date: "Aug 27, 2026", payment: "UPI"  },
-  { id: "ORD-2846", customer: "Rahul Kumar",    phone: "87654 32109", items: 1, amount: 177,  status: "Shipped",    date: "Aug 27, 2026", payment: "Card" },
-  { id: "ORD-2845", customer: "Anita Patel",    phone: "76543 21098", items: 5, amount: 1247, status: "Processing", date: "Aug 27, 2026", payment: "COD"  },
-  { id: "ORD-2844", customer: "Suresh Gupta",   phone: "65432 10987", items: 2, amount: 426,  status: "Delivered",  date: "Aug 26, 2026", payment: "UPI"  },
-  { id: "ORD-2843", customer: "Meera Nair",     phone: "54321 09876", items: 1, amount: 332,  status: "Shipped",    date: "Aug 26, 2026", payment: "UPI"  },
-  { id: "ORD-2842", customer: "Vikram Singh",   phone: "43210 98765", items: 4, amount: 892,  status: "Cancelled",  date: "Aug 26, 2026", payment: "Card" },
-  { id: "ORD-2841", customer: "Deepa Krishnan", phone: "32109 87654", items: 2, amount: 519,  status: "Delivered",  date: "Aug 25, 2026", payment: "UPI"  },
-  { id: "ORD-2840", customer: "Amit Verma",     phone: "21098 76543", items: 6, amount: 1834, status: "Processing", date: "Aug 25, 2026", payment: "Card" },
-  { id: "ORD-2839", customer: "Sunita Rao",     phone: "10987 65432", items: 1, amount: 105,  status: "Delivered",  date: "Aug 25, 2026", payment: "COD"  },
-  { id: "ORD-2838", customer: "Kiran Mehta",    phone: "09876 54321", items: 3, amount: 671,  status: "Shipped",    date: "Aug 24, 2026", payment: "UPI"  },
+  { id: "ORD-2847", customer: "Priya Sharma", phone: "98765 43210", items: 3, amount: 763, status: "Delivered", date: "Aug 27, 2026", payment: "UPI" },
+  { id: "ORD-2846", customer: "Rahul Kumar", phone: "87654 32109", items: 1, amount: 177, status: "Shipped", date: "Aug 27, 2026", payment: "Card" },
+  { id: "ORD-2845", customer: "Anita Patel", phone: "76543 21098", items: 5, amount: 1247, status: "Processing", date: "Aug 27, 2026", payment: "COD" },
+  { id: "ORD-2844", customer: "Suresh Gupta", phone: "65432 10987", items: 2, amount: 426, status: "Delivered", date: "Aug 26, 2026", payment: "UPI" },
+  { id: "ORD-2843", customer: "Meera Nair", phone: "54321 09876", items: 1, amount: 332, status: "Shipped", date: "Aug 26, 2026", payment: "UPI" },
+  { id: "ORD-2842", customer: "Vikram Singh", phone: "43210 98765", items: 4, amount: 892, status: "Cancelled", date: "Aug 26, 2026", payment: "Card" },
+  { id: "ORD-2841", customer: "Deepa Krishnan", phone: "32109 87654", items: 2, amount: 519, status: "Delivered", date: "Aug 25, 2026", payment: "UPI" },
+  { id: "ORD-2840", customer: "Amit Verma", phone: "21098 76543", items: 6, amount: 1834, status: "Processing", date: "Aug 25, 2026", payment: "Card" },
+  { id: "ORD-2839", customer: "Sunita Rao", phone: "10987 65432", items: 1, amount: 105, status: "Delivered", date: "Aug 25, 2026", payment: "COD" },
+  { id: "ORD-2838", customer: "Kiran Mehta", phone: "09876 54321", items: 3, amount: 671, status: "Shipped", date: "Aug 24, 2026", payment: "UPI" },
 ];
 
 const TAB_ITEMS: { id: AdminTab; label: string; icon: React.ReactElement }[] = [
-  { id: "dashboard", label: "Dashboard", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 1H8V8H1V1ZM10 1H17V8H10V1ZM1 10H8V17H1V10ZM10 10H17V17H10V10Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg> },
-  { id: "products",  label: "Products",  icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 1L17 5V13L9 17L1 13V5L9 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><path d="M9 9L17 5M9 9L1 5M9 9V17" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg> },
-  { id: "inventory", label: "Inventory", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 13L5 15L9 13L13 15L17 13V5L13 3L9 5L5 3L1 5V13Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><path d="M9 5V13M5 3V15M13 3V15" stroke="currentColor" strokeWidth="1.5"/></svg> },
-  { id: "orders",    label: "Orders",    icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 1H14C15.1 1 16 1.9 16 3V17L13 15.5L9 17L5 15.5L2 17V3C2 1.9 2.9 1 4 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><path d="M5 6H13M5 9H13M5 12H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg> },
-  { id: "revenue",   label: "Revenue",   icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 13L5 9L8 11L12 6L17 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M1 17H17M13 2H17V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> },
-  { id: "settings",  label: "Settings",  icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 11.5C10.38 11.5 11.5 10.38 11.5 9C11.5 7.62 10.38 6.5 9 6.5C7.62 6.5 6.5 7.62 6.5 9C6.5 10.38 7.62 11.5 9 11.5Z" stroke="currentColor" strokeWidth="1.5"/><path d="M15.1 9C15.1 8.71 15.07 8.43 15.04 8.15L16.86 6.74L14.86 3.26L12.74 4.22C12.27 3.87 11.77 3.57 11.22 3.34L10.9 1H7.1L6.78 3.34C6.23 3.57 5.73 3.87 5.26 4.22L3.14 3.26L1.14 6.74L2.96 8.15C2.93 8.43 2.9 8.71 2.9 9C2.9 9.29 2.93 9.57 2.96 9.85L1.14 11.26L3.14 14.74L5.26 13.78C5.73 14.13 6.23 14.43 6.78 14.66L7.1 17H10.9L11.22 14.66C11.77 14.43 12.27 14.13 12.74 13.78L14.86 14.74L16.86 11.26L15.04 9.85C15.07 9.57 15.1 9.29 15.1 9Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg> },
+  { id: "dashboard", label: "Dashboard", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 1H8V8H1V1ZM10 1H17V8H10V1ZM1 10H8V17H1V10ZM10 10H17V17H10V10Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg> },
+  { id: "products", label: "Products", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 1L17 5V13L9 17L1 13V5L9 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M9 9L17 5M9 9L1 5M9 9V17" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg> },
+  { id: "inventory", label: "Inventory", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 13L5 15L9 13L13 15L17 13V5L13 3L9 5L5 3L1 5V13Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M9 5V13M5 3V15M13 3V15" stroke="currentColor" strokeWidth="1.5" /></svg> },
+  { id: "orders", label: "Orders", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 1H14C15.1 1 16 1.9 16 3V17L13 15.5L9 17L5 15.5L2 17V3C2 1.9 2.9 1 4 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M5 6H13M5 9H13M5 12H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg> },
+  { id: "revenue", label: "Revenue", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 13L5 9L8 11L12 6L17 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M1 17H17M13 2H17V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg> },
+  { id: "settings", label: "Settings", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 11.5C10.38 11.5 11.5 10.38 11.5 9C11.5 7.62 10.38 6.5 9 6.5C7.62 6.5 6.5 7.62 6.5 9C6.5 10.38 7.62 11.5 9 11.5Z" stroke="currentColor" strokeWidth="1.5" /><path d="M15.1 9C15.1 8.71 15.07 8.43 15.04 8.15L16.86 6.74L14.86 3.26L12.74 4.22C12.27 3.87 11.77 3.57 11.22 3.34L10.9 1H7.1L6.78 3.34C6.23 3.57 5.73 3.87 5.26 4.22L3.14 3.26L1.14 6.74L2.96 8.15C2.93 8.43 2.9 8.71 2.9 9C2.9 9.29 2.93 9.57 2.96 9.85L1.14 11.26L3.14 14.74L5.26 13.78C5.73 14.13 6.23 14.43 6.78 14.66L7.1 17H10.9L11.22 14.66C11.77 14.43 12.27 14.13 12.74 13.78L14.86 14.74L16.86 11.26L15.04 9.85C15.07 9.57 15.1 9.29 15.1 9Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg> },
 ];
 
 function stockStatus(s: number): { label: string; color: string; bg: string } {
   if (s === 0) return { label: "Out of Stock", color: "#b91c1c", bg: "#fee2e2" };
-  if (s <= 10)  return { label: "Low Stock",    color: "#c2410c", bg: "#ffedd5" };
-  return              { label: "In Stock",       color: "#047857", bg: "#d1fae5" };
+  if (s <= 10) return { label: "Low Stock", color: "#c2410c", bg: "#ffedd5" };
+  return { label: "In Stock", color: "#047857", bg: "#d1fae5" };
 }
 
 function orderStatus(s: string): { color: string; bg: string } {
   switch (s) {
-    case "Delivered":  return { color: "#047857", bg: "#d1fae5" };
-    case "Shipped":    return { color: "#1d4ed8", bg: "#dbeafe" };
+    case "Delivered": return { color: "#047857", bg: "#d1fae5" };
+    case "Shipped": return { color: "#1d4ed8", bg: "#dbeafe" };
     case "Processing": return { color: "#d97706", bg: "#fef3c7" };
-    case "Cancelled":  return { color: "#b91c1c", bg: "#fee2e2" };
-    default:           return { color: "#374151", bg: "#f3f4f6" };
+    case "Cancelled": return { color: "#b91c1c", bg: "#fee2e2" };
+    default: return { color: "#374151", bg: "#f3f4f6" };
   }
 }
 
@@ -186,7 +186,7 @@ function ProductModal({
     if (!form.hsn || defaultHsns.includes(form.hsn)) {
       setForm((p) => ({ ...p, hsn: CAT_HSN[form.category] ?? "" }));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.category]);
 
   const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -219,7 +219,7 @@ function ProductModal({
             {mode === "add" ? "Add New Product" : "Edit Product"}
           </h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-[#f0f4f0] flex items-center justify-center hover:bg-[#e4ede2] transition-colors">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1L11 11M11 1L1 11" stroke="#073b4c" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1L11 11M11 1L1 11" stroke="#073b4c" strokeWidth="1.5" strokeLinecap="round" /></svg>
           </button>
         </div>
 
@@ -240,12 +240,12 @@ function ProductModal({
                     onClick={(e) => { e.stopPropagation(); setForm((p) => ({ ...p, image: undefined })); }}
                     className="absolute top-2 right-2 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white"
                   >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="#073b4c" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="#073b4c" strokeWidth="1.5" strokeLinecap="round" /></svg>
                   </button>
                 </div>
               ) : (
                 <div className="h-28 flex flex-col items-center justify-center gap-1.5 text-[#9aa89b] group-hover:text-[#073b4c] transition-colors">
-                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 4C14 4 8 4 5 7C2 10 2 14 2 14C2 14 2 18 5 21C8 24 14 24 14 24C14 24 20 24 23 21C26 18 26 14 26 14C26 14 26 10 23 7C20 4 14 4Z" stroke="currentColor" strokeWidth="1.5"/><path d="M14 9V14M14 19H14.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 4C14 4 8 4 5 7C2 10 2 14 2 14C2 14 2 18 5 21C8 24 14 24 14 24C14 24 20 24 23 21C26 18 26 14 26 14C26 14 26 10 23 7C20 4 14 4Z" stroke="currentColor" strokeWidth="1.5" /><path d="M14 9V14M14 19H14.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
                   <p className="text-sm font-medium">Click to upload image</p>
                   <p className="text-[11px]">JPG, PNG or WebP</p>
                 </div>
@@ -257,7 +257,7 @@ function ProductModal({
                 onClick={() => cameraRef.current?.click()}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-[#e4ede2] text-xs font-semibold text-[#073b4c] hover:bg-[#f0f4f0] transition-colors"
               >
-                <svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M5 1H9L10.5 3H13C13.55 3 14 3.45 14 4V12C14 12.55 13.55 13 13 13H1C0.45 13 0 12.55 0 12V4C0 3.45 0.45 3 1 3H3.5L5 1Z" fill="#073b4c"/><circle cx="7" cy="8" r="2.5" fill="white"/></svg>
+                <svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M5 1H9L10.5 3H13C13.55 3 14 3.45 14 4V12C14 12.55 13.55 13 13 13H1C0.45 13 0 12.55 0 12V4C0 3.45 0.45 3 1 3H3.5L5 1Z" fill="#073b4c" /><circle cx="7" cy="8" r="2.5" fill="white" /></svg>
                 Take Photo
               </button>
               <button
@@ -265,7 +265,7 @@ function ProductModal({
                 onClick={() => galleryRef.current?.click()}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-[#e4ede2] text-xs font-semibold text-[#073b4c] hover:bg-[#f0f4f0] transition-colors"
               >
-                <svg width="14" height="12" viewBox="0 0 14 12" fill="none"><path d="M13 0H1C0.45 0 0 0.45 0 1V11C0 11.55 0.45 12 1 12H13C13.55 12 14 11.55 14 11V1C14 0.45 13.55 0 13 0ZM4 2.5C4.83 2.5 5.5 3.17 5.5 4C5.5 4.83 4.83 5.5 4 5.5C3.17 5.5 2.5 4.83 2.5 4C2.5 3.17 3.17 2.5 4 2.5ZM12 10H2L5.5 6.5L7 8L9 5L12 10Z" fill="#073b4c"/></svg>
+                <svg width="14" height="12" viewBox="0 0 14 12" fill="none"><path d="M13 0H1C0.45 0 0 0.45 0 1V11C0 11.55 0.45 12 1 12H13C13.55 12 14 11.55 14 11V1C14 0.45 13.55 0 13 0ZM4 2.5C4.83 2.5 5.5 3.17 5.5 4C5.5 4.83 4.83 5.5 4 5.5C3.17 5.5 2.5 4.83 2.5 4C2.5 3.17 3.17 2.5 4 2.5ZM12 10H2L5.5 6.5L7 8L9 5L12 10Z" fill="#073b4c" /></svg>
                 Upload from Gallery
               </button>
             </div>
@@ -294,7 +294,7 @@ function ProductModal({
               <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px]">Category</label>
               <button type="button" onClick={() => setShowAddCat(!showAddCat)}
                 className="text-[10px] font-bold text-[#006a39] hover:underline flex items-center gap-1">
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1V9M1 5H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1V9M1 5H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
                 Add Category
               </button>
             </div>
@@ -443,8 +443,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     lowThreshold: "10", defaultDisc: "15", emailAlerts: true, smsAlerts: false, autoReorder: true,
   });
 
-  const lowStockCount    = useMemo(() => products.filter((p) => p.stock > 0 && p.stock <= 10).length, [products]);
-  const outOfStockCount  = useMemo(() => products.filter((p) => p.stock === 0).length, [products]);
+  const lowStockCount = useMemo(() => products.filter((p) => p.stock > 0 && p.stock <= 10).length, [products]);
+  const outOfStockCount = useMemo(() => products.filter((p) => p.stock === 0).length, [products]);
 
   const filteredProducts = useMemo(() => {
     let list = products;
@@ -463,7 +463,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     let list = [...products].sort((a, b) => a.stock - b.stock);
     if (invFilter === "Out of Stock") list = list.filter((p) => p.stock === 0);
     else if (invFilter === "Low Stock") list = list.filter((p) => p.stock > 0 && p.stock <= 10);
-    else if (invFilter === "In Stock")  list = list.filter((p) => p.stock > 10);
+    else if (invFilter === "In Stock") list = list.filter((p) => p.stock > 10);
     if (invSearch.trim()) {
       const q = invSearch.toLowerCase();
       list = list.filter((p) =>
@@ -479,7 +479,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     return MOCK_ORDERS.filter((o) => o.status === orderFilter);
   }, [orderFilter]);
 
-  const openAdd  = () => { setForm(emptyForm(categories[0])); setModal({ open: true, mode: "add" }); };
+  const openAdd = () => { setForm(emptyForm(categories[0])); setModal({ open: true, mode: "add" }); };
   const openEdit = (p: Product) => { setForm({ ...p }); setModal({ open: true, mode: "edit" }); };
   const closeModal = () => setModal({ open: false, mode: "add" });
 
@@ -520,9 +520,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
       {/* Sidebar */}
       <aside
-        className={`w-[240px] shrink-0 flex flex-col fixed inset-y-0 left-0 z-50 md:static transition-transform duration-300 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        }`}
+        className={`w-[240px] shrink-0 flex flex-col fixed inset-y-0 left-0 z-50 md:static transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          }`}
         style={{ backgroundColor: SIDEBAR_BG, minHeight: "100vh" }}
       >
         <div className="px-5 py-5 border-b border-white/10 flex items-center justify-between">
@@ -534,7 +533,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             onClick={() => setSidebarOpen(false)}
             className="md:hidden text-white/70 hover:text-white p-1"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
         </div>
         <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto">
@@ -564,7 +563,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           </div>
           <button onClick={onLogout}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[#ff6b6b] hover:bg-white/10 transition-colors text-sm font-semibold">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 14H3C2.45 14 2 13.55 2 13V3C2 2.45 2.45 2 3 2H6M10 11L14 8M14 8L10 5M14 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 14H3C2.45 14 2 13.55 2 13V3C2 2.45 2.45 2 3 2H6M10 11L14 8M14 8L10 5M14 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             Sign Out
           </button>
         </div>
@@ -589,7 +588,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           </div>
           {activeTab === "products" && (
             <button onClick={openAdd} className="flex items-center gap-1.5 sm:gap-2 bg-[#073b4c] text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl hover:opacity-90 transition-opacity">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1V13M1 7H13" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1V13M1 7H13" stroke="white" strokeWidth="2" strokeLinecap="round" /></svg>
               Add Product
             </button>
           )}
@@ -641,7 +640,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full p-8 text-center shadow-2xl">
             <div className="w-14 h-14 rounded-full bg-[#fee2e2] flex items-center justify-center mx-auto mb-4 text-[#ef4444]">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M19 7L18.133 19.142A2 2 0 0 1 16.138 21H7.862A2 2 0 0 1 5.867 19.142L5 7M10 11V17M14 11V17M15 7V4A1 1 0 0 0 14 3H10A1 1 0 0 0 9 4V7M4 7H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M19 7L18.133 19.142A2 2 0 0 1 16.138 21H7.862A2 2 0 0 1 5.867 19.142L5 7M10 11V17M14 11V17M15 7V4A1 1 0 0 0 14 3H10A1 1 0 0 0 9 4V7M4 7H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
             <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg mb-1">Delete Product</h3>
             <p className="text-[#9aa89b] text-sm mb-6">Are you sure you want to delete this product? This action cannot be undone.</p>
@@ -661,18 +660,18 @@ function DashboardTab({ products, lowStockCount, outOfStockCount, onNavigate }: 
   products: Product[]; lowStockCount: number; outOfStockCount: number; onNavigate: (t: AdminTab) => void;
 }) {
   const stats = [
-    { label: "Total Products",    value: products.length,              unit: "SKUs",    color: "#073b4c" },
-    { label: "Low / Out of Stock",value: lowStockCount + outOfStockCount, unit: "alerts", color: "#c2410c" },
-    { label: "Categories",        value: INITIAL_CATEGORIES.length,    unit: "active",  color: "#047857" },
-    { label: "Today's Orders",    value: 23,                           unit: "orders",  color: "#1d4ed8" },
+    { label: "Total Products", value: products.length, unit: "SKUs", color: "#073b4c" },
+    { label: "Low / Out of Stock", value: lowStockCount + outOfStockCount, unit: "alerts", color: "#c2410c" },
+    { label: "Categories", value: INITIAL_CATEGORIES.length, unit: "active", color: "#047857" },
+    { label: "Today's Orders", value: 23, unit: "orders", color: "#1d4ed8" },
   ];
   const recentActivity = [
-    { text: "Stock updated: Volini Spray 249ml (+50 units)",   time: "10 min ago", dot: "#006a39" },
-    { text: "New order: ORD-2847 — Priya Sharma, ₹763",        time: "24 min ago", dot: "#1d4ed8" },
-    { text: "Low stock alert: Chyawanprash 860g (3 units)",    time: "1 hr ago",   dot: "#c2410c" },
-    { text: "Product added: Glucon D Regular Jar 219g",        time: "2 hrs ago",  dot: "#006a39" },
-    { text: "Order delivered: ORD-2841 — Deepa Krishnan",      time: "3 hrs ago",  dot: "#047857" },
-    { text: "Low stock alert: Candid Powder 174g (5 units)",   time: "4 hrs ago",  dot: "#c2410c" },
+    { text: "Stock updated: Volini Spray 249ml (+50 units)", time: "10 min ago", dot: "#006a39" },
+    { text: "New order: ORD-2847 — Priya Sharma, ₹763", time: "24 min ago", dot: "#1d4ed8" },
+    { text: "Low stock alert: Chyawanprash 860g (3 units)", time: "1 hr ago", dot: "#c2410c" },
+    { text: "Product added: Glucon D Regular Jar 219g", time: "2 hrs ago", dot: "#006a39" },
+    { text: "Order delivered: ORD-2841 — Deepa Krishnan", time: "3 hrs ago", dot: "#047857" },
+    { text: "Low stock alert: Candid Powder 174g (5 units)", time: "4 hrs ago", dot: "#c2410c" },
   ];
 
   return (
@@ -747,17 +746,17 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
 }) {
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative max-w-xs flex-1">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative flex-1">
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa89b]">
-            <path d="M13 13L10 10M11.5 6.5C11.5 9.26 9.26 11.5 6.5 11.5C3.74 11.5 1.5 9.26 1.5 6.5C1.5 3.74 3.74 1.5 6.5 1.5C9.26 1.5 11.5 3.74 11.5 6.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M13 13L10 10M11.5 6.5C11.5 9.26 9.26 11.5 6.5 11.5C3.74 11.5 1.5 9.26 1.5 6.5C1.5 3.74 3.74 1.5 6.5 1.5C9.26 1.5 11.5 3.74 11.5 6.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, brand, SKU or HSN…"
             className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-[#e4ede2] rounded-xl focus:outline-none focus:border-[#073b4c] transition-colors" />
         </div>
         <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)}
-          className="bg-white border border-[#e4ede2] rounded-xl px-3.5 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#073b4c] transition-colors">
+          className="bg-white border border-[#e4ede2] rounded-xl px-3.5 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#073b4c] transition-colors w-full sm:w-auto">
           <option value="All">All Categories ({allProductCount})</option>
           {categories.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
@@ -834,10 +833,10 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
                     <td className="px-3.5 py-3">
                       <div className="flex items-center gap-1.5">
                         <button onClick={() => onEdit(p)} className="w-7 h-7 rounded-lg bg-[#e0f2fe] text-[#0369a1] flex items-center justify-center hover:opacity-80 transition-opacity" title="Edit">
-                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M8.5 1.5L11.5 4.5M1 12L2 9L9.5 1.5L12.5 4.5L5 12H1V12Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/></svg>
+                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M8.5 1.5L11.5 4.5M1 12L2 9L9.5 1.5L12.5 4.5L5 12H1V12Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" /></svg>
                         </button>
                         <button onClick={() => onDelete(p.id)} className="w-7 h-7 rounded-lg bg-[#fee2e2] text-[#b91c1c] flex items-center justify-center hover:opacity-80 transition-opacity" title="Delete">
-                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 4H11M4.5 4V2.5H8.5V4M5.5 6.5V10M7.5 6.5V10M3 4L3.75 11H9.25L10 4H3Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 4H11M4.5 4V2.5H8.5V4M5.5 6.5V10M7.5 6.5V10M3 4L3.75 11H9.25L10 4H3Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                         </button>
                       </div>
                     </td>
@@ -871,9 +870,9 @@ function InventoryTab({ products, filter, setFilter, search, setSearch, stockEdi
   return (
     <div className="flex flex-col gap-5">
       {/* Search bar */}
-      <div className="relative max-w-md">
+      <div className="relative">
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9aa89b] pointer-events-none">
-          <path d="M13 13L10 10M11.5 6.5C11.5 9.26 9.26 11.5 6.5 11.5C3.74 11.5 1.5 9.26 1.5 6.5C1.5 3.74 3.74 1.5 6.5 1.5C9.26 1.5 11.5 3.74 11.5 6.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M13 13L10 10M11.5 6.5C11.5 9.26 9.26 11.5 6.5 11.5C3.74 11.5 1.5 9.26 1.5 6.5C1.5 3.74 3.74 1.5 6.5 1.5C9.26 1.5 11.5 3.74 11.5 6.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
         <input
           type="text" value={search} onChange={(e) => setSearch(e.target.value)}
@@ -882,14 +881,14 @@ function InventoryTab({ products, filter, setFilter, search, setSearch, stockEdi
         />
         {search && (
           <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9aa89b] hover:text-[#073b4c] transition-colors">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1L11 11M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1L11 11M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
           </button>
         )}
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {[{ label: "In Stock", count: inStockCount, color: "#047857", bg: "#d1fae5" }, { label: "Low Stock", count: lowStockCount, color: "#c2410c", bg: "#ffedd5" }, { label: "Out of Stock", count: outOfStockCount, color: "#b91c1c", bg: "#fee2e2" }].map((s) => (
-          <button key={s.label} onClick={() => setFilter(s.label)} className="bg-white rounded-2xl border border-[#e4ede2] p-5 flex items-center gap-4 hover:shadow-md transition-shadow text-left">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-xl" style={{ color: s.color, backgroundColor: s.bg }}>{s.count}</div>
+          <button key={s.label} onClick={() => setFilter(s.label)} className="bg-white rounded-2xl border border-[#e4ede2] p-4 sm:p-5 flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow text-left">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-lg sm:text-xl shrink-0" style={{ color: s.color, backgroundColor: s.bg }}>{s.count}</div>
             <div><p className="font-semibold text-[#073b4c] text-sm">{s.label}</p><p className="text-[#9aa89b] text-xs mt-0.5">products</p></div>
           </button>
         ))}
@@ -974,41 +973,43 @@ function OrdersTab({ orders, filter, setFilter }: { orders: typeof MOCK_ORDERS; 
   const FILTERS = ["All", "Processing", "Shipped", "Delivered", "Cancelled"];
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
         {FILTERS.map((f) => (
-          <button key={f} onClick={() => setFilter(f)} className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+          <button key={f} onClick={() => setFilter(f)} className="px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap shrink-0"
             style={filter === f ? { backgroundColor: "#073b4c", color: "white" } : { backgroundColor: "white", color: "#6d7a6f", border: "1px solid #e4ede2" }}>
             {f}
           </button>
         ))}
       </div>
       <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-[#e4ede2] bg-[#f8fafb]">
-              {["Order ID", "Customer", "Phone", "Items", "Amount", "Payment", "Status", "Date"].map((h) => (
-                <th key={h} className="text-left px-5 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px] whitespace-nowrap">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((o) => {
-              const st = orderStatus(o.status);
-              return (
-                <tr key={o.id} className="border-b border-[#f0f4f0] last:border-0 hover:bg-[#fafcfa] transition-colors">
-                  <td className="px-5 py-3.5 font-mono text-xs text-[#006a39] font-bold">{o.id}</td>
-                  <td className="px-5 py-3.5 font-semibold text-[#073b4c]">{o.customer}</td>
-                  <td className="px-5 py-3.5 text-[#6d7a6f]">{o.phone}</td>
-                  <td className="px-5 py-3.5 text-[#073b4c]">{o.items} {o.items === 1 ? "item" : "items"}</td>
-                  <td className="px-5 py-3.5 font-['Manrope',sans-serif] font-bold text-[#073b4c]">₹{o.amount.toLocaleString()}</td>
-                  <td className="px-5 py-3.5"><span className="text-xs bg-[#f0f4f0] text-[#6d7a6f] px-2 py-0.5 rounded font-medium">{o.payment}</span></td>
-                  <td className="px-5 py-3.5"><span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ color: st.color, backgroundColor: st.bg }}>{o.status}</span></td>
-                  <td className="px-5 py-3.5 text-[#9aa89b] text-xs">{o.date}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm" style={{ minWidth: "760px" }}>
+            <thead>
+              <tr className="border-b border-[#e4ede2] bg-[#f8fafb]">
+                {["Order ID", "Customer", "Phone", "Items", "Amount", "Payment", "Status", "Date"].map((h) => (
+                  <th key={h} className="text-left px-5 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px] whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((o) => {
+                const st = orderStatus(o.status);
+                return (
+                  <tr key={o.id} className="border-b border-[#f0f4f0] last:border-0 hover:bg-[#fafcfa] transition-colors">
+                    <td className="px-5 py-3.5 font-mono text-xs text-[#006a39] font-bold">{o.id}</td>
+                    <td className="px-5 py-3.5 font-semibold text-[#073b4c]">{o.customer}</td>
+                    <td className="px-5 py-3.5 text-[#6d7a6f]">{o.phone}</td>
+                    <td className="px-5 py-3.5 text-[#073b4c]">{o.items} {o.items === 1 ? "item" : "items"}</td>
+                    <td className="px-5 py-3.5 font-['Manrope',sans-serif] font-bold text-[#073b4c]">₹{o.amount.toLocaleString()}</td>
+                    <td className="px-5 py-3.5"><span className="text-xs bg-[#f0f4f0] text-[#6d7a6f] px-2 py-0.5 rounded font-medium">{o.payment}</span></td>
+                    <td className="px-5 py-3.5"><span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ color: st.color, backgroundColor: st.bg }}>{o.status}</span></td>
+                    <td className="px-5 py-3.5 text-[#9aa89b] text-xs">{o.date}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
         {orders.length === 0 && <div className="py-16 text-center text-[#9aa89b] text-sm">No orders match this filter.</div>}
       </div>
     </div>
@@ -1054,7 +1055,7 @@ function RevenueTab() {
   return (
     <div className="flex flex-col gap-6">
       {/* Top row: live clock + today stats */}
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {/* Live clock */}
         <div className="bg-[#073b4c] rounded-2xl p-6 flex flex-col justify-between col-span-1">
           <div>
@@ -1100,9 +1101,9 @@ function RevenueTab() {
         <div className="bg-white rounded-2xl border border-[#e4ede2] p-6">
           <p className="text-[#9aa89b] text-xs font-semibold uppercase tracking-wider mb-4">Today's Payment Split</p>
           {[
-            { label: "UPI",  amount: today.upi,  color: "#006a39", pct: Math.round((today.upi  / today.revenue) * 100) },
+            { label: "UPI", amount: today.upi, color: "#006a39", pct: Math.round((today.upi / today.revenue) * 100) },
             { label: "Card", amount: today.card, color: "#0369a1", pct: Math.round((today.card / today.revenue) * 100) },
-            { label: "COD",  amount: today.cod,  color: "#c2410c", pct: Math.round((today.cod  / today.revenue) * 100) },
+            { label: "COD", amount: today.cod, color: "#c2410c", pct: Math.round((today.cod / today.revenue) * 100) },
           ].map((m) => (
             <div key={m.label} className="mb-3 last:mb-0">
               <div className="flex items-center justify-between mb-1">
@@ -1118,11 +1119,11 @@ function RevenueTab() {
       </div>
 
       {/* Weekly summary stats */}
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {[
-          { label: "7-Day Revenue",  value: `₹${weekTotal.toLocaleString()}`,  sub: "This week",       color: "#073b4c" },
-          { label: "7-Day Orders",   value: weekOrders,                        sub: "Transactions",    color: "#006a39" },
-          { label: "Daily Average",  value: `₹${avgDaily.toLocaleString()}`,   sub: "Per day",         color: "#0369a1" },
+          { label: "7-Day Revenue", value: `₹${weekTotal.toLocaleString()}`, sub: "This week", color: "#073b4c" },
+          { label: "7-Day Orders", value: weekOrders, sub: "Transactions", color: "#006a39" },
+          { label: "Daily Average", value: `₹${avgDaily.toLocaleString()}`, sub: "Per day", color: "#0369a1" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-[#e4ede2] p-5 flex items-center gap-4">
             <div className="flex-1">
@@ -1165,7 +1166,7 @@ function RevenueTab() {
 
         {/* Table */}
         <div className="overflow-x-auto mt-4 border-t border-[#f0f4f0] pt-4">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm" style={{ minWidth: "640px" }}>
             <thead>
               <tr className="border-b border-[#f0f4f0]">
                 {["Date", "Orders", "Revenue", "UPI", "Card", "COD", "Avg Order"].map((h) => (
@@ -1217,9 +1218,9 @@ function SettingsTab({ settings, setSettings, categories, addCategory }: {
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
       {/* Store Info */}
-      <div className="bg-white rounded-2xl border border-[#e4ede2] p-7">
+      <div className="bg-white rounded-2xl border border-[#e4ede2] p-5 sm:p-7">
         <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base mb-5">Store Information</h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[{ label: "Store Name", key: "storeName" }, { label: "Contact Number", key: "phone" }, { label: "Email Address", key: "email" }].map((f) => (
             <div key={f.key}>
               <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">{f.label}</label>
@@ -1227,7 +1228,7 @@ function SettingsTab({ settings, setSettings, categories, addCategory }: {
                 onChange={(e) => setSettings((p) => ({ ...p, [f.key]: e.target.value }))} className={INPUT_CLS} />
             </div>
           ))}
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Business Address</label>
             <textarea value={settings.address} onChange={(e) => setSettings((p) => ({ ...p, address: e.target.value }))}
               rows={2} className={`${INPUT_CLS} resize-none`} />
@@ -1236,9 +1237,9 @@ function SettingsTab({ settings, setSettings, categories, addCategory }: {
       </div>
 
       {/* Product Config */}
-      <div className="bg-white rounded-2xl border border-[#e4ede2] p-7">
+      <div className="bg-white rounded-2xl border border-[#e4ede2] p-5 sm:p-7">
         <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base mb-5">Product Configuration</h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[{ label: "Low Stock Threshold (units)", key: "lowThreshold" }, { label: "Default Discount (%)", key: "defaultDisc" }].map((f) => (
             <div key={f.key}>
               <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">{f.label}</label>
@@ -1250,7 +1251,7 @@ function SettingsTab({ settings, setSettings, categories, addCategory }: {
       </div>
 
       {/* Category Management */}
-      <div className="bg-white rounded-2xl border border-[#e4ede2] p-7">
+      <div className="bg-white rounded-2xl border border-[#e4ede2] p-5 sm:p-7">
         <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base mb-4">Category Management</h3>
         <div className="flex flex-wrap gap-2 mb-4">
           {categories.map((c) => (
@@ -1271,13 +1272,13 @@ function SettingsTab({ settings, setSettings, categories, addCategory }: {
       </div>
 
       {/* Notifications */}
-      <div className="bg-white rounded-2xl border border-[#e4ede2] p-7">
+      <div className="bg-white rounded-2xl border border-[#e4ede2] p-5 sm:p-7">
         <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base mb-5">Notifications</h3>
         <div className="flex flex-col gap-4">
           {[{ label: "Email alerts for low stock", key: "emailAlerts" }, { label: "SMS alerts for new orders", key: "smsAlerts" }, { label: "Auto-reorder when stock is critical", key: "autoReorder" }].map((f) => (
-            <label key={f.key} className="flex items-center justify-between cursor-pointer">
+            <label key={f.key} className="flex items-center justify-between gap-4 cursor-pointer">
               <span className="text-[#073b4c] text-sm font-medium">{f.label}</span>
-              <div className="w-11 h-6 rounded-full relative transition-colors duration-200 cursor-pointer"
+              <div className="w-11 h-6 rounded-full relative transition-colors duration-200 cursor-pointer shrink-0"
                 style={{ backgroundColor: (settings as Record<string, unknown>)[f.key] ? "#073b4c" : "#d1d5db" }}
                 onClick={() => setSettings((p) => ({ ...p, [f.key]: !(p as Record<string, unknown>)[f.key] }))}>
                 <div className="absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all duration-200"
@@ -1288,7 +1289,7 @@ function SettingsTab({ settings, setSettings, categories, addCategory }: {
         </div>
       </div>
 
-      <button className="self-start bg-[#073b4c] text-white font-bold text-sm px-7 py-3 rounded-xl hover:opacity-90 transition-opacity">
+      <button className="w-full sm:w-auto self-start bg-[#073b4c] text-white font-bold text-sm px-7 py-3 rounded-xl hover:opacity-90 transition-opacity">
         Save Changes
       </button>
     </div>
