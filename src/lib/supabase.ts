@@ -1,13 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const DEFAULT_SUPABASE_URL = "https://httevxkzcudyugqbpptd.supabase.co";
+const DEFAULT_SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0dGV2eGt6Y3VkeXVncWJwcHRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MDgwNDAsImV4cCI6MjEwMzQ4NDA0MH0.K8Zcrf_zk2ibFjNekPinv-UpfOVfofjO4n7qxXJi0KY";
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in your .env.local file."
-  );
-}
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string) || DEFAULT_SUPABASE_URL;
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || DEFAULT_SUPABASE_ANON_KEY;
 
 /**
  * Singleton Supabase browser client.
