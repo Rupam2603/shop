@@ -136,34 +136,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.user) {
-        // Enforce strict role match with the selected login tab
         const profile = await fetchProfile(data.user);
         const userRole: UserRole =
           profile?.role ||
           (data.user.user_metadata?.role as UserRole) ||
           "customer";
 
-        if (expectedRole && userRole !== expectedRole) {
+        // Admin protection: only verified admins can access admin dashboard
+        if (expectedRole === "admin" && userRole !== "admin") {
           await supabase.auth.signOut();
           setAppUser(null);
           setLoading(false);
-
-          if (expectedRole === "admin") {
-            return { error: "Access denied. This account does not have Admin privileges." };
-          } else if (expectedRole === "retailer") {
-            return {
-              error: `This account is registered as a ${userRole === "admin" ? "Admin" : "Customer"}. Please switch to the ${userRole === "admin" ? "Admin" : "Customer"} tab to sign in.`,
-            };
-          } else if (expectedRole === "customer") {
-            return {
-              error: `This account is registered as a ${userRole === "admin" ? "Admin" : "Retailer"}. Please switch to the ${userRole === "admin" ? "Admin" : "Retailer"} tab to sign in.`,
-            };
-          }
+          return { error: "Access denied. This account does not have Admin privileges." };
         }
 
         await hydrateUser(data.user);
       }
 
+      setLoading(false);
       return { error: null };
     },
     [fetchProfile, hydrateUser]
@@ -174,19 +164,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (opts: SignUpOptions): Promise<{ error: string | null; emailConfirmationRequired: boolean }> => {
       setLoading(true);
 
-      // Security: block admin role — this would be ignored anyway by the
-      // trigger (which always sets 'customer'), but we enforce it here too.
       const safeRole: "customer" | "retailer" = opts.role === "retailer" ? "retailer" : "customer";
 
       const { data, error } = await supabase.auth.signUp({
-        email: opts.email,
+        email: opts.email.trim(),
         password: opts.password,
         options: {
           data: {
-            full_name: opts.fullName,
-            role: safeRole,      // stored in raw_user_meta_data
-            phone: opts.phone ?? null,
-            shop_name: opts.shopName ?? null,
+            full_name: opts.fullName.trim(),
+            role: safeRole,
+            phone: opts.phone?.trim() || null,
+            shop_name: opts.shopName?.trim() || null,
           },
         },
       });
@@ -196,34 +184,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: friendlyAuthError(error), emailConfirmationRequired: false };
       }
 
-      // If email confirmation is required, the session will be null
-      const emailConfirmationRequired = !data.session;
-
-      // Update the profile with the role/shop after trigger creates it
-      // We do this server-side via the trigger with metadata, but also
-      // try to patch the role if email confirmation isn't needed.
-      if (data.session && data.user) {
-        // Give trigger ~500ms to run, then patch role/shop_name
-        setTimeout(async () => {
-          await supabase
-            .from("profiles")
-            .update({
-              full_name: opts.fullName,
-              phone: opts.phone ?? null,
-              shop_name: opts.shopName ?? null,
-            })
-            .eq("id", data.user!.id);
-        }, 800);
+      if (data.user) {
+        await hydrateUser(data.user);
       }
 
-      if (emailConfirmationRequired) {
-        setLoading(false);
-      }
-      // else onAuthStateChange fires and hydrateUser handles state
-
-      return { error: null, emailConfirmationRequired };
+      setLoading(false);
+      return { error: null, emailConfirmationRequired: false };
     },
-    []
+    [hydrateUser]
   );
 
   // ── Reset Password ──────────────────────────────────────────────────────────
