@@ -160,27 +160,27 @@ export default function ProfilePage({
         <div className="absolute top-6 -left-28 w-56 h-56 rounded-full opacity-[0.04]" style={{ backgroundColor: "white" }} />
         <div className="absolute -bottom-10 right-40 w-40 h-40 rounded-full opacity-[0.05]" style={{ backgroundColor: "white" }} />
 
-        <div className="max-w-[1280px] mx-auto px-10 py-8 relative z-10">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 relative z-10">
           <button
             onClick={() => onNavigate("home")}
-            className="flex items-center gap-2 text-white/55 hover:text-white text-sm mb-6 transition-colors"
+            className="flex items-center gap-2 text-white/65 hover:text-white text-xs sm:text-sm mb-4 sm:mb-6 transition-colors"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Back to Home
           </button>
 
-          <div className="flex items-end gap-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 sm:gap-6">
             {/* Avatar */}
             <div className="relative shrink-0">
               <div
                 onClick={() => imageRef.current?.click()}
-                className="w-24 h-24 rounded-2xl border-4 border-white/20 overflow-hidden cursor-pointer group relative"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-white/20 overflow-hidden cursor-pointer group relative shadow-md"
                 style={{ backgroundColor: accent }}
               >
                 {user.profileImage ? (
                   <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-white text-3xl">
+                  <div className="w-full h-full flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-white text-2xl sm:text-3xl">
                     {user.name[0].toUpperCase()}
                   </div>
                 )}
@@ -193,34 +193,34 @@ export default function ProfilePage({
 
             {/* Name + meta */}
             <div className="flex-1 pb-1">
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="font-['Manrope',sans-serif] font-extrabold text-white text-2xl leading-none">{user.name}</h1>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full capitalize" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}>
+              <div className="flex items-center gap-2.5 sm:gap-3 mb-1 flex-wrap">
+                <h1 className="font-['Manrope',sans-serif] font-extrabold text-white text-xl sm:text-2xl leading-none">{user.name}</h1>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full capitalize" style={{ backgroundColor: "rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.95)" }}>
                   {user.role}
                 </span>
               </div>
-              <p className="text-white/55 text-sm mt-1">{user.email}</p>
-              {user.phone && <p className="text-white/40 text-xs mt-0.5">{user.phone}</p>}
+              <p className="text-white/70 text-xs sm:text-sm mt-0.5">{user.email}</p>
+              {user.phone && <p className="text-white/50 text-xs mt-0.5">{user.phone}</p>}
               {user.shopName && (
-                <p className="text-white/70 text-sm mt-1 font-medium flex items-center gap-1.5">
-                  <svg width="13" height="12" viewBox="0 0 13 12" fill="white" opacity="0.6"><path d="M1 6H2.5V11H10.5V6H12L11 2H2L1 6ZM4 6V10H2.5V6H4ZM9 6V10H7.5V7H5.5V10H4V6H9Z"/></svg>
+                <p className="text-white/80 text-xs sm:text-sm mt-1 font-medium flex items-center gap-1.5">
+                  <svg width="13" height="12" viewBox="0 0 13 12" fill="white" opacity="0.8"><path d="M1 6H2.5V11H10.5V6H12L11 2H2L1 6ZM4 6V10H2.5V6H4ZM9 6V10H7.5V7H5.5V10H4V6H9Z"/></svg>
                   {user.shopName}
                 </p>
               )}
-              {user.joinedDate && <p className="text-white/35 text-xs mt-1">Member since {user.joinedDate}</p>}
+              {user.joinedDate && <p className="text-white/40 text-[11px] mt-1">Member since {user.joinedDate}</p>}
             </div>
 
             {/* Quick stats */}
-            <div className="hidden md:flex items-center gap-3 pb-1">
+            <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3 pb-1 w-full sm:w-auto">
               {[
                 { label: "Total Orders",   value: orders.length },
                 { label: "Delivered",      value: orders.filter((o) => o.status === "Delivered").length },
                 { label: "Addresses",      value: addresses.length },
                 { label: "Total Spent",    value: "₹" + totalSpent.toLocaleString() },
               ].map((s) => (
-                <div key={s.label} className="text-center px-4 py-2.5 rounded-xl min-w-[80px]" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
-                  <p className="font-['Manrope',sans-serif] font-extrabold text-white text-xl leading-none">{s.value}</p>
-                  <p className="text-white/45 text-[10px] mt-1">{s.label}</p>
+                <div key={s.label} className="text-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl min-w-[70px]" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
+                  <p className="font-['Manrope',sans-serif] font-extrabold text-white text-base sm:text-xl leading-none">{s.value}</p>
+                  <p className="text-white/50 text-[10px] mt-1">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -229,24 +229,24 @@ export default function ProfilePage({
       </div>
 
       {/* ── Body ── */}
-      <div className="max-w-[1280px] mx-auto px-10 py-8 flex gap-7">
-        {/* Sidebar */}
-        <aside className="w-56 shrink-0">
-          <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden sticky top-24">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 flex flex-col md:flex-row gap-5 sm:gap-7">
+        {/* Sidebar Tabs */}
+        <aside className="w-full md:w-56 shrink-0">
+          <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden flex md:flex-col overflow-x-auto md:overflow-visible sticky top-20">
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setSection(item.id)}
-                className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold transition-all border-b border-[#f0f4f0] last:border-0"
+                className="flex items-center gap-2 sm:gap-3 px-3.5 sm:px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold transition-all border-b md:border-b border-r md:border-r-0 border-[#f0f4f0] last:border-0 shrink-0 md:w-full"
                 style={section === item.id
                   ? { color: accent, backgroundColor: accent + "0f" }
                   : { color: "#6d7a6f" }
                 }
               >
                 <span style={{ color: section === item.id ? accent : "#c0ccc0" }}>{item.icon}</span>
-                <span className="flex-1 text-left">{item.label}</span>
+                <span className="text-left whitespace-nowrap">{item.label}</span>
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: section === item.id ? accent + "20" : "#f0f4f0", color: section === item.id ? accent : "#9aa89b" }}>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto" style={{ backgroundColor: section === item.id ? accent + "20" : "#f0f4f0", color: section === item.id ? accent : "#9aa89b" }}>
                     {item.badge}
                   </span>
                 )}
@@ -260,11 +260,11 @@ export default function ProfilePage({
 
           {/* ════ MY PROFILE ════ */}
           {section === "profile" && (
-            <div className="bg-white rounded-2xl border border-[#e4ede2] p-7">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl">My Profile</h2>
+            <div className="bg-white rounded-2xl border border-[#e4ede2] p-5 sm:p-7">
+              <div className="flex items-center justify-between mb-5 sm:mb-6">
+                <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg sm:text-xl">My Profile</h2>
                 {saved && (
-                  <span className="flex items-center gap-1.5 text-[#047857] text-sm font-semibold bg-[#d1fae5] px-3 py-1.5 rounded-full animate-pulse">
+                  <span className="flex items-center gap-1.5 text-[#047857] text-xs sm:text-sm font-semibold bg-[#d1fae5] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full animate-pulse">
                     <svg width="12" height="10" viewBox="0 0 12 10" fill="none"><path d="M1 5L4.5 8.5L11 1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
                     Saved!
                   </span>
@@ -272,16 +272,16 @@ export default function ProfilePage({
               </div>
 
               {/* Avatar row */}
-              <div className="flex items-center gap-5 pb-7 mb-7 border-b border-[#f0f4f0]">
+              <div className="flex items-center gap-4 sm:gap-5 pb-5 sm:pb-7 mb-5 sm:mb-7 border-b border-[#f0f4f0]">
                 <div
                   onClick={() => imageRef.current?.click()}
-                  className="w-20 h-20 rounded-2xl overflow-hidden cursor-pointer group relative shrink-0"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden cursor-pointer group relative shrink-0"
                   style={{ backgroundColor: accent }}
                 >
                   {user.profileImage ? (
                     <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-white text-2xl">
+                    <div className="w-full h-full flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-white text-xl sm:text-2xl">
                       {user.name[0].toUpperCase()}
                     </div>
                   )}
@@ -290,63 +290,58 @@ export default function ProfilePage({
                   </div>
                 </div>
                 <div>
-                  <p className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg leading-none">{user.name}</p>
-                  <p className="text-[#9aa89b] text-sm mt-1">{user.email}</p>
-                  <button onClick={() => imageRef.current?.click()} className="mt-2 text-xs font-semibold hover:underline transition-colors" style={{ color: accent }}>
+                  <p className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg leading-none">{user.name}</p>
+                  <p className="text-[#9aa89b] text-xs sm:text-sm mt-1">{user.email}</p>
+                  <button onClick={() => imageRef.current?.click()} className="mt-1.5 text-xs font-semibold hover:underline transition-colors" style={{ color: accent }}>
                     Change profile photo
                   </button>
                 </div>
               </div>
 
               {/* Form */}
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Full Name</label>
                   <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className={INPUT_CLS}
                     onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
                 </div>
                 <div>
+                  <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Email Address</label>
+                  <input type="email" value={user.email} disabled className={`${INPUT_CLS} opacity-60 cursor-not-allowed`} />
+                </div>
+                <div>
                   <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Phone Number</label>
                   <input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="+91 XXXXX XXXXX" className={INPUT_CLS}
                     onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
                 </div>
-                <div className="col-span-2">
-                  <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Email Address</label>
-                  <input type="email" value={user.email} disabled className={`${INPUT_CLS} cursor-not-allowed text-[#9aa89b]`} />
-                  <p className="text-[10px] text-[#c0ccc0] mt-1">Email cannot be changed. Contact support if needed.</p>
-                </div>
                 {user.role === "retailer" && (
-                  <div className="col-span-2">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px]">Shop / Business Name</label>
-                      <span className="text-[9px] font-bold bg-[#e8f5ee] text-[#006a39] px-1.5 py-0.5 rounded uppercase">Retailers Only</span>
-                    </div>
-                    <input type="text" value={editShop} onChange={(e) => setEditShop(e.target.value)} placeholder="e.g. Sharma Medical Store" className={INPUT_CLS}
+                  <div>
+                    <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Shop / Business Name</label>
+                    <input type="text" value={editShop} onChange={(e) => setEditShop(e.target.value)} className={INPUT_CLS}
                       onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
-                    <p className="text-[10px] text-[#9aa89b] mt-1">Shown on invoices and B2B order documents.</p>
                   </div>
                 )}
               </div>
 
-              <button onClick={handleSaveProfile} className="mt-6 px-7 py-2.5 rounded-xl text-white text-sm font-bold hover:opacity-90 transition-opacity" style={{ backgroundColor: accent }}>
-                Save Changes
-              </button>
+              <div className="mt-6 pt-5 border-t border-[#f0f4f0] flex justify-end">
+                <button onClick={handleSaveProfile} className="px-6 py-2.5 rounded-xl text-white text-xs sm:text-sm font-bold hover:opacity-90 transition-opacity" style={{ backgroundColor: accent }}>
+                  Save Changes
+                </button>
+              </div>
             </div>
           )}
 
           {/* ════ ADDRESSES ════ */}
           {section === "addresses" && (
-            <div className="flex flex-col gap-5">
-              <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-5 sm:mb-6">
                 <div>
-                  <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl">Saved Addresses</h2>
-                  <p className="text-[#9aa89b] text-sm mt-0.5">
-                    {addresses.length > 0 ? "Your default address auto-fills at checkout" : "Add addresses for faster checkout"}
-                  </p>
+                  <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg sm:text-xl">Saved Addresses</h2>
+                  <p className="text-[#9aa89b] text-xs sm:text-sm mt-0.5">Manage your delivery and billing addresses</p>
                 </div>
                 <button
                   onClick={openAddAddr}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold hover:opacity-90 transition-opacity"
+                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-white text-xs sm:text-sm font-bold hover:opacity-90 transition-opacity"
                   style={{ backgroundColor: accent }}
                 >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1V11M1 6H11" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
@@ -355,27 +350,27 @@ export default function ProfilePage({
               </div>
 
               {addresses.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-[#e4ede2] py-20 flex flex-col items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: accent + "15" }}>
+                <div className="bg-white rounded-2xl border border-[#e4ede2] py-16 sm:py-20 flex flex-col items-center gap-4 px-4 text-center">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: accent + "15" }}>
                     <svg width="28" height="34" viewBox="0 0 28 34" fill="none"><path d="M14 1C7.37 1 2 6.37 2 13C2 22.25 14 33 14 33C14 33 26 22.25 26 13C26 6.37 20.63 1 14 1ZM14 17.5C11.51 17.5 9.5 15.49 9.5 13C9.5 10.51 11.51 8.5 14 8.5C16.49 8.5 18.5 10.51 18.5 13C18.5 15.49 16.49 17.5 14 17.5Z" fill={accent} fillOpacity="0.35"/></svg>
                   </div>
-                  <div className="text-center">
-                    <p className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg">No saved addresses yet</p>
-                    <p className="text-[#9aa89b] text-sm mt-1">Add a delivery address for faster checkout</p>
+                  <div>
+                    <p className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg">No saved addresses yet</p>
+                    <p className="text-[#9aa89b] text-xs sm:text-sm mt-1">Add a delivery address for faster checkout</p>
                   </div>
-                  <button onClick={openAddAddr} className="px-7 py-2.5 rounded-xl text-white text-sm font-bold hover:opacity-90 transition-opacity" style={{ backgroundColor: accent }}>
+                  <button onClick={openAddAddr} className="px-6 py-2.5 rounded-xl text-white text-xs sm:text-sm font-bold hover:opacity-90 transition-opacity" style={{ backgroundColor: accent }}>
                     Add Your First Address
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {addresses.map((addr, idx) => {
                     const lc = ADDR_LABEL_COLORS[addr.label] ?? ADDR_LABEL_COLORS["Other"];
                     return (
-                      <div key={addr.id} className="bg-white rounded-2xl border-2 p-5 transition-all" style={{ borderColor: addr.isDefault ? accent : "#e4ede2" }}>
+                      <div key={addr.id} className="bg-white rounded-2xl border-2 p-4 sm:p-5 transition-all" style={{ borderColor: addr.isDefault ? accent : "#e4ede2" }}>
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ color: lc.color, backgroundColor: lc.bg }}>{addr.label}</span>
+                            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full" style={{ color: lc.color, backgroundColor: lc.bg }}>{addr.label}</span>
                             {addr.isDefault && (
                               <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#d1fae5] text-[#047857] uppercase tracking-wide">Default</span>
                             )}
@@ -390,8 +385,8 @@ export default function ProfilePage({
                           </div>
                         </div>
                         <p className="font-semibold text-[#073b4c] text-sm">{addr.name}</p>
-                        <p className="text-[#6d7a6f] text-sm mt-0.5 leading-snug">{addr.line1}{addr.line2 ? `, ${addr.line2}` : ""}</p>
-                        <p className="text-[#6d7a6f] text-sm leading-snug">{addr.city}, {addr.state} – {addr.pincode}</p>
+                        <p className="text-[#6d7a6f] text-xs sm:text-sm mt-0.5 leading-snug">{addr.line1}{addr.line2 ? `, ${addr.line2}` : ""}</p>
+                        <p className="text-[#6d7a6f] text-xs sm:text-sm leading-snug">{addr.city}, {addr.state} – {addr.pincode}</p>
                         {addr.phone && <p className="text-[#9aa89b] text-xs mt-1">{addr.phone}</p>}
                         {addr.isDefault ? (
                           <p className="mt-3 text-xs text-[#047857] font-medium flex items-center gap-1.5">

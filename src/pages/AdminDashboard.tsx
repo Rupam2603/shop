@@ -504,19 +504,42 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     setStockEdits((prev) => { const n = { ...prev }; delete n[id]; return n; });
   };
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const SIDEBAR_BG = "#073b4c";
 
   return (
     <div className="min-h-screen flex bg-[#f0f4f0]" style={{ fontFamily: "'Hanken Grotesk', sans-serif" }}>
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-[232px] shrink-0 flex flex-col" style={{ backgroundColor: SIDEBAR_BG, minHeight: "100vh" }}>
-        <div className="px-5 py-5 border-b border-white/10">
-          <p className="font-['Manrope',sans-serif] font-extrabold text-white text-xl tracking-tight">SubhOne</p>
-          <span className="inline-block bg-white/15 text-white/80 text-[10px] font-bold px-2 py-0.5 rounded mt-1.5 tracking-wider uppercase">Admin Panel</span>
+      <aside
+        className={`w-[240px] shrink-0 flex flex-col fixed inset-y-0 left-0 z-50 md:static transition-transform duration-300 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+        style={{ backgroundColor: SIDEBAR_BG, minHeight: "100vh" }}
+      >
+        <div className="px-5 py-5 border-b border-white/10 flex items-center justify-between">
+          <div>
+            <p className="font-['Manrope',sans-serif] font-extrabold text-white text-xl tracking-tight">SubhOne</p>
+            <span className="inline-block bg-white/15 text-white/80 text-[10px] font-bold px-2 py-0.5 rounded mt-1 tracking-wider uppercase">Admin Panel</span>
+          </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="md:hidden text-white/70 hover:text-white p-1"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
         </div>
         <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto">
           {TAB_ITEMS.map((t) => (
-            <button key={t.id} onClick={() => setActiveTab(t.id)}
+            <button key={t.id} onClick={() => { setActiveTab(t.id); setSidebarOpen(false); }}
               className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all w-full text-left"
               style={activeTab === t.id ? { backgroundColor: "white", color: SIDEBAR_BG } : { color: "rgba(255,255,255,0.65)" }}>
               <span style={{ color: activeTab === t.id ? SIDEBAR_BG : "rgba(255,255,255,0.5)" }}>{t.icon}</span>
@@ -548,25 +571,34 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       </aside>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen min-w-0">
         {/* Top bar */}
-        <header className="bg-white border-b border-[#e4ede2] px-8 h-16 flex items-center justify-between shrink-0">
-          <div>
-            <h1 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl capitalize">{activeTab}</h1>
-            <p className="text-[#9aa89b] text-[11px] mt-0.5">SubhOne Admin › {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</p>
+        <header className="bg-white border-b border-[#e4ede2] px-4 sm:px-8 h-16 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden p-2 rounded-xl border border-[#d5dcd3] text-[#073b4c] hover:bg-[#f0f7ee]"
+              aria-label="Open navigation menu"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+            <div>
+              <h1 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg sm:text-xl capitalize">{activeTab}</h1>
+              <p className="text-[#9aa89b] text-[11px] hidden sm:block">SubhOne Admin › {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</p>
+            </div>
           </div>
           {activeTab === "products" && (
-            <button onClick={openAdd} className="flex items-center gap-2 bg-[#073b4c] text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
+            <button onClick={openAdd} className="flex items-center gap-1.5 sm:gap-2 bg-[#073b4c] text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl hover:opacity-90 transition-opacity">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1V13M1 7H13" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
               Add Product
             </button>
           )}
           {activeTab === "inventory" && (
-            <p className="text-sm text-[#9aa89b]">Last synced: <span className="text-[#073b4c] font-semibold">Aug 28, 2026 · 10:42 AM</span></p>
+            <p className="text-xs sm:text-sm text-[#9aa89b] hidden sm:block">Last synced: <span className="text-[#073b4c] font-semibold">Aug 28, 2026</span></p>
           )}
         </header>
 
-        <main className="flex-1 p-8 overflow-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
           {activeTab === "dashboard" && (
             <DashboardTab products={products} lowStockCount={lowStockCount} outOfStockCount={outOfStockCount} onNavigate={setActiveTab} />
           )}
@@ -608,14 +640,14 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       {deleteId !== null && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full p-8 text-center shadow-2xl">
-            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 6H21M8 6V4H16V6M19 6L18 20H6L5 6M10 10V16M14 10V16" stroke="#b91c1c" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <div className="w-14 h-14 rounded-full bg-[#fee2e2] flex items-center justify-center mx-auto mb-4 text-[#ef4444]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M19 7L18.133 19.142A2 2 0 0 1 16.138 21H7.862A2 2 0 0 1 5.867 19.142L5 7M10 11V17M14 11V17M15 7V4A1 1 0 0 0 14 3H10A1 1 0 0 0 9 4V7M4 7H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>
-            <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg">Delete Product?</h3>
-            <p className="text-[#6d7a6f] text-sm mt-2">This action cannot be undone.</p>
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl border-2 border-[#e4ede2] text-[#073b4c] text-sm font-bold">Keep</button>
-              <button onClick={() => deleteProduct(deleteId)} className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors">Delete</button>
+            <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg mb-1">Delete Product</h3>
+            <p className="text-[#9aa89b] text-sm mb-6">Are you sure you want to delete this product? This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl border border-[#e4ede2] text-[#6d7a6f] font-bold text-sm hover:bg-[#f8fafb] transition-colors">Cancel</button>
+              <button onClick={() => deleteProduct(deleteId)} className="flex-1 py-2.5 rounded-xl bg-[#ef4444] text-white font-bold text-sm hover:bg-[#dc2626] transition-colors">Delete</button>
             </div>
           </div>
         </div>
@@ -644,28 +676,28 @@ function DashboardTab({ products, lowStockCount, outOfStockCount, onNavigate }: 
   ];
 
   return (
-    <div className="flex flex-col gap-7">
-      <div className="grid grid-cols-4 gap-5">
+    <div className="flex flex-col gap-5 sm:gap-7">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         {stats.map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl border border-[#e4ede2] p-5 flex flex-col gap-3">
-            <p className="text-[#9aa89b] text-xs font-semibold">{s.label}</p>
-            <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-4xl leading-none">{s.value}</p>
-            <p className="text-[#9aa89b] text-xs">{s.unit}</p>
+          <div key={s.label} className="bg-white rounded-2xl border border-[#e4ede2] p-4 sm:p-5 flex flex-col gap-2 sm:gap-3">
+            <p className="text-[#9aa89b] text-[11px] sm:text-xs font-semibold">{s.label}</p>
+            <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-2xl sm:text-4xl leading-none">{s.value}</p>
+            <p className="text-[#9aa89b] text-[11px] sm:text-xs">{s.unit}</p>
           </div>
         ))}
       </div>
-      <div className="bg-[#073b4c] rounded-2xl p-6 flex items-center justify-between">
+      <div className="bg-[#073b4c] rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <p className="text-white/60 text-sm">Today's Revenue</p>
-          <p className="font-['Manrope',sans-serif] font-extrabold text-white text-4xl mt-1">₹14,283</p>
-          <p className="text-white/50 text-xs mt-1">+12.4% vs yesterday</p>
+          <p className="text-white/60 text-xs sm:text-sm">Today's Revenue</p>
+          <p className="font-['Manrope',sans-serif] font-extrabold text-white text-3xl sm:text-4xl mt-1">₹14,283</p>
+          <p className="text-white/50 text-xs mt-0.5">+12.4% vs yesterday</p>
         </div>
-        <div className="flex gap-3">
-          <button onClick={() => onNavigate("inventory")} className="bg-white/15 hover:bg-white/20 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors">Manage Stock</button>
-          <button onClick={() => onNavigate("orders")} className="bg-[#0f9d58] hover:bg-[#0b8a4d] text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors">View Orders</button>
+        <div className="flex gap-2 sm:gap-3">
+          <button onClick={() => onNavigate("inventory")} className="bg-white/15 hover:bg-white/20 text-white text-xs sm:text-sm font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-colors">Manage Stock</button>
+          <button onClick={() => onNavigate("orders")} className="bg-[#0f9d58] hover:bg-[#0b8a4d] text-white text-xs sm:text-sm font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-colors">View Orders</button>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         <div className="bg-white rounded-2xl border border-[#e4ede2] p-6">
           <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base mb-4">Recent Activity</h3>
           <div className="flex flex-col gap-3.5">

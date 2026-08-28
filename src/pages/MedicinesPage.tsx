@@ -197,30 +197,30 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
       {/* Retailer pricing banner */}
       {isRetailer && (
         <div className="bg-[#073b4c] text-white">
-          <div className="max-w-[1280px] mx-auto px-10 py-2.5 flex items-center gap-3">
-            <span className="bg-[#0369a1] text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide">Retailer</span>
-            <p className="text-sm font-medium">
-              Viewing <span className="font-bold text-[#7dd3fc]">retailer prices</span> — approx. 15% below customer price. Manage pricing in Admin Dashboard.
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-2 sm:py-2.5 flex items-center gap-2.5 sm:gap-3">
+            <span className="bg-[#0369a1] text-white text-[10px] font-bold px-2 py-0.5 sm:py-1 rounded uppercase tracking-wide shrink-0">Retailer</span>
+            <p className="text-xs sm:text-sm font-medium">
+              Viewing <span className="font-bold text-[#7dd3fc]">retailer prices</span> — approx. 15% below customer price.
             </p>
           </div>
         </div>
       )}
       {/* Page header */}
       <div className="bg-white border-b border-[#e4ede2]">
-        <div className="max-w-[1280px] mx-auto px-10 py-5 flex items-end justify-between gap-4">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-3xl">OTC & Medical Supplies</h1>
-            <p className="text-[#6d7a6f] text-sm mt-1">
+            <h1 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-2xl sm:text-3xl">OTC & Medical Supplies</h1>
+            <p className="text-[#6d7a6f] text-xs sm:text-sm mt-0.5 sm:mt-1">
               {ALL_PRODUCTS.length} products · {CATEGORY_LIST.length - 1} categories
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="relative flex items-center gap-2 px-4 py-2 rounded-xl border border-[#d5dcd3] bg-white text-[#073b4c] text-sm font-semibold hover:border-[#006a39] transition-colors"
+              className="relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl border border-[#d5dcd3] bg-white text-[#073b4c] text-xs sm:text-sm font-semibold hover:border-[#006a39] transition-colors"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4H14M4 8H12M6 12H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
-              Filters
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2 4H14M4 8H12M6 12H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+              {showFilters ? "Hide Filters" : "Show Filters"}
               {activeFilterCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 bg-[#006a39] text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                   {activeFilterCount}
@@ -230,7 +230,7 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
             <select
               value={sortBy}
               onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
-              className="px-4 py-2 rounded-xl border border-[#d5dcd3] bg-white text-[#073b4c] text-sm font-semibold focus:outline-none focus:border-[#006a39] cursor-pointer"
+              className="px-3 sm:px-4 py-2 rounded-xl border border-[#d5dcd3] bg-white text-[#073b4c] text-xs sm:text-sm font-semibold focus:outline-none focus:border-[#006a39] cursor-pointer"
             >
               <option value="featured">Featured</option>
               <option value="price-asc">Price: Low to High</option>
@@ -241,7 +241,7 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
         </div>
 
         {/* Category tabs */}
-        <div className="max-w-[1280px] mx-auto px-10">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10">
           <div className="flex gap-2 overflow-x-auto pb-3 pt-1" style={{ scrollbarWidth: "none" }}>
             {CATEGORY_LIST.map((cat) => {
               const count = cat === "All" ? ALL_PRODUCTS.length : ALL_PRODUCTS.filter((p) => p.cat === cat).length;
@@ -251,7 +251,7 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
                 <button
                   key={cat}
                   onClick={() => { setSelectedCategory(cat); setPage(1); }}
-                  className="shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border"
+                  className="shrink-0 px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border"
                   style={isActive
                     ? { backgroundColor: accent, color: "#fff", borderColor: accent }
                     : { backgroundColor: "#f0f7ee", color: "#3e4a3f", borderColor: "transparent" }
@@ -266,10 +266,10 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
         </div>
       </div>
 
-      <div className="max-w-[1280px] mx-auto px-10 py-6 flex gap-6">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-6 flex flex-col md:flex-row gap-5 sm:gap-6">
         {/* Sidebar */}
         {showFilters && (
-          <aside className="w-52 shrink-0">
+          <aside className="w-full md:w-52 shrink-0">
             <div className="bg-white rounded-2xl border border-[#e4ede2] p-4 sticky top-20">
               <div className="flex items-center justify-between pb-3 border-b border-[#e4ede2] mb-1">
                 <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c]">Filters</span>
@@ -302,8 +302,8 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
         )}
 
         {/* Products grid */}
-        <div className="flex-1 flex flex-col gap-4">
-          <p className="text-[#6d7a6f] text-sm">
+        <div className="flex-1 flex flex-col gap-4 min-w-0">
+          <p className="text-[#6d7a6f] text-xs sm:text-sm">
             Showing <span className="font-semibold text-[#073b4c]">{paginated.length}</span> of{" "}
             <span className="font-semibold text-[#073b4c]">{filtered.length}</span> products
             {selectedCategory !== "All" && (
@@ -316,7 +316,7 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
           </p>
 
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
               <p className="font-bold text-[#073b4c] text-lg">No products found</p>
               <button onClick={() => { setSelectedBrands([]); setSelectedPriceIdx(null); }} className="bg-[#006a39] text-white text-sm font-bold px-6 py-2.5 rounded-lg hover:bg-[#005a30] transition-colors">
                 Clear Filters
@@ -324,12 +324,12 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
             </div>
           ) : (
             <>
-              <div className={`grid gap-4 ${showFilters ? "grid-cols-4" : "grid-cols-5"}`}>
+              <div className={`grid gap-3 sm:gap-4 ${showFilters ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"}`}>
                 {paginated.map((p) => {
                   const accentColor = CAT_COLORS[p.cat] || "#006a39";
                   return (
                     <div key={p.id} onClick={() => setSelectedProduct(p)} className="bg-white rounded-2xl border border-[#e4ede2] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer">
-                      <div className="relative bg-[#f8fafb] h-36 overflow-hidden">
+                      <div className="relative bg-[#f8fafb] h-32 sm:h-36 overflow-hidden">
                         {p.disc && (
                           <span className="absolute top-2 left-2 z-10 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase" style={{ backgroundColor: accentColor }}>
                             {p.disc} OFF

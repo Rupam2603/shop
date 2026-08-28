@@ -246,15 +246,15 @@ export default function LoginPage({ onLogin }: Props) {
       </div>
 
       {/* Form Panel */}
-      <div className="flex-1 flex items-center justify-center bg-white px-8 py-12 overflow-y-auto">
-        <div className="w-full max-w-[440px] flex flex-col gap-6">
-          <div className="lg:hidden font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-3xl">SubhOne</div>
+      <div className="flex-1 flex items-center justify-center bg-white px-4 sm:px-8 py-8 sm:py-12 overflow-y-auto min-h-screen">
+        <div className="w-full max-w-[440px] flex flex-col gap-5 sm:gap-6">
+          <div className="lg:hidden font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-2xl sm:text-3xl">SubhOne</div>
 
           {/* Mode toggle */}
           <div className="flex bg-[#f8fafb] border border-[#e4ede2] rounded-xl p-1">
             {(["login", "signup"] as const).map((m) => (
               <button key={m} onClick={() => switchMode(m)}
-                className="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
+                className="flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all"
                 style={mode === m ? { backgroundColor: "white", color: "#073b4c", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" } : { color: "#9aa89b" }}>
                 {m === "login" ? "Sign In" : "Sign Up"}
               </button>
@@ -263,10 +263,10 @@ export default function LoginPage({ onLogin }: Props) {
 
           {/* Header */}
           <div>
-            <h1 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-[26px] leading-tight">
+            <h1 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-2xl sm:text-[26px] leading-tight">
               {mode === "login" ? "Welcome back" : "Create your account"}
             </h1>
-            <p className="text-[#6d7a6f] text-sm mt-1.5">
+            <p className="text-[#6d7a6f] text-xs sm:text-sm mt-1">
               {mode === "login"
                 ? "Sign in to your SubhOne account to continue"
                 : "Join SubhOne as a retailer or customer — free to start"}
@@ -276,24 +276,24 @@ export default function LoginPage({ onLogin }: Props) {
           {/* Role selector */}
           <div className="flex flex-col gap-2">
             <p className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[1px]">Select your role</p>
-            <div className={`grid gap-2.5 ${mode === "signup" ? "grid-cols-2" : "grid-cols-3"}`}>
+            <div className={`grid gap-2 sm:gap-2.5 ${mode === "signup" ? "grid-cols-2" : "grid-cols-3"}`}>
               {(mode === "signup" ? signupRoles : (["admin", "retailer", "customer"] as UserRole[])).map((role) => {
                 const r = ROLES[role];
                 const active = selectedRole === role;
                 return (
                   <button key={role} onClick={() => handleRoleSelect(role)}
-                    className="relative flex flex-col items-center gap-2 p-3.5 rounded-xl border-2 transition-all duration-200"
+                    className="relative flex flex-col items-center gap-1.5 sm:gap-2 p-2.5 sm:p-3.5 rounded-xl border-2 transition-all duration-200"
                     style={{ borderColor: active ? r.accent : "#e4ede2", backgroundColor: active ? r.lightBg : "white" }}>
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-colors"
                       style={{ backgroundColor: active ? r.accent : "#f0f4f0" }}>
                       {role === "admin"    && <ShieldIcon color={active ? "white" : r.accent} />}
                       {role === "retailer" && <StoreIcon color={active ? "white" : r.accent} />}
                       {role === "customer" && <PersonIcon color={active ? "white" : r.accent} />}
                     </div>
-                    <p className="font-bold text-[11px]" style={{ color: active ? r.accent : "#6d7a6f" }}>{r.label}</p>
-                    <p className="text-[9px] text-center leading-[12px]" style={{ color: active ? r.accent + "bb" : "#b0bcb2" }}>{r.desc}</p>
+                    <p className="font-bold text-[10px] sm:text-[11px]" style={{ color: active ? r.accent : "#6d7a6f" }}>{r.label}</p>
+                    <p className="text-[8px] sm:text-[9px] text-center leading-[11px] sm:leading-[12px] hidden sm:block" style={{ color: active ? r.accent + "bb" : "#b0bcb2" }}>{r.desc}</p>
                     {active && (
-                      <div className="absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: r.accent }}>
+                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: r.accent }}>
                         <svg width="7" height="7" viewBox="0 0 7 7" fill="none"><path d="M1 3.5L3 5.5L6 1.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
                     )}
@@ -308,7 +308,7 @@ export default function LoginPage({ onLogin }: Props) {
 
           {/* ── LOGIN FORM ── */}
           {mode === "login" && (
-            <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <form onSubmit={handleLogin} className="flex flex-col gap-3.5 sm:gap-4">
               <div>
                 <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Email Address</label>
                 <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }}
@@ -329,7 +329,7 @@ export default function LoginPage({ onLogin }: Props) {
               </div>
               {error && <ErrorBox msg={error} />}
               <button type="submit" disabled={loading}
-                className="w-full py-3.5 rounded-xl font-['Manrope',sans-serif] font-bold text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 mt-1"
+                className="w-full py-3 sm:py-3.5 rounded-xl font-['Manrope',sans-serif] font-bold text-sm sm:text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 mt-1"
                 style={{ backgroundColor: cfg.accent }}>
                 {loading ? "Signing in…" : `Sign In as ${cfg.label}`}
               </button>
@@ -338,9 +338,9 @@ export default function LoginPage({ onLogin }: Props) {
 
           {/* ── SIGNUP FORM ── */}
           {mode === "signup" && (
-            <form onSubmit={handleSignup} className="flex flex-col gap-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
+            <form onSubmit={handleSignup} className="flex flex-col gap-3.5 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
                   <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Full Name *</label>
                   <input type="text" value={signupName} onChange={(e) => { setSignupName(e.target.value); setError(""); }}
                     placeholder="Your full name" required className={FIELD_CLS}
@@ -359,7 +359,7 @@ export default function LoginPage({ onLogin }: Props) {
                     onFocus={(e) => (e.target.style.borderColor = cfg.accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
                 </div>
                 {selectedRole === "retailer" && (
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px]">Shop / Business Name *</label>
                       <span className="text-[9px] bg-[#e8f5ee] text-[#006a39] font-bold px-1.5 py-0.5 rounded uppercase">Required</span>
@@ -390,7 +390,7 @@ export default function LoginPage({ onLogin }: Props) {
               </div>
               {error && <ErrorBox msg={error} />}
               <button type="submit" disabled={loading}
-                className="w-full py-3.5 rounded-xl font-['Manrope',sans-serif] font-bold text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
+                className="w-full py-3 sm:py-3.5 rounded-xl font-['Manrope',sans-serif] font-bold text-sm sm:text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
                 style={{ backgroundColor: cfg.accent }}>
                 {loading ? "Creating account…" : `Create ${cfg.label} Account`}
               </button>
@@ -402,8 +402,8 @@ export default function LoginPage({ onLogin }: Props) {
 
           {/* Demo credentials — login only */}
           {mode === "login" && (
-            <div className="bg-[#f8fafb] border border-[#e4ede2] rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2.5">
+            <div className="bg-[#f8fafb] border border-[#e4ede2] rounded-xl p-3.5 sm:p-4">
+              <div className="flex items-center justify-between mb-2 sm:mb-2.5">
                 <p className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px]">Demo Credentials</p>
                 <button onClick={fillDemo} className="text-[11px] font-bold hover:underline transition-colors" style={{ color: cfg.accent }}>
                   Auto-fill ↗

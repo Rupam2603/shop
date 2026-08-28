@@ -159,18 +159,18 @@ export default function ProductDetailModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center p-4 pt-6 overflow-y-auto"
+      className="fixed inset-0 bg-black/60 z-50 flex items-center sm:items-start justify-center p-2 sm:p-4 sm:pt-6 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl w-full max-w-[920px] shadow-2xl mb-8 overflow-hidden"
+        className="bg-white rounded-2xl w-full max-w-[920px] shadow-2xl my-auto sm:my-8 overflow-hidden max-h-[94vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Top: Image + Details ── */}
-        <div className="flex">
+        <div className="flex flex-col md:flex-row">
           {/* Image panel */}
-          <div className="w-72 shrink-0 flex flex-col" style={{ backgroundColor: accentColor + "0d" }}>
-            <div className="relative h-64 overflow-hidden">
+          <div className="w-full md:w-72 shrink-0 flex flex-col" style={{ backgroundColor: accentColor + "0d" }}>
+            <div className="relative h-56 sm:h-64 overflow-hidden">
               {product.disc && (
                 <span
                   className="absolute top-3 left-3 z-10 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase"
@@ -186,7 +186,7 @@ export default function ProductDetailModal({
                 onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.12"; }}
               />
             </div>
-            <div className="flex-1 p-5 flex flex-col gap-3.5 bg-white/60 backdrop-blur-sm">
+            <div className="flex-1 p-4 sm:p-5 grid grid-cols-2 md:flex md:flex-col gap-3 bg-white/60 backdrop-blur-sm">
               <div>
                 <p className="text-[9px] font-bold uppercase tracking-[0.7px] text-[#9aa89b] mb-1">Category</p>
                 <span
@@ -210,7 +210,7 @@ export default function ProductDetailModal({
                   <p className="text-[#073b4c] font-semibold text-sm">{product.sub}</p>
                 </div>
               )}
-              <div>
+              <div className="col-span-2 md:col-span-1">
                 <p className="text-[9px] font-bold uppercase tracking-[0.7px] text-[#9aa89b] mb-1">Availability</p>
                 <span className="flex items-center gap-1.5 text-[#047857] text-xs font-semibold">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#047857] inline-block" />
@@ -221,11 +221,12 @@ export default function ProductDetailModal({
           </div>
 
           {/* Details panel */}
-          <div className="flex-1 p-7 flex flex-col overflow-hidden">
-            <div className="flex justify-end mb-3">
+          <div className="flex-1 p-4 sm:p-7 flex flex-col overflow-hidden">
+            <div className="flex justify-end mb-2 sm:mb-3">
               <button
                 onClick={onClose}
                 className="w-8 h-8 rounded-full bg-[#f0f4f0] flex items-center justify-center hover:bg-[#e4ede2] transition-colors"
+                aria-label="Close modal"
               >
                 <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
                   <path d="M1 1L11 11M11 1L1 11" stroke="#073b4c" strokeWidth="1.5" strokeLinecap="round" />
@@ -233,13 +234,13 @@ export default function ProductDetailModal({
               </button>
             </div>
 
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
               <span className="text-[10px] font-bold uppercase tracking-[0.6px]" style={{ color: accentColor }}>{product.brand}</span>
               <span className="text-[#d0d8cf]">·</span>
-              <span className="text-[10px] text-[#9aa89b]">{product.cat}</span>
+              <span className="text-[10px] text-[#9aa89b] truncate">{product.cat}</span>
             </div>
 
-            <h2 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-2xl leading-tight mb-2">{product.name}</h2>
+            <h2 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xl sm:text-2xl leading-tight mb-2">{product.name}</h2>
 
             {product.sub && (
               <span className="inline-block text-[10px] font-bold bg-[#f0fdf4] text-[#047857] border border-[#bbf7d0] px-2 py-0.5 rounded-full mb-3 w-fit">
@@ -247,21 +248,21 @@ export default function ProductDetailModal({
               </span>
             )}
 
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
               <StarRow rating={avgRating} size={15} />
               <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm">{avgRating.toFixed(1)}</span>
-              <span className="text-[#9aa89b] text-xs">({reviews.length} verified reviews)</span>
+              <span className="text-[#9aa89b] text-xs">({reviews.length} reviews)</span>
             </div>
 
             {/* Pricing */}
-            <div className="rounded-xl p-4 mb-4 border" style={{ backgroundColor: accentColor + "08", borderColor: accentColor + "28" }}>
+            <div className="rounded-xl p-3.5 sm:p-4 mb-4 border" style={{ backgroundColor: accentColor + "08", borderColor: accentColor + "28" }}>
               {isRetailer ? (
                 <div>
                   <div className="flex items-baseline gap-2.5">
-                    <span className="font-['Manrope',sans-serif] font-extrabold text-[#0369a1] text-3xl">{retailerPrice(product.price)}</span>
+                    <span className="font-['Manrope',sans-serif] font-extrabold text-[#0369a1] text-2xl sm:text-3xl">{retailerPrice(product.price)}</span>
                     <span className="text-[10px] font-bold bg-[#dbeafe] text-[#1d4ed8] px-2 py-0.5 rounded uppercase">Trade Price</span>
                   </div>
-                  <div className="flex items-center gap-3 mt-1">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1">
                     <span className="text-[#9aa89b] text-xs">Customer MRP: <span className="line-through">{product.price}</span></span>
                     {product.orig && <span className="text-[#9aa89b] text-xs">Max. MRP: <span className="line-through">{product.orig}</span></span>}
                   </div>
@@ -270,23 +271,23 @@ export default function ProductDetailModal({
               ) : (
                 <div>
                   <div className="flex items-baseline gap-2.5">
-                    <span className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-3xl">{product.price}</span>
+                    <span className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-2xl sm:text-3xl">{product.price}</span>
                     {product.disc && (
-                      <span className="text-sm font-bold bg-[#d1fae5] text-[#047857] px-2 py-0.5 rounded-full">{product.disc} OFF</span>
+                      <span className="text-xs sm:text-sm font-bold bg-[#d1fae5] text-[#047857] px-2 py-0.5 rounded-full">{product.disc} OFF</span>
                     )}
                   </div>
                   {product.orig && (
-                    <p className="text-[#9aa89b] text-sm mt-0.5">MRP <span className="line-through">{product.orig}</span></p>
+                    <p className="text-[#9aa89b] text-xs sm:text-sm mt-0.5">MRP <span className="line-through">{product.orig}</span></p>
                   )}
                 </div>
               )}
             </div>
 
             {/* Description */}
-            <p className="text-[#6d7a6f] text-sm leading-relaxed mb-4">{description}</p>
+            <p className="text-[#6d7a6f] text-xs sm:text-sm leading-relaxed mb-4">{description}</p>
 
             {/* Feature list */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mb-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 mb-5">
               {features.map((f) => (
                 <div key={f} className="flex items-center gap-2">
                   <div
@@ -303,30 +304,30 @@ export default function ProductDetailModal({
             </div>
 
             {/* Qty + CTA */}
-            <div className="flex items-center gap-3 mt-auto">
+            <div className="flex items-center gap-2 sm:gap-3 mt-auto">
               <div className="flex items-center border border-[#e4ede2] rounded-xl overflow-hidden">
                 <button
                   onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  className="w-9 h-10 flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] transition-colors font-bold text-lg"
+                  className="w-8 sm:w-9 h-9 sm:h-10 flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] transition-colors font-bold text-base sm:text-lg"
                 >
                   −
                 </button>
-                <span className="w-10 text-center font-['Manrope',sans-serif] font-bold text-[#073b4c]">{qty}</span>
+                <span className="w-8 sm:w-10 text-center font-['Manrope',sans-serif] font-bold text-sm sm:text-base text-[#073b4c]">{qty}</span>
                 <button
                   onClick={() => setQty((q) => q + 1)}
-                  className="w-9 h-10 flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] transition-colors font-bold text-lg"
+                  className="w-8 sm:w-9 h-9 sm:h-10 flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] transition-colors font-bold text-base sm:text-lg"
                 >
                   +
                 </button>
               </div>
               <button
-                className="flex-1 py-2.5 rounded-xl text-white font-bold text-sm hover:opacity-90 active:scale-[0.98] transition-all"
+                className="flex-1 py-2.5 rounded-xl text-white font-bold text-xs sm:text-sm hover:opacity-90 active:scale-[0.98] transition-all"
                 style={{ backgroundColor: accentColor }}
               >
                 Add to Cart
               </button>
               <button
-                className="w-10 h-10 rounded-xl border border-[#e4ede2] flex items-center justify-center hover:bg-[#f0f4f0] transition-colors"
+                className="w-9 sm:w-10 h-9 sm:h-10 rounded-xl border border-[#e4ede2] flex items-center justify-center hover:bg-[#f0f4f0] transition-colors shrink-0"
                 title="Add to Wishlist"
               >
                 <svg width="17" height="15" viewBox="0 0 18 16" fill="none">
@@ -335,7 +336,7 @@ export default function ProductDetailModal({
               </button>
             </div>
 
-            <p className="text-xs text-[#047857] font-medium mt-3 flex items-center gap-1.5">
+            <p className="text-[11px] sm:text-xs text-[#047857] font-medium mt-3 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#047857] inline-block" />
               Ready to ship within 24 hours · Free delivery on orders above ₹499
             </p>
@@ -343,19 +344,21 @@ export default function ProductDetailModal({
         </div>
 
         {/* ── Reviews Section ── */}
-        <div className="border-t border-[#e4ede2] p-7">
-          <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg mb-6">Customer Reviews</h3>
+        <div className="border-t border-[#e4ede2] p-4 sm:p-7">
+          <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg mb-4 sm:mb-6">Customer Reviews</h3>
 
-          <div className="flex gap-10 mb-8">
-            <div className="flex flex-col items-center gap-2 shrink-0 min-w-[110px]">
-              <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-6xl leading-none">{avgRating.toFixed(1)}</p>
-              <StarRow rating={avgRating} size={18} />
-              <p className="text-[#9aa89b] text-xs text-center">{reviews.length} reviews</p>
+          <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 mb-6 sm:mb-8">
+            <div className="flex sm:flex-col items-center gap-3 sm:gap-2 shrink-0 min-w-[110px]">
+              <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-4xl sm:text-6xl leading-none">{avgRating.toFixed(1)}</p>
+              <div className="flex flex-col items-start sm:items-center">
+                <StarRow rating={avgRating} size={16} />
+                <p className="text-[#9aa89b] text-xs mt-0.5">{reviews.length} reviews</p>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-2.5 flex-1 justify-center">
+            <div className="flex flex-col gap-2 flex-1 justify-center">
               {ratingBreakdown.map(({ star, count }) => (
-                <div key={star} className="flex items-center gap-3">
+                <div key={star} className="flex items-center gap-2 sm:gap-3">
                   <span className="text-xs text-[#9aa89b] w-5 text-right shrink-0">{star}★</span>
                   <div className="flex-1 h-2 bg-[#f0f4f0] rounded-full overflow-hidden">
                     <div
@@ -372,23 +375,23 @@ export default function ProductDetailModal({
             </div>
           </div>
 
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4 sm:gap-5">
             {reviews.map((r, idx) => (
-              <div key={idx} className="border-b border-[#f0f4f0] pb-5 last:border-0 last:pb-0">
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-3">
+              <div key={idx} className="border-b border-[#f0f4f0] pb-4 sm:pb-5 last:border-0 last:pb-0">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
                     <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white shrink-0"
+                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm text-white shrink-0"
                       style={{ backgroundColor: accentColor }}
                     >
                       {r.name[0]}
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-[#073b4c] text-sm">{r.name}</p>
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <p className="font-semibold text-[#073b4c] text-xs sm:text-sm">{r.name}</p>
                         {r.verified && (
-                          <span className="text-[9px] font-bold bg-[#d1fae5] text-[#047857] px-1.5 py-0.5 rounded">
-                            Verified Purchase
+                          <span className="text-[8px] sm:text-[9px] font-bold bg-[#d1fae5] text-[#047857] px-1.5 py-0.5 rounded">
+                            Verified
                           </span>
                         )}
                       </div>
@@ -399,10 +402,10 @@ export default function ProductDetailModal({
                     </div>
                   </div>
                   {r.helpful > 0 && (
-                    <span className="text-[10px] text-[#9aa89b] shrink-0 mt-1">{r.helpful} found helpful</span>
+                    <span className="text-[10px] text-[#9aa89b] shrink-0">{r.helpful} helpful</span>
                   )}
                 </div>
-                <p className="text-[#6d7a6f] text-sm leading-relaxed ml-12">{r.text}</p>
+                <p className="text-[#6d7a6f] text-xs sm:text-sm leading-relaxed sm:ml-12">{r.text}</p>
               </div>
             ))}
           </div>

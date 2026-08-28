@@ -98,66 +98,69 @@ export default function OffersPage() {
 
   return (
     <div className="bg-[#f5fbf2] min-h-screen">
-      <div className="max-w-[1280px] mx-auto px-10 py-8 flex flex-col gap-8">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-6 sm:gap-8">
 
         {/* Featured Hero Grid */}
-        <div className="grid grid-cols-3 grid-rows-2 gap-4">
-          {/* Main hero - spans 2 rows, 2 cols */}
-          <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden relative h-[400px] shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Main hero */}
+          <div className="md:col-span-2 rounded-2xl overflow-hidden relative min-h-[280px] sm:min-h-[340px] md:h-[400px] shadow-sm flex flex-col justify-end">
             <img
               src={imgMainFeatured}
               alt="Premium Sports Nutrition"
-              className="w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[rgba(7,59,76,0.8)] via-[rgba(7,59,76,0.2)] to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-8 flex flex-col gap-2">
-              <span className="bg-[#0f9d58] text-white text-sm font-bold px-3 py-1 rounded-full w-fit tracking-[0.7px]">
+            <div className="absolute inset-0 bg-gradient-to-t from-[rgba(7,59,76,0.85)] via-[rgba(7,59,76,0.3)] to-transparent" />
+            <div className="relative z-10 p-5 sm:p-8 flex flex-col gap-2">
+              <span className="bg-[#0f9d58] text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full w-fit tracking-[0.6px]">
                 Premium Sports Nutrition
               </span>
-              <h2 className="font-['Manrope',sans-serif] font-bold text-white text-3xl leading-10">
+              <h2 className="font-['Manrope',sans-serif] font-bold text-white text-2xl sm:text-3xl leading-tight">
                 Fuel Your Performance
               </h2>
-              <p className="text-white text-sm leading-6 max-w-[448px]">
+              <p className="text-white/90 text-xs sm:text-sm leading-relaxed max-w-[448px]">
                 Discover our clinical-grade whey proteins and pre-workout formulas designed for peak results.
               </p>
-              <button className="bg-white text-[#073b4c] font-bold text-sm tracking-[0.7px] px-6 py-2 rounded-lg w-fit hover:bg-[#f0f7f0] transition-colors shadow-sm mt-1">
+              <button className="bg-white text-[#073b4c] font-bold text-xs sm:text-sm tracking-[0.6px] px-5 sm:px-6 py-2 sm:py-2.5 rounded-lg w-fit hover:bg-[#f0f7f0] transition-colors shadow-sm mt-1">
                 Shop Proteins
               </button>
             </div>
           </div>
 
-          {/* Daily Vitamins tile */}
-          <div className="rounded-2xl overflow-hidden relative h-[190px] shadow-sm">
-            <img src={imgVitamins} alt="Daily Vitamins" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[rgba(7,59,76,0.7)] to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-4">
-              <p className="font-['Manrope',sans-serif] font-semibold text-white text-xl leading-8">
-                Daily Vitamins
-              </p>
-              <p className="text-[#82fde6] text-xs tracking-[0.6px] uppercase">Explore</p>
+          {/* Sub tiles */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4">
+            {/* Daily Vitamins tile */}
+            <div className="rounded-2xl overflow-hidden relative h-[180px] sm:h-[190px] shadow-sm flex flex-col justify-end">
+              <img src={imgVitamins} alt="Daily Vitamins" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[rgba(7,59,76,0.75)] to-transparent" />
+              <div className="relative z-10 p-4">
+                <p className="font-['Manrope',sans-serif] font-semibold text-white text-lg sm:text-xl leading-tight">
+                  Daily Vitamins
+                </p>
+                <p className="text-[#82fde6] text-xs tracking-[0.6px] uppercase mt-0.5">Explore</p>
+              </div>
             </div>
-          </div>
 
-          {/* Ayurvedic Blends tile */}
-          <div className="rounded-2xl overflow-hidden relative h-[190px] shadow-sm">
-            <img src={imgAyurveda} alt="Ayurvedic Blends" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[rgba(7,59,76,0.7)] to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-4">
-              <p className="font-['Manrope',sans-serif] font-semibold text-white text-xl leading-8">
-                Ayurvedic Blends
-              </p>
-              <p className="text-[#82fde6] text-xs tracking-[0.6px] uppercase">Explore</p>
+            {/* Ayurvedic Blends tile */}
+            <div className="rounded-2xl overflow-hidden relative h-[180px] sm:h-[190px] shadow-sm flex flex-col justify-end">
+              <img src={imgAyurveda} alt="Ayurvedic Blends" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[rgba(7,59,76,0.75)] to-transparent" />
+              <div className="relative z-10 p-4">
+                <p className="font-['Manrope',sans-serif] font-semibold text-white text-lg sm:text-xl leading-tight">
+                  Ayurvedic Blends
+                </p>
+                <p className="text-[#82fde6] text-xs tracking-[0.6px] uppercase mt-0.5">Explore</p>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Category Tabs */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
           {categoryTabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors shrink-0 whitespace-nowrap ${
                 activeTab === tab
                   ? "bg-[#006a39] text-white"
                   : "bg-white border border-[#d5dcd3] text-[#3e4a3f] hover:border-[#006a39] hover:text-[#006a39]"
@@ -169,15 +172,15 @@ export default function OffersPage() {
         </div>
 
         {/* Best Sellers */}
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4 sm:gap-5">
           <div className="flex items-end justify-between">
             <div>
-              <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-3xl leading-10">
+              <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl sm:text-2xl lg:text-3xl leading-tight">
                 Best Sellers
               </h2>
-              <p className="text-[#3e4a3f] text-sm mt-1">Highly rated clinical-grade formulations.</p>
+              <p className="text-[#3e4a3f] text-xs sm:text-sm mt-0.5 sm:mt-1">Highly rated clinical-grade formulations.</p>
             </div>
-            <button className="font-bold text-[#006a39] text-sm tracking-[0.7px] flex items-center gap-1 hover:underline">
+            <button className="font-bold text-[#006a39] text-xs sm:text-sm tracking-[0.6px] flex items-center gap-1 hover:underline">
               View All
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M1 7H13M9 3L13 7L9 11" stroke="#006a39" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -185,13 +188,13 @@ export default function OffersPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {bestSellers.map((p, i) => (
               <div
                 key={p.name}
                 className="bg-white rounded-xl border border-[#d5dcd3] overflow-hidden hover:shadow-md transition-shadow flex flex-col"
               >
-                <div className="relative bg-[#f8fafb] h-48 flex items-center justify-center p-4">
+                <div className="relative bg-[#f8fafb] h-44 sm:h-48 flex items-center justify-center p-4">
                   {p.badge && (
                     <span className="absolute top-2 left-2 bg-[#ffb703] text-white text-[10px] font-bold px-2 py-0.5 rounded">
                       {p.badge}
@@ -200,6 +203,7 @@ export default function OffersPage() {
                   <button
                     onClick={() => toggleWishlist(i)}
                     className="absolute top-2 right-2 p-1.5 rounded-full bg-white shadow-sm hover:scale-110 transition-transform"
+                    aria-label="Add to wishlist"
                   >
                     <HeartIcon filled={wishlist.includes(i)} />
                   </button>
@@ -209,24 +213,24 @@ export default function OffersPage() {
                     className="h-full max-w-full object-contain mix-blend-multiply"
                   />
                 </div>
-                <div className="p-4 flex flex-col gap-1.5 flex-1">
+                <div className="p-3.5 sm:p-4 flex flex-col gap-1.5 flex-1">
                   <p
-                    className="text-xs font-bold tracking-[0.6px] uppercase"
+                    className="text-[10px] sm:text-xs font-bold tracking-[0.6px] uppercase"
                     style={{ color: p.brandColor }}
                   >
                     {p.brand}
                   </p>
-                  <h4 className="font-bold text-[#073b4c] text-sm leading-5">{p.name}</h4>
+                  <h4 className="font-bold text-[#073b4c] text-xs sm:text-sm leading-snug">{p.name}</h4>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <StarIcon />
-                    <span className="font-bold text-[#073b4c] text-sm">{p.rating}</span>
-                    <span className="text-[#6d7a6f] text-xs">{p.reviews}</span>
+                    <span className="font-bold text-[#073b4c] text-xs sm:text-sm">{p.rating}</span>
+                    <span className="text-[#6d7a6f] text-[10px] sm:text-xs">{p.reviews}</span>
                   </div>
                   <div className="flex items-center justify-between mt-auto pt-2">
-                    <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg leading-6">
+                    <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg leading-6">
                       {p.price}
                     </span>
-                    <button className="w-9 h-9 bg-[#006a39] rounded-lg flex items-center justify-center hover:bg-[#005a30] transition-colors shrink-0">
+                    <button className="w-8 h-8 sm:w-9 sm:h-9 bg-[#006a39] rounded-lg flex items-center justify-center hover:bg-[#005a30] transition-colors shrink-0" aria-label="Add to cart">
                       <CartIcon />
                     </button>
                   </div>

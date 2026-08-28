@@ -73,38 +73,38 @@ export default function LabTestsPage() {
       className="min-h-screen"
       style={{ background: "linear-gradient(180deg, #f5fbf2 0%, #f5fbf2 100%)" }}
     >
-      <div className="max-w-[1280px] mx-auto px-10 py-8 flex flex-col gap-8">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-6 sm:gap-8">
 
         {/* Hero */}
-        <div className="bg-[#eff6ec] rounded-xl shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between p-8 gap-8 relative">
+        <div className="bg-[#eff6ec] rounded-2xl shadow-sm overflow-hidden">
+          <div className="flex flex-col-reverse lg:flex-row items-center justify-between p-5 sm:p-8 gap-6 sm:gap-8 relative">
             <div
-              className="absolute inset-0 rounded-xl pointer-events-none"
+              className="absolute inset-0 rounded-2xl pointer-events-none"
               style={{ boxShadow: "0px 4px 6px -2px rgba(7,59,76,0.1)" }}
             />
-            <div className="flex flex-col gap-4 flex-1 min-w-0 relative z-10">
+            <div className="flex flex-col gap-3 sm:gap-4 flex-1 min-w-0 relative z-10">
               <div>
-                <h1 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-5xl leading-[56px] tracking-[-0.96px]">
+                <h1 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-3xl sm:text-4xl lg:text-5xl leading-tight sm:leading-[48px] lg:leading-[56px] tracking-tight">
                   Precision Diagnostics,
                 </h1>
-                <h1 className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-5xl leading-[56px] tracking-[-0.96px]">
+                <h1 className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-3xl sm:text-4xl lg:text-5xl leading-tight sm:leading-[48px] lg:leading-[56px] tracking-tight">
                   Delivered Home.
                 </h1>
               </div>
-              <p className="text-[#3e4a3f] text-lg leading-7 max-w-[512px]">
+              <p className="text-[#3e4a3f] text-sm sm:text-base lg:text-lg leading-relaxed max-w-[512px]">
                 Book certified lab tests from the comfort of your home. Fast, accurate, and hygienic sample collection by trained professionals.
               </p>
-              <div className="flex gap-4 pt-4">
-                <button className="bg-[#006a39] text-white font-['Hanken_Grotesk',sans-serif] font-bold text-sm tracking-[0.7px] px-6 py-3 rounded-lg shadow-md hover:bg-[#005a30] transition-colors">
+              <div className="flex flex-wrap gap-3 sm:gap-4 pt-2 sm:pt-4">
+                <button className="bg-[#006a39] text-white font-['Hanken_Grotesk',sans-serif] font-bold text-xs sm:text-sm tracking-[0.6px] px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg shadow-md hover:bg-[#005a30] transition-colors">
                   Book a Test Now
                 </button>
-                <button className="border border-[#073b4c] text-[#073b4c] font-['Hanken_Grotesk',sans-serif] font-bold text-sm tracking-[0.7px] px-6 py-3 rounded-lg hover:bg-[#073b4c] hover:text-white transition-colors">
+                <button className="border border-[#073b4c] text-[#073b4c] font-['Hanken_Grotesk',sans-serif] font-bold text-xs sm:text-sm tracking-[0.6px] px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-[#073b4c] hover:text-white transition-colors">
                   Upload Prescription
                 </button>
               </div>
             </div>
             <div
-              className="flex-1 h-80 rounded-xl overflow-hidden shadow-md shrink-0 min-w-0 max-w-[420px]"
+              className="w-full lg:w-auto flex-1 h-56 sm:h-72 lg:h-80 rounded-xl overflow-hidden shadow-md shrink-0 max-w-[420px]"
               style={{ boxShadow: "0px 10px 15px -3px rgba(0,0,0,0.1)" }}
             >
               <img src={imgLabTesting} alt="Lab testing" className="w-full h-full object-cover" />
@@ -113,20 +113,20 @@ export default function LabTestsPage() {
         </div>
 
         {/* Popular Categories */}
-        <div className="flex flex-col gap-4">
-          <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-3xl leading-10">
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl sm:text-2xl lg:text-3xl leading-tight">
             Popular Categories
           </h2>
-          <div className="grid grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6">
             {categories.map((cat, i) => (
               <button
                 key={cat}
-                className="bg-white rounded-lg border border-[#d5dcd3] shadow-sm hover:shadow-md transition-all flex flex-col items-center gap-2 p-[17px]"
+                className="bg-white rounded-xl border border-[#d5dcd3] shadow-sm hover:shadow-md transition-all flex flex-col items-center gap-2 p-3.5 sm:p-[17px]"
               >
-                <div className="bg-[#bde9ff] w-12 h-12 rounded-full flex items-center justify-center">
+                <div className="bg-[#bde9ff] w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0">
                   {categoryIcons[i]}
                 </div>
-                <span className="font-bold text-[#073b4c] text-sm tracking-[0.7px] text-center">
+                <span className="font-bold text-[#073b4c] text-xs sm:text-sm tracking-[0.5px] text-center">
                   {cat}
                 </span>
               </button>
@@ -135,16 +135,16 @@ export default function LabTestsPage() {
         </div>
 
         {/* Health Packages */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 sm:gap-4">
           <div className="flex items-end justify-between">
-            <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-3xl leading-10">
+            <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl sm:text-2xl lg:text-3xl leading-tight">
               Comprehensive Health Packages
             </h2>
-            <button className="font-bold text-[#006a39] text-sm tracking-[0.7px] hover:underline">
-              View All Packages
+            <button className="font-bold text-[#006a39] text-xs sm:text-sm tracking-[0.6px] hover:underline">
+              View All
             </button>
           </div>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {packages.map((pkg) => (
               <div
                 key={pkg.name}
@@ -152,21 +152,22 @@ export default function LabTestsPage() {
                 style={{ boxShadow: "0px 4px 6px -2px rgba(7,59,76,0.1)" }}
               >
                 <div className="bg-[#e9f0e7] p-4 border-b border-[#d5dcd3]">
-                  {pkg.badge && (
-                    <span className={`${pkg.badgeBg} text-white text-[10px] uppercase px-2 py-1 rounded-full mb-2 inline-block`}>
+                  {pkg.badge ? (
+                    <span className={`${pkg.badgeBg} text-white text-[10px] uppercase px-2 py-0.5 sm:py-1 rounded-full mb-1.5 inline-block font-semibold`}>
                       {pkg.badge}
                     </span>
+                  ) : (
+                    <div className="h-5" />
                   )}
-                  {!pkg.badge && <div className="h-6" />}
-                  <h3 className="font-['Manrope',sans-serif] font-semibold text-[#073b4c] text-2xl leading-8 mt-1">
+                  <h3 className="font-['Manrope',sans-serif] font-semibold text-[#073b4c] text-xl sm:text-2xl leading-7 mt-1">
                     {pkg.name}
                   </h3>
-                  <p className="text-[#3e4a3f] text-sm leading-5 mt-1">{pkg.tests}</p>
+                  <p className="text-[#3e4a3f] text-xs sm:text-sm leading-5 mt-1">{pkg.tests}</p>
                 </div>
                 <div className="p-4 flex flex-col justify-between flex-1 gap-4">
                   <ul className="flex flex-col gap-2">
                     {pkg.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-[#171d18] leading-5">
+                      <li key={f} className="flex items-start gap-2 text-xs sm:text-sm text-[#171d18] leading-5">
                         <CheckCircleIcon />
                         {f}
                       </li>
@@ -174,14 +175,14 @@ export default function LabTestsPage() {
                   </ul>
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-2">
-                      <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl leading-6">{pkg.price}</span>
-                      <span className="text-[#6d7a6f] text-sm line-through">{pkg.original}</span>
-                      <span className="bg-[#e3eae1] text-[#2d6a4f] text-xs px-2 py-0.5 rounded">
+                      <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg sm:text-xl leading-6">{pkg.price}</span>
+                      <span className="text-[#6d7a6f] text-xs sm:text-sm line-through">{pkg.original}</span>
+                      <span className="bg-[#e3eae1] text-[#2d6a4f] text-xs px-2 py-0.5 rounded font-semibold">
                         {pkg.discount}
                       </span>
                     </div>
                     <button
-                      className={`w-full py-3 rounded-lg font-bold text-sm tracking-[0.7px] transition-colors ${
+                      className={`w-full py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm tracking-[0.6px] transition-colors ${
                         pkg.buttonVariant === "solid"
                           ? "bg-[#006a39] text-white hover:bg-[#005a30]"
                           : "border border-[#006a39] text-[#006a39] hover:bg-[#006a39] hover:text-white"
@@ -197,20 +198,20 @@ export default function LabTestsPage() {
         </div>
 
         {/* Why Choose SubhOne */}
-        <div className="bg-[#f8fafb] rounded-xl border border-[#d5dcd3] p-8 flex flex-col gap-8">
-          <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-3xl leading-10 text-center">
+        <div className="bg-[#f8fafb] rounded-2xl border border-[#d5dcd3] p-5 sm:p-8 flex flex-col gap-6 sm:gap-8">
+          <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl sm:text-2xl lg:text-3xl leading-tight text-center">
             Why Choose SubhOne Labs
           </h2>
-          <div className="grid grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {whyChoose.map((item) => (
-              <div key={item.title} className="flex flex-col items-center gap-2">
-                <div className="bg-[#bde9ff] w-16 h-16 rounded-full flex items-center justify-center mb-2">
+              <div key={item.title} className="flex flex-col items-center text-center gap-2">
+                <div className="bg-[#bde9ff] w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-1 shrink-0">
                   {item.icon}
                 </div>
-                <h4 className="font-['Manrope',sans-serif] font-semibold text-[#073b4c] text-xl text-center leading-8">
+                <h4 className="font-['Manrope',sans-serif] font-semibold text-[#073b4c] text-lg sm:text-xl leading-snug">
                   {item.title}
                 </h4>
-                <p className="text-[#3e4a3f] text-sm leading-5 text-center">{item.desc}</p>
+                <p className="text-[#3e4a3f] text-xs sm:text-sm leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>

@@ -83,23 +83,50 @@ const ROLE_COLORS: Record<string, string> = {
 
 export default function NavBar({ activePage, onNavigate, user, onLogout, onProfile }: NavBarProps) {
   const [searchValue, setSearchValue] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleNavClick = (page: Page) => {
+    onNavigate(page);
+    setMobileMenuOpen(false);
+  };
 
   return (
     <header
       className="sticky top-0 z-50 bg-white border-b border-[#bdcabc]"
       style={{ boxShadow: "0px 1px 1px rgba(0,0,0,0.05)" }}
     >
-      <div className="max-w-[1280px] mx-auto px-6 h-16 flex items-center gap-4">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4">
+        {/* Mobile Hamburger Button */}
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-2 rounded-lg text-[#073b4c] hover:bg-[#f0f7f0] transition-colors focus:outline-none"
+          aria-label="Toggle navigation menu"
+        >
+          {mobileMenuOpen ? (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          ) : (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          )}
+        </button>
+
         {/* Logo */}
         <button
-          onClick={() => onNavigate("home")}
-          className="shrink-0 font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-2xl leading-8 tracking-tight"
+          onClick={() => handleNavClick("home")}
+          className="shrink-0 font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-xl sm:text-2xl leading-8 tracking-tight"
         >
           SubhOne
         </button>
 
         {/* Search */}
-        <div className="flex-1 max-w-xl relative">
+        <div className="flex-1 max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl relative mx-1 sm:mx-2">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
             <SearchIcon />
           </div>
@@ -107,18 +134,18 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
             type="text"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
-            placeholder="Search for medicines, lab tests..."
-            className="w-full bg-[#f8fafb] rounded-lg pl-10 pr-4 py-2.5 text-sm text-[#6d7a6f] border border-[#e2e8df] focus:outline-none focus:border-[#006a39] focus:ring-1 focus:ring-[#006a39] transition-colors"
+            placeholder="Search medicines, tests..."
+            className="w-full bg-[#f8fafb] rounded-lg pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 text-xs sm:text-sm text-[#073b4c] border border-[#e2e8df] focus:outline-none focus:border-[#006a39] focus:ring-1 focus:ring-[#006a39] transition-colors"
           />
         </div>
 
         {/* Nav links - desktop */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-4 lg:gap-6">
           {navLinks.map(({ label, page }) => (
             <button
               key={page}
-              onClick={() => onNavigate(page)}
-              className={`relative pb-0.5 text-sm font-bold tracking-[0.7px] transition-colors ${
+              onClick={() => handleNavClick(page)}
+              className={`relative pb-0.5 text-xs lg:text-sm font-bold tracking-[0.5px] transition-colors whitespace-nowrap ${
                 activePage === page
                   ? "text-[#006a39]"
                   : "text-[#3e4a3f] hover:text-[#006a39]"
@@ -133,25 +160,25 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
         </nav>
 
         {/* Trailing icons */}
-        <div className="flex items-center gap-2 ml-auto shrink-0">
-          <button className="p-2 rounded-full hover:bg-[#f0f7f0] transition-colors relative">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          <button className="hidden sm:flex p-2 rounded-full hover:bg-[#f0f7f0] transition-colors relative text-[#006a39]" title="Location">
             <LocationIcon />
           </button>
-          <button className="p-2 rounded-full hover:bg-[#f0f7f0] transition-colors relative">
+          <button className="p-2 rounded-full hover:bg-[#f0f7f0] transition-colors relative text-[#006a39]" title="Cart">
             <CartIcon />
             <span className="absolute top-1 right-1 bg-[#0f9d58] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
               2
             </span>
           </button>
           {user ? (
-            <div className="flex items-center gap-2.5 pl-3 border-l border-[#e2e8df]">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 pl-1.5 sm:pl-3 border-l border-[#e2e8df]">
               <button
-                onClick={onProfile}
+                onClick={() => { onProfile?.(); setMobileMenuOpen(false); }}
                 className="flex items-center gap-2 group"
                 title="View profile"
               >
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center font-['Manrope',sans-serif] font-bold text-sm text-white shrink-0 group-hover:ring-2 group-hover:ring-offset-1 transition-all"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-['Manrope',sans-serif] font-bold text-xs sm:text-sm text-white shrink-0 group-hover:ring-2 group-hover:ring-offset-1 transition-all"
                   style={{ backgroundColor: ROLE_COLORS[user.role] ?? "#073b4c" }}
                 >
                   {user.name[0].toUpperCase()}
@@ -163,7 +190,7 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
               </button>
               <button
                 onClick={onLogout}
-                className="ml-1 text-xs font-bold text-[#c0392b] hover:text-[#9a2e1e] transition-colors whitespace-nowrap"
+                className="hidden sm:inline-block ml-1 text-xs font-bold text-[#c0392b] hover:text-[#9a2e1e] transition-colors whitespace-nowrap"
               >
                 Logout
               </button>
@@ -175,6 +202,56 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
           )}
         </div>
       </div>
+
+      {/* Mobile Drawer Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-[#e4ede2] bg-white px-4 py-4 shadow-lg animate-in slide-in-from-top-2 duration-200">
+          <nav className="flex flex-col gap-1">
+            {navLinks.map(({ label, page }) => (
+              <button
+                key={page}
+                onClick={() => handleNavClick(page)}
+                className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-colors ${
+                  activePage === page
+                    ? "bg-[#e8f5ee] text-[#006a39]"
+                    : "text-[#3e4a3f] hover:bg-[#f8fafb]"
+                }`}
+              >
+                <span>{label}</span>
+                {activePage === page && (
+                  <span className="w-2 h-2 rounded-full bg-[#006a39]" />
+                )}
+              </button>
+            ))}
+          </nav>
+
+          {user && (
+            <div className="mt-4 pt-3 border-t border-[#f0f4f0] flex flex-col gap-2">
+              <button
+                onClick={() => { onProfile?.(); setMobileMenuOpen(false); }}
+                className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[#f8fafb] transition-colors text-left"
+              >
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center font-['Manrope',sans-serif] font-bold text-sm text-white shrink-0"
+                  style={{ backgroundColor: ROLE_COLORS[user.role] ?? "#073b4c" }}
+                >
+                  {user.name[0].toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-[#073b4c] truncate">{user.name}</p>
+                  <p className="text-xs text-[#9aa89b] capitalize">{user.role} · View Profile</p>
+                </div>
+              </button>
+              <button
+                onClick={() => { onLogout?.(); setMobileMenuOpen(false); }}
+                className="w-full text-left px-3 py-2 rounded-xl text-sm font-bold text-[#c0392b] hover:bg-[#fee2e2] transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 }
