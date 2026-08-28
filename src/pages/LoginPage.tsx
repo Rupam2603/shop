@@ -76,11 +76,14 @@ function EyeOffIcon() {
 
 function ErrorBox({ msg }: { msg: string }) {
   return (
-    <div className="bg-[#fff0ee] border border-[#ffd5cf] rounded-xl p-3.5 flex items-start gap-2.5">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5">
-        <path d="M8 1.5C4.41 1.5 1.5 4.41 1.5 8C1.5 11.59 4.41 14.5 8 14.5C11.59 14.5 14.5 11.59 14.5 8C14.5 4.41 11.59 1.5 8 1.5ZM8.75 11H7.25V9.5H8.75V11ZM8.75 8H7.25V5H8.75V8Z" fill="#c0392b" />
-      </svg>
-      <p className="text-[#c0392b] text-xs leading-relaxed">{msg}</p>
+    <div className="bg-[#fff1f0] border border-[#ffa39e] rounded-xl p-3.5 flex items-start gap-3 shadow-xs animate-in fade-in duration-200">
+      <div className="w-5 h-5 rounded-full bg-[#ff4d4f] text-white flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
+        !
+      </div>
+      <div>
+        <p className="text-[#cf1322] font-bold text-xs">Login Error</p>
+        <p className="text-[#a8071a] text-xs leading-relaxed mt-0.5">{msg}</p>
+      </div>
     </div>
   );
 }
@@ -353,8 +356,8 @@ export default function LoginPage() {
               <div>
                 <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Email Address</label>
                 <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                  placeholder="you@example.com" required className={FIELD_CLS}
-                  onFocus={(e) => (e.target.style.borderColor = cfg.accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
+                  placeholder="you@example.com" required className={`${FIELD_CLS} ${error ? "!border-[#ef4444] !bg-[#fff8f8]" : ""}`}
+                  onFocus={(e) => (e.target.style.borderColor = error ? "#ef4444" : cfg.accent)} onBlur={(e) => (e.target.style.borderColor = error ? "#ef4444" : "#e4ede2")} />
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
@@ -374,8 +377,8 @@ export default function LoginPage() {
                 </div>
                 <div className="relative">
                   <input type={showPass ? "text" : "password"} value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }}
-                    placeholder="Enter your password" required className={`${FIELD_CLS} pr-12`}
-                    onFocus={(e) => (e.target.style.borderColor = cfg.accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
+                    placeholder="Enter your password" required className={`${FIELD_CLS} pr-12 ${error ? "!border-[#ef4444] !bg-[#fff8f8]" : ""}`}
+                    onFocus={(e) => (e.target.style.borderColor = error ? "#ef4444" : cfg.accent)} onBlur={(e) => (e.target.style.borderColor = error ? "#ef4444" : "#e4ede2")} />
                   <button type="button" onClick={() => setShowPass(!showPass)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9aa89b] hover:text-[#073b4c] transition-colors">
                     {showPass ? <EyeOffIcon /> : <EyeIcon />}

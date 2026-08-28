@@ -257,7 +257,7 @@ function friendlyAuthError(error: AuthError): string {
   const msg = error.message.toLowerCase();
 
   if (msg.includes("invalid login credentials") || msg.includes("invalid credentials"))
-    return "Incorrect email or password. Please try again.";
+    return "Incorrect email or password. Please verify your credentials and try again.";
   if (msg.includes("email not confirmed"))
     return "Please confirm your email address first. Check your inbox.";
   if (msg.includes("user already registered") || msg.includes("already been registered"))
@@ -269,12 +269,12 @@ function friendlyAuthError(error: AuthError): string {
   if (msg.includes("signup is disabled"))
     return "New registrations are temporarily disabled. Please contact support.";
   if (msg.includes("network") || msg.includes("fetch"))
-    return "Network error. Please check your internet connection and try again.";
+    return "Network connection error. Please check your internet connection and try again.";
   if (msg.includes("rate limit") || msg.includes("too many"))
-    return "Too many attempts. Please wait a moment and try again.";
+    return "Too many attempts. Please wait a moment before trying again.";
 
-  // Fallback — don't expose raw DB/internal errors
-  return "Something went wrong. Please try again.";
+  // Fallback — return error message or default
+  return error.message || "Incorrect email or password. Please try again.";
 }
 
 // ─── Utility — convert AppUser to the legacy CurrentUser shape ────────────────
