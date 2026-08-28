@@ -532,19 +532,38 @@ export default function ProductDetailModal({
               onClick={() => setShowReviewForm(!showReviewForm)}
               className="bg-[#006a39] text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-bold hover:bg-[#005a30] transition-colors shadow-sm shrink-0 flex items-center gap-1.5"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M7 1V13M1 7H13" stroke="white" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-              <span>{showReviewForm ? "Close Review Form" : "Write a Review"}</span>
+              {showReviewForm ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M1 1L13 13M1 13L13 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                  <span>Close Form</span>
+                </>
+              ) : (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M7 1V13M1 7H13" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                  <span>Write a Review</span>
+                </>
+              )}
             </button>
           </div>
 
           {reviewSuccess && (
-            <div className="mb-6 p-4 rounded-xl bg-[#d1fae5] border border-[#a7f3d0] text-[#065f46] text-xs sm:text-sm font-semibold flex items-center gap-2 animate-in fade-in">
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="#059669">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>Thank you! Your review has been submitted and published successfully in real-time.</span>
+            <div className="mb-6 p-4 rounded-xl bg-[#d1fae5] border border-[#a7f3d0] text-[#065f46] text-xs sm:text-sm font-semibold flex items-center justify-between gap-2 animate-in fade-in">
+              <div className="flex items-center gap-2">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="#059669">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span>Thank you! Your review has been submitted and published successfully in real-time.</span>
+              </div>
+              <button
+                onClick={() => setReviewSuccess(false)}
+                className="text-[#065f46] hover:text-[#047857] font-bold text-xs"
+              >
+                ✕
+              </button>
             </div>
           )}
 
@@ -552,26 +571,39 @@ export default function ProductDetailModal({
           {showReviewForm && (
             <form
               onSubmit={handleReviewSubmit}
-              className="mb-8 p-5 sm:p-6 bg-white rounded-2xl border-2 border-[#006a39]/20 shadow-lg flex flex-col gap-4 animate-in slide-in-from-top-2 duration-200"
+              className="mb-8 p-5 sm:p-6 bg-white rounded-2xl border-2 border-[#006a39]/30 shadow-xl flex flex-col gap-4 animate-in slide-in-from-top-2 duration-200 relative"
             >
               <div className="flex items-center justify-between border-b border-[#f0f4f0] pb-3">
-                <h4 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-base">
-                  Submit Your Review
-                </h4>
-                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
-                  isRetailer ? "bg-blue-100 text-blue-800" : "bg-emerald-100 text-emerald-800"
-                }`}>
-                  {isRetailer ? "📦 Posting as Verified Retailer" : "👤 Posting as Verified Customer"}
-                </span>
+                <div>
+                  <h4 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-base">
+                    Write Your Review
+                  </h4>
+                  <p className="text-[11px] text-[#9aa89b]">Share your experience with this product</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${
+                    isRetailer ? "bg-blue-100 text-blue-800" : "bg-emerald-100 text-emerald-800"
+                  }`}>
+                    {isRetailer ? "📦 Posting as Verified Retailer" : "👤 Posting as Verified Customer"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowReviewForm(false)}
+                    className="w-7 h-7 rounded-full bg-[#f0f4f0] hover:bg-[#e4ede2] text-[#073b4c] flex items-center justify-center font-bold text-xs transition-colors shrink-0"
+                    title="Close review form"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
 
-              {/* Star Rating Picker */}
+              {/* Selectable Rating Stars */}
               <div>
                 <label className="block text-xs font-bold text-[#073b4c] mb-1.5">
-                  Overall Rating *
+                  Select Your Overall Rating * <span className="font-normal text-[#9aa89b]">(Click star to select)</span>
                 </label>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
+                <div className="flex items-center gap-3 bg-[#f8fafb] border border-[#e4ede2] p-3 rounded-xl">
+                  <div className="flex items-center gap-1.5">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         key={star}
@@ -579,18 +611,21 @@ export default function ProductDetailModal({
                         onClick={() => setReviewRating(star)}
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(0)}
-                        className="p-1 hover:scale-125 transition-transform"
+                        className="p-1 hover:scale-125 focus:outline-none transition-transform cursor-pointer"
+                        title={`${star} Star${star > 1 ? "s" : ""}`}
                       >
-                        <svg width="24" height="24" viewBox="0 0 14 14" fill="none">
+                        <svg width="26" height="26" viewBox="0 0 14 14" fill="none">
                           <path
                             d="M7 1L8.854 5.09L13.5 5.835L10.25 8.995L11.021 13.5L7 11.277L2.979 13.5L3.75 8.995L0.5 5.835L5.146 5.09Z"
                             fill={star <= (hoverRating || reviewRating) ? "#f59e0b" : "#e5e7eb"}
+                            stroke={star <= (hoverRating || reviewRating) ? "#d97706" : "#d1d5db"}
+                            strokeWidth="0.5"
                           />
                         </svg>
                       </button>
                     ))}
                   </div>
-                  <span className="text-xs font-semibold text-[#6d7a6f] ml-2">
+                  <span className="text-xs font-bold text-[#073b4c] ml-1">
                     {RATING_LABELS[hoverRating || reviewRating]}
                   </span>
                 </div>
@@ -633,13 +668,14 @@ export default function ProductDetailModal({
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#f0f4f0]">
                 <button
                   type="button"
                   onClick={() => setShowReviewForm(false)}
-                  className="px-4 py-2 text-xs font-bold text-[#6d7a6f] hover:bg-[#f0f4f0] rounded-xl transition-colors"
+                  className="px-4 py-2 text-xs font-bold text-[#6d7a6f] hover:bg-[#f0f4f0] rounded-xl transition-colors flex items-center gap-1"
                 >
-                  Cancel
+                  <span>✕</span>
+                  <span>Close</span>
                 </button>
                 <button
                   type="submit"
@@ -659,62 +695,127 @@ export default function ProductDetailModal({
             </form>
           )}
 
-          {/* Rating Breakdown & Summary */}
-          <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 mb-6 sm:mb-8 bg-white p-5 rounded-2xl border border-[#e4ede2]">
-            <div className="flex sm:flex-col items-center gap-3 sm:gap-2 shrink-0 min-w-[120px] justify-center">
+          {/* ── Rating Breakdown & Selectable Overall Stars ── */}
+          <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 mb-6 bg-white p-5 rounded-2xl border border-[#e4ede2] shadow-xs">
+            {/* Clickable Overall Stars Card */}
+            <div className="flex sm:flex-col items-center gap-3 sm:gap-2 shrink-0 min-w-[130px] justify-center text-center">
               <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-4xl sm:text-5xl leading-none">
                 {avgRating.toFixed(1)}
               </p>
-              <div className="flex flex-col items-start sm:items-center">
-                <StarRow rating={avgRating} size={16} />
-                <p className="text-[#9aa89b] text-xs mt-1">{allReviews.length} total reviews</p>
+              <div className="flex flex-col items-center">
+                {/* Selectable overall stars to filter */}
+                <div className="flex items-center gap-1 cursor-pointer" title="Click any star to filter reviews">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setReviewFilter(reviewFilter === s ? "all" : s)}
+                      className={`p-0.5 transition-transform hover:scale-125 ${
+                        typeof reviewFilter === "number" && reviewFilter >= s ? "scale-110" : ""
+                      }`}
+                      title={`Filter by ${s} Star${s > 1 ? "s" : ""}`}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 14 14" fill="none">
+                        <path
+                          d="M7 1L8.854 5.09L13.5 5.835L10.25 8.995L11.021 13.5L7 11.277L2.979 13.5L3.75 8.995L0.5 5.835L5.146 5.09Z"
+                          fill={s <= Math.round(avgRating) ? "#f59e0b" : "#e5e7eb"}
+                        />
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[#9aa89b] text-xs mt-1">{allReviews.length} verified reviews</p>
+                <span className="text-[10px] text-[#006a39] font-semibold mt-0.5">
+                  ★ Click stars to filter
+                </span>
               </div>
             </div>
 
+            {/* Breakdown Bars (Selectable rows) */}
             <div className="flex flex-col gap-2 flex-1 justify-center">
-              {ratingBreakdown.map(({ star, count }) => (
-                <button
-                  key={star}
-                  onClick={() => setReviewFilter(reviewFilter === star ? "all" : star)}
-                  className="flex items-center gap-2 sm:gap-3 group text-left cursor-pointer"
-                >
-                  <span className="text-xs font-semibold text-[#6d7a6f] w-6 text-right shrink-0 group-hover:text-[#006a39]">
-                    {star}★
-                  </span>
-                  <div className="flex-1 h-2 bg-[#f0f4f0] rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${allReviews.length ? (count / allReviews.length) * 100 : 0}%`,
-                        backgroundColor: star >= 4 ? "#006a39" : star === 3 ? "#d97706" : "#b91c1c",
-                      }}
-                    />
-                  </div>
-                  <span className="text-xs text-[#9aa89b] w-6 text-right shrink-0">{count}</span>
-                </button>
-              ))}
+              {ratingBreakdown.map(({ star, count }) => {
+                const isSelected = reviewFilter === star;
+                return (
+                  <button
+                    key={star}
+                    onClick={() => setReviewFilter(isSelected ? "all" : star)}
+                    className={`flex items-center gap-2 sm:gap-3 px-2 py-1 rounded-lg group text-left cursor-pointer transition-all ${
+                      isSelected ? "bg-[#e8f5ee] ring-2 ring-[#006a39]" : "hover:bg-[#f8fafb]"
+                    }`}
+                    title={`Click to filter ${star} Star reviews`}
+                  >
+                    <span className={`text-xs font-bold w-6 text-right shrink-0 ${
+                      isSelected ? "text-[#006a39]" : "text-[#6d7a6f] group-hover:text-[#006a39]"
+                    }`}>
+                      {star}★
+                    </span>
+                    <div className="flex-1 h-2.5 bg-[#f0f4f0] rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${allReviews.length ? (count / allReviews.length) * 100 : 0}%`,
+                          backgroundColor: star >= 4 ? "#006a39" : star === 3 ? "#d97706" : "#b91c1c",
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs font-semibold text-[#9aa89b] w-6 text-right shrink-0">{count}</span>
+                    {isSelected && (
+                      <span className="text-[10px] font-bold text-[#006a39] shrink-0">✓ Selected</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Review Filtering Tabs */}
-          <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-            {[
-              { label: `All Reviews (${allReviews.length})`, value: "all" },
-              { label: `Customer Reviews (${allReviews.filter((r) => r.role === "customer").length})`, value: "customer" },
-              { label: `Retailer Wholesale (${allReviews.filter((r) => r.role === "retailer").length})`, value: "retailer" },
-            ].map((tab) => (
+          {/* ── Review Filtering Chips & Reset ── */}
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full" style={{ scrollbarWidth: "none" }}>
+              {/* Category tabs */}
+              {[
+                { label: `All (${allReviews.length})`, value: "all" },
+                { label: `Customer (${allReviews.filter((r) => r.role === "customer").length})`, value: "customer" },
+                { label: `Retailer (${allReviews.filter((r) => r.role === "retailer").length})`, value: "retailer" },
+              ].map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => setReviewFilter(tab.value as any)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors shrink-0 ${
+                    reviewFilter === tab.value
+                      ? "bg-[#006a39] text-white shadow-sm"
+                      : "bg-white border border-[#d5dcd3] text-[#3e4a3f] hover:border-[#006a39]"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+
+              {/* Star rating filter chips */}
+              <div className="h-4 w-px bg-[#d5dcd3] mx-1 shrink-0" />
+              {[5, 4, 3, 2, 1].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setReviewFilter(reviewFilter === s ? "all" : s)}
+                  className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors shrink-0 flex items-center gap-0.5 ${
+                    reviewFilter === s
+                      ? "bg-[#f59e0b] text-white shadow-sm font-bold"
+                      : "bg-white border border-[#d5dcd3] text-[#6d7a6f] hover:border-[#f59e0b]"
+                  }`}
+                >
+                  <span>{s}</span>
+                  <span>★</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Active Filter Clear Button */}
+            {reviewFilter !== "all" && (
               <button
-                key={tab.value}
-                onClick={() => setReviewFilter(tab.value as any)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors shrink-0 ${
-                  reviewFilter === tab.value
-                    ? "bg-[#006a39] text-white shadow-sm"
-                    : "bg-white border border-[#d5dcd3] text-[#3e4a3f] hover:border-[#006a39]"
-                }`}
+                onClick={() => setReviewFilter("all")}
+                className="text-xs font-bold text-[#b91c1c] hover:bg-[#fee2e2] bg-[#fef2f2] px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 shrink-0"
               >
-                {tab.label}
+                <span>✕ Clear Filter</span>
               </button>
-            ))}
+            )}
           </div>
 
           {/* Review List */}
