@@ -14,6 +14,10 @@ import { fetchAllLabBookings, updateLabBookingStatus as dbUpdateLabBookingStatus
 import {
   printOrDownloadInvoice,
   printOrDownloadDailyReport,
+  downloadInvoicePdf,
+  downloadDailyReportPdf,
+  generateInvoiceHtml,
+  generateDailyReportHtml,
   InvoiceOrderData,
 } from "../lib/invoiceGenerator";
 
@@ -1326,6 +1330,12 @@ function OrdersTab({
     return today.toISOString().split("T")[0]; // YYYY-MM-DD
   });
 
+  // Modal & download states
+  const [previewInvoice, setPreviewInvoice] = useState<InvoiceOrderData | null>(null);
+  const [showDailyModal, setShowDailyModal] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadingDaily, setDownloadingDaily] = useState(false);
+
   const STATUS_FILTERS = ["All", "Processing", "Shipped", "Delivered", "Cancelled"];
 
   // Metrics computation
@@ -1374,51 +1384,90 @@ function OrdersTab({
     });
   }, [orders, roleSegment, filter, searchQuery]);
 
-  // Handle Daily PDF generation
-  const handleDownloadDailyPdf = () => {
+  // Handle single invoice download
+  const handleDownloadInvoice = async (o: InvoiceOrderData) => {
+    try {
+      setDownloadingId(o.id);
+      await downloadInvoicePdf(o, settings);
+    } catch (err) {
+      console.error("Download invoice error:", err);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  // Format date string for report
+  const getFormattedReportDate = () => {
     const dObj = new Date(reportDate);
-    const dateFormatted = isNaN(dObj.getTime())
+    return isNaN(dObj.getTime())
       ? reportDate
       : dObj.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  };
 
-    // Include orders for that day or all matching active orders
-    const ordersForDay = orders.map((o) => ({
-      ...o,
-      date: dateFormatted,
-    }));
+  // Get orders array for daily report
+  const getDailyOrdersList = () => {
+    const dStr = getFormattedReportDate();
+    return orders.map((o) => ({ ...o, date: dStr }));
+  };
 
-    printOrDownloadDailyReport(dateFormatted, ordersForDay, settings);
+  // Handle Daily PDF direct download
+  const handleDownloadDailyPdf = async () => {
+    try {
+      setDownloadingDaily(true);
+      const dateFormatted = getFormattedReportDate();
+      const ordersForDay = getDailyOrdersList();
+      await downloadDailyReportPdf(dateFormatted, ordersForDay, settings);
+    } catch (err) {
+      console.error("Daily report download error:", err);
+    } finally {
+      setDownloadingDaily(false);
+    }
   };
 
   return (
     <div className="flex flex-col gap-6">
       {/* ── Daily Orders PDF Export Banner ── */}
-      <div className="bg-gradient-to-r from-[#073b4c] to-[#006a39] text-white p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
+      <div className="bg-gradient-to-r from-[#073b4c] via-[#045d5a] to-[#006a39] text-white p-5 sm:p-6 rounded-2xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 shadow-lg border border-white/10">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xl">📄</span>
-            <h3 className="font-['Manrope',sans-serif] font-bold text-base sm:text-lg">
-              Daily Orders PDF & Invoice Reports
-            </h3>
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl bg-white/20 p-2 rounded-xl">📄</span>
+            <div>
+              <h3 className="font-['Manrope',sans-serif] font-extrabold text-base sm:text-xl text-white">
+                Daily Orders Management & Invoice Center
+              </h3>
+              <p className="text-white/80 text-xs sm:text-sm mt-0.5">
+                Generate and download official PDF reports for Retailers & Customers orders or individual invoice bills.
+              </p>
+            </div>
           </div>
-          <p className="text-white/80 text-xs sm:text-sm mt-1">
-            Export a comprehensive summary of all Retailers & Customers orders for any single day in official PDF format.
-          </p>
         </div>
 
-        <div className="flex items-center flex-wrap gap-2.5 w-full sm:w-auto">
-          <input
-            type="date"
-            value={reportDate}
-            onChange={(e) => setReportDate(e.target.value)}
-            className="bg-white/15 border border-white/30 text-white rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:bg-white focus:text-[#073b4c] transition-colors"
-          />
+        <div className="flex items-center flex-wrap gap-3 w-full lg:w-auto">
+          <div className="flex items-center gap-1.5 bg-white/15 px-3 py-1.5 rounded-xl border border-white/25">
+            <span className="text-xs font-bold text-white/90">Date:</span>
+            <input
+              type="date"
+              value={reportDate}
+              onChange={(e) => setReportDate(e.target.value)}
+              className="bg-transparent text-white font-bold text-xs focus:outline-none cursor-pointer"
+            />
+          </div>
+
+          <button
+            onClick={() => setShowDailyModal(true)}
+            className="bg-white/20 hover:bg-white/30 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all border border-white/30 flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>👁️</span>
+            <span>Preview Report</span>
+          </button>
+
           <button
             onClick={handleDownloadDailyPdf}
-            className="bg-white hover:bg-white/90 text-[#073b4c] font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+            disabled={downloadingDaily}
+            className="bg-[#00a86b] hover:bg-[#00925c] text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-[0.98] disabled:opacity-50"
           >
-            <span>📥</span>
-            <span>Download Daily PDF Report</span>
+            <span>{downloadingDaily ? "⏳" : "📥"}</span>
+            <span>{downloadingDaily ? "Generating PDF..." : "Download Daily Orders PDF"}</span>
           </button>
         </div>
       </div>
@@ -1595,10 +1644,10 @@ function OrdersTab({
       {/* ── Orders Table ── */}
       <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm" style={{ minWidth: "920px" }}>
+          <table className="w-full text-sm" style={{ minWidth: "960px" }}>
             <thead>
               <tr className="border-b border-[#e4ede2] bg-[#f8fafb]">
-                {["Order ID", "Account Type", "Customer / Shop", "Phone", "Items", "Amount", "Payment", "Status", "Date", "Invoice & Action"].map((h) => (
+                {["Order ID", "Account Type", "Customer / Shop", "Phone", "Items", "Amount", "Payment", "Status", "Date", "Invoice Bill & Action"].map((h) => (
                   <th key={h} className="text-left px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px] whitespace-nowrap">
                     {h}
                   </th>
@@ -1609,6 +1658,8 @@ function OrdersTab({
               {displayedOrders.map((o) => {
                 const st = orderStatus(o.status);
                 const isRetailerOrder = o.role === "retailer";
+                const isDownloadingThis = downloadingId === o.id;
+
                 return (
                   <tr key={o.id} className="border-b border-[#f0f4f0] last:border-0 hover:bg-[#fafcfa] transition-colors">
                     {/* Order ID */}
@@ -1667,9 +1718,30 @@ function OrdersTab({
                     {/* Date */}
                     <td className="px-4 py-3.5 text-[#9aa89b] text-xs whitespace-nowrap">{o.date}</td>
 
-                    {/* Action & Invoice Button */}
+                    {/* Action & Invoice Buttons */}
                     <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {/* Download PDF button */}
+                        <button
+                          onClick={() => handleDownloadInvoice(o)}
+                          disabled={isDownloadingThis}
+                          title="Directly Download SubhOne Invoice PDF"
+                          className="flex items-center gap-1 bg-[#006a39] hover:bg-[#00542d] text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all shadow-2xs whitespace-nowrap cursor-pointer active:scale-95 disabled:opacity-50"
+                        >
+                          <span>{isDownloadingThis ? "⏳" : "📥"}</span>
+                          <span>{isDownloadingThis ? "Saving..." : "PDF Bill"}</span>
+                        </button>
+
+                        {/* View & Print button */}
+                        <button
+                          onClick={() => setPreviewInvoice(o)}
+                          title="View and Print Invoice Bill"
+                          className="flex items-center gap-1 bg-[#f0f7ee] hover:bg-[#c3dec0] text-[#006a39] text-[11px] font-bold px-2 py-1 rounded-lg transition-all border border-[#c3dec0] whitespace-nowrap cursor-pointer"
+                        >
+                          <span>👁️ View</span>
+                        </button>
+
+                        {/* Status dropdown */}
                         <select
                           value={o.status}
                           onChange={(e) =>
@@ -1685,16 +1757,6 @@ function OrdersTab({
                           <option value="Delivered">Delivered</option>
                           <option value="Cancelled">Cancelled</option>
                         </select>
-
-                        {/* Download / Print Invoice Button */}
-                        <button
-                          onClick={() => printOrDownloadInvoice(o, settings)}
-                          title="Download SubhOne Invoice Bill PDF"
-                          className="flex items-center gap-1 bg-[#f0f7ee] hover:bg-[#006a39] text-[#006a39] hover:text-white border border-[#c3dec0] text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all shadow-2xs whitespace-nowrap cursor-pointer"
-                        >
-                          <span>🧾</span>
-                          <span>Invoice PDF</span>
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -1710,6 +1772,98 @@ function OrdersTab({
           </div>
         )}
       </div>
+
+      {/* ── Invoice Preview Modal ── */}
+      {previewInvoice && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in">
+            {/* Modal Header */}
+            <div className="p-4 bg-[#073b4c] text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🧾</span>
+                <span className="font-bold text-sm sm:text-base">SubhOne Official Invoice Bill — {previewInvoice.id}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => printOrDownloadInvoice(previewInvoice, settings)}
+                  className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <span>🖨️</span>
+                  <span>Print</span>
+                </button>
+                <button
+                  onClick={() => handleDownloadInvoice(previewInvoice)}
+                  disabled={downloadingId === previewInvoice.id}
+                  className="bg-[#00a86b] hover:bg-[#00925c] text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+                >
+                  <span>📥</span>
+                  <span>{downloadingId === previewInvoice.id ? "Saving PDF..." : "Download PDF"}</span>
+                </button>
+                <button
+                  onClick={() => setPreviewInvoice(null)}
+                  className="text-white/80 hover:text-white text-lg font-bold px-2 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content / Visual Preview */}
+            <div
+              className="p-6 overflow-y-auto bg-[#fafafa]"
+              dangerouslySetInnerHTML={{ __html: generateInvoiceHtml(previewInvoice, settings) }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── Daily Orders Report Preview Modal ── */}
+      {showDailyModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in">
+            {/* Modal Header */}
+            <div className="p-4 bg-[#073b4c] text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📊</span>
+                <span className="font-bold text-sm sm:text-base">
+                  Daily Orders Report Preview ({getFormattedReportDate()})
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => printOrDownloadDailyReport(getFormattedReportDate(), getDailyOrdersList(), settings)}
+                  className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <span>🖨️</span>
+                  <span>Print</span>
+                </button>
+                <button
+                  onClick={handleDownloadDailyPdf}
+                  disabled={downloadingDaily}
+                  className="bg-[#00a86b] hover:bg-[#00925c] text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+                >
+                  <span>📥</span>
+                  <span>{downloadingDaily ? "Saving PDF..." : "Download PDF File"}</span>
+                </button>
+                <button
+                  onClick={() => setShowDailyModal(false)}
+                  className="text-white/80 hover:text-white text-lg font-bold px-2 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content / Visual Preview */}
+            <div
+              className="p-6 overflow-y-auto bg-[#fafafa]"
+              dangerouslySetInnerHTML={{
+                __html: generateDailyReportHtml(getFormattedReportDate(), getDailyOrdersList(), settings),
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

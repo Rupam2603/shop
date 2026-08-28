@@ -1,3 +1,6 @@
+// @ts-ignore
+import html2pdf from "html2pdf.js";
+
 export interface InvoiceOrderData {
   id: string;
   dbId?: string;
@@ -155,322 +158,186 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
   const amountInWords = numberToWords(grandTotal);
 
   return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <title>Invoice - ${billNo}</title>
-      <style>
-        @page {
-          size: A4 portrait;
-          margin: 12mm 15mm;
-        }
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-          color: #111;
-          margin: 0;
-          padding: 10px;
-          background: #fff;
-          font-size: 12px;
-          line-height: 1.35;
-        }
-        .invoice-box {
-          max-width: 780px;
-          margin: 0 auto;
-          border: 2px solid #222;
-          padding: 18px 22px;
-          background: #fff;
-        }
-        .header-title {
-          text-align: center;
-          font-size: 20px;
-          font-weight: 800;
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
-          margin: 0 0 2px 0;
-          color: #073b4c;
-        }
-        .company-name {
-          text-align: center;
-          font-size: 16px;
-          font-weight: 700;
-          color: #006a39;
-          margin: 0 0 4px 0;
-        }
-        .company-details {
-          text-align: center;
-          font-size: 10.5px;
-          color: #444;
-          margin-bottom: 12px;
-          border-bottom: 1.5px solid #222;
-          padding-bottom: 8px;
-        }
-        .invoice-badge {
-          text-align: center;
-          font-size: 14px;
-          font-weight: 800;
-          letter-spacing: 1px;
-          margin: 10px 0 12px 0;
-          text-decoration: underline;
-        }
-        .meta-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 12px;
-        }
-        .meta-table th, .meta-table td {
-          border: 1px solid #333;
-          padding: 6px 10px;
-          font-size: 11px;
-        }
-        .meta-table th {
-          background-color: #f2f5f3;
-          font-weight: 700;
-          text-align: center;
-        }
-        .meta-table td {
-          text-align: center;
-          font-weight: 600;
-        }
-        .customer-section {
-          margin-bottom: 12px;
-          padding: 8px 10px;
-          background: #fbfdfb;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-        }
-        .customer-row {
-          margin-bottom: 4px;
-          font-size: 11.5px;
-        }
-        .customer-row strong {
-          display: inline-block;
-          width: 80px;
-        }
-        .items-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 12px;
-        }
-        .items-table th {
-          background-color: #f2f5f3;
-          border: 1px solid #333;
-          padding: 7px 6px;
-          font-size: 10.5px;
-          font-weight: 700;
-          text-transform: uppercase;
-        }
-        .totals-section {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 12px;
-          gap: 20px;
-        }
-        .payment-info {
-          flex: 1;
-          font-size: 11px;
-        }
-        .checkbox-group {
-          margin-top: 4px;
-          margin-bottom: 6px;
-        }
-        .checkbox-item {
-          display: inline-block;
-          margin-right: 12px;
-          font-weight: 600;
-        }
-        .totals-table {
-          width: 240px;
-          border-collapse: collapse;
-        }
-        .totals-table td {
-          padding: 4px 6px;
-          font-size: 11.5px;
-        }
-        .totals-table tr.grand-total td {
-          border-top: 2px solid #222;
-          border-bottom: 2px solid #222;
-          font-size: 13px;
-          font-weight: 800;
-          color: #073b4c;
-          padding: 6px 6px;
-        }
-        .words-section {
-          border-top: 1px dashed #666;
-          border-bottom: 1px dashed #666;
-          padding: 6px 4px;
-          font-size: 11px;
-          margin-bottom: 24px;
-          background: #fafafa;
-        }
-        .signature-section {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-          margin-top: 28px;
-          padding-top: 10px;
-        }
-        .sig-box {
-          text-align: center;
-          width: 200px;
-          border-top: 1px solid #333;
-          padding-top: 5px;
-          font-size: 11px;
-          font-weight: 600;
-        }
-        .footer-note {
-          text-align: center;
-          font-size: 10px;
-          color: #666;
-          margin-top: 18px;
-          border-top: 1px solid #eee;
-          padding-top: 6px;
-        }
-        @media print {
-          body {
-            padding: 0;
-            background: transparent;
-          }
-          .invoice-box {
-            border: 2px solid #000;
-            padding: 15px;
-          }
-          .no-print {
-            display: none !important;
-          }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="no-print" style="text-align: right; max-width: 780px; margin: 10px auto;">
-        <button onclick="window.print()" style="background: #006a39; color: white; border: none; padding: 8px 18px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-          🖨️ Print / Save as PDF
-        </button>
+    <div class="invoice-box" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #111; max-width: 780px; margin: 0 auto; border: 2px solid #222; padding: 18px 22px; background: #fff; font-size: 12px; line-height: 1.35;">
+      <div style="text-align: center; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin: 0 0 2px 0; color: #073b4c;">
+        SubhOne INVOICE BILL
+      </div>
+      <div style="text-align: center; font-size: 16px; font-weight: 700; color: #006a39; margin: 0 0 4px 0;">
+        ${storeName}
+      </div>
+      <div style="text-align: center; font-size: 10.5px; color: #444; margin-bottom: 12px; border-bottom: 1.5px solid #222; padding-bottom: 8px;">
+        ${storeAddress} | Phone: ${storePhone} | Email: ${storeEmail}<br/>
+        GSTIN: ${gstin} | Drug Licence No.: ${drugLicence}
       </div>
 
-      <div class="invoice-box">
-        <div class="header-title">SubhOne INVOICE BILL</div>
-        <div class="company-name">${storeName}</div>
-        <div class="company-details">
-          ${storeAddress} | Phone: ${storePhone} | Email: ${storeEmail}<br/>
-          GSTIN: ${gstin} | Drug Licence No.: ${drugLicence}
+      <div style="text-align: center; font-size: 14px; font-weight: 800; letter-spacing: 1px; margin: 10px 0 12px 0; text-decoration: underline;">
+        INVOICE / BILL
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
+        <thead>
+          <tr>
+            <th style="border: 1px solid #333; padding: 6px 10px; font-size: 11px; background-color: #f2f5f3; font-weight: 700; text-align: center;">Bill No.</th>
+            <th style="border: 1px solid #333; padding: 6px 10px; font-size: 11px; background-color: #f2f5f3; font-weight: 700; text-align: center;">Date</th>
+            <th style="border: 1px solid #333; padding: 6px 10px; font-size: 11px; background-color: #f2f5f3; font-weight: 700; text-align: center;">Customer ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="border: 1px solid #333; padding: 6px 10px; font-size: 11px; text-align: center; font-weight: bold; color: #006a39;">${billNo}</td>
+            <td style="border: 1px solid #333; padding: 6px 10px; font-size: 11px; text-align: center; font-weight: 600;">${dateFormatted}</td>
+            <td style="border: 1px solid #333; padding: 6px 10px; font-size: 11px; text-align: center; font-weight: 600;">${custId}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-bottom: 12px; padding: 8px 10px; background: #fbfdfb; border: 1px solid #ddd; border-radius: 4px;">
+        <div style="margin-bottom: 4px; font-size: 11.5px;"><strong>Customer:</strong> ${customerDisplay}</div>
+        <div style="margin-bottom: 4px; font-size: 11.5px;"><strong>Mobile:</strong> ${order.phone || "+91 98765 00000"}</div>
+        <div style="font-size: 11.5px;"><strong>Address:</strong> ${order.address || "Standard Store Delivery Address"}</div>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
+        <thead>
+          <tr>
+            <th style="width: 40px; text-align: center; background-color: #f2f5f3; border: 1px solid #333; padding: 7px 6px; font-size: 10.5px; font-weight: 700; text-transform: uppercase;">S.No.</th>
+            <th style="text-align: left; background-color: #f2f5f3; border: 1px solid #333; padding: 7px 6px; font-size: 10.5px; font-weight: 700; text-transform: uppercase;">Medicine / Product</th>
+            <th style="width: 75px; text-align: center; background-color: #f2f5f3; border: 1px solid #333; padding: 7px 6px; font-size: 10.5px; font-weight: 700; text-transform: uppercase;">Batch</th>
+            <th style="width: 60px; text-align: center; background-color: #f2f5f3; border: 1px solid #333; padding: 7px 6px; font-size: 10.5px; font-weight: 700; text-transform: uppercase;">Expiry</th>
+            <th style="width: 45px; text-align: center; background-color: #f2f5f3; border: 1px solid #333; padding: 7px 6px; font-size: 10.5px; font-weight: 700; text-transform: uppercase;">Qty</th>
+            <th style="width: 65px; text-align: right; background-color: #f2f5f3; border: 1px solid #333; padding: 7px 6px; font-size: 10.5px; font-weight: 700; text-transform: uppercase;">MRP</th>
+            <th style="width: 65px; text-align: right; background-color: #f2f5f3; border: 1px solid #333; padding: 7px 6px; font-size: 10.5px; font-weight: 700; text-transform: uppercase;">Rate</th>
+            <th style="width: 80px; text-align: right; background-color: #f2f5f3; border: 1px solid #333; padding: 7px 6px; font-size: 10.5px; font-weight: 700; text-transform: uppercase;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemRowsHtml}
+        </tbody>
+      </table>
+
+      <div style="display: flex; justify-content: space-between; margin-bottom: 12px; gap: 20px;">
+        <div style="flex: 1; font-size: 11px;">
+          <div style="margin-top: 4px; margin-bottom: 6px;">
+            <strong>Payment Mode:</strong><br/>
+            <span style="display: inline-block; margin-right: 12px; font-weight: 600;">${isCash ? "☑" : "☐"} Cash</span>
+            <span style="display: inline-block; margin-right: 12px; font-weight: 600;">${isUPI ? "☑" : "☐"} UPI</span>
+            <span style="display: inline-block; margin-right: 12px; font-weight: 600;">${isCard ? "☑" : "☐"} Card</span>
+            <span style="display: inline-block; margin-right: 12px; font-weight: 600;">${isCOD ? "☑" : "☐"} COD</span>
+          </div>
+          <div>
+            <strong>Payment Status:</strong>
+            <span style="display: inline-block; margin-left: 6px; font-weight: 600;">☑ Paid</span>
+            <span style="display: inline-block; margin-left: 12px; font-weight: 600;">☐ Pending</span>
+          </div>
         </div>
 
-        <div class="invoice-badge">INVOICE / BILL</div>
-
-        <table class="meta-table">
-          <thead>
-            <tr>
-              <th>Bill No.</th>
-              <th>Date</th>
-              <th>Customer ID</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="color: #006a39; font-weight: bold;">${billNo}</td>
-              <td>${dateFormatted}</td>
-              <td>${custId}</td>
-            </tr>
-          </tbody>
+        <table style="width: 240px; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 3px 6px; font-size: 11px;">Subtotal:</td>
+            <td style="padding: 3px 6px; font-size: 11px; text-align: right; font-weight: 600;">₹${subtotal.toLocaleString()}</td>
+          </tr>
+          <tr>
+            <td style="padding: 3px 6px; font-size: 11px;">Discount:</td>
+            <td style="padding: 3px 6px; font-size: 11px; text-align: right; color: #006a39; font-weight: 600;">-₹${discount.toLocaleString()}</td>
+          </tr>
+          <tr>
+            <td style="padding: 3px 6px; font-size: 11px;">GST (Incl.):</td>
+            <td style="padding: 3px 6px; font-size: 11px; text-align: right;">₹${gstAmount.toLocaleString()}</td>
+          </tr>
+          <tr>
+            <td style="padding: 3px 6px; font-size: 11px;">Delivery Charges:</td>
+            <td style="padding: 3px 6px; font-size: 11px; text-align: right; font-weight: 600;">${deliveryCharge === 0 ? "FREE" : `₹${deliveryCharge}`}</td>
+          </tr>
+          <tr style="border-top: 2px solid #222; border-bottom: 2px solid #222; font-size: 13px; font-weight: 800; color: #073b4c;">
+            <td style="padding: 6px 6px;">GRAND TOTAL:</td>
+            <td style="padding: 6px 6px; text-align: right;">₹${grandTotal.toLocaleString()}</td>
+          </tr>
         </table>
+      </div>
 
-        <div class="customer-section">
-          <div class="customer-row"><strong>Customer:</strong> ${customerDisplay}</div>
-          <div class="customer-row"><strong>Mobile:</strong> ${order.phone || "+91 98765 00000"}</div>
-          <div class="customer-row"><strong>Address:</strong> ${order.address || "Standard Store Delivery Address"}</div>
+      <div style="border-top: 1px dashed #666; border-bottom: 1px dashed #666; padding: 6px 4px; font-size: 11px; margin-bottom: 20px; background: #fafafa;">
+        <strong>Amount in Words:</strong> ${amountInWords}
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; padding-top: 8px;">
+        <div style="text-align: center; width: 180px; border-top: 1px solid #333; padding-top: 4px; font-size: 10.5px; font-weight: 600;">
+          Customer Signature
         </div>
-
-        <table class="items-table">
-          <thead>
-            <tr>
-              <th style="width: 40px; text-align: center;">S.No.</th>
-              <th style="text-align: left;">Medicine / Product</th>
-              <th style="width: 75px; text-align: center;">Batch</th>
-              <th style="width: 60px; text-align: center;">Expiry</th>
-              <th style="width: 45px; text-align: center;">Qty</th>
-              <th style="width: 65px; text-align: right;">MRP</th>
-              <th style="width: 65px; text-align: right;">Rate</th>
-              <th style="width: 80px; text-align: right;">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemRowsHtml}
-          </tbody>
-        </table>
-
-        <div class="totals-section">
-          <div class="payment-info">
-            <div class="checkbox-group">
-              <strong>Payment Mode:</strong><br/>
-              <span class="checkbox-item">${isCash ? "☑" : "☐"} Cash</span>
-              <span class="checkbox-item">${isUPI ? "☑" : "☐"} UPI</span>
-              <span class="checkbox-item">${isCard ? "☑" : "☐"} Card</span>
-              <span class="checkbox-item">${isCOD ? "☑" : "☐"} COD</span>
-            </div>
-            <div class="checkbox-group">
-              <strong>Payment Status:</strong>
-              <span class="checkbox-item" style="margin-left: 6px;">☑ Paid</span>
-              <span class="checkbox-item">☐ Pending</span>
-            </div>
-          </div>
-
-          <table class="totals-table">
-            <tr>
-              <td>Subtotal:</td>
-              <td style="text-align: right; font-weight: 600;">₹${subtotal.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td>Discount:</td>
-              <td style="text-align: right; color: #006a39; font-weight: 600;">-₹${discount.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td>GST (Incl.):</td>
-              <td style="text-align: right;">₹${gstAmount.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td>Delivery Charges:</td>
-              <td style="text-align: right; font-weight: 600;">${deliveryCharge === 0 ? "FREE" : `₹${deliveryCharge}`}</td>
-            </tr>
-            <tr class="grand-total">
-              <td>GRAND TOTAL:</td>
-              <td style="text-align: right;">₹${grandTotal.toLocaleString()}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div class="words-section">
-          <strong>Amount in Words:</strong> ${amountInWords}
-        </div>
-
-        <div class="signature-section">
-          <div class="sig-box">
-            Customer Signature
-          </div>
-          <div class="sig-box">
-            Authorized Signatory<br/>
-            <span style="font-size: 9.5px; color: #555; font-weight: normal;">SubhOne Health Group</span>
-          </div>
-        </div>
-
-        <div class="footer-note">
-          Thank you for your purchase. Please retain this bill for future reference.
+        <div style="text-align: center; width: 180px; border-top: 1px solid #333; padding-top: 4px; font-size: 10.5px; font-weight: 600;">
+          Authorized Signatory<br/>
+          <span style="font-size: 9px; color: #555; font-weight: normal;">SubhOne Health Group</span>
         </div>
       </div>
-    </body>
-    </html>
+
+      <div style="text-align: center; font-size: 9.5px; color: #666; margin-top: 16px; border-top: 1px solid #eee; padding-top: 6px;">
+        Thank you for your purchase. Please retain this bill for future reference.
+      </div>
+    </div>
   `;
 }
 
 /**
- * Open print / PDF download window for a single invoice
+ * Directly download an invoice as a PDF file
+ */
+export async function downloadInvoicePdf(order: InvoiceOrderData, settings?: Partial<StoreSettings>) {
+  const container = document.createElement("div");
+  container.style.position = "absolute";
+  container.style.left = "-9999px";
+  container.style.top = "-9999px";
+  container.style.width = "780px";
+  container.innerHTML = generateInvoiceHtml(order, settings);
+  document.body.appendChild(container);
+
+  const billNo = order.id.startsWith("ORD-") ? `INV-${order.id.replace("ORD-", "")}` : `INV-${order.id}`;
+
+  const opt = {
+    margin: [6, 6, 6, 6],
+    filename: `SubhOne-Invoice-${billNo}.pdf`,
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+  };
+
+  try {
+    // @ts-ignore
+    await html2pdf().set(opt).from(container.firstElementChild || container).save();
+  } catch (err) {
+    console.error("PDF generation failed, falling back to print dialog:", err);
+    printOrDownloadInvoice(order, settings);
+  } finally {
+    document.body.removeChild(container);
+  }
+}
+
+/**
+ * Open print dialog for single invoice
  */
 export function printOrDownloadInvoice(order: InvoiceOrderData, settings?: Partial<StoreSettings>) {
   const invoiceHtml = generateInvoiceHtml(order, settings);
   const printWindow = window.open("", "_blank", "width=850,height=1000");
   if (printWindow) {
     printWindow.document.open();
-    printWindow.document.write(invoiceHtml);
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice - ${order.id}</title>
+        <style>
+          @page { size: A4 portrait; margin: 10mm; }
+          body { margin: 0; padding: 10px; background: #fff; }
+          @media print { .no-print { display: none !important; } }
+        </style>
+      </head>
+      <body>
+        <div class="no-print" style="text-align: right; max-width: 780px; margin: 10px auto;">
+          <button onclick="window.print()" style="background: #006a39; color: white; border: none; padding: 8px 18px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer;">
+            🖨️ Print / Save as PDF
+          </button>
+        </div>
+        ${invoiceHtml}
+      </body>
+      </html>
+    `);
     printWindow.document.close();
     printWindow.focus();
   }
@@ -514,128 +381,160 @@ export function generateDailyReportHtml(
   };
 
   return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <title>Daily Orders Report - ${dateStr}</title>
-      <style>
-        @page { size: A4 landscape; margin: 10mm; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #222; margin: 0; padding: 12px; font-size: 11px; }
-        .report-box { max-width: 1050px; margin: 0 auto; background: #fff; }
-        .report-header { border-bottom: 2px solid #073b4c; padding-bottom: 10px; margin-bottom: 14px; }
-        .title { font-size: 18px; font-weight: 800; color: #073b4c; margin: 0; text-transform: uppercase; }
-        .sub-header { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 4px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
-        .stat-card { border: 1px solid #ddd; border-radius: 6px; padding: 8px 12px; background: #fafafa; }
-        .stat-card .label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #666; }
-        .stat-card .val { font-size: 16px; font-weight: 800; color: #073b4c; margin-top: 2px; }
-        .section-heading { font-size: 13px; font-weight: 800; color: #073b4c; margin: 14px 0 6px 0; display: flex; justify-content: space-between; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
-        th { background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700; text-align: left; }
-        @media print { .no-print { display: none !important; } body { padding: 0; } }
-      </style>
-    </head>
-    <body>
-      <div class="no-print" style="text-align: right; max-width: 1050px; margin: 8px auto;">
-        <button onclick="window.print()" style="background: #073b4c; color: white; border: none; padding: 8px 18px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer;">
-          🖨️ Print / Save Daily Report as PDF
-        </button>
-      </div>
-
-      <div class="report-box">
-        <div class="report-header">
-          <h1 class="title">${storeName} — Daily Orders Management Report</h1>
-          <div class="sub-header">
-            <div>${storeAddress} | Ph: ${storePhone}</div>
-            <div style="font-weight: 700; font-size: 13px; color: #006a39;">Date: ${dateStr}</div>
-          </div>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="label">Total Orders Today</div>
-            <div class="val">${orders.length} Orders</div>
-          </div>
-          <div class="stat-card">
-            <div class="label">Total Gross Revenue</div>
-            <div class="val">₹${totalRevenue.toLocaleString()}</div>
-          </div>
-          <div class="stat-card" style="border-left: 3px solid #0369a1;">
-            <div class="label">🏪 Retailer Orders (${retailerOrders.length})</div>
-            <div class="val" style="color: #0369a1;">₹${retailerRevenue.toLocaleString()}</div>
-          </div>
-          <div class="stat-card" style="border-left: 3px solid #006a39;">
-            <div class="label">👤 Customer Orders (${customerOrders.length})</div>
-            <div class="val" style="color: #006a39;">₹${customerRevenue.toLocaleString()}</div>
-          </div>
-        </div>
-
-        <!-- Retailer Orders Section -->
-        <div class="section-heading">
-          <span>🏪 Retailer Wholesale Orders (${retailerOrders.length})</span>
-          <span>Subtotal: ₹${retailerRevenue.toLocaleString()}</span>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 30px; text-align: center;">#</th>
-              <th>Order ID</th>
-              <th>Retailer / Pharmacy</th>
-              <th>Phone</th>
-              <th style="text-align: center;">Items</th>
-              <th style="text-align: right;">Amount</th>
-              <th style="text-align: center;">Payment</th>
-              <th style="text-align: center;">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${renderTableRows(retailerOrders)}
-          </tbody>
-        </table>
-
-        <!-- Customer Orders Section -->
-        <div class="section-heading">
-          <span>👤 Customer Retail Orders (${customerOrders.length})</span>
-          <span>Subtotal: ₹${customerRevenue.toLocaleString()}</span>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 30px; text-align: center;">#</th>
-              <th>Order ID</th>
-              <th>Customer Name</th>
-              <th>Phone</th>
-              <th style="text-align: center;">Items</th>
-              <th style="text-align: right;">Amount</th>
-              <th style="text-align: center;">Payment</th>
-              <th style="text-align: center;">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${renderTableRows(customerOrders)}
-          </tbody>
-        </table>
-
-        <div style="margin-top: 20px; display: flex; justify-content: space-between; font-size: 10px; color: #777; border-top: 1px solid #ddd; padding-top: 8px;">
-          <span>Generated by SubhOne Admin Control System</span>
-          <span>Official Store Records — Confirmed</span>
+    <div class="report-box" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color: #222; max-width: 1050px; margin: 0 auto; background: #fff; font-size: 11px; padding: 10px;">
+      <div style="border-bottom: 2px solid #073b4c; padding-bottom: 10px; margin-bottom: 14px;">
+        <h1 style="font-size: 18px; font-weight: 800; color: #073b4c; margin: 0; text-transform: uppercase;">
+          ${storeName} — Daily Orders Management Report
+        </h1>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 4px;">
+          <div>${storeAddress} | Ph: ${storePhone}</div>
+          <div style="font-weight: 700; font-size: 13px; color: #006a39;">Report Date: ${dateStr}</div>
         </div>
       </div>
-    </body>
-    </html>
+
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px;">
+        <div style="border: 1px solid #ddd; border-radius: 6px; padding: 8px 12px; background: #fafafa;">
+          <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #666;">Total Orders Today</div>
+          <div style="font-size: 16px; font-weight: 800; color: #073b4c; margin-top: 2px;">${orders.length} Orders</div>
+        </div>
+        <div style="border: 1px solid #ddd; border-radius: 6px; padding: 8px 12px; background: #fafafa;">
+          <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #666;">Total Gross Revenue</div>
+          <div style="font-size: 16px; font-weight: 800; color: #073b4c; margin-top: 2px;">₹${totalRevenue.toLocaleString()}</div>
+        </div>
+        <div style="border: 1px solid #ddd; border-radius: 6px; padding: 8px 12px; background: #fafafa; border-left: 3px solid #0369a1;">
+          <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #666;">🏪 Retailer Orders (${retailerOrders.length})</div>
+          <div style="font-size: 16px; font-weight: 800; color: #0369a1; margin-top: 2px;">₹${retailerRevenue.toLocaleString()}</div>
+        </div>
+        <div style="border: 1px solid #ddd; border-radius: 6px; padding: 8px 12px; background: #fafafa; border-left: 3px solid #006a39;">
+          <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #666;">👤 Customer Orders (${customerOrders.length})</div>
+          <div style="font-size: 16px; font-weight: 800; color: #006a39; margin-top: 2px;">₹${customerRevenue.toLocaleString()}</div>
+        </div>
+      </div>
+
+      <!-- Retailer Orders Section -->
+      <div style="font-size: 13px; font-weight: 800; color: #073b4c; margin: 14px 0 6px 0; display: flex; justify-content: space-between;">
+        <span>🏪 Retailer Wholesale Orders (${retailerOrders.length})</span>
+        <span>Subtotal: ₹${retailerRevenue.toLocaleString()}</span>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 14px;">
+        <thead>
+          <tr>
+            <th style="width: 30px; text-align: center; background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700;">#</th>
+            <th style="background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700; text-align: left;">Order ID</th>
+            <th style="background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700; text-align: left;">Retailer / Pharmacy</th>
+            <th style="background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700; text-align: left;">Phone</th>
+            <th style="text-align: center; background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700;">Items</th>
+            <th style="text-align: right; background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700;">Amount</th>
+            <th style="text-align: center; background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700;">Payment</th>
+            <th style="text-align: center; background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${renderTableRows(retailerOrders)}
+        </tbody>
+      </table>
+
+      <!-- Customer Orders Section -->
+      <div style="font-size: 13px; font-weight: 800; color: #073b4c; margin: 14px 0 6px 0; display: flex; justify-content: space-between;">
+        <span>👤 Customer Retail Orders (${customerOrders.length})</span>
+        <span>Subtotal: ₹${customerRevenue.toLocaleString()}</span>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 14px;">
+        <thead>
+          <tr>
+            <th style="width: 30px; text-align: center; background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700;">#</th>
+            <th style="background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700; text-align: left;">Order ID</th>
+            <th style="background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700; text-align: left;">Customer Name</th>
+            <th style="background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700; text-align: left;">Phone</th>
+            <th style="text-align: center; background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700;">Items</th>
+            <th style="text-align: right; background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700;">Amount</th>
+            <th style="text-align: center; background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700;">Payment</th>
+            <th style="text-align: center; background: #f0f4f0; border: 1px solid #ccc; padding: 6px; font-size: 10px; font-weight: 700;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${renderTableRows(customerOrders)}
+        </tbody>
+      </table>
+
+      <div style="margin-top: 20px; display: flex; justify-content: space-between; font-size: 10px; color: #777; border-top: 1px solid #ddd; padding-top: 8px;">
+        <span>Generated by SubhOne Admin Control System</span>
+        <span>Official Store Records — Confirmed</span>
+      </div>
+    </div>
   `;
 }
 
 /**
- * Open print / PDF download window for Daily Orders Report
+ * Directly download Daily Orders Report as a PDF file
  */
-export function printOrDownloadDailyReport(dateStr: string, orders: InvoiceOrderData[], settings?: Partial<StoreSettings>) {
+export async function downloadDailyReportPdf(
+  dateStr: string,
+  orders: InvoiceOrderData[],
+  settings?: Partial<StoreSettings>
+) {
+  const container = document.createElement("div");
+  container.style.position = "absolute";
+  container.style.left = "-9999px";
+  container.style.top = "-9999px";
+  container.style.width = "1050px";
+  container.innerHTML = generateDailyReportHtml(dateStr, orders, settings);
+  document.body.appendChild(container);
+
+  const cleanDate = dateStr.replace(/[^a-zA-Z0-9]/g, "-");
+
+  const opt = {
+    margin: [6, 6, 6, 6],
+    filename: `SubhOne-Daily-Orders-${cleanDate}.pdf`,
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+    jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
+  };
+
+  try {
+    // @ts-ignore
+    await html2pdf().set(opt).from(container.firstElementChild || container).save();
+  } catch (err) {
+    console.error("Daily report PDF generation failed, falling back to print dialog:", err);
+    printOrDownloadDailyReport(dateStr, orders, settings);
+  } finally {
+    document.body.removeChild(container);
+  }
+}
+
+/**
+ * Open print dialog for Daily Orders Report
+ */
+export function printOrDownloadDailyReport(
+  dateStr: string,
+  orders: InvoiceOrderData[],
+  settings?: Partial<StoreSettings>
+) {
   const reportHtml = generateDailyReportHtml(dateStr, orders, settings);
   const printWindow = window.open("", "_blank", "width=1100,height=900");
   if (printWindow) {
     printWindow.document.open();
-    printWindow.document.write(reportHtml);
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Daily Orders Report - ${dateStr}</title>
+        <style>
+          @page { size: A4 landscape; margin: 8mm; }
+          body { margin: 0; padding: 10px; background: #fff; }
+          @media print { .no-print { display: none !important; } }
+        </style>
+      </head>
+      <body>
+        <div class="no-print" style="text-align: right; max-width: 1050px; margin: 8px auto;">
+          <button onclick="window.print()" style="background: #073b4c; color: white; border: none; padding: 8px 18px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer;">
+            🖨️ Print / Save Daily Report as PDF
+          </button>
+        </div>
+        ${reportHtml}
+      </body>
+      </html>
+    `);
     printWindow.document.close();
     printWindow.focus();
   }
