@@ -93,7 +93,26 @@ export async function placeOrder(params: {
     console.error("Error creating order items:", itemsError.message);
   }
 
-  // 3. Clear user's cart in Supabase
+  // 3. Decrement product stock in real-time
+  for (const item of params.items) {
+    try {
+      if (item.productId && item.productId.includes("-")) {
+        const { data: prod } = await supabase.from("products").select("stock").eq("id", item.productId).single();
+        if (prod) {
+          await supabase.from("products").update({ stock: Math.max(0, prod.stock - item.quantity) }).eq("id", item.productId);
+        }
+      } else {
+        const { data: prod } = await supabase.from("products").select("id, stock").eq("name", item.name).maybeSingle();
+        if (prod) {
+          await supabase.from("products").update({ stock: Math.max(0, prod.stock - item.quantity) }).eq("id", prod.id);
+        }
+      }
+    } catch (e) {
+      console.warn("Stock update warning:", e);
+    }
+  }
+
+  // 4. Clear user's cart in Supabase
   await supabase.from("cart_items").delete().eq("user_id", user.id);
 
   return { data: orderData as DbOrder, error: null };

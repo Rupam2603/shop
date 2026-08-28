@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import type { Page } from "../App";
 import ProductDetailModal, { nameToId, type PopupProduct } from "../components/ProductModal";
 import { useCart } from "../contexts/CartContext";
-import { fetchProducts, DbProduct } from "../lib/products";
+import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
 import imgHeroBg from "@/imports/SubhOneHomeYourWellnessPartner/ebb34ae9c328f1310a1fb45e38080c80fbd47637.png";
 import imgProduct1 from "@/imports/SubhOneHomeYourWellnessPartner/ed2cee3d70ea8b6d972ea44b1746b961d47ff5b3.png";
 import imgProduct2 from "@/imports/SubhOneHomeYourWellnessPartner/a57c492ebf391250fdba394a1ec646ea8a83b1ed.png";
@@ -178,18 +178,34 @@ function MiniCard({
   onClick,
   onAddToCart,
 }: {
-  p: { name: string; sub: string; price: string; orig: string; disc: string; img: string };
+  p: { name: string; sub: string; price: string; orig: string; disc: string; img: string; stock?: number };
   accent: string;
   category?: string;
   onClick: () => void;
   onAddToCart?: () => void;
 }) {
+  const isOutOfStock = p.stock !== undefined && p.stock <= 0;
+  const isLowStock = p.stock !== undefined && p.stock > 0 && p.stock <= 10;
+
   return (
-    <div onClick={onClick} className="w-[155px] sm:w-[185px] lg:w-auto shrink-0 snap-start bg-white rounded-2xl border border-[#e4ede2] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer">
+    <div onClick={onClick} className={`w-[155px] sm:w-[185px] lg:w-auto shrink-0 snap-start bg-white rounded-2xl border ${isOutOfStock ? "border-red-200 opacity-80" : "border-[#e4ede2]"} hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer`}>
       <div className="relative bg-[#f8fafb] h-32 sm:h-36 overflow-hidden">
         {p.disc && (
           <span className="absolute top-2 left-2 z-10 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase" style={{ backgroundColor: accent }}>
             {p.disc} OFF
+          </span>
+        )}
+        {isOutOfStock ? (
+          <span className="absolute top-2 right-2 z-10 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">
+            Out of Stock
+          </span>
+        ) : isLowStock ? (
+          <span className="absolute top-2 right-2 z-10 bg-[#fef3c7] text-[#b45309] border border-[#fde68a] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase animate-pulse">
+            Only {p.stock} Left
+          </span>
+        ) : (
+          <span className="absolute top-2 right-2 z-10 bg-[#d1fae5]/90 text-[#047857] text-[8px] font-bold px-1.5 py-0.5 rounded">
+            {p.stock} in stock
           </span>
         )}
         <img src={p.img} alt={p.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.15"; }} />
@@ -202,17 +218,21 @@ function MiniCard({
             <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-base">{p.price}</span>
             {p.orig && <span className="text-[#9aa89b] text-[10px] sm:text-xs line-through ml-1">MRP {p.orig}</span>}
           </div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddToCart?.();
-            }}
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shrink-0 hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: accent }}
-            title="Add to cart"
-          >
-            <PlusIcon />
-          </button>
+          {isOutOfStock ? (
+            <span className="text-[9px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">Out</span>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToCart?.();
+              }}
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shrink-0 hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: accent }}
+              title="Add to cart"
+            >
+              <PlusIcon />
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -264,6 +284,7 @@ function CategorySection({
               cat: item.cat,
               brand: p.name.split(" ")[0],
               img: p.img,
+              stock: (p as any).stock ?? 50,
             })}
             onAddToCart={() => onAddToCart(p, item.cat)}
           />
@@ -297,7 +318,25 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
         setDbProducts(data);
       }
     });
-    return () => { mounted = false; };
+
+    // Real-time Supabase subscription for stock and product changes
+    const unsubscribe = subscribeToProductsRealtime((payload) => {
+      if (payload.eventType === "UPDATE" && payload.new) {
+        setDbProducts((prev) => {
+          if (!prev) return [payload.new];
+          return prev.map((p) => (p.id === payload.new.id ? { ...p, ...payload.new } : p));
+        });
+      } else if (payload.eventType === "INSERT" && payload.new) {
+        setDbProducts((prev) => (prev ? [payload.new, ...prev] : [payload.new]));
+      } else if (payload.eventType === "DELETE" && payload.old) {
+        setDbProducts((prev) => (prev ? prev.filter((p) => p.id !== payload.old.id) : []));
+      }
+    });
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const categoriesData = useMemo(() => {
@@ -319,6 +358,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
           img: p.image_url,
           brand: p.brand,
           cat: p.category_name,
+          stock: p.stock ?? 50,
         })),
       };
     });
@@ -341,6 +381,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
       img: p.image_url,
       badge: `${p.discount_percent}% OFF`,
       color: "#ba1a1a",
+      stock: p.stock ?? 50,
     }));
   }, [dbProducts, isRetailer]);
 
@@ -445,47 +486,68 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
             <button onClick={() => onNavigate("offers")} className="font-bold text-[#006a39] text-xs sm:text-sm hover:underline">View All</button>
           </div>
           <div className="flex lg:grid lg:grid-cols-4 gap-3 sm:gap-4 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
-            {flashSaleData.map((p) => (
-              <div
-                key={p.name}
-                onClick={() => setSelectedProduct({ id: nameToId(p.name), name: p.name, sub: p.sub, price: p.price, orig: p.orig, disc: p.disc, cat: p.cat, brand: p.brand, img: p.img })}
-                className="w-[170px] sm:w-[220px] lg:w-auto shrink-0 snap-start bg-white rounded-2xl border border-[rgba(189,202,188,0.4)] overflow-hidden flex flex-col group hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
-              >
-                <div className="bg-[#f8fafb] h-32 sm:h-40 relative overflow-hidden flex items-center justify-center">
-                  <span className="absolute top-2 left-2 z-10 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded uppercase" style={{ backgroundColor: p.color }}>{p.badge}</span>
-                  <img src={p.img} alt={p.name} className="h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
-                </div>
-                <div className="p-3 sm:p-4 flex flex-col gap-1 flex-1">
-                  <p className="font-bold text-[#073b4c] text-xs sm:text-sm leading-5 line-clamp-2">{p.name}</p>
-                  <p className="text-[#3e4a3f] text-[10px] sm:text-xs">{p.sub}</p>
-                  <div className="flex items-end justify-between mt-auto pt-2">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-lg">{p.price}</span>
-                      {p.orig && <span className="text-[#9aa89b] text-[10px] sm:text-xs line-through">MRP {p.orig}</span>}
+            {flashSaleData.map((p) => {
+              const isOutOfStock = (p as any).stock !== undefined && (p as any).stock <= 0;
+              const isLowStock = (p as any).stock !== undefined && (p as any).stock > 0 && (p as any).stock <= 10;
+              return (
+                <div
+                  key={p.name}
+                  onClick={() => setSelectedProduct({ id: nameToId(p.name), name: p.name, sub: p.sub, price: p.price, orig: p.orig, disc: p.disc, cat: p.cat, brand: p.brand, img: p.img, stock: (p as any).stock ?? 50 })}
+                  className={`w-[170px] sm:w-[220px] lg:w-auto shrink-0 snap-start bg-white rounded-2xl border ${isOutOfStock ? "border-red-200 opacity-80" : "border-[rgba(189,202,188,0.4)]"} overflow-hidden flex flex-col group hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer`}
+                >
+                  <div className="bg-[#f8fafb] h-32 sm:h-40 relative overflow-hidden flex items-center justify-center">
+                    <span className="absolute top-2 left-2 z-10 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded uppercase" style={{ backgroundColor: p.color }}>{p.badge}</span>
+                    {isOutOfStock ? (
+                      <span className="absolute top-2 right-2 z-10 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">
+                        Out of Stock
+                      </span>
+                    ) : isLowStock ? (
+                      <span className="absolute top-2 right-2 z-10 bg-[#fef3c7] text-[#b45309] border border-[#fde68a] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase animate-pulse">
+                        Only {(p as any).stock} Left
+                      </span>
+                    ) : (
+                      <span className="absolute top-2 right-2 z-10 bg-[#d1fae5]/90 text-[#047857] text-[8px] font-bold px-1.5 py-0.5 rounded">
+                        {(p as any).stock ?? 50} in stock
+                      </span>
+                    )}
+                    <img src={p.img} alt={p.name} className="h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
+                  </div>
+                  <div className="p-3 sm:p-4 flex flex-col gap-1 flex-1">
+                    <p className="font-bold text-[#073b4c] text-xs sm:text-sm leading-5 line-clamp-2">{p.name}</p>
+                    <p className="text-[#3e4a3f] text-[10px] sm:text-xs">{p.sub}</p>
+                    <div className="flex items-end justify-between mt-auto pt-2">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-lg">{p.price}</span>
+                        {p.orig && <span className="text-[#9aa89b] text-[10px] sm:text-xs line-through">MRP {p.orig}</span>}
+                      </div>
+                      {isOutOfStock ? (
+                        <span className="text-[9px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">Out</span>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart({
+                              id: nameToId(p.name),
+                              name: p.name,
+                              sub: p.sub,
+                              cat: p.cat,
+                              brand: p.brand,
+                              price: p.price,
+                              orig: p.orig,
+                              img: p.img,
+                            });
+                          }}
+                          className="w-7 h-7 sm:w-8 sm:h-8 bg-[#e9f0e7] rounded-full flex items-center justify-center hover:bg-[#006a39] hover:text-white text-[#006a39] transition-colors"
+                          aria-label="Add to cart"
+                        >
+                          <PlusIcon />
+                        </button>
+                      )}
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart({
-                          id: nameToId(p.name),
-                          name: p.name,
-                          sub: p.sub,
-                          cat: p.cat,
-                          brand: p.brand,
-                          price: p.price,
-                          orig: p.orig,
-                          img: p.img,
-                        });
-                      }}
-                      className="w-7 h-7 sm:w-8 sm:h-8 bg-[#e9f0e7] rounded-full flex items-center justify-center hover:bg-[#006a39] hover:text-white text-[#006a39] transition-colors"
-                      aria-label="Add to cart"
-                    >
-                      <PlusIcon />
-                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 

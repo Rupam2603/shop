@@ -175,3 +175,23 @@ export async function updateProductStock(
   }
   return { error: null };
 }
+
+/**
+ * Subscribe to real-time changes on the products table
+ */
+export function subscribeToProductsRealtime(callback: (payload: { eventType: string; new: DbProduct; old: Partial<DbProduct> }) => void) {
+  const channel = supabase
+    .channel(`realtime-products-${Date.now()}`)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "products" },
+      (payload) => {
+        callback(payload as unknown as { eventType: string; new: DbProduct; old: Partial<DbProduct> });
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}

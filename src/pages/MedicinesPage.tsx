@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import ProductDetailModal, { CAT_COLORS, HSN_BY_CAT, retailerPrice, PopupProduct } from "../components/ProductModal";
-import { fetchProducts, DbProduct } from "../lib/products";
+import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
 import { useCart } from "../contexts/CartContext";
 
 const U = (id: string) => `https://images.unsplash.com/${id}?w=300&q=80`;
@@ -189,24 +189,45 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
     }).catch(() => {
       if (mounted) setLoadingProducts(false);
     });
-    return () => { mounted = false; };
+
+    // Real-time Supabase subscription for live stock and product updates
+    const unsubscribe = subscribeToProductsRealtime((payload) => {
+      if (payload.eventType === "UPDATE" && payload.new) {
+        setDbProducts((prev) => {
+          if (!prev) return [payload.new];
+          return prev.map((p) => (p.id === payload.new.id ? { ...p, ...payload.new } : p));
+        });
+      } else if (payload.eventType === "INSERT" && payload.new) {
+        setDbProducts((prev) => (prev ? [payload.new, ...prev] : [payload.new]));
+      } else if (payload.eventType === "DELETE" && payload.old) {
+        setDbProducts((prev) => (prev ? prev.filter((p) => p.id !== payload.old.id) : []));
+      }
+    });
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const productList = useMemo(() => {
     if (dbProducts && dbProducts.length > 0) {
       return dbProducts.map((p) => ({
         id: p.numeric_id,
+        dbId: p.id,
         name: p.name,
-        sub: p.subtitle || "",
+        sub: p.details || p.subtitle || "",
         price: `₹${Math.round(p.customer_price)}`,
+        retailerPrice: `₹${Math.round(p.retailer_price)}`,
         orig: p.mrp > p.customer_price ? `₹${Math.round(p.mrp)}` : "",
         disc: p.discount_percent > 0 ? `${p.discount_percent}%` : "",
         cat: p.category_name,
         brand: p.brand,
         img: p.image_url,
+        stock: p.stock ?? 50,
       }));
     }
-    return ALL_PRODUCTS;
+    return ALL_PRODUCTS.map((p) => ({ ...p, stock: 50 }));
   }, [dbProducts]);
 
   const toggleBrand = (b: string) =>
@@ -375,12 +396,31 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
               <div className={`grid gap-3 sm:gap-4 ${showFilters ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"}`}>
                 {paginated.map((p) => {
                   const accentColor = CAT_COLORS[p.cat] || "#006a39";
+                  const isOutOfStock = p.stock !== undefined && p.stock <= 0;
+                  const isLowStock = p.stock !== undefined && p.stock > 0 && p.stock <= 10;
                   return (
-                    <div key={p.id} onClick={() => setSelectedProduct(p)} className="bg-white rounded-2xl border border-[#e4ede2] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer">
+                    <div
+                      key={p.id}
+                      onClick={() => setSelectedProduct(p)}
+                      className={`bg-white rounded-2xl border ${isOutOfStock ? "border-red-200 opacity-80" : "border-[#e4ede2]"} hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer`}
+                    >
                       <div className="relative bg-[#f8fafb] h-32 sm:h-36 overflow-hidden">
                         {p.disc && (
                           <span className="absolute top-2 left-2 z-10 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase" style={{ backgroundColor: accentColor }}>
                             {p.disc} OFF
+                          </span>
+                        )}
+                        {isOutOfStock ? (
+                          <span className="absolute top-2 right-2 z-10 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] text-[9px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider">
+                            Out of Stock
+                          </span>
+                        ) : isLowStock ? (
+                          <span className="absolute top-2 right-2 z-10 bg-[#fef3c7] text-[#b45309] border border-[#fde68a] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase animate-pulse">
+                            Only {p.stock} Left
+                          </span>
+                        ) : (
+                          <span className="absolute top-2 right-2 z-10 bg-[#d1fae5]/90 text-[#047857] text-[8px] font-bold px-1.5 py-0.5 rounded">
+                            {p.stock} in stock
                           </span>
                         )}
                         <img
@@ -414,18 +454,36 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
                               {p.orig && <span className="text-[#9aa89b] text-[10px] line-through">MRP {p.orig}</span>}
                             </div>
                           )}
-                          <p className="text-[#c0ccc0] text-[9px] mt-0.5">HSN: {HSN_BY_CAT[p.cat] ?? "—"}</p>
+                          <div className="flex items-center justify-between text-[9px] mt-1">
+                            <span className="text-[#c0ccc0]">HSN: {HSN_BY_CAT[p.cat] ?? "—"}</span>
+                            {isOutOfStock ? (
+                              <span className="text-[#dc2626] font-bold">Out of stock</span>
+                            ) : isLowStock ? (
+                              <span className="text-[#d97706] font-semibold">{p.stock} units left</span>
+                            ) : (
+                              <span className="text-[#059669] font-medium">{p.stock} units available</span>
+                            )}
+                          </div>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addToCart(p);
-                          }}
-                          className="w-full mt-1 py-1.5 rounded-xl text-white text-[10px] font-bold tracking-[0.4px] hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-1"
-                          style={{ backgroundColor: accentColor }}
-                        >
-                          <PlusIcon /> Add to Cart
-                        </button>
+                        {isOutOfStock ? (
+                          <button
+                            disabled
+                            className="w-full mt-1.5 py-1.5 rounded-xl bg-[#f3f4f6] text-[#9ca3af] text-[10px] font-bold tracking-[0.4px] cursor-not-allowed flex items-center justify-center gap-1"
+                          >
+                            Out of Stock
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(p);
+                            }}
+                            className="w-full mt-1.5 py-1.5 rounded-xl text-white text-[10px] font-bold tracking-[0.4px] hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-1"
+                            style={{ backgroundColor: accentColor }}
+                          >
+                            <PlusIcon /> Add to Cart
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
