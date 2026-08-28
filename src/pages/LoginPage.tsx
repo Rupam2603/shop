@@ -172,10 +172,9 @@ export default function LoginPage() {
   };
 
   const handleRoleSelect = (role: UserRole) => {
-    setSelectedRole(role); setError(""); setSuccess("");
-    if (mode === "login" && role === "admin" && !email) {
-      setEmail("admin@subhone.com");
-    }
+    setSelectedRole(role);
+    setError("");
+    setSuccess("");
   };
 
   const switchMode = (m: "login" | "signup") => {
