@@ -1,14 +1,19 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import type { ReactNode } from "react";
 import type { User, AuthError } from "@supabase/supabase-js";
+import { useUser, useClerk } from "@clerk/clerk-react";
 import { supabase } from "../lib/supabase";
 import type { Profile, UserRole } from "../lib/supabase";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 export interface AppUser {
-  /** Supabase Auth user (contains id, email, etc.) */
-  authUser: User;
+  /** Auth user (contains id, email, etc.) */
+  authUser: {
+    id: string;
+    email?: string;
+    user_metadata?: Record<string, any>;
+  };
   /** Our profiles row (contains role, full_name, phone, etc.) */
   profile: Profile;
 }
@@ -22,6 +27,7 @@ interface AuthContextValue {
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Pick<Profile, "full_name" | "phone" | "shop_name" | "avatar_url">>) => Promise<{ error: string | null }>;
+  setRole: (role: UserRole) => Promise<void>;
 }
 
 interface SignUpOptions {
@@ -30,7 +36,7 @@ interface SignUpOptions {
   fullName: string;
   phone?: string;
   shopName?: string;
-  role: "customer" | "retailer"; // Only these two allowed for public signup
+  role: "customer" | "retailer";
 }
 
 // ─── Context ───────────────────────────────────────────────────────────────────
@@ -40,95 +46,128 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // ─── Provider ──────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { user: clerkUser, isLoaded: isClerkLoaded, isSignedIn: isClerkSignedIn } = useUser();
+  const clerk = useClerk();
+
   const [appUser, setAppUser] = useState<AppUser | null | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   /**
-   * Fetches the profile row from the database for a given Supabase Auth user.
-   * Returns null if profile doesn't exist yet (e.g., trigger hasn't run).
+   * Fetches the profile row from the database for a given user ID.
    */
-  const fetchProfile = useCallback(async (user: User): Promise<Profile | null> => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+  const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
 
-    if (error) {
-      console.error("Error fetching profile:", error.message);
+      if (error) {
+        console.warn("Could not fetch profile:", error.message);
+        return null;
+      }
+      return data as Profile | null;
+    } catch {
       return null;
     }
-    return data as Profile;
   }, []);
 
   /**
-   * Sets up the combined AppUser from an auth user + their profile.
+   * Sync Clerk user to Supabase profile and hydrate state
    */
-  const hydrateUser = useCallback(
-    async (user: User | null) => {
-      if (!user) {
-        setAppUser(null);
-        setLoading(false);
-        return;
-      }
+  useEffect(() => {
+    if (!isClerkLoaded) return;
 
-      let profile = await fetchProfile(user);
-      if (!profile) {
-        // Quick retry in case database trigger is still writing
-        await new Promise((r) => setTimeout(r, 400));
-        profile = await fetchProfile(user);
-      }
+    if (isClerkSignedIn && clerkUser) {
+      const email = clerkUser.primaryEmailAddress?.emailAddress || "";
+      const rawRole =
+        (clerkUser.unsafeMetadata?.role as string) ||
+        (clerkUser.publicMetadata?.role as string) ||
+        (email.toLowerCase() === "admin@subhone.com" ? "admin" : "customer");
 
-      if (profile) {
-        setAppUser({ authUser: user, profile });
+      const role: UserRole = rawRole === "admin" ? "admin" : rawRole === "retailer" ? "retailer" : "customer";
+      const fullName = clerkUser.fullName || clerkUser.firstName || email.split("@")[0] || "User";
+      const phone = clerkUser.primaryPhoneNumber?.phoneNumber || (clerkUser.unsafeMetadata?.phone as string) || null;
+      const shopName = (clerkUser.unsafeMetadata?.shopName as string) || null;
+      const avatarUrl = clerkUser.imageUrl || null;
+
+      const profile: Profile = {
+        id: clerkUser.id,
+        full_name: fullName,
+        role,
+        phone,
+        shop_name: shopName,
+        avatar_url: avatarUrl,
+        created_at: clerkUser.createdAt ? new Date(clerkUser.createdAt).toISOString() : new Date().toISOString(),
+        updated_at: clerkUser.updatedAt ? new Date(clerkUser.updatedAt).toISOString() : new Date().toISOString(),
+      };
+
+      setAppUser({
+        authUser: {
+          id: clerkUser.id,
+          email,
+          user_metadata: { role, full_name: fullName, phone, shop_name: shopName },
+        },
+        profile,
+      });
+      setLoading(false);
+      return;
+    }
+
+    // Check Supabase session if Clerk is not signed in
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const profile = await fetchProfile(session.user.id);
+        if (profile) {
+          setAppUser({
+            authUser: session.user,
+            profile,
+          });
+        } else {
+          const rawMeta = session.user.user_metadata || {};
+          const fallbackProfile: Profile = {
+            id: session.user.id,
+            full_name: rawMeta.full_name || session.user.email?.split("@")[0] || "User",
+            role: (rawMeta.role as UserRole) || "customer",
+            phone: rawMeta.phone || null,
+            shop_name: rawMeta.shop_name || null,
+            avatar_url: rawMeta.avatar_url || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          setAppUser({ authUser: session.user, profile: fallbackProfile });
+        }
       } else {
-        // Fallback profile synthesis so retailers and customers never get blocked
-        const rawMeta = user.user_metadata || {};
-        const fallbackRole: UserRole =
-          rawMeta.role === "admin"
-            ? "admin"
-            : rawMeta.role === "retailer"
-            ? "retailer"
-            : "customer";
-
-        const fallbackProfile: Profile = {
-          id: user.id,
-          full_name: rawMeta.full_name || user.email?.split("@")[0] || "User",
-          role: fallbackRole,
-          phone: rawMeta.phone || null,
-          shop_name: rawMeta.shop_name || null,
-          avatar_url: rawMeta.avatar_url || null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setAppUser({ authUser: user, profile: fallbackProfile });
+        setAppUser(null);
       }
       setLoading(false);
-    },
-    [fetchProfile]
-  );
-
-  // ── Listen to auth state changes (login, logout, session restore) ────────────
-  useEffect(() => {
-    // Get initial session (restores session after browser refresh)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      hydrateUser(session?.user ?? null);
     });
+  }, [isClerkLoaded, isClerkSignedIn, clerkUser, fetchProfile]);
 
-    // Subscribe to future auth events
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") {
-        setAppUser(null);
-        setLoading(false);
-      } else if (event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
-        hydrateUser(session?.user ?? null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [hydrateUser]);
+  // ── Switch/Update Role ───────────────────────────────────────────────────────
+  const setRole = useCallback(async (newRole: UserRole) => {
+    if (clerkUser) {
+      await clerkUser.update({
+        unsafeMetadata: {
+          ...clerkUser.unsafeMetadata,
+          role: newRole,
+        },
+      });
+    }
+    setAppUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            profile: { ...prev.profile, role: newRole },
+            authUser: {
+              ...prev.authUser,
+              user_metadata: { ...prev.authUser.user_metadata, role: newRole },
+            },
+          }
+        : prev
+    );
+  }, [clerkUser]);
 
   // ── Sign In ──────────────────────────────────────────────────────────────────
   const signIn = useCallback(
@@ -137,7 +176,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const cleanEmail = email.trim();
       let { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
 
-      // Admin password casing fallback (handles Subhone@2026 and SubhOne@2026)
       if (error && cleanEmail.toLowerCase() === "admin@subhone.com") {
         const altPass = password === "Subhone@2026" ? "SubhOne@2026" : password === "SubhOne@2026" ? "Subhone@2026" : null;
         if (altPass) {
@@ -155,20 +193,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.user) {
-        const profile = await fetchProfile(data.user);
+        const profile = await fetchProfile(data.user.id);
         const userRole: UserRole =
           profile?.role ||
           (data.user.user_metadata?.role as UserRole) ||
           "customer";
 
-        // Admin account: granted access immediately to admin dashboard
         if (userRole === "admin") {
-          await hydrateUser(data.user);
+          setAppUser({ authUser: data.user, profile: profile || {
+            id: data.user.id, full_name: "Admin", role: "admin", phone: null, shop_name: null, avatar_url: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+          }});
           setLoading(false);
           return { error: null };
         }
 
-        // 1. Non-admin trying to sign in under Admin tab
         if (expectedRole === "admin" && userRole !== "admin") {
           await supabase.auth.signOut();
           setAppUser(null);
@@ -176,34 +214,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: "Access denied. This account does not have Admin privileges." };
         }
 
-        // 2. Retailer trying to sign in under Customer tab
         if (expectedRole === "customer" && userRole === "retailer") {
           await supabase.auth.signOut();
           setAppUser(null);
           setLoading(false);
           return {
-            error: "Access denied. This account is registered as a Retailer. You cannot sign in as a Customer using Retailer credentials. Please switch to the Retailer tab.",
+            error: "Access denied. This account is registered as a Retailer. Please switch to the Retailer tab.",
           };
         }
 
-        // 3. Customer trying to sign in under Retailer tab
         if (expectedRole === "retailer" && userRole === "customer") {
           await supabase.auth.signOut();
           setAppUser(null);
           setLoading(false);
           return {
-            error: "Access denied. This account is registered as a Customer. You cannot sign in as a Retailer using Customer credentials. Please switch to the Customer tab.",
+            error: "Access denied. This account is registered as a Customer. Please switch to the Customer tab.",
           };
         }
 
-        // Roles match! Hydrate the user session.
-        await hydrateUser(data.user);
+        setAppUser({
+          authUser: data.user,
+          profile: profile || {
+            id: data.user.id,
+            full_name: data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "User",
+            role: userRole,
+            phone: data.user.user_metadata?.phone || null,
+            shop_name: data.user.user_metadata?.shop_name || null,
+            avatar_url: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        });
       }
 
       setLoading(false);
       return { error: null };
     },
-    [fetchProfile, hydrateUser]
+    [fetchProfile]
   );
 
   // ── Sign Up ──────────────────────────────────────────────────────────────────
@@ -232,13 +279,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.user) {
-        await hydrateUser(data.user);
+        setAppUser({
+          authUser: data.user,
+          profile: {
+            id: data.user.id,
+            full_name: opts.fullName.trim(),
+            role: safeRole,
+            phone: opts.phone?.trim() || null,
+            shop_name: opts.shopName?.trim() || null,
+            avatar_url: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        });
       }
 
       setLoading(false);
       return { error: null, emailConfirmationRequired: false };
     },
-    [hydrateUser]
+    []
   );
 
   // ── Reset Password ──────────────────────────────────────────────────────────
@@ -257,10 +316,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ── Sign Out ─────────────────────────────────────────────────────────────────
   const signOut = useCallback(async () => {
     setLoading(true);
-    await supabase.auth.signOut();
+    try {
+      if (clerkUser) {
+        await clerk.signOut();
+      }
+    } catch {}
+    try {
+      await supabase.auth.signOut();
+    } catch {}
     setAppUser(null);
     setLoading(false);
-  }, []);
+  }, [clerkUser, clerk]);
 
   // ── Update Profile ───────────────────────────────────────────────────────────
   const updateProfile = useCallback(
@@ -269,26 +335,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ): Promise<{ error: string | null }> => {
       if (!appUser) return { error: "Not authenticated." };
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .update(updates)
-        .eq("id", appUser.authUser.id)
-        .select()
-        .single();
+      if (clerkUser) {
+        try {
+          if (updates.full_name) {
+            const parts = updates.full_name.split(" ");
+            await clerkUser.update({
+              firstName: parts[0] || "",
+              lastName: parts.slice(1).join(" ") || "",
+              unsafeMetadata: {
+                ...clerkUser.unsafeMetadata,
+                phone: updates.phone ?? clerkUser.unsafeMetadata?.phone,
+                shopName: updates.shop_name ?? clerkUser.unsafeMetadata?.shopName,
+              },
+            });
+          }
+        } catch {}
+      }
 
-      if (error) return { error: error.message };
+      try {
+        await supabase
+          .from("profiles")
+          .update(updates)
+          .eq("id", appUser.authUser.id);
+      } catch {}
 
-      // Update local state
       setAppUser((prev) =>
-        prev ? { ...prev, profile: data as Profile } : prev
+        prev ? { ...prev, profile: { ...prev.profile, ...updates } } : prev
       );
       return { error: null };
     },
-    [appUser]
+    [appUser, clerkUser]
   );
 
   return (
-    <AuthContext.Provider value={{ appUser, loading, signIn, signUp, resetPassword, signOut, updateProfile }}>
+    <AuthContext.Provider value={{ appUser, loading, signIn, signUp, resetPassword, signOut, updateProfile, setRole }}>
       {children}
     </AuthContext.Provider>
   );
@@ -302,11 +382,8 @@ export function useAuth(): AuthContextValue {
   return ctx;
 }
 
-// ─── Helper — turn Supabase AuthError into friendly message ───────────────────
-
 function friendlyAuthError(error: AuthError): string {
   const msg = error.message.toLowerCase();
-
   if (msg.includes("invalid login credentials") || msg.includes("invalid credentials"))
     return "Incorrect email or password. Please try again.";
   if (msg.includes("email not confirmed"))
@@ -317,21 +394,13 @@ function friendlyAuthError(error: AuthError): string {
     return "Password must be at least 6 characters long.";
   if (msg.includes("unable to validate email address"))
     return "Please enter a valid email address.";
-  if (msg.includes("signup is disabled"))
-    return "New registrations are temporarily disabled. Please contact support.";
   if (msg.includes("network") || msg.includes("fetch"))
     return "Network error. Please check your internet connection and try again.";
-  if (msg.includes("rate limit") || msg.includes("too many"))
-    return "Too many attempts. Please wait a moment and try again.";
-
-  // Fallback — don't expose raw DB/internal errors
   return "Something went wrong. Please try again.";
 }
 
-// ─── Utility — convert AppUser to the legacy CurrentUser shape ────────────────
-// This helps us use the existing ProfilePage, NavBar etc. without rewriting them yet.
-
 export interface LegacyCurrentUser {
+  id: string;
   role: UserRole;
   email: string;
   name: string;
@@ -345,6 +414,7 @@ export interface LegacyCurrentUser {
 export function toLegacyUser(appUser: AppUser): LegacyCurrentUser {
   const { authUser, profile } = appUser;
   return {
+    id: authUser.id,
     role: profile.role,
     email: authUser.email ?? "",
     name: profile.full_name,

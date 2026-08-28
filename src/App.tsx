@@ -30,6 +30,7 @@ export interface Address {
 }
 
 export interface CurrentUser {
+  id?: string;
   role: UserRole;
   email: string;
   name: string;
@@ -62,8 +63,7 @@ function ConsultPage() {
 }
 
 /**
- * Loading screen shown while Supabase checks for an existing session.
- * This prevents the login page from flashing before auth state is resolved.
+ * Loading screen shown while Auth checks for an existing session.
  */
 function LoadingScreen() {
   return (
@@ -83,14 +83,11 @@ export default function App() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   useEffect(() => {
-    // Replace initial state with canonical entry
     const current = parseHashToState();
     replacePageState(current.page, current.category);
 
     const handlePopState = (e: PopStateEvent) => {
-      // If the popped state was an open modal, let useModalBackHandler handle it
       if (e.state?.modal) return;
-
       const { page, category } = parseHashToState();
       setActivePage(page);
       setInitialCategory(category);
@@ -107,13 +104,13 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // ── Show spinner while Supabase resolves the session ──────────────────────
+  // ── Show spinner while resolving the session ───────────────────────────────
   if (loading || appUser === undefined) return <LoadingScreen />;
 
   // ── Not logged in → show Login page ──────────────────────────────────────
   if (!appUser) return <LoginPage />;
 
-  // ── Convert Supabase profile to the shape existing components expect ──────
+  // ── Convert profile to the shape existing components expect ───────────────
   const currentUser: CurrentUser = toLegacyUser(appUser);
 
   // ── Admin → redirect to admin dashboard ──────────────────────────────────
@@ -138,12 +135,12 @@ export default function App() {
 
   const renderPage = () => {
     switch (activePage) {
-      case "home":      return <HomePage onNavigate={navigateTo} userRole={currentUser.role} />;
+      case "home": return <HomePage onNavigate={navigateTo} userRole={currentUser.role} />;
       case "lab-tests": return <LabTestsPage user={currentUser} />;
       case "medicines": return <MedicinesPage initialCategory={initialCategory} userRole={currentUser.role} />;
-      case "offers":    return <OffersPage userRole={currentUser.role} onNavigate={navigateTo} />;
-      case "consult":   return <ConsultPage />;
-      case "profile":   return (
+      case "offers": return <OffersPage userRole={currentUser.role} onNavigate={navigateTo} />;
+      case "consult": return <ConsultPage />;
+      case "profile": return (
         <ProfilePage
           user={currentUser}
           onUpdateUser={handleUpdateUser}

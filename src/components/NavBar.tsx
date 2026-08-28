@@ -3,6 +3,7 @@ import { useCart } from "../contexts/CartContext";
 import { useModalBackHandler } from "../lib/navigation";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
 import ProductDetailModal, { nameToId, type PopupProduct } from "./ProductModal";
+import { UserButton, SignedIn } from "@clerk/clerk-react";
 
 type Page = "home" | "medicines" | "lab-tests" | "consult" | "offers" | "profile";
 
@@ -342,6 +343,11 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
             </button>
             {user ? (
               <div className="flex items-center gap-1.5 sm:gap-2.5 pl-1.5 sm:pl-3 border-l border-[#e2e8df]">
+                <SignedIn>
+                  <div className="flex items-center">
+                    <UserButton afterSignOutUrl="/" />
+                  </div>
+                </SignedIn>
                 <button
                   onClick={() => { onProfile?.(); setMobileMenuOpen(false); }}
                   className="flex items-center gap-2 group cursor-pointer"

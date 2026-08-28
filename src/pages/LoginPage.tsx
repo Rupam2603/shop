@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { UserRole } from "../App";
 import { useAuth } from "../contexts/AuthContext";
+import { SignInButton, SignUpButton } from "@clerk/clerk-react";
 
 // ─── Role UI configuration ────────────────────────────────────────────────────
 
@@ -437,11 +438,32 @@ export default function LoginPage() {
               {error && <ErrorBox msg={error} />}
               {success && <SuccessBox msg={success} />}
               <button type="submit" disabled={loading}
-                className="w-full py-3 sm:py-3.5 rounded-xl font-['Manrope',sans-serif] font-bold text-sm sm:text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 mt-1 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 sm:py-3.5 rounded-xl font-['Manrope',sans-serif] font-bold text-sm sm:text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 mt-1 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                 style={{ backgroundColor: cfg.accent }}>
                 {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                 {loading ? "Signing in…" : `Sign In as ${cfg.label}`}
               </button>
+
+              <div className="flex items-center gap-3 my-1">
+                <div className="flex-1 h-px bg-[#e4ede2]" />
+                <span className="text-[10px] text-[#9aa89b] uppercase font-bold tracking-wider">or fast sign in</span>
+                <div className="flex-1 h-px bg-[#e4ede2]" />
+              </div>
+
+              <SignInButton mode="modal">
+                <button
+                  type="button"
+                  className="w-full py-3 px-4 rounded-xl border border-[#e4ede2] bg-[#f8fafb] hover:bg-[#f0f4f0] text-[#073b4c] text-xs sm:text-sm font-bold flex items-center justify-center gap-2.5 transition-all shadow-xs"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                  </svg>
+                  <span>Continue with Clerk</span>
+                </button>
+              </SignInButton>
             </form>
           )}
 
@@ -500,11 +522,33 @@ export default function LoginPage() {
               {error && <ErrorBox msg={error} />}
               {success && <SuccessBox msg={success} />}
               <button type="submit" disabled={loading}
-                className="w-full py-3 sm:py-3.5 rounded-xl font-['Manrope',sans-serif] font-bold text-sm sm:text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2"
+                className="w-full py-3 sm:py-3.5 rounded-xl font-['Manrope',sans-serif] font-bold text-sm sm:text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2 shadow-sm"
                 style={{ backgroundColor: cfg.accent }}>
                 {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                 {loading ? "Creating account…" : `Create ${cfg.label} Account`}
               </button>
+
+              <div className="flex items-center gap-3 my-1">
+                <div className="flex-1 h-px bg-[#e4ede2]" />
+                <span className="text-[10px] text-[#9aa89b] uppercase font-bold tracking-wider">or sign up with</span>
+                <div className="flex-1 h-px bg-[#e4ede2]" />
+              </div>
+
+              <SignUpButton mode="modal">
+                <button
+                  type="button"
+                  className="w-full py-3 px-4 rounded-xl border border-[#e4ede2] bg-[#f8fafb] hover:bg-[#f0f4f0] text-[#073b4c] text-xs sm:text-sm font-bold flex items-center justify-center gap-2.5 transition-all shadow-xs"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                  </svg>
+                  <span>Sign Up with Clerk</span>
+                </button>
+              </SignUpButton>
+
               <p className="text-center text-[11px] text-[#9aa89b]">
                 By signing up you agree to SubhOne&apos;s terms of service and privacy policy.
               </p>
