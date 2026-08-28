@@ -72,18 +72,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const profile = await fetchProfile(user);
+      let profile = await fetchProfile(user);
+      if (!profile) {
+        // Quick retry in case database trigger is still writing
+        await new Promise((r) => setTimeout(r, 400));
+        profile = await fetchProfile(user);
+      }
+
       if (profile) {
         setAppUser({ authUser: user, profile });
       } else {
-        // Profile may not exist yet (trigger latency on first signup).
-        // Retry once after a short delay.
-        setTimeout(async () => {
-          const retried = await fetchProfile(user);
-          setAppUser(retried ? { authUser: user, profile: retried } : null);
-          setLoading(false);
-        }, 1500);
-        return;
+        // Fallback profile synthesis so retailers and customers never get blocked
+        const rawMeta = user.user_metadata || {};
+        const fallbackRole: UserRole =
+          rawMeta.role === "admin"
+            ? "admin"
+            : rawMeta.role === "retailer"
+            ? "retailer"
+            : "customer";
+
+        const fallbackProfile: Profile = {
+          id: user.id,
+          full_name: rawMeta.full_name || user.email?.split("@")[0] || "User",
+          role: fallbackRole,
+          phone: rawMeta.phone || null,
+          shop_name: rawMeta.shop_name || null,
+          avatar_url: rawMeta.avatar_url || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        setAppUser({ authUser: user, profile: fallbackProfile });
       }
       setLoading(false);
     },
