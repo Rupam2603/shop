@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { UserRole } from "../App";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -141,9 +141,9 @@ export default function LoginPage() {
   const [forgotError, setForgotError] = useState("");
 
   // Signup-only fields
-  const [signupName, setSignupName]       = useState("");
-  const [signupPhone, setSignupPhone]     = useState("");
-  const [signupShop, setSignupShop]       = useState("");
+  const [signupName, setSignupName] = useState("");
+  const [signupPhone, setSignupPhone] = useState("");
+  const [signupShop, setSignupShop] = useState("");
   const [signupConfirm, setSignupConfirm] = useState("");
 
   const cfg = ROLES[selectedRole];
@@ -224,11 +224,11 @@ export default function LoginPage() {
     setSuccess("");
 
     // Client-side validation
-    if (!signupName.trim())                               { setError("Please enter your full name."); return; }
-    if (!/\S+@\S+\.\S+/.test(email))                     { setError("Please enter a valid email address."); return; }
+    if (!signupName.trim()) { setError("Please enter your full name."); return; }
+    if (!/\S+@\S+\.\S+/.test(email)) { setError("Please enter a valid email address."); return; }
     if (selectedRole === "retailer" && !signupShop.trim()) { setError("Please enter your shop or business name."); return; }
-    if (password.length < 6)                              { setError("Password must be at least 6 characters."); return; }
-    if (password !== signupConfirm)                       { setError("Passwords do not match."); return; }
+    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (password !== signupConfirm) { setError("Passwords do not match."); return; }
 
     // Security: only customer and retailer allowed via public signup
     const safeRole: "customer" | "retailer" = selectedRole === "retailer" ? "retailer" : "customer";
@@ -305,7 +305,7 @@ export default function LoginPage() {
             ).map((f) => (
               <div key={f} className="flex items-center gap-3">
                 <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                  <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1 4.5L3.5 7L8 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1 4.5L3.5 7L8 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </div>
                 <span className="text-white/75 text-[13px]">{f}</span>
               </div>
@@ -364,7 +364,7 @@ export default function LoginPage() {
                     style={{ borderColor: active ? r.accent : "#e4ede2", backgroundColor: active ? r.lightBg : "white" }}>
                     <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-colors"
                       style={{ backgroundColor: active ? r.accent : "#f0f4f0" }}>
-                      {role === "admin"    && <ShieldIcon color={active ? "white" : r.accent} />}
+                      {role === "admin" && <ShieldIcon color={active ? "white" : r.accent} />}
                       {role === "retailer" && <StoreIcon color={active ? "white" : r.accent} />}
                       {role === "customer" && <PersonIcon color={active ? "white" : r.accent} />}
                     </div>
@@ -372,7 +372,7 @@ export default function LoginPage() {
                     <p className="text-[8px] sm:text-[9px] text-center leading-[11px] sm:leading-[12px] hidden sm:block" style={{ color: active ? r.accent + "bb" : "#b0bcb2" }}>{r.desc}</p>
                     {active && (
                       <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: r.accent }}>
-                        <svg width="7" height="7" viewBox="0 0 7 7" fill="none"><path d="M1 3.5L3 5.5L6 1.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <svg width="7" height="7" viewBox="0 0 7 7" fill="none"><path d="M1 3.5L3 5.5L6 1.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                       </div>
                     )}
                   </button>
@@ -525,7 +525,7 @@ export default function LoginPage() {
               ✕
             </button>
             <div className="w-12 h-12 rounded-2xl bg-[#e8f5ee] text-[#006a39] flex items-center justify-center mb-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
             </div>
             <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl">Reset Your Password</h3>
             <p className="text-[#6d7a6f] text-xs sm:text-sm mt-1 mb-5">
