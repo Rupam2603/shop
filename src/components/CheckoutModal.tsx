@@ -47,7 +47,12 @@ export default function CheckoutModal({
     if (open) {
       setError("");
       setOrderPlaced(null);
-      fetchUserAddresses().then((data) => {
+      setNewAddr((prev) => ({
+        ...prev,
+        name: prev.name || user.name || "",
+        phone: prev.phone || user.phone || "",
+      }));
+      fetchUserAddresses(appUser?.authUser?.id).then((data) => {
         setAddresses(data);
         const def = data.find((a) => a.is_default) || data[0];
         if (def) {
@@ -58,7 +63,7 @@ export default function CheckoutModal({
         }
       });
     }
-  }, [open, user]);
+  }, [open, user, appUser]);
 
   if (!open) return null;
 
