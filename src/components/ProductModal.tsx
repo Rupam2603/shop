@@ -290,17 +290,18 @@ export default function ProductDetailModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-center sm:items-start justify-center p-2 sm:p-4 sm:pt-6 overflow-y-auto"
+      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl w-full max-w-[920px] shadow-2xl my-auto sm:my-8 overflow-hidden max-h-[94vh] flex flex-col"
+        className="bg-white rounded-2xl w-full max-w-[920px] shadow-2xl my-auto max-h-[92vh] overflow-y-auto flex flex-col relative animate-in fade-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex flex-col md:flex-row overflow-y-auto">
+        {/* Top Product Details Section */}
+        <div className="flex flex-col md:flex-row shrink-0 border-b border-[#e4ede2]">
           {/* Image panel */}
-          <div className="w-full md:w-72 shrink-0 flex flex-col" style={{ backgroundColor: accentColor + "0d" }}>
-            <div className="relative h-56 sm:h-64 overflow-hidden">
+          <div className="w-full md:w-72 shrink-0 flex flex-col border-b md:border-b-0 md:border-r border-[#e4ede2]" style={{ backgroundColor: accentColor + "08" }}>
+            <div className="relative h-60 sm:h-72 overflow-hidden flex items-center justify-center p-4 bg-white">
               {product.disc && (
                 <span
                   className="absolute top-3 left-3 z-10 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase shadow-sm"
@@ -312,11 +313,11 @@ export default function ProductDetailModal({
               <img
                 src={product.img}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.12"; }}
               />
             </div>
-            <div className="flex-1 p-4 sm:p-5 grid grid-cols-2 md:flex md:flex-col gap-3 bg-white/60 backdrop-blur-sm">
+            <div className="flex-1 p-4 sm:p-5 grid grid-cols-2 md:flex md:flex-col gap-3 bg-white/80">
               <div>
                 <p className="text-[9px] font-bold uppercase tracking-[0.7px] text-[#9aa89b] mb-1">Category</p>
                 <span
@@ -372,7 +373,7 @@ export default function ProductDetailModal({
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-[#f0f4f0] hover:bg-[#e4ede2] text-[#073b4c] flex items-center justify-center shrink-0 transition-colors"
+                className="w-8 h-8 rounded-full bg-[#f0f4f0] hover:bg-[#e4ede2] text-[#073b4c] flex items-center justify-center shrink-0 transition-colors cursor-pointer"
                 aria-label="Close"
               >
                 ✕
