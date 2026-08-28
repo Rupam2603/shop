@@ -324,7 +324,7 @@ export default function ProfilePage({
               </div>
 
               <div className="mt-6 pt-5 border-t border-[#f0f4f0] flex justify-end">
-                <button onClick={handleSaveProfile} className="px-6 py-2.5 rounded-xl text-white text-xs sm:text-sm font-bold hover:opacity-90 transition-opacity" style={{ backgroundColor: accent }}>
+                <button onClick={handleSaveProfile} className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-white text-xs sm:text-sm font-bold hover:opacity-90 transition-opacity" style={{ backgroundColor: accent }}>
                   Save Changes
                 </button>
               </div>
@@ -416,10 +416,10 @@ export default function ProfilePage({
                     {orders.length} orders · ₹{totalSpent.toLocaleString()} total spent
                   </p>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
                   {["All", "Processing", "Shipped", "Delivered", "Cancelled"].map((f) => (
                     <button key={f} onClick={() => setOrderFilter(f)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0"
                       style={orderFilter === f
                         ? { backgroundColor: accent, color: "white" }
                         : { backgroundColor: "white", color: "#6d7a6f", border: "1px solid #e4ede2" }}>
@@ -474,7 +474,7 @@ export default function ProfilePage({
           {section === "security" && (
             <div className="flex flex-col gap-5 max-w-lg">
               {/* Change Password */}
-              <div className="bg-white rounded-2xl border border-[#e4ede2] p-7">
+              <div className="bg-white rounded-2xl border border-[#e4ede2] p-5 sm:p-7">
                 <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl mb-5">Change Password</h2>
                 <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
                   {[
@@ -491,14 +491,14 @@ export default function ProfilePage({
                   {passMsg && (
                     <p className={`text-sm font-medium ${passMsg.startsWith("✓") ? "text-[#047857]" : "text-[#c0392b]"}`}>{passMsg}</p>
                   )}
-                  <button type="submit" className="self-start px-6 py-2.5 rounded-xl text-white text-sm font-bold hover:opacity-90 transition-opacity" style={{ backgroundColor: accent }}>
+                  <button type="submit" className="w-full sm:w-auto self-start px-6 py-2.5 rounded-xl text-white text-sm font-bold hover:opacity-90 transition-opacity" style={{ backgroundColor: accent }}>
                     Update Password
                   </button>
                 </form>
               </div>
 
               {/* Notifications */}
-              <div className="bg-white rounded-2xl border border-[#e4ede2] p-7">
+              <div className="bg-white rounded-2xl border border-[#e4ede2] p-5 sm:p-7">
                 <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base mb-5">Notification Preferences</h3>
                 <div className="flex flex-col gap-5">
                   {[
@@ -524,7 +524,7 @@ export default function ProfilePage({
               </div>
 
               {/* Danger Zone */}
-              <div className="bg-white rounded-2xl border-2 border-[#fee2e2] p-7">
+              <div className="bg-white rounded-2xl border-2 border-[#fee2e2] p-5 sm:p-7">
                 <h3 className="font-['Manrope',sans-serif] font-bold text-[#b91c1c] text-base mb-1">Danger Zone</h3>
                 <p className="text-[#6d7a6f] text-sm mb-4">Permanently delete your account and all associated data. This cannot be undone.</p>
                 <button className="px-5 py-2 rounded-xl border-2 border-[#b91c1c] text-[#b91c1c] text-sm font-bold hover:bg-[#fee2e2] transition-colors">
@@ -540,8 +540,8 @@ export default function ProfilePage({
       {addrModal.open && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={closeAddrModal}>
           <div className="bg-white rounded-2xl w-full max-w-[500px] shadow-2xl my-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-7 py-5 border-b border-[#e4ede2]">
-              <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg">
+            <div className="flex items-center justify-between px-5 sm:px-7 py-4 sm:py-5 border-b border-[#e4ede2]">
+              <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg">
                 {addrModal.mode === "add" ? "Add New Address" : "Edit Address"}
               </h3>
               <button onClick={closeAddrModal} className="w-8 h-8 rounded-full bg-[#f0f4f0] flex items-center justify-center hover:bg-[#e4ede2] transition-colors">
@@ -549,7 +549,7 @@ export default function ProfilePage({
               </button>
             </div>
 
-            <div className="p-7 flex flex-col gap-4 overflow-y-auto max-h-[72vh]">
+            <div className="p-4 sm:p-7 flex flex-col gap-4 overflow-y-auto max-h-[72vh]">
               {/* Label selector */}
               <div>
                 <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-2">Address Label</label>
@@ -568,7 +568,7 @@ export default function ProfilePage({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Full Name *</label>
                   <input type="text" value={addrModal.form.name ?? ""} onChange={(e) => setAddrField("name", e.target.value)}
@@ -599,7 +599,7 @@ export default function ProfilePage({
                   onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
                   { key: "city",    label: "City *",    ph: "Mumbai" },
                   { key: "state",   label: "State *",   ph: "Maharashtra" },
@@ -622,7 +622,7 @@ export default function ProfilePage({
               </label>
             </div>
 
-            <div className="flex gap-3 px-7 pb-7 pt-2">
+            <div className="flex gap-3 px-4 sm:px-7 pb-4 sm:pb-7 pt-2">
               <button onClick={closeAddrModal} className="flex-1 py-3 rounded-xl border-2 border-[#e4ede2] text-[#073b4c] text-sm font-bold hover:bg-[#f0f4f0] transition-colors">
                 Cancel
               </button>

@@ -166,7 +166,7 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedPriceIdx, setSelectedPriceIdx] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState("featured");
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<PopupProduct | null>(null);
   const PER_PAGE = 24;
@@ -267,17 +267,27 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
       </div>
 
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-6 flex flex-col md:flex-row gap-5 sm:gap-6">
-        {/* Sidebar */}
+        {/* Mobile filter drawer backdrop */}
         {showFilters && (
-          <aside className="w-full md:w-52 shrink-0">
-            <div className="bg-white rounded-2xl border border-[#e4ede2] p-4 sticky top-20">
+          <div className="fixed inset-0 bg-black/40 z-40 md:hidden" onClick={() => setShowFilters(false)} />
+        )}
+
+        {/* Filter sidebar — drawer on mobile, column on md+ */}
+        {showFilters && (
+          <aside className="fixed bottom-0 left-0 right-0 z-50 md:static md:w-52 md:shrink-0 md:z-auto">
+            <div className="bg-white rounded-t-2xl md:rounded-2xl border border-[#e4ede2] p-4 md:sticky md:top-20 max-h-[80vh] md:max-h-none overflow-y-auto">
               <div className="flex items-center justify-between pb-3 border-b border-[#e4ede2] mb-1">
                 <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c]">Filters</span>
-                {activeFilterCount > 0 && (
-                  <button onClick={() => { setSelectedBrands([]); setSelectedPriceIdx(null); }} className="text-[#006a39] text-xs font-semibold hover:underline">
-                    Clear all
+                <div className="flex items-center gap-2">
+                  {activeFilterCount > 0 && (
+                    <button onClick={() => { setSelectedBrands([]); setSelectedPriceIdx(null); }} className="text-[#006a39] text-xs font-semibold hover:underline">
+                      Clear all
+                    </button>
+                  )}
+                  <button onClick={() => setShowFilters(false)} className="md:hidden w-7 h-7 rounded-full bg-[#f0f4f0] flex items-center justify-center text-[#073b4c]">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                   </button>
-                )}
+                </div>
               </div>
               <Collapsible title="Price Range">
                 {PRICE_RANGES.map((r, i) => (
