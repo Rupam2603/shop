@@ -1,0 +1,102 @@
+Category-wise Item and Price List
+
+--- Pain Relief & Balms ---
+Volini Gel @ 15: ₹11
+Amrutanjan Strong @ 44: ₹36
+Volini Spray @ 249: ₹177
+Volini Spray @ 340: ₹241
+Volini gel @ 54: ₹38.34
+Moov Chain @ 15: ₹13
+Volini gel @ 65: ₹45
+Volini gel @ 156: ₹110.76
+Volini Spray @ 187: ₹133
+Volini Spray @ 88: ₹63
+Volini Pain Relief Gel 50 Gm @ 180: ₹129.60
+Volini Chain @ 15: ₹11
+Moov ointment @ 75: ₹60
+Amrutanjan Maha Strong @ 48: ₹40
+Amrutanjan Strong @ 20: ₹16
+Amrutanjan Strong @ 135: ₹110
+Zandu Balm @ 45: ₹39.50
+
+--- Energy, Hydration & Supplements ---
+Glucon D Orange @ 173: ₹138.40
+Glucon D Orange @ 75: ₹60
+Glucon D Regular @ 65: ₹49.60
+Glucon D Orange @ 47: ₹37.60
+Glucon D Nimbu Pani @ 415: ₹332
+Glucon D Orange @ 415: ₹332
+Glucon D Regular Jar @ 219: ₹175
+Glucon D Regular Jar @ 123: ₹98
+Glucon D Regular @ 118: ₹94.40
+Glucon D Regular Jar @ 67: ₹53.60
+Glucon D Regular Refill @ 62: ₹50
+Glucon D Regular @ 31: ₹24.80
+Cipla ORS Powder Box @ 978.40: ₹250
+Johnson ORS (Orange ) Lqd. @ 42: ₹28
+Johnson ORS (Lemon) Lqd. @ 37: ₹25
+ORS (Cipla ) Lqd @ 29.20: ₹16.50
+Electrol Powder @ 22.66: ₹16
+Dexolac @ 490: ₹410
+Dabur Huney @ 125: ₹105
+Chyawanprash @ 860: ₹671
+Chyawanprash @ 450: ₹351
+Sugar Free Gold @ 40: ₹32.40
+
+--- First Aid & Antiseptics ---
+Dettol Lqd. 250ML @ 154.59: ₹131.40
+Dettol Lqd 120ML @ 80.52: ₹70
+Dettol Lqd 60ML @ 30.25: ₹27
+Dettol Lqd. 550ML @ 259: ₹223
+Dettol Lqd. @ 331.41: ₹285
+Dettol Lqd. @ 33.27: ₹29
+Hansaplast Regular Band-Aid @ 240: ₹165
+Hansaplast Washproof Band-Aid @ 300: ₹195
+
+--- Antacids, Digestion & Laxatives ---
+Eno Lemon 30Pcs Pack: ₹230
+Eno Cola 5 Gm: ₹7.50
+Eno Lemon 5 Gm @ 9: ₹7.50
+Eno Lemon 5 Gm: ₹7.50
+Zandu Nityam Tab @ 99: ₹61
+Softovac SF @ 229: ₹150
+Pet Safa @ 115: ₹94.30
+Baidya Isabgol @ 360: ₹305
+Kayam Churna @ 115: ₹93
+
+--- Skin Care, Powders & Ointments ---
+Nycil Cool @ 130: ₹104
+Nycil Cool @ 159: ₹115
+Ring Guard @ 96: ₹78
+Ring Guard Chain @ 18: ₹15.42
+Itch Guard @ 16.50: ₹14
+Candid dusting powder @ 174: ₹121.80
+Candid dusting powder @ 104: ₹72.80
+B-Tex @ 30: ₹21
+Salical @ 25: ₹18
+Suthol Neem @ 50: ₹41
+Suthol Neem Spray @ 80: ₹66.40
+Boroline Jar @ 480: ₹420
+Boroline Cream @ 45: ₹39.15
+
+--- Personal Care, Hygiene & Others ---
+Jac Body Oil @ 75: ₹53
+Jac Body Oil @ 135: ₹95
+Jac Body Oil @ 180: ₹126
+Jac Body Oil @ 275: ₹193
+Love Nature Hair Oil @ 299: ₹165
+Veet Hair Remover @ 99: ₹87
+V Wash @ 50: ₹40
+Dettol Sanitizer @ 30: ₹26
+Dettol Soap: ₹89
+Bengal's Pheneol @ 88: ₹69
+Vicks Cough Drops 130 Pcs: ₹100
+
+--- Baby Care ---
+Morisons Baby Nipple @ 30: ₹21
+Morisons Feeding Bottle: ₹72
+
+--- Medical Supplies & General ---
+Surgical Face Mask @ 75/-: ₹75
+Surgical Face Mask @ 100: ₹100
+Glandiner Oil @ 145: ₹120

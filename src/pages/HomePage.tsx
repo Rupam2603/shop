@@ -1,0 +1,379 @@
+import { useState, useEffect } from "react";
+import type { Page } from "../App";
+import ProductDetailModal, { nameToId, type PopupProduct } from "../components/ProductModal";
+import imgHeroBg from "@/imports/SubhOneHomeYourWellnessPartner/ebb34ae9c328f1310a1fb45e38080c80fbd47637.png";
+import imgProduct1 from "@/imports/SubhOneHomeYourWellnessPartner/ed2cee3d70ea8b6d972ea44b1746b961d47ff5b3.png";
+import imgProduct2 from "@/imports/SubhOneHomeYourWellnessPartner/a57c492ebf391250fdba394a1ec646ea8a83b1ed.png";
+import imgProduct3 from "@/imports/SubhOneHomeYourWellnessPartner/fd45459640081f88735ba0ccaedc003e03983ae7.png";
+import imgProduct4 from "@/imports/SubhOneHomeYourWellnessPartner/025be39c0ac7528a3968899be77492c149730632.png";
+
+interface HomePageProps {
+  onNavigate: (page: Page, category?: string) => void;
+  userRole?: string;
+}
+
+const U = (id: string) => `https://images.unsplash.com/${id}?w=300&q=80`;
+
+function useCountdown(initial: number) {
+  const [s, setS] = useState(initial);
+  useEffect(() => {
+    const id = setInterval(() => setS((v) => (v > 0 ? v - 1 : 0)), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  return `${String(h).padStart(2, "0")}h : ${String(m).padStart(2, "0")}m : ${String(sec).padStart(2, "0")}s`;
+}
+
+function PlusIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M6 1V11M1 6H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+function ArrowRight() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+      <path d="M3 7.5H12M8.5 4L12 7.5L8.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function FlashIcon() {
+  return (
+    <svg width="16" height="20" viewBox="0 0 16 20" fill="none">
+      <path d="M9 1L1 11H8L7 19L15 9H8L9 1Z" fill="#FFB703" stroke="#FFB703" strokeWidth="0.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+const QUICK_ACTIONS = [
+  { label: "Upload Prescription", bg: "bg-[#bde9ff]",
+    icon: <svg width="24" height="26" viewBox="0 0 24 26" fill="none"><path d="M19 2H5C3.9 2 3 2.9 3 4V22C3 23.1 3.9 24 5 24H19C20.1 24 21 23.1 21 22V4C21 2.9 20.1 2 19 2ZM7 7H17V9H7V7ZM7 11H17V13H7V11ZM7 15H13V17H7V15Z" fill="#3F6A7C"/></svg> },
+  { label: "Consult Doctor",       bg: "bg-[rgba(0,134,73,0.15)]",
+    icon: <svg width="26" height="21" viewBox="0 0 26 21" fill="none"><path d="M13 0C10.2 0 8 2.2 8 5C8 7.8 10.2 10 13 10C15.8 10 18 7.8 18 5C18 2.2 15.8 0 13 0ZM13 12C8.33 12 0 14.17 0 18.5V21H26V18.5C26 14.17 17.67 12 13 12Z" fill="#006A39"/></svg> },
+  { label: "Book Lab Test",         bg: "bg-[#b3ebff]",
+    icon: <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M9 0V9L3 15C1.7 16.3 1.7 18.4 3 19.7C3.6 20.3 4.4 20.7 5.3 20.7H15.7C16.6 20.7 17.4 20.3 18 19.7C19.3 18.4 19.3 16.3 18 15L12 9V0H9Z" fill="#001F27"/></svg> },
+  { label: "Special Offers",        bg: "bg-[rgba(255,183,3,0.18)]",
+    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12.79 2.71L2.71 12.79C2.32 13.18 2.32 13.82 2.71 14.21L9.79 21.29C10.18 21.68 10.82 21.68 11.21 21.29L21.29 11.21C21.68 10.82 21.68 10.18 21.29 9.79L14.21 2.71C13.82 2.32 13.18 2.32 12.79 2.71Z" fill="#073B4C"/></svg> },
+];
+
+/* ─── 8 real store categories from Categorized_Items_List ─── */
+const ALL_CATEGORIES = [
+  {
+    cat: "Pain Relief & Balms",
+    short: "Pain Relief",
+    accent: "#c0392b", lightBg: "#fff0ee", iconBg: "#ffd5cf",
+    count: 17,
+    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M19 3H5c-1.1 0-2 .9-2 2v3.01h.01L3 8c0 1.65 1.19 3.02 2.76 3.28L9 11.72V19c0 1.1.89 2 2 2h2c1.11 0 2-.9 2-2v-7.28l3.24-.44C19.81 11.02 21 9.65 21 8V5c0-1.1-.9-2-2-2z" fill="#c0392b"/></svg>,
+    products: [
+      { name: "Volini Spray 249ml",       sub: "Pain Relief Spray",   price: "₹177",  orig: "₹249",  disc: "29%", img: U("photo-1583687809174-d8db66b1b7fd") },
+      { name: "Amrutanjan Strong 44g",    sub: "Fast Relief Balm",    price: "₹36",   orig: "₹44",   disc: "18%", img: U("photo-1638609927040-8a7e97cd9d6a") },
+      { name: "Volini Pain Relief Gel 50g",sub:"Diclofenac Gel",      price: "₹130",  orig: "₹180",  disc: "28%", img: U("photo-1691096675075-de995918f3ce") },
+      { name: "Zandu Balm 45ml",          sub: "Headache & Pain",     price: "₹40",   orig: "₹45",   disc: "12%", img: U("photo-1614162063681-1adc832305b1") },
+    ],
+  },
+  {
+    cat: "Energy, Hydration & Supplements",
+    short: "Energy & Supplements",
+    accent: "#d97706", lightBg: "#fffbeb", iconBg: "#fde68a",
+    count: 22,
+    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="#d97706"/></svg>,
+    products: [
+      { name: "Glucon D Orange 415g Jar", sub: "Orange Energy Jar",   price: "₹332",  orig: "₹415",  disc: "20%", img: U("photo-1693996045463-6ea86d10a2e7") },
+      { name: "Dabur Chyawanprash 860g",  sub: "Ayurvedic Tonic",     price: "₹671",  orig: "₹860",  disc: "22%", img: U("photo-1629240830845-e4a550a6bbde") },
+      { name: "Dabur Honey 125g",         sub: "Pure Natural Honey",  price: "₹105",  orig: "₹125",  disc: "16%", img: U("photo-1613548058193-1cd24c1bebcf") },
+      { name: "Cipla ORS Powder Box",     sub: "Oral Rehydration",    price: "₹250",  orig: "₹978",  disc: "74%", img: U("photo-1606607728103-1b48747ad318") },
+    ],
+  },
+  {
+    cat: "First Aid & Antiseptics",
+    short: "First Aid",
+    accent: "#047857", lightBg: "#ecfdf5", iconBg: "#a7f3d0",
+    count: 8,
+    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" fill="#047857"/></svg>,
+    products: [
+      { name: "Dettol Antiseptic 250ml",  sub: "Antiseptic Solution", price: "₹131",  orig: "₹155",  disc: "15%", img: U("photo-1627495395570-d2c94e3319f5") },
+      { name: "Dettol Antiseptic 550ml",  sub: "Antiseptic Solution", price: "₹223",  orig: "₹259",  disc: "14%", img: U("photo-1559743344-950d2d9458cc") },
+      { name: "Hansaplast Regular Band-Aid",sub:"Adhesive Bandage Box",price: "₹165", orig: "₹240",  disc: "31%", img: U("photo-1635091237278-a882f31bc310") },
+      { name: "Hansaplast Washproof Band-Aid",sub:"Waterproof Box",   price: "₹195",  orig: "₹300",  disc: "35%", img: U("photo-1776047129625-50b8c7299705") },
+    ],
+  },
+  {
+    cat: "Antacids, Digestion & Laxatives",
+    short: "Digestion",
+    accent: "#1d4ed8", lightBg: "#eff6ff", iconBg: "#bfdbfe",
+    count: 8,
+    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="#1d4ed8"/></svg>,
+    products: [
+      { name: "Eno Lemon 30 Pcs Pack",    sub: "Antacid Sachet Pack", price: "₹230",  orig: "",      disc: "",    img: U("photo-1664956617303-83e06c068f7f") },
+      { name: "Zandu Nityam Tablets",     sub: "Constipation Relief", price: "₹61",   orig: "₹99",   disc: "38%", img: U("photo-1734607403132-40350099c752") },
+      { name: "Softovac SF Powder 229g",  sub: "Laxative Powder",     price: "₹150",  orig: "₹229",  disc: "34%", img: U("photo-1664956617303-83e06c068f7f") },
+      { name: "Baidya Isabgol 360g",      sub: "Psyllium Husk Fibre", price: "₹305",  orig: "₹360",  disc: "15%", img: U("photo-1664956617303-83e06c068f7f") },
+    ],
+  },
+  {
+    cat: "Skin Care, Powders & Ointments",
+    short: "Skin Care",
+    accent: "#7c3aed", lightBg: "#f5f3ff", iconBg: "#ddd6fe",
+    count: 13,
+    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#7c3aed"/></svg>,
+    products: [
+      { name: "Nycil Cool Powder 130g",   sub: "Prickly Heat Powder", price: "₹104",  orig: "₹130",  disc: "20%", img: U("photo-1733348188703-ad5a2e7d0d76") },
+      { name: "Candid Dusting Powder 174g",sub:"Antifungal Powder",   price: "₹122",  orig: "₹174",  disc: "30%", img: U("photo-1750780536033-483faf4d28b2") },
+      { name: "Boroline Antiseptic Cream 45g",sub:"Antiseptic Cream", price: "₹39",   orig: "₹45",   disc: "13%", img: U("photo-1638609927040-8a7e97cd9d6a") },
+      { name: "Ring Guard Cream 96g",     sub: "Antifungal Cream",    price: "₹78",   orig: "₹96",   disc: "19%", img: U("photo-1616750819574-7e38aa8046fa") },
+    ],
+  },
+  {
+    cat: "Personal Care, Hygiene & Others",
+    short: "Personal Care",
+    accent: "#0e7490", lightBg: "#ecfeff", iconBg: "#a5f3fc",
+    count: 11,
+    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#0e7490"/></svg>,
+    products: [
+      { name: "Love Nature Hair Oil 299ml",sub: "Natural Hair Oil",   price: "₹165",  orig: "₹299",  disc: "45%", img: U("photo-1768548658056-f5cbb2d3d795") },
+      { name: "Jac Body Oil 275ml",       sub: "Moisturising Body Oil",price: "₹193", orig: "₹275",  disc: "30%", img: U("photo-1700107650012-36feae7e18ed") },
+      { name: "Dettol Hand Sanitizer 30ml",sub:"Hand Sanitizer",      price: "₹26",   orig: "₹30",   disc: "13%", img: U("photo-1628771066235-78f074cdc9d6") },
+      { name: "Vicks Cough Drops 130 Pcs",sub: "Menthol Cough Drops", price: "₹100",  orig: "",      disc: "",    img: U("photo-1655313719848-23d645684e4a") },
+    ],
+  },
+  {
+    cat: "Baby Care",
+    short: "Baby Care",
+    accent: "#0369a1", lightBg: "#f0f9ff", iconBg: "#bae6fd",
+    count: 2,
+    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 13H9v-2h2v2zm0-4H9V7h2v4zm4 4h-2v-2h2v2zm0-4h-2V7h2v4z" fill="#0369a1"/></svg>,
+    products: [
+      { name: "Morisons Baby Nipple",     sub: "Silicone Nipple",     price: "₹21",   orig: "₹30",   disc: "30%", img: U("photo-1623707430616-d9f956bcac2b") },
+      { name: "Morisons Feeding Bottle",  sub: "Baby Feeding Bottle", price: "₹72",   orig: "",      disc: "",    img: U("photo-1635258559918-ed56f88004de") },
+    ],
+  },
+  {
+    cat: "Medical Supplies & General",
+    short: "Medical Supplies",
+    accent: "#374151", lightBg: "#f9fafb", iconBg: "#e5e7eb",
+    count: 3,
+    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" fill="#374151"/></svg>,
+    products: [
+      { name: "Surgical Face Mask 75pc",  sub: "3-Ply Disposable",    price: "₹75",   orig: "",      disc: "",    img: U("photo-1586975949231-9374052a0d63") },
+      { name: "Surgical Face Mask 100pc", sub: "3-Ply Disposable",    price: "₹100",  orig: "",      disc: "",    img: U("photo-1604116395843-94f7b28a8080") },
+      { name: "Glandiner Oil 145ml",      sub: "Massage Oil",         price: "₹120",  orig: "₹145",  disc: "17%", img: U("photo-1700107650012-36feae7e18ed") },
+    ],
+  },
+];
+
+const FLASH = [
+  { img: imgProduct1, badge: "30% OFF", color: "#ba1a1a", name: "Omega 3 Fish Oil 1000mg",      sub: "Vitamins & Supplements", price: "₹349", orig: "₹499", cat: "Energy, Hydration & Supplements", brand: "Generic",     disc: "30%" },
+  { img: imgProduct2, badge: "20% OFF", color: "#ba1a1a", name: "Glucon D Orange 415g Jar",     sub: "Energy & Hydration",     price: "₹332", orig: "₹415", cat: "Energy, Hydration & Supplements", brand: "Glucon D",    disc: "20%" },
+  { img: imgProduct3, badge: "22% OFF", color: "#006a39", name: "Dabur Chyawanprash 860g",      sub: "Ayurvedic Supplement",   price: "₹671", orig: "₹860", cat: "Energy, Hydration & Supplements", brand: "Dabur",       disc: "22%" },
+  { img: imgProduct4, badge: "35% OFF", color: "#ba1a1a", name: "Hansaplast Washproof Band-Aid", sub: "First Aid",             price: "₹195", orig: "₹300", cat: "First Aid & Antiseptics",         brand: "Hansaplast",  disc: "35%" },
+];
+
+function MiniCard({ p, accent, onClick }: { p: { name: string; sub: string; price: string; orig: string; disc: string; img: string }; accent: string; onClick: () => void }) {
+  return (
+    <div onClick={onClick} className="bg-white rounded-2xl border border-[#e4ede2] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer">
+      <div className="relative bg-[#f8fafb] h-36 overflow-hidden">
+        {p.disc && (
+          <span className="absolute top-2 left-2 z-10 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase" style={{ backgroundColor: accent }}>
+            {p.disc} OFF
+          </span>
+        )}
+        <img src={p.img} alt={p.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.15"; }} />
+      </div>
+      <div className="p-2.5 flex flex-col gap-0.5 flex-1">
+        <p className="font-bold text-[#073b4c] text-[11px] leading-[14px] line-clamp-2">{p.name}</p>
+        <p className="text-[#9aa89b] text-[10px]">{p.sub}</p>
+        <div className="flex items-center justify-between mt-auto pt-1.5">
+          <div>
+            <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm">{p.price}</span>
+            {p.orig && <span className="text-[#9aa89b] text-[10px] line-through ml-1">MRP {p.orig}</span>}
+          </div>
+          <button onClick={(e) => e.stopPropagation()} className="w-7 h-7 rounded-full flex items-center justify-center text-white shrink-0 hover:opacity-90 transition-opacity" style={{ backgroundColor: accent }}>
+            <PlusIcon />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CategorySection({ item, onViewAll, onProductClick }: { item: typeof ALL_CATEGORIES[0]; onViewAll: () => void; onProductClick: (p: PopupProduct) => void }) {
+  const cols = item.products.length >= 4 ? "grid-cols-5" : item.products.length === 3 ? "grid-cols-4" : "grid-cols-3";
+  return (
+    <section className="flex flex-col gap-4">
+      <div className="flex items-center justify-between px-5 py-4 rounded-2xl" style={{ backgroundColor: item.lightBg }}>
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: item.iconBg }}>
+            {item.icon}
+          </div>
+          <div>
+            <h2 className="font-['Manrope',sans-serif] font-bold text-xl" style={{ color: item.accent }}>{item.cat}</h2>
+            <p className="text-[#6d7a6f] text-xs mt-0.5">{item.count} products available</p>
+          </div>
+        </div>
+        <button onClick={onViewAll} className="flex items-center gap-1.5 text-sm font-bold hover:underline shrink-0" style={{ color: item.accent }}>
+          View All ({item.count}) <ArrowRight />
+        </button>
+      </div>
+
+      <div className={`grid ${cols} gap-4`}>
+        {item.products.map((p) => (
+          <MiniCard
+            key={p.name}
+            p={p}
+            accent={item.accent}
+            onClick={() => onProductClick({
+              id: nameToId(p.name),
+              name: p.name,
+              sub: p.sub,
+              price: p.price,
+              orig: p.orig,
+              disc: p.disc,
+              cat: item.cat,
+              brand: p.name.split(" ")[0],
+              img: p.img,
+            })}
+          />
+        ))}
+        <button
+          onClick={onViewAll}
+          className="rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 p-4 hover:bg-white transition-all group min-h-[200px]"
+          style={{ borderColor: item.iconBg }}
+        >
+          <div className="w-10 h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform" style={{ backgroundColor: item.lightBg, color: item.accent }}>
+            <ArrowRight />
+          </div>
+          <p className="text-xs font-semibold text-center" style={{ color: item.accent }}>See all {item.short}</p>
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export default function HomePage({ onNavigate, userRole }: HomePageProps) {
+  const countdown = useCountdown(2 * 3600 + 45 * 60 + 12);
+  const isRetailer = userRole === "retailer";
+  const [selectedProduct, setSelectedProduct] = useState<PopupProduct | null>(null);
+
+  return (
+    <div className="bg-[#f5fbf2] min-h-screen">
+      <div className="max-w-[1280px] mx-auto px-10 py-8 flex flex-col gap-10">
+
+        {/* Hero */}
+        <div className="relative rounded-2xl overflow-hidden h-[370px] shadow-sm bg-gradient-to-r from-[rgba(15,157,88,0.15)] to-[rgba(0,129,138,0.1)]">
+          <div className="absolute right-0 top-0 w-2/3 h-full">
+            <img src={imgHeroBg} alt="Health products" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#f5fbf2] via-[rgba(245,251,242,0.4)] to-transparent" />
+          </div>
+          <div className="relative z-10 flex flex-col gap-4 p-14 max-w-[520px] justify-center h-full">
+            <span className="inline-flex bg-[#ba1a1a] text-white text-xs px-3 py-1 rounded-full w-fit uppercase tracking-[0.6px]">Limited Time</span>
+            <h1 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-5xl leading-[56px] tracking-[-0.96px]">
+              Flat 20% Off on<br />First Order
+            </h1>
+            <p className="text-[#3e4a3f] text-base leading-6">Medicines, balms, supplements, baby care & more — delivered fast.</p>
+            <button onClick={() => onNavigate("medicines")} className="bg-[#0f9d58] text-white text-base px-6 py-3 rounded-lg shadow-md hover:bg-[#0b8a4d] transition-colors w-fit">
+              Shop Now
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-4 gap-4">
+          {QUICK_ACTIONS.map((a) => (
+            <button key={a.label} className="bg-white rounded-2xl border border-[rgba(189,202,188,0.3)] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-5 flex flex-col items-center gap-3">
+              <div className={`w-12 h-12 rounded-full ${a.bg} flex items-center justify-center`}>{a.icon}</div>
+              <span className="font-bold text-[#073b4c] text-sm tracking-[0.6px] text-center">{a.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Category browser — compact */}
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl">Browse All Categories</h2>
+            <button onClick={() => onNavigate("medicines", "All")} className="font-bold text-[#006a39] text-xs flex items-center gap-1 hover:underline">
+              View All <ArrowRight />
+            </button>
+          </div>
+          <div className="grid grid-cols-8 gap-2">
+            {ALL_CATEGORIES.map((c) => (
+              <button
+                key={c.cat}
+                onClick={() => onNavigate("medicines", c.cat)}
+                className="group flex flex-col items-center gap-1.5 p-3 rounded-xl border border-[#e4ede2] bg-white hover:shadow-md hover:-translate-y-0.5 transition-all"
+              >
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform" style={{ backgroundColor: c.lightBg }}>
+                  <div style={{ transform: "scale(0.82)" }}>{c.icon}</div>
+                </div>
+                <p className="font-semibold text-[10px] leading-[12px] text-center line-clamp-2" style={{ color: c.accent }}>{c.short}</p>
+                <p className="text-[#9aa89b] text-[9px]">{c.count} items</p>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <div className="border-t border-[#dee4db]" />
+
+        {/* Category sections */}
+        {ALL_CATEGORIES.map((item) => (
+          <CategorySection key={item.cat} item={item} onViewAll={() => onNavigate("medicines", item.cat)} onProductClick={setSelectedProduct} />
+        ))}
+
+        <div className="border-t border-[#dee4db]" />
+
+        {/* Flash Sale */}
+        <section className="flex flex-col gap-5">
+          <div className="flex items-end justify-between">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <FlashIcon />
+                <h2 className="font-['Manrope',sans-serif] font-semibold text-[#073b4c] text-2xl">Flash Sale</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#3e4a3f] text-sm">Ends in:</span>
+                <span className="bg-[#ffdad6] text-[#ba1a1a] text-xs font-semibold px-2 py-0.5 rounded">{countdown}</span>
+              </div>
+            </div>
+            <button className="font-bold text-[#006a39] text-sm hover:underline">View All</button>
+          </div>
+          <div className="grid grid-cols-4 gap-4">
+            {FLASH.map((p) => (
+              <div
+                key={p.name}
+                onClick={() => setSelectedProduct({ id: nameToId(p.name), name: p.name, sub: p.sub, price: p.price, orig: p.orig, disc: p.disc, cat: p.cat, brand: p.brand, img: p.img })}
+                className="bg-white rounded-2xl border border-[rgba(189,202,188,0.4)] overflow-hidden flex flex-col group hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+              >
+                <div className="bg-[#f8fafb] h-40 relative overflow-hidden flex items-center justify-center">
+                  <span className="absolute top-2 left-2 z-10 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase" style={{ backgroundColor: p.color }}>{p.badge}</span>
+                  <img src={p.img} alt={p.name} className="h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
+                </div>
+                <div className="p-4 flex flex-col gap-1 flex-1">
+                  <p className="font-bold text-[#073b4c] text-sm leading-5 line-clamp-2">{p.name}</p>
+                  <p className="text-[#3e4a3f] text-xs">{p.sub}</p>
+                  <div className="flex items-end justify-between mt-auto pt-2">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg">{p.price}</span>
+                      {p.orig && <span className="text-[#9aa89b] text-xs line-through">MRP {p.orig}</span>}
+                    </div>
+                    <button onClick={(e) => e.stopPropagation()} className="w-8 h-8 bg-[#e9f0e7] rounded-full flex items-center justify-center hover:bg-[#006a39] hover:text-white text-[#006a39] transition-colors">
+                      <PlusIcon />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+      </div>
+
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          isRetailer={isRetailer}
+          onClose={() => setSelectedProduct(null)}
+        />
+      )}
+    </div>
+  );
+}
