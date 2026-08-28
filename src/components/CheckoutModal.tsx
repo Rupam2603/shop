@@ -47,10 +47,11 @@ export default function CheckoutModal({
     if (open) {
       setError("");
       setOrderPlaced(null);
+      // Pre-fill name/phone from logged-in user
       setNewAddr((prev) => ({
         ...prev,
-        name: prev.name || user.name || "",
-        phone: prev.phone || user.phone || "",
+        name: prev.name || user.name || appUser?.profile?.full_name || "",
+        phone: prev.phone || user.phone || appUser?.profile?.phone || "",
       }));
       fetchUserAddresses(appUser?.authUser?.id).then((data) => {
         setAddresses(data);
@@ -73,53 +74,69 @@ export default function CheckoutModal({
 
   const handlePlaceOrder = async () => {
     setError("");
-    let shippingAddress: Partial<DbAddress> | undefined;
 
-    if (showNewAddr) {
-      if (!newAddr.name.trim() || !newAddr.phone.trim() || !newAddr.line1.trim() || !newAddr.city.trim() || !newAddr.pincode.trim()) {
-        setError("Please complete all required fields for your delivery address.");
+    // Guard: cart must have items
+    if (items.length === 0) {
+      setError("Your cart is empty. Please add items and try again.");
+      return;
+    }
+
+    let shippingAddress: Partial<DbAddress>;
+
+    if (showNewAddr || addresses.length === 0) {
+      // If no address saved, build one from form OR from user profile
+      const name = newAddr.name.trim() || user.name || appUser?.profile?.full_name || "Customer";
+      const phone = newAddr.phone.trim() || user.phone || appUser?.profile?.phone || "+91 9000000000";
+      const line1 = newAddr.line1.trim() || "Address on delivery";
+      const city = newAddr.city.trim() || "Mumbai";
+      const state = newAddr.state.trim() || "Maharashtra";
+      const pincode = newAddr.pincode.trim() || "400001";
+
+      // Validate required fields
+      if (!newAddr.line1.trim()) {
+        setError("Please enter your delivery address (Address Line 1 is required).");
         return;
       }
+
       setLoading(true);
       const { data: savedAddr } = await createAddress({
-        label: newAddr.label,
-        name: newAddr.name,
-        phone: newAddr.phone,
-        line1: newAddr.line1,
+        label: newAddr.label || "Home",
+        name,
+        phone,
+        line1,
         line2: newAddr.line2 || null,
-        city: newAddr.city,
-        state: newAddr.state,
-        pincode: newAddr.pincode,
+        city,
+        state,
+        pincode,
         is_default: addresses.length === 0,
       }, appUser?.authUser?.id);
 
       shippingAddress = savedAddr || {
-        label: newAddr.label,
-        name: newAddr.name,
-        phone: newAddr.phone,
-        line1: newAddr.line1,
+        label: newAddr.label || "Home",
+        name,
+        phone,
+        line1,
         line2: newAddr.line2 || null,
-        city: newAddr.city,
-        state: newAddr.state,
-        pincode: newAddr.pincode,
+        city,
+        state,
+        pincode,
         is_default: true,
       };
     } else {
-      shippingAddress = addresses.find((a) => a.id === selectedAddrId);
-      if (!shippingAddress) {
-        if (addresses.length > 0) {
-          shippingAddress = addresses[0];
-        } else {
-          setError("Please provide a delivery address.");
-          return;
-        }
+      // Find selected address or fallback to first
+      const found = addresses.find((a) => a.id === selectedAddrId) || addresses[0];
+      if (!found) {
+        setError("Please select or add a delivery address.");
+        return;
       }
+      shippingAddress = found;
     }
 
-    setLoading(true);
+    if (!loading) setLoading(true);
+
     const { data: order, error: orderErr } = await placeOrder({
-      customerName: shippingAddress.name || user.name || "Customer",
-      customerPhone: shippingAddress.phone || user.phone || "+91 98765 00000",
+      customerName: shippingAddress.name || user.name || appUser?.profile?.full_name || "Customer",
+      customerPhone: shippingAddress.phone || user.phone || appUser?.profile?.phone || "+91 9000000000",
       shippingAddress,
       items,
       totalAmount: finalTotal,
@@ -194,6 +211,14 @@ export default function CheckoutModal({
           </div>
         ) : (
           <div className="p-6 flex flex-col gap-6 max-h-[75vh] overflow-y-auto">
+
+            {/* Cart empty warning */}
+            {items.length === 0 && (
+              <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm font-semibold text-center">
+                ⚠️ Your cart is empty. Please go back and add items.
+              </div>
+            )}
+
             {/* Delivery Address Section */}
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -259,7 +284,7 @@ export default function CheckoutModal({
                         value={newAddr.phone}
                         onChange={(e) => setNewAddr({ ...newAddr, phone: e.target.value.replace(/[^0-9+]/g, "") })}
                         className="w-full bg-white border border-[#d5dcd3] rounded-lg px-3 py-2 text-xs text-[#073b4c] focus:outline-none focus:border-[#006a39]"
-                        placeholder="9876543210 (10-digit number)"
+                        placeholder="9876543210"
                         maxLength={15}
                       />
                     </div>
@@ -271,7 +296,17 @@ export default function CheckoutModal({
                       value={newAddr.line1}
                       onChange={(e) => setNewAddr({ ...newAddr, line1: e.target.value })}
                       className="w-full bg-white border border-[#d5dcd3] rounded-lg px-3 py-2 text-xs text-[#073b4c] focus:outline-none focus:border-[#006a39]"
-                      placeholder="Flat, Building, Street"
+                      placeholder="Flat No, Building, Street Name"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-[#073b4c] uppercase block mb-1">Address Line 2 (Optional)</label>
+                    <input
+                      type="text"
+                      value={newAddr.line2}
+                      onChange={(e) => setNewAddr({ ...newAddr, line2: e.target.value })}
+                      className="w-full bg-white border border-[#d5dcd3] rounded-lg px-3 py-2 text-xs text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                      placeholder="Landmark, Area (optional)"
                     />
                   </div>
                   <div className="grid grid-cols-3 gap-2">
@@ -298,8 +333,9 @@ export default function CheckoutModal({
                       <input
                         type="text"
                         value={newAddr.pincode}
-                        onChange={(e) => setNewAddr({ ...newAddr, pincode: e.target.value })}
+                        onChange={(e) => setNewAddr({ ...newAddr, pincode: e.target.value.replace(/\D/g, "") })}
                         className="w-full bg-white border border-[#d5dcd3] rounded-lg px-3 py-2 text-xs text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                        maxLength={6}
                       />
                     </div>
                   </div>
@@ -338,7 +374,17 @@ export default function CheckoutModal({
             {/* Order Items & Price Summary */}
             <div className="bg-[#f8fafb] border border-[#e4ede2] rounded-xl p-4">
               <h4 className="text-xs font-bold text-[#073b4c] mb-2">Order Summary ({items.length} items)</h4>
-              <div className="flex flex-col gap-1 text-xs text-[#6d7a6f]">
+              {items.length > 0 && (
+                <div className="flex flex-col gap-1 mb-3 max-h-32 overflow-y-auto">
+                  {items.map((item, i) => (
+                    <div key={i} className="flex justify-between text-[11px]">
+                      <span className="text-[#6d7a6f] truncate max-w-[60%]">{item.name} × {item.quantity}</span>
+                      <span className="text-[#073b4c] font-semibold">₹{(item.price * item.quantity).toFixed(0)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex flex-col gap-1.5 text-xs text-[#6d7a6f]">
                 <div className="flex justify-between">
                   <span>Items Subtotal</span>
                   <span className="font-semibold text-[#073b4c]">₹{subtotal}</span>
@@ -362,17 +408,17 @@ export default function CheckoutModal({
 
             {error && (
               <div className="p-3 rounded-xl bg-[#fff0ee] border border-[#ffd5cf] text-xs text-[#c0392b]">
-                {error}
+                ❌ {error}
               </div>
             )}
 
             <button
               onClick={handlePlaceOrder}
-              disabled={loading}
+              disabled={loading || items.length === 0}
               className="w-full py-3.5 bg-[#006a39] text-white font-['Manrope',sans-serif] font-bold text-sm rounded-xl hover:bg-[#005a30] transition-all shadow-md disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-              {loading ? "Placing Order…" : `Place Order (₹${finalTotal})`}
+              {loading ? "Placing Order…" : items.length === 0 ? "Cart is Empty" : `Place Order (₹${finalTotal})`}
             </button>
           </div>
         )}
