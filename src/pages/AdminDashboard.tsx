@@ -130,16 +130,16 @@ const MOCK_REVENUE_HISTORY = [
 ];
 
 const MOCK_ORDERS = [
-  { id: "ORD-2847", customer: "Priya Sharma", phone: "98765 43210", items: 3, amount: 763, status: "Delivered", date: "Aug 27, 2026", payment: "UPI" },
-  { id: "ORD-2846", customer: "Rahul Kumar", phone: "87654 32109", items: 1, amount: 177, status: "Shipped", date: "Aug 27, 2026", payment: "Card" },
-  { id: "ORD-2845", customer: "Anita Patel", phone: "76543 21098", items: 5, amount: 1247, status: "Processing", date: "Aug 27, 2026", payment: "COD" },
-  { id: "ORD-2844", customer: "Suresh Gupta", phone: "65432 10987", items: 2, amount: 426, status: "Delivered", date: "Aug 26, 2026", payment: "UPI" },
-  { id: "ORD-2843", customer: "Meera Nair", phone: "54321 09876", items: 1, amount: 332, status: "Shipped", date: "Aug 26, 2026", payment: "UPI" },
-  { id: "ORD-2842", customer: "Vikram Singh", phone: "43210 98765", items: 4, amount: 892, status: "Cancelled", date: "Aug 26, 2026", payment: "Card" },
-  { id: "ORD-2841", customer: "Deepa Krishnan", phone: "32109 87654", items: 2, amount: 519, status: "Delivered", date: "Aug 25, 2026", payment: "UPI" },
-  { id: "ORD-2840", customer: "Amit Verma", phone: "21098 76543", items: 6, amount: 1834, status: "Processing", date: "Aug 25, 2026", payment: "Card" },
-  { id: "ORD-2839", customer: "Sunita Rao", phone: "10987 65432", items: 1, amount: 105, status: "Delivered", date: "Aug 25, 2026", payment: "COD" },
-  { id: "ORD-2838", customer: "Kiran Mehta", phone: "09876 54321", items: 3, amount: 671, status: "Shipped", date: "Aug 24, 2026", payment: "UPI" },
+  { id: "ORD-2847", customer: "Priya Sharma", phone: "98765 43210", items: 3, amount: 763, status: "Delivered", date: "Aug 27, 2026", payment: "UPI", role: "customer" as const },
+  { id: "ORD-2846", customer: "Sharma Medical & Surgical", phone: "87654 32109", items: 12, amount: 4890, status: "Shipped", date: "Aug 27, 2026", payment: "Card", role: "retailer" as const, shopName: "Sharma Medical Store" },
+  { id: "ORD-2845", customer: "Anita Patel", phone: "76543 21098", items: 5, amount: 1247, status: "Processing", date: "Aug 27, 2026", payment: "COD", role: "customer" as const },
+  { id: "ORD-2844", customer: "Apex Pharma Distributors", phone: "65432 10987", items: 25, amount: 12450, status: "Delivered", date: "Aug 26, 2026", payment: "UPI", role: "retailer" as const, shopName: "Apex Pharma" },
+  { id: "ORD-2843", customer: "Meera Nair", phone: "54321 09876", items: 1, amount: 332, status: "Shipped", date: "Aug 26, 2026", payment: "UPI", role: "customer" as const },
+  { id: "ORD-2842", customer: "Kolkata City Meds", phone: "43210 98765", items: 18, amount: 7650, status: "Cancelled", date: "Aug 26, 2026", payment: "Card", role: "retailer" as const, shopName: "Kolkata City Meds" },
+  { id: "ORD-2841", customer: "Deepa Krishnan", phone: "32109 87654", items: 2, amount: 519, status: "Delivered", date: "Aug 25, 2026", payment: "UPI", role: "customer" as const },
+  { id: "ORD-2840", customer: "Apollo Care Chemist", phone: "21098 76543", items: 30, amount: 14834, status: "Processing", date: "Aug 25, 2026", payment: "Card", role: "retailer" as const, shopName: "Apollo Care Chemist" },
+  { id: "ORD-2839", customer: "Sunita Rao", phone: "10987 65432", items: 1, amount: 105, status: "Delivered", date: "Aug 25, 2026", payment: "COD", role: "customer" as const },
+  { id: "ORD-2838", customer: "Gupta Health Pharmacy", phone: "09876 54321", items: 15, amount: 6271, status: "Shipped", date: "Aug 24, 2026", payment: "UPI", role: "retailer" as const, shopName: "Gupta Health Pharmacy" },
 ];
 
 const TAB_ITEMS: { id: AdminTab; label: string; icon: React.ReactElement }[] = [
@@ -592,17 +592,28 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
   const liveOrders = useMemo(() => {
     if (dbOrders.length > 0) {
-      return dbOrders.map((o) => ({
-        id: o.order_number,
-        dbId: o.id,
-        customer: o.customer_name,
-        phone: o.customer_phone,
-        items: o.order_items?.length || 1,
-        amount: Number(o.total_amount),
-        status: o.status,
-        date: new Date(o.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
-        payment: o.payment_method,
-      }));
+      return dbOrders.map((o) => {
+        const isRetailerInferred =
+          o.user_role === "retailer" ||
+          o.customer_name?.toLowerCase().includes("store") ||
+          o.customer_name?.toLowerCase().includes("pharmacy") ||
+          o.customer_name?.toLowerCase().includes("medical") ||
+          o.customer_name?.toLowerCase().includes("pharma");
+
+        return {
+          id: o.order_number,
+          dbId: o.id,
+          customer: o.customer_name,
+          phone: o.customer_phone,
+          items: o.order_items?.length || 1,
+          amount: Number(o.total_amount),
+          status: o.status,
+          date: new Date(o.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+          payment: o.payment_method,
+          role: (o.user_role || (isRetailerInferred ? "retailer" : "customer")) as "retailer" | "customer",
+          shopName: o.shop_name || (isRetailerInferred ? o.customer_name : undefined),
+        };
+      });
     }
     return MOCK_ORDERS.map((o) => ({ ...o, dbId: "" }));
   }, [dbOrders]);
@@ -1276,6 +1287,8 @@ function OrdersTab({
     status: string;
     date: string;
     payment: string;
+    role?: "retailer" | "customer";
+    shopName?: string;
   }[];
   filter: string;
   setFilter: (v: string) => void;
@@ -1284,15 +1297,217 @@ function OrdersTab({
     newStatus: "Processing" | "Shipped" | "Delivered" | "Cancelled"
   ) => void;
 }) {
-  const FILTERS = ["All", "Processing", "Shipped", "Delivered", "Cancelled"];
+  const [roleSegment, setRoleSegment] = useState<"all" | "retailer" | "customer">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const STATUS_FILTERS = ["All", "Processing", "Shipped", "Delivered", "Cancelled"];
+
+  // Metrics computation
+  const retailerOrders = useMemo(() => orders.filter((o) => o.role === "retailer"), [orders]);
+  const customerOrders = useMemo(() => orders.filter((o) => o.role !== "retailer"), [orders]);
+
+  const retailerRevenue = useMemo(
+    () => retailerOrders.filter((o) => o.status !== "Cancelled").reduce((acc, o) => acc + o.amount, 0),
+    [retailerOrders]
+  );
+  const customerRevenue = useMemo(
+    () => customerOrders.filter((o) => o.status !== "Cancelled").reduce((acc, o) => acc + o.amount, 0),
+    [customerOrders]
+  );
+
+  const retailerPending = useMemo(
+    () => retailerOrders.filter((o) => o.status === "Processing" || o.status === "Shipped").length,
+    [retailerOrders]
+  );
+  const customerPending = useMemo(
+    () => customerOrders.filter((o) => o.status === "Processing" || o.status === "Shipped").length,
+    [customerOrders]
+  );
+
+  // Filtered orders list
+  const displayedOrders = useMemo(() => {
+    return orders.filter((o) => {
+      // Role filter
+      if (roleSegment === "retailer" && o.role !== "retailer") return false;
+      if (roleSegment === "customer" && o.role === "retailer") return false;
+
+      // Status filter
+      if (filter !== "All" && o.status !== filter) return false;
+
+      // Search query
+      if (searchQuery.trim() !== "") {
+        const q = searchQuery.toLowerCase();
+        const matchId = o.id.toLowerCase().includes(q);
+        const matchCustomer = o.customer.toLowerCase().includes(q);
+        const matchShop = o.shopName ? o.shopName.toLowerCase().includes(q) : false;
+        const matchPhone = o.phone.includes(q);
+        if (!matchId && !matchCustomer && !matchShop && !matchPhone) return false;
+      }
+
+      return true;
+    });
+  }, [orders, roleSegment, filter, searchQuery]);
+
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
+      {/* ── Role Management Summary Cards ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* All Orders Card */}
+        <div
+          onClick={() => setRoleSegment("all")}
+          className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+            roleSegment === "all"
+              ? "bg-[#073b4c] text-white border-[#073b4c] shadow-md ring-2 ring-[#073b4c]/30"
+              : "bg-white text-[#073b4c] border-[#e4ede2] hover:border-[#073b4c]/40"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className={`text-xs font-bold uppercase tracking-wider ${roleSegment === "all" ? "text-white/70" : "text-[#9aa89b]"}`}>
+              All Orders
+            </span>
+            <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${roleSegment === "all" ? "bg-white/20 text-white" : "bg-[#f0f4f0] text-[#073b4c]"}`}>
+              {orders.length} total
+            </span>
+          </div>
+          <p className={`font-['Manrope',sans-serif] font-extrabold text-2xl sm:text-3xl ${roleSegment === "all" ? "text-white" : "text-[#073b4c]"}`}>
+            ₹{(retailerRevenue + customerRevenue).toLocaleString()}
+          </p>
+          <p className={`text-xs mt-1.5 ${roleSegment === "all" ? "text-white/60" : "text-[#6d7a6f]"}`}>
+            {retailerPending + customerPending} active fulfillments pending
+          </p>
+        </div>
+
+        {/* Retailer Orders Card */}
+        <div
+          onClick={() => setRoleSegment("retailer")}
+          className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+            roleSegment === "retailer"
+              ? "bg-[#0369a1] text-white border-[#0369a1] shadow-md ring-2 ring-[#0369a1]/30"
+              : "bg-white text-[#073b4c] border-[#e4ede2] hover:border-[#0369a1]/40"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">🏪</span>
+              <span className={`text-xs font-bold uppercase tracking-wider ${roleSegment === "retailer" ? "text-white/80" : "text-[#0369a1]"}`}>
+                Retailer Wholesale
+              </span>
+            </div>
+            <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${roleSegment === "retailer" ? "bg-white/20 text-white" : "bg-[#e0f2fe] text-[#0369a1]"}`}>
+              {retailerOrders.length} orders
+            </span>
+          </div>
+          <p className={`font-['Manrope',sans-serif] font-extrabold text-2xl sm:text-3xl ${roleSegment === "retailer" ? "text-white" : "text-[#0369a1]"}`}>
+            ₹{retailerRevenue.toLocaleString()}
+          </p>
+          <div className="flex items-center justify-between text-xs mt-1.5">
+            <span className={roleSegment === "retailer" ? "text-white/70" : "text-[#6d7a6f]"}>
+              B2B bulk wholesale orders
+            </span>
+            <span className={`font-bold ${roleSegment === "retailer" ? "text-amber-200" : "text-[#d97706]"}`}>
+              {retailerPending} pending
+            </span>
+          </div>
+        </div>
+
+        {/* Customer Orders Card */}
+        <div
+          onClick={() => setRoleSegment("customer")}
+          className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+            roleSegment === "customer"
+              ? "bg-[#006a39] text-white border-[#006a39] shadow-md ring-2 ring-[#006a39]/30"
+              : "bg-white text-[#073b4c] border-[#e4ede2] hover:border-[#006a39]/40"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">👤</span>
+              <span className={`text-xs font-bold uppercase tracking-wider ${roleSegment === "customer" ? "text-white/80" : "text-[#006a39]"}`}>
+                Customer Retail
+              </span>
+            </div>
+            <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${roleSegment === "customer" ? "bg-white/20 text-white" : "bg-[#d1fae5] text-[#006a39]"}`}>
+              {customerOrders.length} orders
+            </span>
+          </div>
+          <p className={`font-['Manrope',sans-serif] font-extrabold text-2xl sm:text-3xl ${roleSegment === "customer" ? "text-white" : "text-[#006a39]"}`}>
+            ₹{customerRevenue.toLocaleString()}
+          </p>
+          <div className="flex items-center justify-between text-xs mt-1.5">
+            <span className={roleSegment === "customer" ? "text-white/70" : "text-[#6d7a6f]"}>
+              Direct consumer purchases
+            </span>
+            <span className={`font-bold ${roleSegment === "customer" ? "text-amber-200" : "text-[#d97706]"}`}>
+              {customerPending} pending
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Segment Toggle Tabs & Search Controls ── */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-[#e4ede2]">
+        {/* Role Segment Tabs */}
+        <div className="flex items-center gap-1 bg-[#f0f4f0] p-1 rounded-xl">
+          <button
+            onClick={() => setRoleSegment("all")}
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+              roleSegment === "all"
+                ? "bg-white text-[#073b4c] shadow-xs"
+                : "text-[#6d7a6f] hover:text-[#073b4c]"
+            }`}
+          >
+            All Orders ({orders.length})
+          </button>
+          <button
+            onClick={() => setRoleSegment("retailer")}
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+              roleSegment === "retailer"
+                ? "bg-[#0369a1] text-white shadow-xs"
+                : "text-[#6d7a6f] hover:text-[#0369a1]"
+            }`}
+          >
+            <span>🏪 Retailer Orders</span>
+            <span className={`text-[11px] px-1.5 py-0.2 rounded-full ${roleSegment === "retailer" ? "bg-white/20 text-white" : "bg-[#e0f2fe] text-[#0369a1]"}`}>
+              {retailerOrders.length}
+            </span>
+          </button>
+          <button
+            onClick={() => setRoleSegment("customer")}
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+              roleSegment === "customer"
+                ? "bg-[#006a39] text-white shadow-xs"
+                : "text-[#6d7a6f] hover:text-[#006a39]"
+            }`}
+          >
+            <span>👤 Customer Orders</span>
+            <span className={`text-[11px] px-1.5 py-0.2 rounded-full ${roleSegment === "customer" ? "bg-white/20 text-white" : "bg-[#d1fae5] text-[#006a39]"}`}>
+              {customerOrders.length}
+            </span>
+          </button>
+        </div>
+
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-md">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa89b]">
+            <path d="M13 13L10 10M11.5 6.5C11.5 9.26 9.26 11.5 6.5 11.5C3.74 11.5 1.5 9.26 1.5 6.5C1.5 3.74 3.74 1.5 6.5 1.5C9.26 1.5 11.5 3.74 11.5 6.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search order ID, customer name, pharmacy, phone…"
+            className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-[#f8fafb] border border-[#e4ede2] rounded-xl focus:outline-none focus:border-[#073b4c]"
+          />
+        </div>
+      </div>
+
+      {/* ── Status Filter Pills ── */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-        {FILTERS.map((f) => (
+        {STATUS_FILTERS.map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className="px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap shrink-0"
+            className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0 cursor-pointer"
             style={
               filter === f
                 ? { backgroundColor: "#073b4c", color: "white" }
@@ -1303,29 +1518,83 @@ function OrdersTab({
           </button>
         ))}
       </div>
-      <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden">
+
+      {/* ── Orders Table ── */}
+      <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm" style={{ minWidth: "760px" }}>
+          <table className="w-full text-sm" style={{ minWidth: "860px" }}>
             <thead>
               <tr className="border-b border-[#e4ede2] bg-[#f8fafb]">
-                {["Order ID", "Customer", "Phone", "Items", "Amount", "Payment", "Status", "Date", "Action"].map((h) => (
-                  <th key={h} className="text-left px-5 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px] whitespace-nowrap">{h}</th>
+                {["Order ID", "Account Type", "Customer / Shop", "Phone", "Items", "Amount", "Payment", "Status", "Date", "Action"].map((h) => (
+                  <th key={h} className="text-left px-5 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px] whitespace-nowrap">
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {orders.map((o) => {
+              {displayedOrders.map((o) => {
                 const st = orderStatus(o.status);
+                const isRetailerOrder = o.role === "retailer";
                 return (
                   <tr key={o.id} className="border-b border-[#f0f4f0] last:border-0 hover:bg-[#fafcfa] transition-colors">
-                    <td className="px-5 py-3.5 font-mono text-xs text-[#006a39] font-bold">{o.id}</td>
-                    <td className="px-5 py-3.5 font-semibold text-[#073b4c]">{o.customer}</td>
-                    <td className="px-5 py-3.5 text-[#6d7a6f]">{o.phone}</td>
-                    <td className="px-5 py-3.5 text-[#073b4c]">{o.items} {o.items === 1 ? "item" : "items"}</td>
-                    <td className="px-5 py-3.5 font-['Manrope',sans-serif] font-bold text-[#073b4c]">₹{o.amount.toLocaleString()}</td>
-                    <td className="px-5 py-3.5"><span className="text-xs bg-[#f0f4f0] text-[#6d7a6f] px-2 py-0.5 rounded font-medium">{o.payment}</span></td>
-                    <td className="px-5 py-3.5"><span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ color: st.color, backgroundColor: st.bg }}>{o.status}</span></td>
-                    <td className="px-5 py-3.5 text-[#9aa89b] text-xs">{o.date}</td>
+                    {/* Order ID */}
+                    <td className="px-5 py-3.5 font-mono text-xs text-[#006a39] font-bold">
+                      {o.id}
+                    </td>
+
+                    {/* Account Type / Role Badge */}
+                    <td className="px-5 py-3.5">
+                      {isRetailerOrder ? (
+                        <span className="inline-flex items-center gap-1 bg-[#e0f2fe] text-[#0369a1] text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider border border-[#bae6fd]">
+                          <span>🏪</span> Retailer
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 bg-[#d1fae5] text-[#047857] text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider border border-[#a7f3d0]">
+                          <span>👤</span> Customer
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Customer / Shop Name */}
+                    <td className="px-5 py-3.5">
+                      <p className="font-semibold text-[#073b4c] text-xs sm:text-sm">{o.customer}</p>
+                      {isRetailerOrder && o.shopName && (
+                        <p className="text-[10px] text-[#0369a1] font-semibold mt-0.5">🏪 {o.shopName}</p>
+                      )}
+                    </td>
+
+                    {/* Phone */}
+                    <td className="px-5 py-3.5 text-[#6d7a6f] text-xs font-mono">{o.phone}</td>
+
+                    {/* Items */}
+                    <td className="px-5 py-3.5 text-[#073b4c] font-medium text-xs">
+                      {o.items} {o.items === 1 ? "item" : "items"}
+                    </td>
+
+                    {/* Amount */}
+                    <td className="px-5 py-3.5 font-['Manrope',sans-serif] font-bold text-[#073b4c]">
+                      ₹{o.amount.toLocaleString()}
+                    </td>
+
+                    {/* Payment */}
+                    <td className="px-5 py-3.5">
+                      <span className="text-xs bg-[#f0f4f0] text-[#6d7a6f] px-2 py-0.5 rounded font-medium">
+                        {o.payment}
+                      </span>
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-5 py-3.5">
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ color: st.color, backgroundColor: st.bg }}>
+                        {o.status}
+                      </span>
+                    </td>
+
+                    {/* Date */}
+                    <td className="px-5 py-3.5 text-[#9aa89b] text-xs whitespace-nowrap">{o.date}</td>
+
+                    {/* Action */}
                     <td className="px-5 py-3.5">
                       <select
                         value={o.status}
@@ -1335,7 +1604,7 @@ function OrdersTab({
                             e.target.value as "Processing" | "Shipped" | "Delivered" | "Cancelled"
                           )
                         }
-                        className="text-xs font-semibold bg-[#f8fafb] border border-[#e4ede2] rounded-lg px-2 py-1 text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                        className="text-xs font-semibold bg-[#f8fafb] border border-[#e4ede2] rounded-lg px-2.5 py-1.5 text-[#073b4c] focus:outline-none focus:border-[#006a39] cursor-pointer"
                       >
                         <option value="Processing">Processing</option>
                         <option value="Shipped">Shipped</option>
@@ -1349,7 +1618,12 @@ function OrdersTab({
             </tbody>
           </table>
         </div>
-        {orders.length === 0 && <div className="py-16 text-center text-[#9aa89b] text-sm">No orders match this filter.</div>}
+        {displayedOrders.length === 0 && (
+          <div className="py-16 text-center text-[#9aa89b] text-sm flex flex-col items-center gap-2">
+            <span className="text-3xl">📦</span>
+            <p>No orders found matching the selected segment and filters.</p>
+          </div>
+        )}
       </div>
     </div>
   );

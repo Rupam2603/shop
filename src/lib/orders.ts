@@ -16,6 +16,8 @@ export interface DbOrder {
   created_at: string;
   updated_at: string;
   order_items?: DbOrderItem[];
+  user_role?: "retailer" | "customer" | "admin";
+  shop_name?: string | null;
 }
 
 export interface DbOrderItem {
@@ -142,16 +144,50 @@ export async function fetchUserOrders(): Promise<DbOrder[]> {
  * Fetch all orders across platform (Admin only)
  */
 export async function fetchAllOrders(): Promise<DbOrder[]> {
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*, order_items(*)")
-    .order("created_at", { ascending: false });
+  try {
+    const { data: orders, error } = await supabase
+      .from("orders")
+      .select("*, order_items(*)")
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching all orders:", error.message);
+    if (error) {
+      console.error("Error fetching all orders:", error.message);
+      return [];
+    }
+
+    if (orders && orders.length > 0) {
+      const userIds = Array.from(new Set(orders.map((o) => o.user_id).filter(Boolean)));
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, role, shop_name, full_name, phone")
+          .in("id", userIds);
+
+        const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
+        return orders.map((o) => {
+          const prof = profileMap.get(o.user_id);
+          const inferredRole: "retailer" | "customer" =
+            prof?.role ||
+            (o.customer_name?.toLowerCase().includes("store") ||
+            o.customer_name?.toLowerCase().includes("pharmacy") ||
+            o.customer_name?.toLowerCase().includes("medical")
+              ? "retailer"
+              : "customer");
+
+          return {
+            ...o,
+            user_role: inferredRole,
+            shop_name: prof?.shop_name || null,
+          };
+        }) as DbOrder[];
+      }
+    }
+
+    return (orders || []) as DbOrder[];
+  } catch (e) {
+    console.error("Error in fetchAllOrders:", e);
     return [];
   }
-  return data as DbOrder[];
 }
 
 /**
