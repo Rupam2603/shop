@@ -118,8 +118,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Subscribe to future auth events
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      hydrateUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        setAppUser(null);
+        setLoading(false);
+      } else if (event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
+        hydrateUser(session?.user ?? null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -142,7 +147,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           (data.user.user_metadata?.role as UserRole) ||
           "customer";
 
-        // Admin protection: only verified admins can access admin dashboard
+        // 1. Strict Customer role validation
+        if (expectedRole === "customer" && userRole !== "customer") {
+          await supabase.auth.signOut();
+          setAppUser(null);
+          setLoading(false);
+          if (userRole === "retailer") {
+            return {
+              error: "Access denied. This account is registered as a Retailer. You cannot sign in as a Customer using Retailer credentials. Please switch to the Retailer tab.",
+            };
+          }
+          return {
+            error: "Access denied. This is an Admin account. Please switch to the Admin tab to sign in.",
+          };
+        }
+
+        // 2. Strict Retailer role validation
+        if (expectedRole === "retailer" && userRole !== "retailer") {
+          await supabase.auth.signOut();
+          setAppUser(null);
+          setLoading(false);
+          if (userRole === "customer") {
+            return {
+              error: "Access denied. This account is registered as a Customer. You cannot sign in as a Retailer using Customer credentials. Please switch to the Customer tab.",
+            };
+          }
+          return {
+            error: "Access denied. This is an Admin account. Please switch to the Admin tab to sign in.",
+          };
+        }
+
+        // 3. Strict Admin role validation
         if (expectedRole === "admin" && userRole !== "admin") {
           await supabase.auth.signOut();
           setAppUser(null);
@@ -150,6 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: "Access denied. This account does not have Admin privileges." };
         }
 
+        // Roles match! Hydrate the user session.
         await hydrateUser(data.user);
       }
 
