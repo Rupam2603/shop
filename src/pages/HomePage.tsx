@@ -175,37 +175,39 @@ function MiniCard({
   p,
   accent,
   category,
+  isRetailer,
   onClick,
   onAddToCart,
 }: {
   p: { name: string; sub: string; price: string; orig: string; disc: string; img: string; stock?: number };
   accent: string;
   category?: string;
+  isRetailer?: boolean;
   onClick: () => void;
   onAddToCart?: () => void;
 }) {
   const isOutOfStock = p.stock !== undefined && p.stock <= 0;
-  const isLowStock = p.stock !== undefined && p.stock > 0 && p.stock <= 10;
+  const isLowStock = p.stock !== undefined && p.stock > 0 && p.stock <= (isRetailer ? 20 : 10);
 
   return (
     <div onClick={onClick} className={`w-[155px] sm:w-[185px] lg:w-auto shrink-0 snap-start bg-white rounded-2xl border ${isOutOfStock ? "border-red-200 opacity-80" : "border-[#e4ede2]"} hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer`}>
       <div className="relative bg-[#f8fafb] h-32 sm:h-36 overflow-hidden">
         {p.disc && (
-          <span className="absolute top-2 left-2 z-10 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase" style={{ backgroundColor: accent }}>
+          <span className="absolute top-2 left-2 z-10 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase shadow-sm" style={{ backgroundColor: accent }}>
             {p.disc} OFF
           </span>
         )}
         {isOutOfStock ? (
-          <span className="absolute top-2 right-2 z-10 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">
-            Out of Stock
+          <span className="absolute top-2 right-2 z-10 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase shadow-sm">
+            {isRetailer ? "Stock Out" : "Out of Stock"}
           </span>
         ) : isLowStock ? (
-          <span className="absolute top-2 right-2 z-10 bg-[#fef3c7] text-[#b45309] border border-[#fde68a] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase animate-pulse">
-            Only {p.stock} Left
+          <span className="absolute top-2 right-2 z-10 bg-[#fef3c7] text-[#b45309] border border-[#fde68a] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase animate-pulse shadow-sm">
+            {isRetailer ? `Low (${p.stock})` : `Only ${p.stock} Left`}
           </span>
         ) : (
-          <span className="absolute top-2 right-2 z-10 bg-[#d1fae5]/90 text-[#047857] text-[8px] font-bold px-1.5 py-0.5 rounded">
-            {p.stock} in stock
+          <span className="absolute top-2 right-2 z-10 bg-[#d1fae5]/90 text-[#047857] text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+            {isRetailer ? `📦 ${p.stock} units` : `${p.stock} in stock`}
           </span>
         )}
         <img src={p.img} alt={p.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.15"; }} />
@@ -213,20 +215,32 @@ function MiniCard({
       <div className="p-2.5 sm:p-3 flex flex-col gap-1 flex-1">
         <p className="font-bold text-[#073b4c] text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[32px]">{p.name}</p>
         <p className="text-[#9aa89b] text-[10px] sm:text-[11px] truncate">{p.sub}</p>
+
+        {/* Real-time stock status indicator */}
+        <div className="text-[9px] mt-0.5">
+          {isOutOfStock ? (
+            <span className="text-[#dc2626] font-bold">🔴 Out of stock</span>
+          ) : isLowStock ? (
+            <span className="text-[#d97706] font-semibold">⚠️ {p.stock} units left</span>
+          ) : (
+            <span className="text-[#059669] font-medium">🟢 {p.stock} in stock</span>
+          )}
+        </div>
+
         <div className="flex items-center justify-between mt-auto pt-2">
           <div>
             <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-base">{p.price}</span>
             {p.orig && <span className="text-[#9aa89b] text-[10px] sm:text-xs line-through ml-1">MRP {p.orig}</span>}
           </div>
           {isOutOfStock ? (
-            <span className="text-[9px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">Out</span>
+            <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">Out</span>
           ) : (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onAddToCart?.();
               }}
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shrink-0 hover:opacity-90 transition-opacity"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shrink-0 hover:opacity-90 active:scale-95 transition-all shadow-sm"
               style={{ backgroundColor: accent }}
               title="Add to cart"
             >
@@ -241,11 +255,13 @@ function MiniCard({
 
 function CategorySection({
   item,
+  isRetailer,
   onViewAll,
   onProductClick,
   onAddToCart,
 }: {
   item: typeof ALL_CATEGORIES[0];
+  isRetailer?: boolean;
   onViewAll: () => void;
   onProductClick: (p: PopupProduct) => void;
   onAddToCart: (p: typeof ALL_CATEGORIES[0]["products"][0], cat: string) => void;
@@ -259,7 +275,7 @@ function CategorySection({
           </div>
           <div className="min-w-0">
             <h2 className="font-['Manrope',sans-serif] font-bold text-base sm:text-xl truncate" style={{ color: item.accent }}>{item.cat}</h2>
-            <p className="text-[#6d7a6f] text-[11px] sm:text-xs mt-0.5">{item.count} products available</p>
+            <p className="text-[#6d7a6f] text-[11px] sm:text-xs mt-0.5">{item.count} products available · Live Inventory</p>
           </div>
         </div>
         <button onClick={onViewAll} className="flex items-center gap-1 text-xs sm:text-sm font-bold hover:underline shrink-0 whitespace-nowrap" style={{ color: item.accent }}>
@@ -274,6 +290,7 @@ function CategorySection({
             p={p}
             accent={item.accent}
             category={item.cat}
+            isRetailer={isRetailer}
             onClick={() => onProductClick({
               id: nameToId(p.name),
               name: p.name,
@@ -462,6 +479,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
           <CategorySection
             key={item.cat}
             item={item}
+            isRetailer={isRetailer}
             onViewAll={() => onNavigate("medicines", item.cat)}
             onProductClick={setSelectedProduct}
             onAddToCart={handleAddToCartFromCategory}
@@ -488,26 +506,28 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
           <div className="flex lg:grid lg:grid-cols-4 gap-3 sm:gap-4 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
             {flashSaleData.map((p) => {
               const isOutOfStock = (p as any).stock !== undefined && (p as any).stock <= 0;
-              const isLowStock = (p as any).stock !== undefined && (p as any).stock > 0 && (p as any).stock <= 10;
+              const isLowStock = (p as any).stock !== undefined && (p as any).stock > 0 && (p as any).stock <= (isRetailer ? 20 : 10);
+              const pStock = (p as any).stock ?? 50;
+
               return (
                 <div
                   key={p.name}
-                  onClick={() => setSelectedProduct({ id: nameToId(p.name), name: p.name, sub: p.sub, price: p.price, orig: p.orig, disc: p.disc, cat: p.cat, brand: p.brand, img: p.img, stock: (p as any).stock ?? 50 })}
+                  onClick={() => setSelectedProduct({ id: nameToId(p.name), name: p.name, sub: p.sub, price: p.price, orig: p.orig, disc: p.disc, cat: p.cat, brand: p.brand, img: p.img, stock: pStock })}
                   className={`w-[170px] sm:w-[220px] lg:w-auto shrink-0 snap-start bg-white rounded-2xl border ${isOutOfStock ? "border-red-200 opacity-80" : "border-[rgba(189,202,188,0.4)]"} overflow-hidden flex flex-col group hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer`}
                 >
                   <div className="bg-[#f8fafb] h-32 sm:h-40 relative overflow-hidden flex items-center justify-center">
-                    <span className="absolute top-2 left-2 z-10 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded uppercase" style={{ backgroundColor: p.color }}>{p.badge}</span>
+                    <span className="absolute top-2 left-2 z-10 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm" style={{ backgroundColor: p.color }}>{p.badge}</span>
                     {isOutOfStock ? (
-                      <span className="absolute top-2 right-2 z-10 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">
-                        Out of Stock
+                      <span className="absolute top-2 right-2 z-10 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase shadow-sm">
+                        {isRetailer ? "Stock Out" : "Out of Stock"}
                       </span>
                     ) : isLowStock ? (
-                      <span className="absolute top-2 right-2 z-10 bg-[#fef3c7] text-[#b45309] border border-[#fde68a] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase animate-pulse">
-                        Only {(p as any).stock} Left
+                      <span className="absolute top-2 right-2 z-10 bg-[#fef3c7] text-[#b45309] border border-[#fde68a] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase animate-pulse shadow-sm">
+                        {isRetailer ? `Low (${pStock})` : `Only ${pStock} Left`}
                       </span>
                     ) : (
-                      <span className="absolute top-2 right-2 z-10 bg-[#d1fae5]/90 text-[#047857] text-[8px] font-bold px-1.5 py-0.5 rounded">
-                        {(p as any).stock ?? 50} in stock
+                      <span className="absolute top-2 right-2 z-10 bg-[#d1fae5]/90 text-[#047857] text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                        {isRetailer ? `📦 ${pStock} units` : `${pStock} in stock`}
                       </span>
                     )}
                     <img src={p.img} alt={p.name} className="h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
@@ -515,13 +535,25 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
                   <div className="p-3 sm:p-4 flex flex-col gap-1 flex-1">
                     <p className="font-bold text-[#073b4c] text-xs sm:text-sm leading-5 line-clamp-2">{p.name}</p>
                     <p className="text-[#3e4a3f] text-[10px] sm:text-xs">{p.sub}</p>
+
+                    {/* Stock status indicator */}
+                    <div className="text-[10px] mt-0.5">
+                      {isOutOfStock ? (
+                        <span className="text-[#dc2626] font-bold">🔴 Out of stock</span>
+                      ) : isLowStock ? (
+                        <span className="text-[#d97706] font-semibold">⚠️ {pStock} units remaining</span>
+                      ) : (
+                        <span className="text-[#059669] font-medium">🟢 {pStock} in stock</span>
+                      )}
+                    </div>
+
                     <div className="flex items-end justify-between mt-auto pt-2">
                       <div className="flex items-baseline gap-1.5">
                         <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-lg">{p.price}</span>
                         {p.orig && <span className="text-[#9aa89b] text-[10px] sm:text-xs line-through">MRP {p.orig}</span>}
                       </div>
                       {isOutOfStock ? (
-                        <span className="text-[9px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">Out</span>
+                        <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">Out</span>
                       ) : (
                         <button
                           onClick={(e) => {

@@ -141,7 +141,7 @@ export default function App() {
       case "home":      return <HomePage onNavigate={navigateTo} userRole={currentUser.role} />;
       case "lab-tests": return <LabTestsPage user={currentUser} />;
       case "medicines": return <MedicinesPage initialCategory={initialCategory} userRole={currentUser.role} />;
-      case "offers":    return <OffersPage />;
+      case "offers":    return <OffersPage userRole={currentUser.role} onNavigate={navigateTo} />;
       case "consult":   return <ConsultPage />;
       case "profile":   return (
         <ProfilePage

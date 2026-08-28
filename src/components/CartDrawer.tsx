@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useModalBackHandler } from "../lib/navigation";
+import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
 
 interface CartDrawerProps {
   onCheckout: () => void;
@@ -13,10 +14,49 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
     useCart();
   const { appUser } = useAuth();
   const isRetailer = appUser?.role === "retailer";
+  const [dbProducts, setDbProducts] = useState<DbProduct[]>([]);
 
   useModalBackHandler(isCartOpen, closeCart, "cart");
 
+  useEffect(() => {
+    let mounted = true;
+    fetchProducts().then((prods) => {
+      if (mounted && prods) {
+        setDbProducts(prods);
+      }
+    });
+
+    const unsubscribe = subscribeToProductsRealtime((payload) => {
+      if (payload.eventType === "UPDATE" && payload.new) {
+        setDbProducts((prev) => prev.map((p) => (p.id === payload.new.id ? { ...p, ...payload.new } : p)));
+      } else if (payload.eventType === "INSERT" && payload.new) {
+        setDbProducts((prev) => [payload.new, ...prev]);
+      } else if (payload.eventType === "DELETE" && payload.old) {
+        setDbProducts((prev) => prev.filter((p) => p.id !== payload.old.id));
+      }
+    });
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, [isCartOpen]);
+
   if (!isCartOpen) return null;
+
+  // Helper to find live stock of a cart item
+  const getLiveStock = (item: typeof items[0]): number => {
+    const matched = dbProducts.find(
+      (p) =>
+        p.id === item.productId ||
+        p.numeric_id === item.productNumericId ||
+        p.name.trim().toLowerCase() === item.name.trim().toLowerCase()
+    );
+    return matched ? matched.stock : 50; // fallback to 50 if db product not loaded yet
+  };
+
+  const hasOutOfStockItems = items.some((item) => getLiveStock(item) <= 0);
+  const hasExceededStockItems = items.some((item) => item.quantity > getLiveStock(item));
 
   const FREE_DELIVERY_THRESHOLD = 150;
   const isFreeDelivery = isRetailer || subtotal >= FREE_DELIVERY_THRESHOLD;
@@ -119,71 +159,124 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
                 </button>
               </div>
             ) : (
-              items.map((item) => (
-                <div key={item.productId || item.name} className="py-4 first:pt-0 last:pb-0 flex gap-3">
-                  <div className="w-16 h-16 bg-[#f8fafb] border border-[#e4ede2] rounded-xl overflow-hidden shrink-0 flex items-center justify-center p-1">
-                    <img src={item.imageUrl} alt={item.name} className="h-full max-w-full object-contain" />
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-between">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#006a39] block">
-                          {item.brand}
+              items.map((item) => {
+                const stock = getLiveStock(item);
+                const isOutOfStock = stock <= 0;
+                const isOverStock = item.quantity > stock && stock > 0;
+                const isLow = stock > 0 && stock <= 5;
+
+                return (
+                  <div key={item.productId || item.name} className={`py-4 first:pt-0 last:pb-0 flex gap-3 ${isOutOfStock ? "opacity-75" : ""}`}>
+                    <div className="w-16 h-16 bg-[#f8fafb] border border-[#e4ede2] rounded-xl overflow-hidden shrink-0 flex items-center justify-center p-1 relative">
+                      <img src={item.imageUrl} alt={item.name} className="h-full max-w-full object-contain" />
+                      {isOutOfStock && (
+                        <span className="absolute inset-0 bg-red-900/60 flex items-center justify-center text-white text-[9px] font-extrabold uppercase text-center p-1 leading-tight">
+                          Out of Stock
                         </span>
-                        <h4 className="font-bold text-[#073b4c] text-xs leading-snug line-clamp-1">
-                          {item.name}
-                        </h4>
-                      </div>
-                      <button
-                        onClick={() => removeFromCart(item.productId || item.productNumericId)}
-                        className="text-[#9aa89b] hover:text-[#c0392b] transition-colors p-1"
-                        title="Remove"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                          <path d="M2 3.5H12M4.5 3.5V2C4.5 1.7 4.7 1.5 5 1.5H9C9.3 1.5 9.5 1.7 9.5 2V3.5M5.5 6V10.5M8.5 6V10.5M3 3.5L3.7 12C3.7 12.3 4 12.5 4.3 12.5H9.7C10 12.5 10.3 12.3 10.3 12L11 3.5H3Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
+                      )}
                     </div>
-
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center border border-[#e4ede2] rounded-lg overflow-hidden bg-white">
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-[#006a39] block">
+                            {item.brand}
+                          </span>
+                          <h4 className="font-bold text-[#073b4c] text-xs leading-snug line-clamp-1">
+                            {item.name}
+                          </h4>
+                        </div>
                         <button
-                          onClick={() => updateQuantity(item.productId || item.productNumericId, item.quantity - 1)}
-                          className="w-6 h-6 flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] transition-colors font-bold text-xs"
+                          onClick={() => removeFromCart(item.productId || item.productNumericId)}
+                          className="text-[#9aa89b] hover:text-[#c0392b] transition-colors p-1"
+                          title="Remove"
                         >
-                          −
-                        </button>
-                        <span className="w-7 text-center font-bold text-xs text-[#073b4c]">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.productId || item.productNumericId, item.quantity + 1)}
-                          className="w-6 h-6 flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] transition-colors font-bold text-xs"
-                        >
-                          +
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2 3.5H12M4.5 3.5V2C4.5 1.7 4.7 1.5 5 1.5H9C9.3 1.5 9.5 1.7 9.5 2V3.5M5.5 6V10.5M8.5 6V10.5M3 3.5L3.7 12C3.7 12.3 4 12.5 4.3 12.5H9.7C10 12.5 10.3 12.3 10.3 12L11 3.5H3Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
                         </button>
                       </div>
 
-                      <div className="text-right">
-                        <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm">
-                          ₹{item.price * item.quantity}
-                        </span>
-                        {item.mrp > item.price && (
-                          <span className="text-[10px] text-[#9aa89b] line-through block">
-                            ₹{item.mrp * item.quantity}
+                      {/* Stock Warning Messages in Cart */}
+                      <div className="my-1">
+                        {isOutOfStock ? (
+                          <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded inline-block">
+                            🔴 Out of Stock - Please remove to checkout
+                          </span>
+                        ) : isOverStock ? (
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded inline-block">
+                            ⚠️ Only {stock} units available in stock
+                          </span>
+                        ) : isLow ? (
+                          <span className="text-[10px] font-medium text-amber-600 inline-block">
+                            ⚠️ Only {stock} units left in stock
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-medium text-emerald-600 inline-block">
+                            🟢 {stock} in stock
                           </span>
                         )}
                       </div>
+
+                      <div className="flex items-center justify-between mt-1">
+                        <div className="flex items-center border border-[#e4ede2] rounded-lg overflow-hidden bg-white">
+                          <button
+                            onClick={() => updateQuantity(item.productId || item.productNumericId, item.quantity - 1)}
+                            className="w-6 h-6 flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] transition-colors font-bold text-xs"
+                          >
+                            −
+                          </button>
+                          <span className="w-7 text-center font-bold text-xs text-[#073b4c]">
+                            {item.quantity}
+                          </span>
+                          <button
+                            disabled={isOutOfStock || item.quantity >= stock}
+                            onClick={() => updateQuantity(item.productId || item.productNumericId, item.quantity + 1)}
+                            className={`w-6 h-6 flex items-center justify-center text-[#073b4c] transition-colors font-bold text-xs ${
+                              isOutOfStock || item.quantity >= stock
+                                ? "opacity-30 cursor-not-allowed bg-gray-100"
+                                : "hover:bg-[#f0f4f0]"
+                            }`}
+                            title={item.quantity >= stock ? `Max available stock reached (${stock})` : "Add one"}
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm">
+                            ₹{item.price * item.quantity}
+                          </span>
+                          {item.mrp > item.price && (
+                            <span className="text-[10px] text-[#9aa89b] line-through block">
+                              ₹{item.mrp * item.quantity}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 
           {/* Footer with Summary & Checkout CTA */}
           {items.length > 0 && (
             <div className="border-t border-[#e4ede2] p-5 bg-[#f8fafb] flex flex-col gap-3">
+              {hasOutOfStockItems && (
+                <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>Your cart contains out-of-stock items. Please remove them to proceed.</span>
+                </div>
+              )}
+
+              {hasExceededStockItems && !hasOutOfStockItems && (
+                <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>Quantity exceeds available stock for some items. Please reduce before checking out.</span>
+                </div>
+              )}
+
               <div className="flex flex-col gap-1.5 text-xs text-[#6d7a6f]">
                 <div className="flex justify-between">
                   <span>Item Total</span>
@@ -206,15 +299,20 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
               </div>
 
               <button
+                disabled={hasOutOfStockItems || hasExceededStockItems}
                 onClick={() => {
                   closeCart();
                   onCheckout();
                 }}
-                className="w-full py-3 bg-[#006a39] text-white font-['Manrope',sans-serif] font-bold text-sm rounded-xl hover:bg-[#005a30] active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2"
+                className={`w-full py-3 font-['Manrope',sans-serif] font-bold text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 ${
+                  hasOutOfStockItems || hasExceededStockItems
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
+                    : "bg-[#006a39] text-white hover:bg-[#005a30] active:scale-[0.98]"
+                }`}
               >
-                <span>Proceed to Checkout</span>
+                <span>{hasOutOfStockItems ? "Remove Out of Stock Items" : "Proceed to Checkout"}</span>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M2.5 7H11.5M7.5 3L11.5 7L7.5 11" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M2.5 7H11.5M7.5 3L11.5 7L7.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             </div>
@@ -224,3 +322,4 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
     </div>
   );
 }
+
