@@ -1,5 +1,11 @@
-// @ts-ignore
-import html2pdf from "html2pdf.js";
+export interface InvoiceOrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+  mrp?: number;
+  batch?: string;
+  expiry?: string;
+}
 
 export interface InvoiceOrderData {
   id: string;
@@ -14,14 +20,7 @@ export interface InvoiceOrderData {
   status: string;
   date: string;
   payment: string;
-  orderItems?: {
-    name: string;
-    quantity: number;
-    price: number;
-    mrp?: number;
-    batch?: string;
-    expiry?: string;
-  }[];
+  orderItems?: InvoiceOrderItem[];
 }
 
 export interface StoreSettings {
@@ -107,7 +106,7 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
     ? order.orderItems
     : [
         {
-          name: isRetailer ? "Volini Spray 249ml (Wholesale Pack)" : "Volini Spray 249ml",
+          name: isRetailer ? "Volini Spray 249ml (Wholesale Bulk Pack)" : "Volini Spray 249ml",
           quantity: Math.max(1, order.items || 1),
           price: Math.round(order.amount / Math.max(1, order.items || 1)),
           mrp: Math.round((order.amount / Math.max(1, order.items || 1)) * 1.15),
@@ -194,7 +193,7 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
       <div style="margin-bottom: 12px; padding: 8px 10px; background: #fbfdfb; border: 1px solid #ddd; border-radius: 4px;">
         <div style="margin-bottom: 4px; font-size: 11.5px;"><strong>Customer:</strong> ${customerDisplay}</div>
         <div style="margin-bottom: 4px; font-size: 11.5px;"><strong>Mobile:</strong> ${order.phone || "+91 98765 00000"}</div>
-        <div style="font-size: 11.5px;"><strong>Address:</strong> ${order.address || "Standard Store Delivery Address"}</div>
+        <div style="font-size: 11.5px;"><strong>Address:</strong> ${order.address || "Customer Delivery Address"}</div>
       </div>
 
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
@@ -277,74 +276,153 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
 }
 
 /**
- * Directly download an invoice as a PDF file
+ * Generate standalone printable document HTML wrapper
  */
-export async function downloadInvoicePdf(order: InvoiceOrderData, settings?: Partial<StoreSettings>) {
-  const container = document.createElement("div");
-  container.style.position = "absolute";
-  container.style.left = "-9999px";
-  container.style.top = "-9999px";
-  container.style.width = "780px";
-  container.innerHTML = generateInvoiceHtml(order, settings);
-  document.body.appendChild(container);
+function wrapInPrintableDocument(title: string, contentHtml: string, isLandscape: boolean = false): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>${title}</title>
+  <style>
+    @page {
+      size: ${isLandscape ? "A4 landscape" : "A4 portrait"};
+      margin: 10mm;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 12px;
+      background: #f3f4f6;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .print-container {
+      background: #fff;
+      padding: 20px;
+      margin: 0 auto;
+      max-width: ${isLandscape ? "1050px" : "800px"};
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+    .action-bar {
+      max-width: ${isLandscape ? "1050px" : "800px"};
+      margin: 0 auto 12px auto;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .btn {
+      padding: 8px 16px;
+      font-weight: 700;
+      font-size: 13px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .btn-print {
+      background: #006a39;
+      color: #fff;
+    }
+    @media print {
+      body {
+        padding: 0;
+        background: #fff;
+      }
+      .action-bar {
+        display: none !important;
+      }
+      .print-container {
+        box-shadow: none;
+        padding: 0;
+        margin: 0;
+        max-width: 100%;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="action-bar">
+    <button class="btn btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  </div>
+  <div class="print-container">
+    ${contentHtml}
+  </div>
+</body>
+</html>`;
+}
 
-  const billNo = order.id.startsWith("ORD-") ? `INV-${order.id.replace("ORD-", "")}` : `INV-${order.id}`;
+/**
+ * Robust hidden iframe printing: works 100% reliably in all browsers without pop-up blockers
+ */
+function printHtmlInIframe(htmlContent: string) {
+  const existingIframe = document.getElementById("subhone-print-iframe");
+  if (existingIframe) {
+    document.body.removeChild(existingIframe);
+  }
 
-  const opt = {
-    margin: [6, 6, 6, 6],
-    filename: `SubhOne-Invoice-${billNo}.pdf`,
-    image: { type: "jpeg", quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-  };
+  const iframe = document.createElement("iframe");
+  iframe.id = "subhone-print-iframe";
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
+  document.body.appendChild(iframe);
 
-  try {
-    // @ts-ignore
-    await html2pdf().set(opt).from(container.firstElementChild || container).save();
-  } catch (err) {
-    console.error("PDF generation failed, falling back to print dialog:", err);
-    printOrDownloadInvoice(order, settings);
-  } finally {
-    document.body.removeChild(container);
+  const doc = iframe.contentWindow?.document;
+  if (doc) {
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    iframe.onload = () => {
+      setTimeout(() => {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      }, 250);
+    };
   }
 }
 
 /**
- * Open print dialog for single invoice
+ * Direct file download (saves .html printable file that opens and prints instantly)
+ */
+function downloadHtmlBlob(filename: string, fullHtml: string) {
+  const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/**
+ * 1-Click Print & Save as PDF for Single Invoice
  */
 export function printOrDownloadInvoice(order: InvoiceOrderData, settings?: Partial<StoreSettings>) {
-  const invoiceHtml = generateInvoiceHtml(order, settings);
-  const printWindow = window.open("", "_blank", "width=850,height=1000");
-  if (printWindow) {
-    printWindow.document.open();
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Invoice - ${order.id}</title>
-        <style>
-          @page { size: A4 portrait; margin: 10mm; }
-          body { margin: 0; padding: 10px; background: #fff; }
-          @media print { .no-print { display: none !important; } }
-        </style>
-      </head>
-      <body>
-        <div class="no-print" style="text-align: right; max-width: 780px; margin: 10px auto;">
-          <button onclick="window.print()" style="background: #006a39; color: white; border: none; padding: 8px 18px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer;">
-            🖨️ Print / Save as PDF
-          </button>
-        </div>
-        ${invoiceHtml}
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-  }
+  const content = generateInvoiceHtml(order, settings);
+  const fullHtml = wrapInPrintableDocument(`Invoice - ${order.id}`, content, false);
+  printHtmlInIframe(fullHtml);
 }
 
 /**
- * Generate Daily Orders Summary PDF Report for both Retailers and Customers
+ * 1-Click Direct File Download for Single Invoice
+ */
+export function downloadInvoiceFile(order: InvoiceOrderData, settings?: Partial<StoreSettings>) {
+  const billNo = order.id.startsWith("ORD-") ? `INV-${order.id.replace("ORD-", "")}` : `INV-${order.id}`;
+  const content = generateInvoiceHtml(order, settings);
+  const fullHtml = wrapInPrintableDocument(`Invoice - ${billNo}`, content, false);
+  downloadHtmlBlob(`SubhOne-Invoice-${billNo}.html`, fullHtml);
+}
+
+/**
+ * Generate Daily Orders Summary Report HTML
  */
 export function generateDailyReportHtml(
   dateStr: string,
@@ -466,76 +544,28 @@ export function generateDailyReportHtml(
 }
 
 /**
- * Directly download Daily Orders Report as a PDF file
- */
-export async function downloadDailyReportPdf(
-  dateStr: string,
-  orders: InvoiceOrderData[],
-  settings?: Partial<StoreSettings>
-) {
-  const container = document.createElement("div");
-  container.style.position = "absolute";
-  container.style.left = "-9999px";
-  container.style.top = "-9999px";
-  container.style.width = "1050px";
-  container.innerHTML = generateDailyReportHtml(dateStr, orders, settings);
-  document.body.appendChild(container);
-
-  const cleanDate = dateStr.replace(/[^a-zA-Z0-9]/g, "-");
-
-  const opt = {
-    margin: [6, 6, 6, 6],
-    filename: `SubhOne-Daily-Orders-${cleanDate}.pdf`,
-    image: { type: "jpeg", quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-    jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-  };
-
-  try {
-    // @ts-ignore
-    await html2pdf().set(opt).from(container.firstElementChild || container).save();
-  } catch (err) {
-    console.error("Daily report PDF generation failed, falling back to print dialog:", err);
-    printOrDownloadDailyReport(dateStr, orders, settings);
-  } finally {
-    document.body.removeChild(container);
-  }
-}
-
-/**
- * Open print dialog for Daily Orders Report
+ * 1-Click Print & Save as PDF for Daily Orders Report
  */
 export function printOrDownloadDailyReport(
   dateStr: string,
   orders: InvoiceOrderData[],
   settings?: Partial<StoreSettings>
 ) {
-  const reportHtml = generateDailyReportHtml(dateStr, orders, settings);
-  const printWindow = window.open("", "_blank", "width=1100,height=900");
-  if (printWindow) {
-    printWindow.document.open();
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Daily Orders Report - ${dateStr}</title>
-        <style>
-          @page { size: A4 landscape; margin: 8mm; }
-          body { margin: 0; padding: 10px; background: #fff; }
-          @media print { .no-print { display: none !important; } }
-        </style>
-      </head>
-      <body>
-        <div class="no-print" style="text-align: right; max-width: 1050px; margin: 8px auto;">
-          <button onclick="window.print()" style="background: #073b4c; color: white; border: none; padding: 8px 18px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer;">
-            🖨️ Print / Save Daily Report as PDF
-          </button>
-        </div>
-        ${reportHtml}
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-  }
+  const content = generateDailyReportHtml(dateStr, orders, settings);
+  const fullHtml = wrapInPrintableDocument(`Daily Orders Report - ${dateStr}`, content, true);
+  printHtmlInIframe(fullHtml);
+}
+
+/**
+ * 1-Click Direct File Download for Daily Orders Report
+ */
+export function downloadDailyReportFile(
+  dateStr: string,
+  orders: InvoiceOrderData[],
+  settings?: Partial<StoreSettings>
+) {
+  const cleanDate = dateStr.replace(/[^a-zA-Z0-9]/g, "-");
+  const content = generateDailyReportHtml(dateStr, orders, settings);
+  const fullHtml = wrapInPrintableDocument(`Daily Orders Report - ${dateStr}`, content, true);
+  downloadHtmlBlob(`SubhOne-Daily-Orders-${cleanDate}.html`, fullHtml);
 }

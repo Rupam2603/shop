@@ -13,9 +13,9 @@ import { fetchAllOrders, updateOrderStatus as dbUpdateOrderStatus, DbOrder } fro
 import { fetchAllLabBookings, updateLabBookingStatus as dbUpdateLabBookingStatus, DbLabBooking } from "../lib/labTests";
 import {
   printOrDownloadInvoice,
+  downloadInvoiceFile,
   printOrDownloadDailyReport,
-  downloadInvoicePdf,
-  downloadDailyReportPdf,
+  downloadDailyReportFile,
   generateInvoiceHtml,
   generateDailyReportHtml,
   InvoiceOrderData,
@@ -1384,16 +1384,16 @@ function OrdersTab({
     });
   }, [orders, roleSegment, filter, searchQuery]);
 
-  // Handle single invoice download
-  const handleDownloadInvoice = async (o: InvoiceOrderData) => {
-    try {
-      setDownloadingId(o.id);
-      await downloadInvoicePdf(o, settings);
-    } catch (err) {
-      console.error("Download invoice error:", err);
-    } finally {
-      setDownloadingId(null);
-    }
+  // Handle single invoice print/pdf dialog
+  const handlePrintInvoice = (o: InvoiceOrderData) => {
+    printOrDownloadInvoice(o, settings);
+  };
+
+  // Handle single invoice direct file download
+  const handleDownloadInvoice = (o: InvoiceOrderData) => {
+    setDownloadingId(o.id);
+    downloadInvoiceFile(o, settings);
+    setTimeout(() => setDownloadingId(null), 800);
   };
 
   // Format date string for report
@@ -1410,18 +1410,20 @@ function OrdersTab({
     return orders.map((o) => ({ ...o, date: dStr }));
   };
 
-  // Handle Daily PDF direct download
-  const handleDownloadDailyPdf = async () => {
-    try {
-      setDownloadingDaily(true);
-      const dateFormatted = getFormattedReportDate();
-      const ordersForDay = getDailyOrdersList();
-      await downloadDailyReportPdf(dateFormatted, ordersForDay, settings);
-    } catch (err) {
-      console.error("Daily report download error:", err);
-    } finally {
-      setDownloadingDaily(false);
-    }
+  // Handle Daily PDF print/save
+  const handlePrintDailyPdf = () => {
+    const dateFormatted = getFormattedReportDate();
+    const ordersForDay = getDailyOrdersList();
+    printOrDownloadDailyReport(dateFormatted, ordersForDay, settings);
+  };
+
+  // Handle Daily PDF direct file download
+  const handleDownloadDailyFile = () => {
+    setDownloadingDaily(true);
+    const dateFormatted = getFormattedReportDate();
+    const ordersForDay = getDailyOrdersList();
+    downloadDailyReportFile(dateFormatted, ordersForDay, settings);
+    setTimeout(() => setDownloadingDaily(false), 800);
   };
 
   return (
@@ -1462,12 +1464,20 @@ function OrdersTab({
           </button>
 
           <button
-            onClick={handleDownloadDailyPdf}
-            disabled={downloadingDaily}
-            className="bg-[#00a86b] hover:bg-[#00925c] text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-[0.98] disabled:opacity-50"
+            onClick={handlePrintDailyPdf}
+            className="bg-[#00a86b] hover:bg-[#00925c] text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-[0.98]"
           >
-            <span>{downloadingDaily ? "⏳" : "📥"}</span>
-            <span>{downloadingDaily ? "Generating PDF..." : "Download Daily Orders PDF"}</span>
+            <span>🖨️</span>
+            <span>Print / Save Daily PDF</span>
+          </button>
+
+          <button
+            onClick={handleDownloadDailyFile}
+            className="bg-white hover:bg-white/90 text-[#073b4c] font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+            title="Download Daily Orders HTML File"
+          >
+            <span>📥</span>
+            <span>{downloadingDaily ? "Saving..." : "Save File"}</span>
           </button>
         </div>
       </div>
@@ -1647,7 +1657,7 @@ function OrdersTab({
           <table className="w-full text-sm" style={{ minWidth: "960px" }}>
             <thead>
               <tr className="border-b border-[#e4ede2] bg-[#f8fafb]">
-                {["Order ID", "Account Type", "Customer / Shop", "Phone", "Items", "Amount", "Payment", "Status", "Date", "Invoice Bill & Action"].map((h) => (
+                {["Order ID", "Account Type", "Customer / Shop", "Phone", "Items", "Amount", "Payment", "Status", "Date", "Invoice Bill & Actions"].map((h) => (
                   <th key={h} className="text-left px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px] whitespace-nowrap">
                     {h}
                   </th>
@@ -1721,22 +1731,29 @@ function OrdersTab({
                     {/* Action & Invoice Buttons */}
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        {/* Download PDF button */}
+                        {/* Print / Save PDF button */}
                         <button
-                          onClick={() => handleDownloadInvoice(o)}
-                          disabled={isDownloadingThis}
-                          title="Directly Download SubhOne Invoice PDF"
-                          className="flex items-center gap-1 bg-[#006a39] hover:bg-[#00542d] text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all shadow-2xs whitespace-nowrap cursor-pointer active:scale-95 disabled:opacity-50"
+                          onClick={() => handlePrintInvoice(o)}
+                          title="Print or Save SubhOne Invoice PDF"
+                          className="flex items-center gap-1 bg-[#006a39] hover:bg-[#00542d] text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all shadow-2xs whitespace-nowrap cursor-pointer active:scale-95"
                         >
-                          <span>{isDownloadingThis ? "⏳" : "📥"}</span>
-                          <span>{isDownloadingThis ? "Saving..." : "PDF Bill"}</span>
+                          <span>🖨️ PDF Bill</span>
                         </button>
 
-                        {/* View & Print button */}
+                        {/* Save HTML File button */}
+                        <button
+                          onClick={() => handleDownloadInvoice(o)}
+                          title="Download standalone Invoice HTML file"
+                          className="flex items-center gap-1 bg-[#f0f7ee] hover:bg-[#c3dec0] text-[#006a39] text-[11px] font-bold px-2 py-1 rounded-lg transition-all border border-[#c3dec0] whitespace-nowrap cursor-pointer"
+                        >
+                          <span>📥 {isDownloadingThis ? "..." : "Save"}</span>
+                        </button>
+
+                        {/* View Modal button */}
                         <button
                           onClick={() => setPreviewInvoice(o)}
-                          title="View and Print Invoice Bill"
-                          className="flex items-center gap-1 bg-[#f0f7ee] hover:bg-[#c3dec0] text-[#006a39] text-[11px] font-bold px-2 py-1 rounded-lg transition-all border border-[#c3dec0] whitespace-nowrap cursor-pointer"
+                          title="View and inspect Invoice Bill"
+                          className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[11px] font-bold px-2 py-1 rounded-lg transition-all whitespace-nowrap cursor-pointer"
                         >
                           <span>👁️ View</span>
                         </button>
@@ -1786,18 +1803,17 @@ function OrdersTab({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => printOrDownloadInvoice(previewInvoice, settings)}
-                  className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                  className="bg-[#00a86b] hover:bg-[#00925c] text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <span>🖨️</span>
-                  <span>Print</span>
+                  <span>Print / Save PDF</span>
                 </button>
                 <button
-                  onClick={() => handleDownloadInvoice(previewInvoice)}
-                  disabled={downloadingId === previewInvoice.id}
-                  className="bg-[#00a86b] hover:bg-[#00925c] text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+                  onClick={() => downloadInvoiceFile(previewInvoice, settings)}
+                  className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                 >
                   <span>📥</span>
-                  <span>{downloadingId === previewInvoice.id ? "Saving PDF..." : "Download PDF"}</span>
+                  <span>Download File</span>
                 </button>
                 <button
                   onClick={() => setPreviewInvoice(null)}
@@ -1832,18 +1848,17 @@ function OrdersTab({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => printOrDownloadDailyReport(getFormattedReportDate(), getDailyOrdersList(), settings)}
-                  className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                  className="bg-[#00a86b] hover:bg-[#00925c] text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <span>🖨️</span>
-                  <span>Print</span>
+                  <span>Print / Save PDF</span>
                 </button>
                 <button
-                  onClick={handleDownloadDailyPdf}
-                  disabled={downloadingDaily}
-                  className="bg-[#00a86b] hover:bg-[#00925c] text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+                  onClick={() => downloadDailyReportFile(getFormattedReportDate(), getDailyOrdersList(), settings)}
+                  className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                 >
                   <span>📥</span>
-                  <span>{downloadingDaily ? "Saving PDF..." : "Download PDF File"}</span>
+                  <span>Download File</span>
                 </button>
                 <button
                   onClick={() => setShowDailyModal(false)}
