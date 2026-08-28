@@ -10,6 +10,7 @@ import {
 } from "../lib/addresses";
 import { fetchUserOrders, DbOrder } from "../lib/orders";
 import { fetchUserLabBookings, DbLabBooking } from "../lib/labTests";
+import { useModalBackHandler } from "../lib/navigation";
 
 type ProfileSection = "profile" | "addresses" | "orders" | "lab-tests" | "security";
 
@@ -146,6 +147,8 @@ export default function ProfilePage({
   const openAddAddr  = () => setAddrModal({ open: true, mode: "add",  idx: null, form: emptyAddr() });
   const openEditAddr = (idx: number) => setAddrModal({ open: true, mode: "edit", idx, form: { ...addresses[idx] } });
   const closeAddrModal = () => setAddrModal((p) => ({ ...p, open: false }));
+
+  useModalBackHandler(addrModal.open, closeAddrModal, "profile-address");
 
   const saveAddress = async () => {
     const f = addrModal.form as Address;

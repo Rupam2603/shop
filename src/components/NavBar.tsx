@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCart } from "../contexts/CartContext";
+import { useModalBackHandler } from "../lib/navigation";
 
 type Page = "home" | "medicines" | "lab-tests" | "consult" | "offers" | "profile";
 
@@ -87,6 +88,8 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
   const { itemCount, openCart } = useCart();
   const [searchValue, setSearchValue] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useModalBackHandler(mobileMenuOpen, () => setMobileMenuOpen(false), "mobile-menu");
 
   const handleNavClick = (page: Page) => {
     onNavigate(page);

@@ -3,6 +3,7 @@ import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { fetchUserAddresses, DbAddress, createAddress } from "../lib/addresses";
 import { placeOrder } from "../lib/orders";
+import { useModalBackHandler } from "../lib/navigation";
 
 interface CheckoutModalProps {
   open: boolean;
@@ -17,6 +18,8 @@ export default function CheckoutModal({
   onOrderSuccess,
   user,
 }: CheckoutModalProps) {
+  useModalBackHandler(open, onClose, "checkout");
+
   const { items, subtotal, savings, clearCart } = useCart();
   const { appUser } = useAuth();
   const isRetailer = appUser?.role === "retailer";

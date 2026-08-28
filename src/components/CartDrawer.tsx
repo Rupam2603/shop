@@ -1,6 +1,7 @@
 import React from "react";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useModalBackHandler } from "../lib/navigation";
 
 interface CartDrawerProps {
   onCheckout: () => void;
@@ -12,6 +13,8 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
     useCart();
   const { appUser } = useAuth();
   const isRetailer = appUser?.role === "retailer";
+
+  useModalBackHandler(isCartOpen, closeCart, "cart");
 
   if (!isCartOpen) return null;
 

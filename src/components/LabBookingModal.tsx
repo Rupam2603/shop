@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchUserAddresses, DbAddress } from "../lib/addresses";
 import { createLabBooking, DbLabPackage, DbLabBooking } from "../lib/labTests";
+import { useModalBackHandler } from "../lib/navigation";
 
 interface Props {
   open: boolean;
@@ -29,6 +30,8 @@ export default function LabBookingModal({
   onBookingSuccess,
   user,
 }: Props) {
+  useModalBackHandler(open, onClose, "lab-booking");
+
   const [step, setStep] = useState<"details" | "schedule" | "address" | "success">("details");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

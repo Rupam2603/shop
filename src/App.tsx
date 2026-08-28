@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
 import HomePage from "./pages/HomePage";
@@ -11,6 +11,7 @@ import ProfilePage from "./pages/ProfilePage";
 import CartDrawer from "./components/CartDrawer";
 import CheckoutModal from "./components/CheckoutModal";
 import { useAuth, toLegacyUser } from "./contexts/AuthContext";
+import { parseHashToState, pushPageState, replacePageState } from "./lib/navigation";
 
 export type Page = "home" | "medicines" | "lab-tests" | "consult" | "offers" | "profile";
 export type UserRole = "admin" | "retailer" | "customer";
@@ -77,13 +78,33 @@ function LoadingScreen() {
 
 export default function App() {
   const { appUser, loading, signOut, updateProfile } = useAuth();
-  const [activePage, setActivePage] = useState<Page>("home");
-  const [initialCategory, setInitialCategory] = useState<string>("All");
+  const [activePage, setActivePage] = useState<Page>(() => parseHashToState().page);
+  const [initialCategory, setInitialCategory] = useState<string>(() => parseHashToState().category);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
+  useEffect(() => {
+    // Replace initial state with canonical entry
+    const current = parseHashToState();
+    replacePageState(current.page, current.category);
+
+    const handlePopState = (e: PopStateEvent) => {
+      // If the popped state was an open modal, let useModalBackHandler handle it
+      if (e.state?.modal) return;
+
+      const { page, category } = parseHashToState();
+      setActivePage(page);
+      setInitialCategory(category);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const navigateTo = (page: Page, category = "All") => {
+    pushPageState(page, category);
     setInitialCategory(category);
     setActivePage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // ── Show spinner while Supabase resolves the session ──────────────────────

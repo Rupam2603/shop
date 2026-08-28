@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useCart } from "../contexts/CartContext";
+import { useModalBackHandler } from "../lib/navigation";
 
 export interface PopupProduct {
   id: number;
@@ -137,6 +138,8 @@ export default function ProductDetailModal({
   isRetailer: boolean;
   onClose: () => void;
 }) {
+  useModalBackHandler(true, onClose, `product-${product.id}`);
+
   const { addToCart } = useCart();
   const [qty, setQty] = useState(1);
   const reviews = useMemo(() => getProductReviews(product.id), [product.id]);
