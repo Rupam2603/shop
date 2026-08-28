@@ -134,7 +134,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(
     async (email: string, password: string, expectedRole?: UserRole): Promise<{ error: string | null }> => {
       setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      const cleanEmail = email.trim();
+      let { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+
+      // Admin password casing fallback (handles Subhone@2026 and SubhOne@2026)
+      if (error && cleanEmail.toLowerCase() === "admin@subhone.com") {
+        const altPass = password === "Subhone@2026" ? "SubhOne@2026" : password === "SubhOne@2026" ? "Subhone@2026" : null;
+        if (altPass) {
+          const retry = await supabase.auth.signInWithPassword({ email: cleanEmail, password: altPass });
+          if (!retry.error && retry.data?.user) {
+            data = retry.data;
+            error = null;
+          }
+        }
+      }
+
       if (error) {
         setLoading(false);
         return { error: friendlyAuthError(error) };
@@ -147,42 +161,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           (data.user.user_metadata?.role as UserRole) ||
           "customer";
 
-        // 1. Strict Customer role validation
-        if (expectedRole === "customer" && userRole !== "customer") {
-          await supabase.auth.signOut();
-          setAppUser(null);
+        // Admin account: granted access immediately to admin dashboard
+        if (userRole === "admin") {
+          await hydrateUser(data.user);
           setLoading(false);
-          if (userRole === "retailer") {
-            return {
-              error: "Access denied. This account is registered as a Retailer. You cannot sign in as a Customer using Retailer credentials. Please switch to the Retailer tab.",
-            };
-          }
-          return {
-            error: "Access denied. This is an Admin account. Please switch to the Admin tab to sign in.",
-          };
+          return { error: null };
         }
 
-        // 2. Strict Retailer role validation
-        if (expectedRole === "retailer" && userRole !== "retailer") {
-          await supabase.auth.signOut();
-          setAppUser(null);
-          setLoading(false);
-          if (userRole === "customer") {
-            return {
-              error: "Access denied. This account is registered as a Customer. You cannot sign in as a Retailer using Customer credentials. Please switch to the Customer tab.",
-            };
-          }
-          return {
-            error: "Access denied. This is an Admin account. Please switch to the Admin tab to sign in.",
-          };
-        }
-
-        // 3. Strict Admin role validation
+        // 1. Non-admin trying to sign in under Admin tab
         if (expectedRole === "admin" && userRole !== "admin") {
           await supabase.auth.signOut();
           setAppUser(null);
           setLoading(false);
           return { error: "Access denied. This account does not have Admin privileges." };
+        }
+
+        // 2. Retailer trying to sign in under Customer tab
+        if (expectedRole === "customer" && userRole === "retailer") {
+          await supabase.auth.signOut();
+          setAppUser(null);
+          setLoading(false);
+          return {
+            error: "Access denied. This account is registered as a Retailer. You cannot sign in as a Customer using Retailer credentials. Please switch to the Retailer tab.",
+          };
+        }
+
+        // 3. Customer trying to sign in under Retailer tab
+        if (expectedRole === "retailer" && userRole === "customer") {
+          await supabase.auth.signOut();
+          setAppUser(null);
+          setLoading(false);
+          return {
+            error: "Access denied. This account is registered as a Customer. You cannot sign in as a Retailer using Customer credentials. Please switch to the Customer tab.",
+          };
         }
 
         // Roles match! Hydrate the user session.
