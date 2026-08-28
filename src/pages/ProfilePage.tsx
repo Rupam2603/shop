@@ -10,9 +10,11 @@ import {
 } from "../lib/addresses";
 import { fetchUserOrders, DbOrder } from "../lib/orders";
 import { fetchUserLabBookings, DbLabBooking } from "../lib/labTests";
+import { fetchUserReviews, submitReview, type DbReview } from "../lib/reviews";
 import { useModalBackHandler } from "../lib/navigation";
+import { StarRow } from "../components/ProductModal";
 
-type ProfileSection = "profile" | "addresses" | "orders" | "lab-tests" | "security";
+type ProfileSection = "profile" | "addresses" | "orders" | "lab-tests" | "reviews" | "security";
 
 const CUSTOMER_ORDERS = [
   { id: "ORD-3041", date: "Aug 28, 2026", status: "Processing", total: 212,  items: ["Volini Spray 249ml", "Dettol Antiseptic 60ml", "Eno Lemon Sachet 5g"] },
@@ -44,7 +46,7 @@ const ADDR_LABEL_COLORS: Record<string, { color: string; bg: string }> = {
   "Home":  { color: "#006a39", bg: "#e8f5ee" },
   "Work":  { color: "#0369a1", bg: "#e0f2fe" },
   "Shop":  { color: "#d97706", bg: "#fef3c7" },
-  "Other": { color: "#6d7a6f", bg: "#f0f4f0" },
+  "Other": { color: "#374151", bg: "#f3f4f6" },
 };
 
 const emptyAddr = (): Partial<Address> => ({
@@ -67,6 +69,15 @@ export default function ProfilePage({
   const [dbAddresses, setDbAddresses] = useState<DbAddress[]>([]);
   const [dbOrders, setDbOrders] = useState<DbOrder[]>([]);
   const [dbLabBookings, setDbLabBookings] = useState<DbLabBooking[]>([]);
+  const [dbReviews, setDbReviews] = useState<DbReview[]>([]);
+  const [reviewModal, setReviewModal] = useState<{ open: boolean; productName: string; rating: number; title: string; comment: string; submitting: boolean }>({
+    open: false,
+    productName: "",
+    rating: 5,
+    title: "",
+    comment: "",
+    submitting: false,
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -79,8 +90,11 @@ export default function ProfilePage({
     fetchUserLabBookings().then((data) => {
       if (mounted) setDbLabBookings(data);
     });
+    fetchUserReviews(user.id).then((data) => {
+      if (mounted) setDbReviews(data);
+    });
     return () => { mounted = false; };
-  }, []);
+  }, [user.id]);
 
   const accent = user.role === "retailer" ? "#006a39" : "#0369a1";
 
@@ -234,6 +248,7 @@ export default function ProfilePage({
     { id: "profile",   label: "My Profile",       icon: <svg width="16" height="18" viewBox="0 0 16 18" fill="none"><path d="M8 9C10.21 9 12 7.21 12 5C12 2.79 10.21 1 8 1C5.79 1 4 2.79 4 5C4 7.21 5.79 9 8 9ZM8 11C5.33 11 0 12.34 0 15V17H16V15C16 12.34 10.67 11 8 11Z" fill="currentColor"/></svg> },
     { id: "addresses", label: "Saved Addresses",  badge: addresses.length || undefined, icon: <svg width="16" height="20" viewBox="0 0 16 20" fill="none"><path d="M8 0C4.13 0 1 3.13 1 7C1 12.25 8 20 8 20C8 20 15 12.25 15 7C15 3.13 11.87 0 8 0ZM8 9.5C6.62 9.5 5.5 8.38 5.5 7C5.5 5.62 6.62 4.5 8 4.5C9.38 4.5 10.5 5.62 10.5 7C10.5 8.38 9.38 9.5 8 9.5Z" fill="currentColor"/></svg> },
     { id: "orders",    label: "Order History",    badge: displayOrders.length || undefined, icon: <svg width="16" height="18" viewBox="0 0 16 18" fill="none"><path d="M3 0H13C14.1 0 15 0.9 15 2V16L12 14.5L8 16L4 14.5L1 16V2C1 0.9 1.9 0 3 0ZM4 5H12M4 8H12M4 11H8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/></svg> },
+    { id: "reviews",   label: "My Reviews",       badge: dbReviews.length || undefined, icon: <svg width="16" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> },
     { id: "lab-tests", label: "Lab Bookings",     badge: dbLabBookings.length || undefined, icon: <svg width="16" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M9 3H6v6L2 15c-.83 1.39-.83 3.08 0 4.47C2.83 20.86 4.33 22 6 22h12c1.67 0 3.17-1.14 4-2.53.83-1.39.83-3.08 0-4.47L18 9V3h-3M9 3v6l-4 6h14L15 9V3M9 3h6"/></svg> },
     { id: "security",  label: "Security",         icon: <svg width="16" height="18" viewBox="0 0 16 18" fill="none"><path d="M8 0L0 4V9C0 13.55 3.4 17.74 8 19C12.6 17.74 16 13.55 16 9V4L8 0ZM7 13L4 10L5.41 8.59L7 10.17L10.59 6.58L12 8L7 13Z" fill="currentColor"/></svg> },
   ];
@@ -535,25 +550,121 @@ export default function ProfilePage({
                               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ color: st.color, backgroundColor: st.bg }}>{o.status}</span>
                               <span className="text-[#9aa89b] text-xs">{o.date}</span>
                             </div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {o.items.slice(0, 2).map((item) => (
-                                <span key={item} className="text-xs bg-[#f8fafb] text-[#073b4c] border border-[#e4ede2] px-2 py-0.5 rounded-lg">{item}</span>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {o.items.map((item) => (
+                                <div key={item} className="flex items-center gap-1.5 bg-[#f8fafb] border border-[#e4ede2] px-2.5 py-1 rounded-lg">
+                                  <span className="text-xs text-[#073b4c] font-medium">{item}</span>
+                                  {o.status === "Delivered" && (
+                                    <button
+                                      onClick={() =>
+                                        setReviewModal({
+                                          open: true,
+                                          productName: item.replace(/×\d+/g, "").trim(),
+                                          rating: 5,
+                                          title: "",
+                                          comment: "",
+                                          submitting: false,
+                                        })
+                                      }
+                                      className="text-[10px] font-bold text-[#006a39] bg-[#d1fae5] hover:bg-[#a7f3d0] px-1.5 py-0.5 rounded transition-colors"
+                                      title="Review this product"
+                                    >
+                                      ★ Review
+                                    </button>
+                                  )}
+                                </div>
                               ))}
-                              {o.items.length > 2 && (
-                                <span className="text-xs text-[#9aa89b] px-1 py-0.5">+{o.items.length - 2} more</span>
-                              )}
                             </div>
                           </div>
                           <div className="text-right shrink-0">
                             <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xl">₹{o.total.toLocaleString()}</p>
-                            <button className="text-xs font-semibold mt-1.5 hover:underline transition-colors" style={{ color: accent }}>
-                              View Details →
-                            </button>
+                            <span className="inline-block text-[11px] text-[#9aa89b] mt-1">Verified Order</span>
                           </div>
                         </div>
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ════ MY REVIEWS ════ */}
+          {section === "reviews" && (
+            <div className="flex flex-col gap-5">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl">My Reviews & Ratings</h2>
+                  <p className="text-[#9aa89b] text-sm mt-0.5">
+                    {dbReviews.length} product review{dbReviews.length !== 1 ? "s" : ""} written by you as a {user.role === "retailer" ? "Wholesale Retailer" : "Verified Customer"}
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    setReviewModal({
+                      open: true,
+                      productName: "Dettol Antiseptic Liquid 250ml",
+                      rating: 5,
+                      title: "",
+                      comment: "",
+                      submitting: false,
+                    })
+                  }
+                  className="px-4 py-2 rounded-xl text-white text-xs sm:text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5"
+                  style={{ backgroundColor: accent }}
+                >
+                  <span>+ Write a Review</span>
+                </button>
+              </div>
+
+              {dbReviews.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-[#e4ede2] py-16 flex flex-col items-center gap-3 text-center px-4">
+                  <div className="w-14 h-14 rounded-2xl bg-[#f0fdf4] text-[#006a39] flex items-center justify-center">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  </div>
+                  <p className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg">No Reviews Written Yet</p>
+                  <p className="text-[#9aa89b] text-xs sm:text-sm max-w-sm">
+                    {user.role === "retailer"
+                      ? "Share wholesale product reviews, batch shelf life observations, and profit margins to help other chemist retailers."
+                      : "Help other customers make informed decisions by reviewing products you've ordered."}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {dbReviews.map((rev) => (
+                    <div key={rev.id} className="bg-white rounded-2xl border border-[#e4ede2] p-5 shadow-xs flex flex-col gap-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-[#073b4c] text-sm">
+                              {rev.title || "Product Review"}
+                            </span>
+                            {rev.user_role === "retailer" ? (
+                              <span className="text-[9px] font-extrabold bg-[#dbeafe] text-[#1d4ed8] px-2 py-0.5 rounded-full uppercase">
+                                📦 Wholesale Retailer
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-bold bg-[#d1fae5] text-[#047857] px-2 py-0.5 rounded-full">
+                                ✓ Verified Customer
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <StarRow rating={rev.rating} size={12} />
+                            <span className="text-[#9aa89b] text-[11px]">
+                              {new Date(rev.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-xs text-[#6d7a6f] bg-[#f8fafb] border border-[#e4ede2] px-2.5 py-1 rounded-lg">
+                          👍 {rev.helpful_count} helpful
+                        </span>
+                      </div>
+                      <p className="text-[#3e4a3f] text-xs sm:text-sm leading-relaxed">{rev.comment}</p>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -810,6 +921,135 @@ export default function ProfilePage({
                 {addrModal.mode === "add" ? "Add Address" : "Save Changes"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Review Submission Modal ── */}
+      {reviewModal.open && (
+        <div
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setReviewModal((p) => ({ ...p, open: false }))}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-[520px] shadow-2xl my-4 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[#e4ede2]">
+              <div>
+                <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg">
+                  Write Product Review
+                </h3>
+                <p className="text-xs text-[#6d7a6f]">{reviewModal.productName}</p>
+              </div>
+              <button
+                onClick={() => setReviewModal((p) => ({ ...p, open: false }))}
+                className="w-8 h-8 rounded-full bg-[#f0f4f0] flex items-center justify-center hover:bg-[#e4ede2] transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!reviewModal.comment.trim()) return;
+                setReviewModal((p) => ({ ...p, submitting: true }));
+
+                const reviewerName = user.name || (user.role === "retailer" ? "Verified Retailer" : "Verified Customer");
+                const { data, error } = await submitReview({
+                  user_id: user.id,
+                  user_name: reviewerName,
+                  user_role: user.role,
+                  rating: reviewModal.rating,
+                  title: reviewModal.title,
+                  comment: reviewModal.comment,
+                  verified_purchase: true,
+                });
+
+                setReviewModal((p) => ({ ...p, submitting: false }));
+
+                if (data) {
+                  setDbReviews((prev) => [data, ...prev]);
+                  setReviewModal({
+                    open: false,
+                    productName: "",
+                    rating: 5,
+                    title: "",
+                    comment: "",
+                    submitting: false,
+                  });
+                } else if (error) {
+                  alert("Could not post review: " + error);
+                }
+              }}
+              className="p-5 sm:p-6 flex flex-col gap-4"
+            >
+              <div>
+                <label className="block text-xs font-bold text-[#073b4c] mb-1.5">Rating *</label>
+                <div className="flex items-center gap-1.5">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setReviewModal((p) => ({ ...p, rating: s }))}
+                      className="p-1 hover:scale-125 transition-transform"
+                    >
+                      <svg width="24" height="24" viewBox="0 0 14 14" fill="none">
+                        <path
+                          d="M7 1L8.854 5.09L13.5 5.835L10.25 8.995L11.021 13.5L7 11.277L2.979 13.5L3.75 8.995L0.5 5.835L5.146 5.09Z"
+                          fill={s <= reviewModal.rating ? "#f59e0b" : "#e5e7eb"}
+                        />
+                      </svg>
+                    </button>
+                  ))}
+                  <span className="text-xs font-semibold text-[#6d7a6f] ml-2">
+                    {reviewModal.rating} out of 5 Stars
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#073b4c] mb-1">Headline (Optional)</label>
+                <input
+                  type="text"
+                  value={reviewModal.title}
+                  onChange={(e) => setReviewModal((p) => ({ ...p, title: e.target.value }))}
+                  placeholder={user.role === "retailer" ? "e.g. Fresh stock, excellent retail margins" : "e.g. Fast acting and genuine quality"}
+                  className={INPUT_CLS}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#073b4c] mb-1">Your Review *</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={reviewModal.comment}
+                  onChange={(e) => setReviewModal((p) => ({ ...p, comment: e.target.value }))}
+                  placeholder="Describe your experience with this item..."
+                  className={INPUT_CLS}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setReviewModal((p) => ({ ...p, open: false }))}
+                  className="flex-1 py-2.5 rounded-xl border border-[#e4ede2] text-xs sm:text-sm font-bold text-[#6d7a6f] hover:bg-[#f0f4f0] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={reviewModal.submitting || !reviewModal.comment.trim()}
+                  className="flex-1 py-2.5 rounded-xl text-white text-xs sm:text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                  style={{ backgroundColor: accent }}
+                >
+                  {reviewModal.submitting ? "Posting..." : "Submit Review"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
