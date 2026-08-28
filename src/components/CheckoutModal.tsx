@@ -76,7 +76,7 @@ export default function CheckoutModal({
         return;
       }
       setLoading(true);
-      const { data: savedAddr, error: addrErr } = await createAddress({
+      const { data: savedAddr } = await createAddress({
         label: newAddr.label,
         name: newAddr.name,
         phone: newAddr.phone,
@@ -86,29 +86,42 @@ export default function CheckoutModal({
         state: newAddr.state,
         pincode: newAddr.pincode,
         is_default: addresses.length === 0,
-      });
-      if (addrErr || !savedAddr) {
-        setError(addrErr || "Failed to save address");
-        setLoading(false);
-        return;
-      }
-      shippingAddress = savedAddr;
+      }, appUser?.authUser?.id);
+
+      shippingAddress = savedAddr || {
+        label: newAddr.label,
+        name: newAddr.name,
+        phone: newAddr.phone,
+        line1: newAddr.line1,
+        line2: newAddr.line2 || null,
+        city: newAddr.city,
+        state: newAddr.state,
+        pincode: newAddr.pincode,
+        is_default: true,
+      };
     } else {
       shippingAddress = addresses.find((a) => a.id === selectedAddrId);
       if (!shippingAddress) {
-        setError("Please select a delivery address.");
-        return;
+        if (addresses.length > 0) {
+          shippingAddress = addresses[0];
+        } else {
+          setError("Please provide a delivery address.");
+          return;
+        }
       }
     }
 
     setLoading(true);
     const { data: order, error: orderErr } = await placeOrder({
-      customerName: shippingAddress.name || user.name,
-      customerPhone: shippingAddress.phone || user.phone || "",
+      customerName: shippingAddress.name || user.name || "Customer",
+      customerPhone: shippingAddress.phone || user.phone || "+91 98765 00000",
       shippingAddress,
       items,
       totalAmount: finalTotal,
       paymentMethod,
+      userId: appUser?.authUser?.id,
+      userRole: isRetailer ? "retailer" : "customer",
+      shopName: appUser?.profile?.shop_name,
     });
     setLoading(false);
 

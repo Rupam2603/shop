@@ -84,10 +84,10 @@ export default function ProfilePage({
 
   useEffect(() => {
     let mounted = true;
-    fetchUserAddresses().then((data) => {
+    fetchUserAddresses(user.id).then((data) => {
       if (mounted) setDbAddresses(data);
     });
-    fetchUserOrders().then((data) => {
+    fetchUserOrders(user.id).then((data) => {
       if (mounted) setDbOrders(data);
     });
     fetchUserLabBookings().then((data) => {
@@ -182,7 +182,7 @@ export default function ProfilePage({
         state: f.state,
         pincode: f.pincode,
         is_default: addresses.length === 0 || !!f.isDefault,
-      });
+      }, user.id);
       if (data) {
         setDbAddresses((prev) => [...prev, data]);
       }
@@ -199,7 +199,7 @@ export default function ProfilePage({
           state: f.state,
           pincode: f.pincode,
           is_default: f.isDefault,
-        });
+        }, user.id);
         if (data) {
           setDbAddresses((prev) => prev.map((a) => a.id === target.id ? data : a));
         }
@@ -212,7 +212,7 @@ export default function ProfilePage({
     const target = addresses[idx];
     if (target?.id) {
       setDbAddresses((prev) => prev.filter((a) => a.id !== target.id));
-      await dbDeleteAddress(target.id);
+      await dbDeleteAddress(target.id, user.id);
     }
   };
 
@@ -220,7 +220,7 @@ export default function ProfilePage({
     const target = addresses[idx];
     if (target?.id) {
       setDbAddresses((prev) => prev.map((a) => ({ ...a, is_default: a.id === target.id })));
-      await dbSetDefaultAddress(target.id);
+      await dbSetDefaultAddress(target.id, user.id);
     }
   };
 

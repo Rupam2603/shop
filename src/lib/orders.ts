@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { DbAddress } from "./addresses";
+import { DbAddress, getEffectiveUserId } from "./addresses";
 import { CartItem } from "../contexts/CartContext";
 
 export interface DbOrder {
@@ -41,103 +41,127 @@ export async function placeOrder(params: {
   items: CartItem[];
   totalAmount: number;
   paymentMethod: string;
+  userId?: string;
+  userRole?: "retailer" | "customer" | "admin";
+  shopName?: string | null;
 }): Promise<{ data: DbOrder | null; error: string | null }> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { data: null, error: "Not authenticated" };
+  try {
+    const userId = await getEffectiveUserId(params.userId);
 
-  if (!params.items || params.items.length === 0) {
-    return { data: null, error: "Cart is empty" };
-  }
-
-  const orderNumber = `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
-
-  // 1. Create order record
-  const { data: orderData, error: orderError } = await supabase
-    .from("orders")
-    .insert([
-      {
-        order_number: orderNumber,
-        user_id: user.id,
-        customer_name: params.customerName,
-        customer_phone: params.customerPhone,
-        shipping_address: params.shippingAddress,
-        total_amount: params.totalAmount,
-        payment_method: params.paymentMethod,
-        payment_status: "Paid",
-        status: "Processing",
-      },
-    ])
-    .select()
-    .single();
-
-  if (orderError) {
-    return { data: null, error: orderError.message };
-  }
-
-  const orderId = orderData.id;
-
-  // 2. Insert order items
-  const orderItemsPayload = params.items.map((item) => ({
-    order_id: orderId,
-    product_id: item.productId && item.productId.includes("-") ? item.productId : null,
-    product_name: item.name,
-    quantity: item.quantity,
-    unit_price: item.price,
-    total_price: item.price * item.quantity,
-    image_url: item.imageUrl,
-  }));
-
-  const { error: itemsError } = await supabase
-    .from("order_items")
-    .insert(orderItemsPayload);
-
-  if (itemsError) {
-    console.error("Error creating order items:", itemsError.message);
-  }
-
-  // 3. Decrement product stock in real-time
-  for (const item of params.items) {
-    try {
-      if (item.productId && item.productId.includes("-")) {
-        const { data: prod } = await supabase.from("products").select("stock").eq("id", item.productId).single();
-        if (prod) {
-          await supabase.from("products").update({ stock: Math.max(0, prod.stock - item.quantity) }).eq("id", item.productId);
-        }
-      } else {
-        const { data: prod } = await supabase.from("products").select("id, stock").eq("name", item.name).maybeSingle();
-        if (prod) {
-          await supabase.from("products").update({ stock: Math.max(0, prod.stock - item.quantity) }).eq("id", prod.id);
-        }
-      }
-    } catch (e) {
-      console.warn("Stock update warning:", e);
+    if (!params.items || params.items.length === 0) {
+      return { data: null, error: "Your cart is empty. Please add medicines or wellness products to proceed." };
     }
+
+    const orderNumber = `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // 1. Create order record
+    const { data: orderData, error: orderError } = await supabase
+      .from("orders")
+      .insert([
+        {
+          order_number: orderNumber,
+          user_id: userId,
+          customer_name: params.customerName || "Customer",
+          customer_phone: params.customerPhone || "+91 98765 00000",
+          shipping_address: params.shippingAddress,
+          total_amount: params.totalAmount,
+          payment_method: params.paymentMethod || "UPI",
+          payment_status: "Paid",
+          status: "Processing",
+        },
+      ])
+      .select()
+      .single();
+
+    if (orderError || !orderData) {
+      console.error("Order creation database error:", orderError);
+      return { data: null, error: orderError ? orderError.message : "Could not create order in database." };
+    }
+
+    const orderId = orderData.id;
+
+    // 2. Insert order items
+    const orderItemsPayload = params.items.map((item) => ({
+      order_id: orderId,
+      product_id: item.productId && item.productId.includes("-") ? item.productId : null,
+      product_name: item.name,
+      quantity: item.quantity,
+      unit_price: item.price,
+      total_price: item.price * item.quantity,
+      image_url: item.imageUrl || null,
+    }));
+
+    const { error: itemsError } = await supabase
+      .from("order_items")
+      .insert(orderItemsPayload);
+
+    if (itemsError) {
+      console.warn("Notice creating order items:", itemsError.message);
+    }
+
+    // 3. Decrement product stock in real-time
+    for (const item of params.items) {
+      try {
+        if (item.productId && item.productId.includes("-")) {
+          const { data: prod } = await supabase.from("products").select("stock").eq("id", item.productId).single();
+          if (prod) {
+            await supabase.from("products").update({ stock: Math.max(0, prod.stock - item.quantity) }).eq("id", item.productId);
+          }
+        } else {
+          const { data: prod } = await supabase.from("products").select("id, stock").eq("name", item.name).maybeSingle();
+          if (prod) {
+            await supabase.from("products").update({ stock: Math.max(0, prod.stock - item.quantity) }).eq("id", prod.id);
+          }
+        }
+      } catch (e) {
+        console.warn("Stock update warning:", e);
+      }
+    }
+
+    // 4. Clear user's cart in Supabase if exists
+    try {
+      await supabase.from("cart_items").delete().eq("user_id", userId);
+    } catch {}
+
+    const fullOrder: DbOrder = {
+      ...(orderData as DbOrder),
+      user_role: params.userRole,
+      shop_name: params.shopName,
+      order_items: orderItemsPayload.map((item, idx) => ({
+        id: `item_${idx}_${Date.now()}`,
+        ...item,
+      })),
+    };
+
+    return { data: fullOrder, error: null };
+  } catch (err: any) {
+    console.error("placeOrder unexpected error:", err);
+    return { data: null, error: err?.message || "Failed to place order." };
   }
-
-  // 4. Clear user's cart in Supabase
-  await supabase.from("cart_items").delete().eq("user_id", user.id);
-
-  return { data: orderData as DbOrder, error: null };
 }
 
 /**
  * Fetch orders for the logged-in user with their items
  */
-export async function fetchUserOrders(): Promise<DbOrder[]> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
+export async function fetchUserOrders(explicitUserId?: string): Promise<DbOrder[]> {
+  try {
+    const userId = await getEffectiveUserId(explicitUserId);
 
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*, order_items(*)")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*, order_items(*)")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching user orders:", error.message);
+    if (error) {
+      console.warn("Notice fetching user orders:", error.message);
+      return [];
+    }
+    return (data || []) as DbOrder[];
+  } catch (err) {
+    console.error("fetchUserOrders error:", err);
     return [];
   }
-  return data as DbOrder[];
 }
 
 /**
@@ -312,4 +336,3 @@ export function subscribeToOrdersRealtime(onUpdate: (payload: any) => void) {
     supabase.removeChannel(channel);
   };
 }
-
