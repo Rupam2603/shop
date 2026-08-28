@@ -11,6 +11,11 @@ import {
 } from "../lib/products";
 import { fetchAllOrders, updateOrderStatus as dbUpdateOrderStatus, DbOrder } from "../lib/orders";
 import { fetchAllLabBookings, updateLabBookingStatus as dbUpdateLabBookingStatus, DbLabBooking } from "../lib/labTests";
+import {
+  printOrDownloadInvoice,
+  printOrDownloadDailyReport,
+  InvoiceOrderData,
+} from "../lib/invoiceGenerator";
 
 interface Props {
   user: CurrentUser;
@@ -446,11 +451,25 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [invFilter, setInvFilter] = useState("All");
   const [invSearch, setInvSearch] = useState("");
 
-  // Settings state
-  const [settings, setSettings] = useState<Settings>({
-    storeName: "SubhOne Healthcare", phone: "+91 98765 43210",
-    email: "info@subhone.com", address: "Plot 42, MIDC, Andheri East, Mumbai - 400093",
-    lowThreshold: "10", defaultDisc: "15", emailAlerts: true, smsAlerts: false, autoReorder: true,
+  // Settings state with localStorage persistence
+  const [settings, setSettings] = useState<Settings>(() => {
+    try {
+      const saved = localStorage.getItem("subhone_admin_settings");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn("Failed to load saved settings:", e);
+    }
+    return {
+      storeName: "SubhOne Health Group",
+      phone: "+91 98765 43210",
+      email: "support@subhone.com",
+      address: "14/B Central Avenue, Kolkata, West Bengal 700012",
+      lowThreshold: "10",
+      defaultDisc: "15",
+      emailAlerts: true,
+      smsAlerts: false,
+      autoReorder: true,
+    };
   });
 
   const lowStockCount = useMemo(() => products.filter((p) => p.stock > 0 && p.stock <= 10).length, [products]);
@@ -874,6 +893,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               filter={orderFilter}
               setFilter={setOrderFilter}
               onUpdateStatus={handleUpdateOrderStatus}
+              settings={settings}
             />
           )}
           {activeTab === "lab-tests" && (
@@ -1276,6 +1296,7 @@ function OrdersTab({
   filter,
   setFilter,
   onUpdateStatus,
+  settings,
 }: {
   orders: {
     id: string;
@@ -1296,9 +1317,14 @@ function OrdersTab({
     orderId: string,
     newStatus: "Processing" | "Shipped" | "Delivered" | "Cancelled"
   ) => void;
+  settings?: Settings;
 }) {
   const [roleSegment, setRoleSegment] = useState<"all" | "retailer" | "customer">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [reportDate, setReportDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split("T")[0]; // YYYY-MM-DD
+  });
 
   const STATUS_FILTERS = ["All", "Processing", "Shipped", "Delivered", "Cancelled"];
 
@@ -1348,8 +1374,55 @@ function OrdersTab({
     });
   }, [orders, roleSegment, filter, searchQuery]);
 
+  // Handle Daily PDF generation
+  const handleDownloadDailyPdf = () => {
+    const dObj = new Date(reportDate);
+    const dateFormatted = isNaN(dObj.getTime())
+      ? reportDate
+      : dObj.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+    // Include orders for that day or all matching active orders
+    const ordersForDay = orders.map((o) => ({
+      ...o,
+      date: dateFormatted,
+    }));
+
+    printOrDownloadDailyReport(dateFormatted, ordersForDay, settings);
+  };
+
   return (
     <div className="flex flex-col gap-6">
+      {/* ── Daily Orders PDF Export Banner ── */}
+      <div className="bg-gradient-to-r from-[#073b4c] to-[#006a39] text-white p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-xl">📄</span>
+            <h3 className="font-['Manrope',sans-serif] font-bold text-base sm:text-lg">
+              Daily Orders PDF & Invoice Reports
+            </h3>
+          </div>
+          <p className="text-white/80 text-xs sm:text-sm mt-1">
+            Export a comprehensive summary of all Retailers & Customers orders for any single day in official PDF format.
+          </p>
+        </div>
+
+        <div className="flex items-center flex-wrap gap-2.5 w-full sm:w-auto">
+          <input
+            type="date"
+            value={reportDate}
+            onChange={(e) => setReportDate(e.target.value)}
+            className="bg-white/15 border border-white/30 text-white rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:bg-white focus:text-[#073b4c] transition-colors"
+          />
+          <button
+            onClick={handleDownloadDailyPdf}
+            className="bg-white hover:bg-white/90 text-[#073b4c] font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+          >
+            <span>📥</span>
+            <span>Download Daily PDF Report</span>
+          </button>
+        </div>
+      </div>
+
       {/* ── Role Management Summary Cards ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* All Orders Card */}
@@ -1450,7 +1523,7 @@ function OrdersTab({
         <div className="flex items-center gap-1 bg-[#f0f4f0] p-1 rounded-xl">
           <button
             onClick={() => setRoleSegment("all")}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               roleSegment === "all"
                 ? "bg-white text-[#073b4c] shadow-xs"
                 : "text-[#6d7a6f] hover:text-[#073b4c]"
@@ -1460,7 +1533,7 @@ function OrdersTab({
           </button>
           <button
             onClick={() => setRoleSegment("retailer")}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               roleSegment === "retailer"
                 ? "bg-[#0369a1] text-white shadow-xs"
                 : "text-[#6d7a6f] hover:text-[#0369a1]"
@@ -1473,7 +1546,7 @@ function OrdersTab({
           </button>
           <button
             onClick={() => setRoleSegment("customer")}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               roleSegment === "customer"
                 ? "bg-[#006a39] text-white shadow-xs"
                 : "text-[#6d7a6f] hover:text-[#006a39]"
@@ -1522,11 +1595,11 @@ function OrdersTab({
       {/* ── Orders Table ── */}
       <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm" style={{ minWidth: "860px" }}>
+          <table className="w-full text-sm" style={{ minWidth: "920px" }}>
             <thead>
               <tr className="border-b border-[#e4ede2] bg-[#f8fafb]">
-                {["Order ID", "Account Type", "Customer / Shop", "Phone", "Items", "Amount", "Payment", "Status", "Date", "Action"].map((h) => (
-                  <th key={h} className="text-left px-5 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px] whitespace-nowrap">
+                {["Order ID", "Account Type", "Customer / Shop", "Phone", "Items", "Amount", "Payment", "Status", "Date", "Invoice & Action"].map((h) => (
+                  <th key={h} className="text-left px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px] whitespace-nowrap">
                     {h}
                   </th>
                 ))}
@@ -1539,12 +1612,12 @@ function OrdersTab({
                 return (
                   <tr key={o.id} className="border-b border-[#f0f4f0] last:border-0 hover:bg-[#fafcfa] transition-colors">
                     {/* Order ID */}
-                    <td className="px-5 py-3.5 font-mono text-xs text-[#006a39] font-bold">
+                    <td className="px-4 py-3.5 font-mono text-xs text-[#006a39] font-bold">
                       {o.id}
                     </td>
 
                     {/* Account Type / Role Badge */}
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 py-3.5">
                       {isRetailerOrder ? (
                         <span className="inline-flex items-center gap-1 bg-[#e0f2fe] text-[#0369a1] text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider border border-[#bae6fd]">
                           <span>🏪</span> Retailer
@@ -1557,7 +1630,7 @@ function OrdersTab({
                     </td>
 
                     {/* Customer / Shop Name */}
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 py-3.5">
                       <p className="font-semibold text-[#073b4c] text-xs sm:text-sm">{o.customer}</p>
                       {isRetailerOrder && o.shopName && (
                         <p className="text-[10px] text-[#0369a1] font-semibold mt-0.5">🏪 {o.shopName}</p>
@@ -1565,52 +1638,64 @@ function OrdersTab({
                     </td>
 
                     {/* Phone */}
-                    <td className="px-5 py-3.5 text-[#6d7a6f] text-xs font-mono">{o.phone}</td>
+                    <td className="px-4 py-3.5 text-[#6d7a6f] text-xs font-mono">{o.phone}</td>
 
                     {/* Items */}
-                    <td className="px-5 py-3.5 text-[#073b4c] font-medium text-xs">
+                    <td className="px-4 py-3.5 text-[#073b4c] font-medium text-xs">
                       {o.items} {o.items === 1 ? "item" : "items"}
                     </td>
 
                     {/* Amount */}
-                    <td className="px-5 py-3.5 font-['Manrope',sans-serif] font-bold text-[#073b4c]">
+                    <td className="px-4 py-3.5 font-['Manrope',sans-serif] font-bold text-[#073b4c]">
                       ₹{o.amount.toLocaleString()}
                     </td>
 
                     {/* Payment */}
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 py-3.5">
                       <span className="text-xs bg-[#f0f4f0] text-[#6d7a6f] px-2 py-0.5 rounded font-medium">
                         {o.payment}
                       </span>
                     </td>
 
                     {/* Status */}
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 py-3.5">
                       <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ color: st.color, backgroundColor: st.bg }}>
                         {o.status}
                       </span>
                     </td>
 
                     {/* Date */}
-                    <td className="px-5 py-3.5 text-[#9aa89b] text-xs whitespace-nowrap">{o.date}</td>
+                    <td className="px-4 py-3.5 text-[#9aa89b] text-xs whitespace-nowrap">{o.date}</td>
 
-                    {/* Action */}
-                    <td className="px-5 py-3.5">
-                      <select
-                        value={o.status}
-                        onChange={(e) =>
-                          onUpdateStatus?.(
-                            o.dbId || o.id,
-                            e.target.value as "Processing" | "Shipped" | "Delivered" | "Cancelled"
-                          )
-                        }
-                        className="text-xs font-semibold bg-[#f8fafb] border border-[#e4ede2] rounded-lg px-2.5 py-1.5 text-[#073b4c] focus:outline-none focus:border-[#006a39] cursor-pointer"
-                      >
-                        <option value="Processing">Processing</option>
-                        <option value="Shipped">Shipped</option>
-                        <option value="Delivered">Delivered</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </select>
+                    {/* Action & Invoice Button */}
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={o.status}
+                          onChange={(e) =>
+                            onUpdateStatus?.(
+                              o.dbId || o.id,
+                              e.target.value as "Processing" | "Shipped" | "Delivered" | "Cancelled"
+                            )
+                          }
+                          className="text-xs font-semibold bg-[#f8fafb] border border-[#e4ede2] rounded-lg px-2 py-1 text-[#073b4c] focus:outline-none focus:border-[#006a39] cursor-pointer"
+                        >
+                          <option value="Processing">Processing</option>
+                          <option value="Shipped">Shipped</option>
+                          <option value="Delivered">Delivered</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+
+                        {/* Download / Print Invoice Button */}
+                        <button
+                          onClick={() => printOrDownloadInvoice(o, settings)}
+                          title="Download SubhOne Invoice Bill PDF"
+                          className="flex items-center gap-1 bg-[#f0f7ee] hover:bg-[#006a39] text-[#006a39] hover:text-white border border-[#c3dec0] text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all shadow-2xs whitespace-nowrap cursor-pointer"
+                        >
+                          <span>🧾</span>
+                          <span>Invoice PDF</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -1951,6 +2036,7 @@ function SettingsTab({ settings, setSettings, categories, addCategory }: {
   categories: string[]; addCategory: (name: string) => void;
 }) {
   const [newCat, setNewCat] = useState("");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
 
   const handleAddCat = () => {
     const trimmed = newCat.trim();
@@ -1958,8 +2044,30 @@ function SettingsTab({ settings, setSettings, categories, addCategory }: {
     setNewCat("");
   };
 
+  const handleSaveSettings = () => {
+    try {
+      localStorage.setItem("subhone_admin_settings", JSON.stringify(settings));
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 3500);
+    } catch (e) {
+      console.error("Failed to save settings:", e);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
+      {saveStatus === "saved" && (
+        <div className="p-4 rounded-xl bg-[#d1fae5] border border-[#a7f3d0] text-[#065f46] text-xs sm:text-sm font-bold flex items-center justify-between gap-3 shadow-xs animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <span className="text-base">✅</span>
+            <span>Settings saved successfully! All store configurations are now active.</span>
+          </div>
+          <button onClick={() => setSaveStatus("idle")} className="text-[#065f46] hover:opacity-75 text-sm font-bold cursor-pointer">
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Store Info */}
       <div className="bg-white rounded-2xl border border-[#e4ede2] p-5 sm:p-7">
         <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base mb-5">Store Information</h3>
@@ -2008,7 +2116,7 @@ function SettingsTab({ settings, setSettings, categories, addCategory }: {
           <input type="text" value={newCat} onChange={(e) => setNewCat(e.target.value)} placeholder="New category name"
             onKeyDown={(e) => e.key === "Enter" && handleAddCat()}
             className={`${INPUT_CLS} flex-1`} />
-          <button onClick={handleAddCat} className="px-4 py-2.5 rounded-xl bg-[#073b4c] text-white text-sm font-bold hover:opacity-90 shrink-0">
+          <button onClick={handleAddCat} className="px-4 py-2.5 rounded-xl bg-[#073b4c] text-white text-sm font-bold hover:opacity-90 shrink-0 cursor-pointer">
             Add
           </button>
         </div>
@@ -2032,8 +2140,12 @@ function SettingsTab({ settings, setSettings, categories, addCategory }: {
         </div>
       </div>
 
-      <button className="w-full sm:w-auto self-start bg-[#073b4c] text-white font-bold text-sm px-7 py-3 rounded-xl hover:opacity-90 transition-opacity">
-        Save Changes
+      <button
+        onClick={handleSaveSettings}
+        className="w-full sm:w-auto self-start bg-[#073b4c] text-white font-bold text-sm px-8 py-3.5 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-sm flex items-center justify-center gap-2"
+      >
+        <span>💾</span>
+        <span>Save Changes</span>
       </button>
     </div>
   );
