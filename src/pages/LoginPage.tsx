@@ -1,18 +1,14 @@
 import { useState } from "react";
-import type { UserRole, CurrentUser } from "../App";
+import type { UserRole } from "../App";
+import { useAuth } from "../contexts/AuthContext";
 
-interface Props {
-  onLogin: (user: CurrentUser) => void;
-}
+// ─── Role UI configuration ────────────────────────────────────────────────────
 
 type RoleCfg = {
   label: string;
   desc: string;
   accent: string;
   lightBg: string;
-  demoEmail: string;
-  demoPass: string;
-  name: string;
 };
 
 const ROLES: Record<UserRole, RoleCfg> = {
@@ -21,29 +17,22 @@ const ROLES: Record<UserRole, RoleCfg> = {
     desc: "Full platform access",
     accent: "#073b4c",
     lightBg: "#e8f4f8",
-    demoEmail: "admin@subhone.com",
-    demoPass: "admin123",
-    name: "Admin User",
   },
   retailer: {
     label: "Retailer",
     desc: "Manage your storefront",
     accent: "#006a39",
     lightBg: "#e8f5ee",
-    demoEmail: "retailer@subhone.com",
-    demoPass: "retail123",
-    name: "Retailer Partner",
   },
   customer: {
     label: "Customer",
     desc: "Shop & track orders",
     accent: "#0369a1",
     lightBg: "#e0f2fe",
-    demoEmail: "customer@subhone.com",
-    demoPass: "any password",
-    name: "Valued Customer",
   },
 };
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
 
 function ShieldIcon({ color }: { color: string }) {
   return (
@@ -85,37 +74,42 @@ function EyeOffIcon() {
   );
 }
 
-const DEMO_PROFILES: Partial<Record<UserRole, { phone: string; shopName?: string; joinedDate: string; addresses: import("../App").Address[] }>> = {
-  retailer: {
-    phone: "+91 98765 43210",
-    shopName: "Sharma Medical Store",
-    joinedDate: "Jan 15, 2025",
-    addresses: [{
-      id: "r1", label: "Shop", name: "Sharma Medical Store", phone: "+91 98765 43210",
-      line1: "Shop No. 4, Laxmi Market", line2: "Dadar West", city: "Mumbai",
-      state: "Maharashtra", pincode: "400028", isDefault: true,
-    }],
-  },
-  customer: {
-    phone: "+91 87654 32109",
-    joinedDate: "Mar 8, 2025",
-    addresses: [{
-      id: "c1", label: "Home", name: "Priya Singh", phone: "+91 87654 32109",
-      line1: "Flat 4B, Sunrise Apartments", line2: "Viman Nagar", city: "Pune",
-      state: "Maharashtra", pincode: "411014", isDefault: true,
-    }],
-  },
-};
+function ErrorBox({ msg }: { msg: string }) {
+  return (
+    <div className="bg-[#fff0ee] border border-[#ffd5cf] rounded-xl p-3.5 flex items-start gap-2.5">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5">
+        <path d="M8 1.5C4.41 1.5 1.5 4.41 1.5 8C1.5 11.59 4.41 14.5 8 14.5C11.59 14.5 14.5 11.59 14.5 8C14.5 4.41 11.59 1.5 8 1.5ZM8.75 11H7.25V9.5H8.75V11ZM8.75 8H7.25V5H8.75V8Z" fill="#c0392b" />
+      </svg>
+      <p className="text-[#c0392b] text-xs leading-relaxed">{msg}</p>
+    </div>
+  );
+}
+
+function SuccessBox({ msg }: { msg: string }) {
+  return (
+    <div className="bg-[#ecfdf5] border border-[#a7f3d0] rounded-xl p-3.5 flex items-start gap-2.5">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5">
+        <path d="M8 1.5C4.41 1.5 1.5 4.41 1.5 8C1.5 11.59 4.41 14.5 8 14.5C11.59 14.5 14.5 11.59 14.5 8C14.5 4.41 11.59 1.5 8 1.5ZM6.5 11.5L3 8L4.06 6.94L6.5 9.37L11.94 3.93L13 5L6.5 11.5Z" fill="#047857" />
+      </svg>
+      <p className="text-[#047857] text-xs leading-relaxed">{msg}</p>
+    </div>
+  );
+}
 
 const FIELD_CLS = "w-full bg-[#f8fafb] border border-[#e4ede2] rounded-xl px-4 py-3 text-sm text-[#073b4c] placeholder:text-[#c0ccc0] focus:outline-none transition-all";
 
-export default function LoginPage({ onLogin }: Props) {
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function LoginPage() {
+  const { signIn, signUp } = useAuth();
+
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [selectedRole, setSelectedRole] = useState<UserRole>("customer");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   // Signup-only fields
@@ -126,64 +120,86 @@ export default function LoginPage({ onLogin }: Props) {
 
   const cfg = ROLES[selectedRole];
 
-  const resetForm = () => { setEmail(""); setPassword(""); setSignupName(""); setSignupPhone(""); setSignupShop(""); setSignupConfirm(""); setError(""); };
-
-  const handleRoleSelect = (role: UserRole) => { setSelectedRole(role); setError(""); setEmail(""); setPassword(""); };
-  const switchMode = (m: "login" | "signup") => { setMode(m); resetForm(); if (m === "signup" && selectedRole === "admin") setSelectedRole("customer"); };
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    setTimeout(() => {
-      let valid = false;
-      if (selectedRole === "customer") valid = /\S+@\S+\.\S+/.test(email) && password.length >= 3;
-      else valid = email === cfg.demoEmail && password === cfg.demoPass;
-      if (valid) {
-        const demo = DEMO_PROFILES[selectedRole];
-        onLogin({
-          role: selectedRole, email, name: cfg.name,
-          phone: demo?.phone, shopName: demo?.shopName,
-          addresses: demo?.addresses ?? [],
-          joinedDate: demo?.joinedDate,
-        });
-      } else {
-        setError(selectedRole === "customer"
-          ? "Invalid credentials. Use any valid email and a password with 3+ characters."
-          : `Wrong credentials. Demo: ${cfg.demoEmail} / ${cfg.demoPass}`
-        );
-        setLoading(false);
-      }
-    }, 600);
+  const resetForm = () => {
+    setEmail(""); setPassword(""); setSignupName(""); setSignupPhone("");
+    setSignupShop(""); setSignupConfirm(""); setError(""); setSuccess("");
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleRoleSelect = (role: UserRole) => {
+    setSelectedRole(role); setError(""); setSuccess(""); setEmail(""); setPassword("");
+  };
+
+  const switchMode = (m: "login" | "signup") => {
+    setMode(m);
+    resetForm();
+    // Admin cannot self-register — force to customer if switching to signup
+    if (m === "signup" && selectedRole === "admin") setSelectedRole("customer");
+  };
+
+  // ── Real Supabase Login ────────────────────────────────────────────────────
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!signupName.trim())                         { setError("Please enter your full name."); return; }
-    if (!/\S+@\S+\.\S+/.test(email))               { setError("Please enter a valid email address."); return; }
+    setSuccess("");
+
+    if (!email.trim()) { setError("Please enter your email address."); return; }
+    if (!password) { setError("Please enter your password."); return; }
+
+    setLoading(true);
+    const { error: authError } = await signIn(email.trim(), password);
+    setLoading(false);
+
+    if (authError) {
+      setError(authError);
+    }
+    // On success, AuthContext updates appUser → App.tsx re-renders automatically
+  };
+
+  // ── Real Supabase Signup ───────────────────────────────────────────────────
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    // Client-side validation
+    if (!signupName.trim())                               { setError("Please enter your full name."); return; }
+    if (!/\S+@\S+\.\S+/.test(email))                     { setError("Please enter a valid email address."); return; }
     if (selectedRole === "retailer" && !signupShop.trim()) { setError("Please enter your shop or business name."); return; }
-    if (password.length < 6)                        { setError("Password must be at least 6 characters."); return; }
-    if (password !== signupConfirm)                 { setError("Passwords do not match."); return; }
+    if (password.length < 6)                              { setError("Password must be at least 6 characters."); return; }
+    if (password !== signupConfirm)                       { setError("Passwords do not match."); return; }
+
+    // Security: only customer and retailer allowed via public signup
+    const safeRole: "customer" | "retailer" = selectedRole === "retailer" ? "retailer" : "customer";
+
     setLoading(true);
-    setTimeout(() => {
-      onLogin({
-        role: selectedRole, email, name: signupName.trim(),
-        phone: signupPhone || undefined,
-        shopName: selectedRole === "retailer" ? signupShop.trim() : undefined,
-        addresses: [],
-        joinedDate: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }),
-      });
-    }, 700);
+    const { error: authError, emailConfirmationRequired } = await signUp({
+      email: email.trim(),
+      password,
+      fullName: signupName.trim(),
+      phone: signupPhone || undefined,
+      shopName: selectedRole === "retailer" ? signupShop.trim() : undefined,
+      role: safeRole,
+    });
+    setLoading(false);
+
+    if (authError) {
+      setError(authError);
+      return;
+    }
+
+    if (emailConfirmationRequired) {
+      setSuccess(
+        `Account created! We've sent a confirmation link to ${email}. ` +
+        "Please check your inbox (and spam folder) and click the link to activate your account."
+      );
+      resetForm();
+      setMode("login");
+    }
+    // If no email confirmation needed, AuthContext fires and App re-renders
   };
 
-  const fillDemo = () => {
-    setEmail(cfg.demoEmail);
-    setPassword(cfg.demoPass === "any password" ? "pass123" : cfg.demoPass);
-    setError("");
-  };
-
-  const signupRoles = (["retailer", "customer"] as UserRole[]);
+  // Roles available for signup (no admin — admin is created manually via Supabase dashboard)
+  const signupRoles: UserRole[] = ["retailer", "customer"];
 
   return (
     <div className="min-h-screen flex">
@@ -312,7 +328,7 @@ export default function LoginPage({ onLogin }: Props) {
               <div>
                 <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Email Address</label>
                 <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                  placeholder={cfg.demoEmail} required className={FIELD_CLS}
+                  placeholder="you@example.com" required className={FIELD_CLS}
                   onFocus={(e) => (e.target.style.borderColor = cfg.accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
               </div>
               <div>
@@ -328,9 +344,11 @@ export default function LoginPage({ onLogin }: Props) {
                 </div>
               </div>
               {error && <ErrorBox msg={error} />}
+              {success && <SuccessBox msg={success} />}
               <button type="submit" disabled={loading}
-                className="w-full py-3 sm:py-3.5 rounded-xl font-['Manrope',sans-serif] font-bold text-sm sm:text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 mt-1"
+                className="w-full py-3 sm:py-3.5 rounded-xl font-['Manrope',sans-serif] font-bold text-sm sm:text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 mt-1 flex items-center justify-center gap-2"
                 style={{ backgroundColor: cfg.accent }}>
+                {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                 {loading ? "Signing in…" : `Sign In as ${cfg.label}`}
               </button>
             </form>
@@ -389,47 +407,20 @@ export default function LoginPage({ onLogin }: Props) {
                 </div>
               </div>
               {error && <ErrorBox msg={error} />}
+              {success && <SuccessBox msg={success} />}
               <button type="submit" disabled={loading}
-                className="w-full py-3 sm:py-3.5 rounded-xl font-['Manrope',sans-serif] font-bold text-sm sm:text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
+                className="w-full py-3 sm:py-3.5 rounded-xl font-['Manrope',sans-serif] font-bold text-sm sm:text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2"
                 style={{ backgroundColor: cfg.accent }}>
+                {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                 {loading ? "Creating account…" : `Create ${cfg.label} Account`}
               </button>
               <p className="text-center text-[11px] text-[#9aa89b]">
-                By signing up you agree to SubhOne's terms of service and privacy policy.
+                By signing up you agree to SubhOne&apos;s terms of service and privacy policy.
               </p>
             </form>
           )}
-
-          {/* Demo credentials — login only */}
-          {mode === "login" && (
-            <div className="bg-[#f8fafb] border border-[#e4ede2] rounded-xl p-3.5 sm:p-4">
-              <div className="flex items-center justify-between mb-2 sm:mb-2.5">
-                <p className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px]">Demo Credentials</p>
-                <button onClick={fillDemo} className="text-[11px] font-bold hover:underline transition-colors" style={{ color: cfg.accent }}>
-                  Auto-fill ↗
-                </button>
-              </div>
-              <div className="grid grid-cols-[64px_1fr] gap-y-1.5 gap-x-3 text-xs">
-                <span className="text-[#9aa89b]">Email</span>
-                <span className="text-[#073b4c] font-medium">{cfg.demoEmail}</span>
-                <span className="text-[#9aa89b]">Password</span>
-                <span className="text-[#073b4c] font-medium">{cfg.demoPass}</span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
-    </div>
-  );
-}
-
-function ErrorBox({ msg }: { msg: string }) {
-  return (
-    <div className="bg-[#fff0ee] border border-[#ffd5cf] rounded-xl p-3.5 flex items-start gap-2.5">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5">
-        <path d="M8 1.5C4.41 1.5 1.5 4.41 1.5 8C1.5 11.59 4.41 14.5 8 14.5C11.59 14.5 14.5 11.59 14.5 8C14.5 4.41 11.59 1.5 8 1.5ZM8.75 11H7.25V9.5H8.75V11ZM8.75 8H7.25V5H8.75V8Z" fill="#c0392b"/>
-      </svg>
-      <p className="text-[#c0392b] text-xs leading-relaxed">{msg}</p>
     </div>
   );
 }
