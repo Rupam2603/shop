@@ -1,5 +1,12 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import type { CurrentUser } from "../App";
+import {
+  fetchProducts,
+  createProduct as dbCreateProduct,
+  updateProduct as dbUpdateProduct,
+  deleteProduct as dbDeleteProduct,
+  updateProductStock as dbUpdateStock,
+} from "../lib/products";
 
 interface Props {
   user: CurrentUser;
@@ -10,6 +17,7 @@ type AdminTab = "dashboard" | "products" | "inventory" | "orders" | "revenue" | 
 
 type Product = {
   id: number;
+  dbId?: string;
   name: string;
   category: string;
   brand: string;
@@ -479,6 +487,33 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     return MOCK_ORDERS.filter((o) => o.status === orderFilter);
   }, [orderFilter]);
 
+  // Fetch live products on mount
+  useEffect(() => {
+    let mounted = true;
+    fetchProducts().then((data) => {
+      if (mounted && data && data.length > 0) {
+        setProducts(
+          data.map((p) => ({
+            id: p.numeric_id,
+            dbId: p.id,
+            name: p.name,
+            category: p.category_name,
+            brand: p.brand,
+            sku: p.sku || `SKU-${p.numeric_id}`,
+            hsn: p.hsn || "3004",
+            mrp: Number(p.mrp),
+            customerPrice: Number(p.customer_price),
+            retailerPrice: Number(p.retailer_price),
+            stock: p.stock,
+            image: p.image_url,
+            details: p.details || "",
+          }))
+        );
+      }
+    });
+    return () => { mounted = false; };
+  }, []);
+
   const openAdd = () => { setForm(emptyForm(categories[0])); setModal({ open: true, mode: "add" }); };
   const openEdit = (p: Product) => { setForm({ ...p }); setModal({ open: true, mode: "edit" }); };
   const closeModal = () => setModal({ open: false, mode: "add" });
@@ -487,20 +522,79 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     setCategories((prev) => [...prev, name]);
   };
 
-  const saveProduct = () => {
+  const saveProduct = async () => {
     if (modal.mode === "add") {
-      setProducts((prev) => [...prev, { ...form, id: Date.now() } as Product]);
+      const tempId = Date.now();
+      const newProd: Product = { ...form, id: tempId } as Product;
+      setProducts((prev) => [newProd, ...prev]);
+      closeModal();
+
+      // Persist to Supabase
+      const { data } = await dbCreateProduct({
+        name: form.name,
+        subtitle: form.details || null,
+        category_id: "00000000-0000-0000-0000-000000000000", // placeholder UUID
+        category_name: form.category,
+        brand: form.brand,
+        sku: form.sku || `SKU-${tempId}`,
+        hsn: form.hsn || "3004",
+        mrp: form.mrp,
+        customer_price: form.customerPrice,
+        retailer_price: form.retailerPrice || Math.round(form.customerPrice * 0.85),
+        discount_percent: form.mrp > form.customerPrice ? Math.round(((form.mrp - form.customerPrice) / form.mrp) * 100) : 0,
+        stock: form.stock || 0,
+        image_url: form.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80",
+        details: form.details || null,
+        is_flash_sale: false,
+        is_featured: false,
+      });
+
+      if (data) {
+        setProducts((prev) => prev.map((p) => p.id === tempId ? { ...p, id: data.numeric_id, dbId: data.id } : p));
+      }
     } else {
-      setProducts((prev) => prev.map((p) => (p.id === form.id ? { ...form } as Product : p)));
+      const target = products.find((p) => p.id === form.id);
+      setProducts((prev) => prev.map((p) => (p.id === form.id ? ({ ...form, dbId: target?.dbId } as Product) : p)));
+      closeModal();
+
+      // Persist edit to Supabase
+      if (target?.dbId) {
+        await dbUpdateProduct(target.dbId, {
+          name: form.name,
+          category_name: form.category,
+          brand: form.brand,
+          sku: form.sku,
+          hsn: form.hsn,
+          mrp: form.mrp,
+          customer_price: form.customerPrice,
+          retailer_price: form.retailerPrice,
+          discount_percent: form.mrp > form.customerPrice ? Math.round(((form.mrp - form.customerPrice) / form.mrp) * 100) : 0,
+          stock: form.stock,
+          image_url: form.image,
+          details: form.details,
+        });
+      }
     }
-    closeModal();
   };
 
-  const deleteProduct = (id: number) => { setProducts((prev) => prev.filter((p) => p.id !== id)); setDeleteId(null); };
+  const deleteProduct = async (id: number) => {
+    const target = products.find((p) => p.id === id);
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+    setDeleteId(null);
+    if (target?.dbId) {
+      await dbDeleteProduct(target.dbId);
+    }
+  };
 
-  const applyStockUpdate = (id: number) => {
+  const applyStockUpdate = async (id: number) => {
     const val = parseInt(stockEdits[id] ?? "");
-    if (!isNaN(val) && val >= 0) setProducts((prev) => prev.map((p) => p.id === id ? { ...p, stock: val } : p));
+    if (!isNaN(val) && val >= 0) {
+      const target = products.find((p) => p.id === id);
+      setProducts((prev) => prev.map((p) => p.id === id ? { ...p, stock: val } : p));
+      if (target?.dbId) {
+        await dbUpdateStock(target.dbId, val);
+      }
+    }
     setStockEdits((prev) => { const n = { ...prev }; delete n[id]; return n; });
   };
 

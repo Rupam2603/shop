@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import ProductDetailModal, { CAT_COLORS, HSN_BY_CAT, retailerPrice, PopupProduct } from "../components/ProductModal";
+import { fetchProducts, DbProduct } from "../lib/products";
 
 const U = (id: string) => `https://images.unsplash.com/${id}?w=300&q=80`;
 
@@ -169,7 +170,42 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<PopupProduct | null>(null);
+  const [dbProducts, setDbProducts] = useState<DbProduct[] | null>(null);
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const PER_PAGE = 24;
+
+  useEffect(() => {
+    let mounted = true;
+    setLoadingProducts(true);
+    fetchProducts().then((data) => {
+      if (mounted) {
+        if (data && data.length > 0) {
+          setDbProducts(data);
+        }
+        setLoadingProducts(false);
+      }
+    }).catch(() => {
+      if (mounted) setLoadingProducts(false);
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  const productList = useMemo(() => {
+    if (dbProducts && dbProducts.length > 0) {
+      return dbProducts.map((p) => ({
+        id: p.numeric_id,
+        name: p.name,
+        sub: p.subtitle || "",
+        price: `₹${Math.round(p.customer_price)}`,
+        orig: p.mrp > p.customer_price ? `₹${Math.round(p.mrp)}` : "",
+        disc: p.discount_percent > 0 ? `${p.discount_percent}%` : "",
+        cat: p.category_name,
+        brand: p.brand,
+        img: p.image_url,
+      }));
+    }
+    return ALL_PRODUCTS;
+  }, [dbProducts]);
 
   const toggleBrand = (b: string) =>
     setSelectedBrands((prev) => prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b]);
@@ -177,7 +213,7 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
   const activeFilterCount = selectedBrands.length + (selectedPriceIdx !== null ? 1 : 0);
 
   const filtered = useMemo(() => {
-    let list = ALL_PRODUCTS;
+    let list = productList;
     if (selectedCategory !== "All") list = list.filter((p) => p.cat === selectedCategory);
     if (selectedBrands.length)      list = list.filter((p) => selectedBrands.includes(p.brand));
     if (selectedPriceIdx !== null) {
@@ -188,7 +224,7 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
     if (sortBy === "price-desc") list = [...list].sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
     if (sortBy === "discount")   list = [...list].sort((a, b) => parseInt(b.disc || "0") - parseInt(a.disc || "0"));
     return list;
-  }, [selectedCategory, selectedBrands, selectedPriceIdx, sortBy]);
+  }, [productList, selectedCategory, selectedBrands, selectedPriceIdx, sortBy]);
 
   const paginated = filtered.slice(0, page * PER_PAGE);
 
