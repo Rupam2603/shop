@@ -171,8 +171,8 @@ const FLASH = [
 
 function MiniCard({ p, accent, onClick }: { p: { name: string; sub: string; price: string; orig: string; disc: string; img: string }; accent: string; onClick: () => void }) {
   return (
-    <div onClick={onClick} className="bg-white rounded-2xl border border-[#e4ede2] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer">
-      <div className="relative bg-[#f8fafb] h-36 overflow-hidden">
+    <div onClick={onClick} className="w-[155px] sm:w-[185px] lg:w-auto shrink-0 snap-start bg-white rounded-2xl border border-[#e4ede2] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer">
+      <div className="relative bg-[#f8fafb] h-32 sm:h-36 overflow-hidden">
         {p.disc && (
           <span className="absolute top-2 left-2 z-10 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase" style={{ backgroundColor: accent }}>
             {p.disc} OFF
@@ -180,15 +180,15 @@ function MiniCard({ p, accent, onClick }: { p: { name: string; sub: string; pric
         )}
         <img src={p.img} alt={p.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.15"; }} />
       </div>
-      <div className="p-2.5 flex flex-col gap-0.5 flex-1">
-        <p className="font-bold text-[#073b4c] text-[11px] leading-[14px] line-clamp-2">{p.name}</p>
-        <p className="text-[#9aa89b] text-[10px]">{p.sub}</p>
-        <div className="flex items-center justify-between mt-auto pt-1.5">
+      <div className="p-2.5 sm:p-3 flex flex-col gap-1 flex-1">
+        <p className="font-bold text-[#073b4c] text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[32px]">{p.name}</p>
+        <p className="text-[#9aa89b] text-[10px] sm:text-[11px] truncate">{p.sub}</p>
+        <div className="flex items-center justify-between mt-auto pt-2">
           <div>
-            <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm">{p.price}</span>
-            {p.orig && <span className="text-[#9aa89b] text-[10px] line-through ml-1">MRP {p.orig}</span>}
+            <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-base">{p.price}</span>
+            {p.orig && <span className="text-[#9aa89b] text-[10px] sm:text-xs line-through ml-1">MRP {p.orig}</span>}
           </div>
-          <button onClick={(e) => e.stopPropagation()} className="w-7 h-7 rounded-full flex items-center justify-center text-white shrink-0 hover:opacity-90 transition-opacity" style={{ backgroundColor: accent }}>
+          <button onClick={(e) => e.stopPropagation()} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shrink-0 hover:opacity-90 transition-opacity" style={{ backgroundColor: accent }}>
             <PlusIcon />
           </button>
         </div>
@@ -200,22 +200,22 @@ function MiniCard({ p, accent, onClick }: { p: { name: string; sub: string; pric
 function CategorySection({ item, onViewAll, onProductClick }: { item: typeof ALL_CATEGORIES[0]; onViewAll: () => void; onProductClick: (p: PopupProduct) => void }) {
   return (
     <section className="flex flex-col gap-3 sm:gap-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl" style={{ backgroundColor: item.lightBg }}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: item.iconBg }}>
+      <div className="flex items-center justify-between gap-3 px-3.5 sm:px-5 py-3 sm:py-4 rounded-2xl" style={{ backgroundColor: item.lightBg }}>
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: item.iconBg }}>
             {item.icon}
           </div>
-          <div>
-            <h2 className="font-['Manrope',sans-serif] font-bold text-lg sm:text-xl" style={{ color: item.accent }}>{item.cat}</h2>
-            <p className="text-[#6d7a6f] text-xs mt-0.5">{item.count} products available</p>
+          <div className="min-w-0">
+            <h2 className="font-['Manrope',sans-serif] font-bold text-base sm:text-xl truncate" style={{ color: item.accent }}>{item.cat}</h2>
+            <p className="text-[#6d7a6f] text-[11px] sm:text-xs mt-0.5">{item.count} products available</p>
           </div>
         </div>
-        <button onClick={onViewAll} className="self-end sm:self-auto flex items-center gap-1.5 text-xs sm:text-sm font-bold hover:underline shrink-0" style={{ color: item.accent }}>
+        <button onClick={onViewAll} className="flex items-center gap-1 text-xs sm:text-sm font-bold hover:underline shrink-0 whitespace-nowrap" style={{ color: item.accent }}>
           View All ({item.count}) <ArrowRight />
         </button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="flex lg:grid lg:grid-cols-5 gap-3 sm:gap-4 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
         {item.products.map((p) => (
           <MiniCard
             key={p.name}
@@ -236,7 +236,7 @@ function CategorySection({ item, onViewAll, onProductClick }: { item: typeof ALL
         ))}
         <button
           onClick={onViewAll}
-          className="rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 p-4 hover:bg-white transition-all group min-h-[160px] sm:min-h-[200px]"
+          className="w-[140px] sm:w-[160px] lg:w-auto shrink-0 snap-start rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 p-4 hover:bg-white transition-all group min-h-[190px] sm:min-h-[220px]"
           style={{ borderColor: item.iconBg }}
         >
           <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform" style={{ backgroundColor: item.lightBg, color: item.accent }}>
@@ -256,30 +256,30 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
 
   return (
     <div className="bg-[#f5fbf2] min-h-screen">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-6 sm:gap-10">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 flex flex-col gap-6 sm:gap-10">
 
         {/* Hero */}
-        <div className="relative rounded-2xl overflow-hidden min-h-[280px] sm:min-h-[340px] md:h-[370px] shadow-sm bg-gradient-to-r from-[rgba(15,157,88,0.15)] to-[rgba(0,129,138,0.1)] flex items-center">
-          <div className="absolute right-0 top-0 w-full sm:w-2/3 h-full opacity-35 sm:opacity-100">
+        <div className="relative rounded-2xl overflow-hidden min-h-[240px] sm:min-h-[320px] md:h-[360px] shadow-sm bg-gradient-to-r from-[rgba(15,157,88,0.15)] to-[rgba(0,129,138,0.1)] flex items-center">
+          <div className="absolute right-0 top-0 w-full sm:w-2/3 h-full opacity-30 sm:opacity-100">
             <img src={imgHeroBg} alt="Health products" className="w-full h-full object-cover object-right" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#f5fbf2] sm:via-[rgba(245,251,242,0.4)] to-transparent" />
           </div>
-          <div className="relative z-10 flex flex-col gap-2.5 sm:gap-4 p-5 sm:p-10 lg:p-14 max-w-[540px] justify-center h-full">
-            <span className="inline-flex bg-[#ba1a1a] text-white text-[10px] sm:text-xs px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full w-fit uppercase tracking-[0.6px] font-semibold">Limited Time</span>
+          <div className="relative z-10 flex flex-col gap-2 sm:gap-3.5 p-4 sm:p-10 lg:p-14 max-w-[540px] justify-center h-full">
+            <span className="inline-flex bg-[#ba1a1a] text-white text-[9px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full w-fit uppercase tracking-[0.6px] font-semibold">Limited Time</span>
             <h1 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-2xl sm:text-4xl lg:text-5xl leading-tight sm:leading-[46px] lg:leading-[56px] tracking-tight">
               Flat 20% Off on<br />First Order
             </h1>
             <p className="text-[#3e4a3f] text-xs sm:text-base leading-relaxed">Medicines, balms, supplements, baby care & more — delivered fast.</p>
-            <button onClick={() => onNavigate("medicines")} className="bg-[#0f9d58] text-white text-xs sm:text-base font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg shadow-md hover:bg-[#0b8a4d] transition-colors w-fit mt-1">
+            <button onClick={() => onNavigate("medicines")} className="bg-[#0f9d58] text-white text-xs sm:text-sm font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg shadow-md hover:bg-[#0b8a4d] transition-colors w-fit mt-1">
               Shop Now
             </button>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
           {QUICK_ACTIONS.map((a) => (
-            <button key={a.label} className="bg-white rounded-2xl border border-[rgba(189,202,188,0.3)] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-3.5 sm:p-5 flex flex-col items-center gap-2 sm:gap-3">
+            <button key={a.label} className="bg-white rounded-2xl border border-[rgba(189,202,188,0.3)] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-3 sm:p-5 flex flex-col items-center gap-2 sm:gap-3">
               <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${a.bg} flex items-center justify-center shrink-0`}>{a.icon}</div>
               <span className="font-bold text-[#073b4c] text-xs sm:text-sm tracking-[0.5px] text-center">{a.label}</span>
             </button>
@@ -289,23 +289,23 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
         {/* Category browser — compact */}
         <section className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg sm:text-xl">Browse All Categories</h2>
+            <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-xl">Browse All Categories</h2>
             <button onClick={() => onNavigate("medicines", "All")} className="font-bold text-[#006a39] text-xs flex items-center gap-1 hover:underline">
               View All <ArrowRight />
             </button>
           </div>
-          <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-2">
+          <div className="flex md:grid md:grid-cols-8 gap-2 sm:gap-2.5 overflow-x-auto md:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
             {ALL_CATEGORIES.map((c) => (
               <button
                 key={c.cat}
                 onClick={() => onNavigate("medicines", c.cat)}
-                className="group flex flex-col items-center gap-1.5 p-2.5 sm:p-3 rounded-xl border border-[#e4ede2] bg-white hover:shadow-md hover:-translate-y-0.5 transition-all"
+                className="w-[84px] sm:w-[94px] md:w-auto shrink-0 snap-start group flex flex-col items-center gap-1.5 p-2 sm:p-3 rounded-2xl border border-[#e4ede2] bg-white hover:shadow-md hover:-translate-y-0.5 transition-all"
               >
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform" style={{ backgroundColor: c.lightBg }}>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform" style={{ backgroundColor: c.lightBg }}>
                   <div style={{ transform: "scale(0.8)" }}>{c.icon}</div>
                 </div>
-                <p className="font-semibold text-[9px] sm:text-[10px] leading-[12px] text-center line-clamp-2" style={{ color: c.accent }}>{c.short}</p>
-                <p className="text-[#9aa89b] text-[8px] sm:text-[9px]">{c.count} items</p>
+                <p className="font-semibold text-[10px] sm:text-[11px] leading-tight text-center line-clamp-2" style={{ color: c.accent }}>{c.short}</p>
+                <p className="text-[#9aa89b] text-[9px]">{c.count} items</p>
               </button>
             ))}
           </div>
@@ -321,12 +321,12 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
         <div className="border-t border-[#dee4db]" />
 
         {/* Flash Sale */}
-        <section className="flex flex-col gap-4 sm:gap-5">
+        <section className="flex flex-col gap-3.5 sm:gap-5">
           <div className="flex flex-wrap items-end justify-between gap-2">
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-0.5 sm:gap-1">
               <div className="flex items-center gap-2">
                 <FlashIcon />
-                <h2 className="font-['Manrope',sans-serif] font-semibold text-[#073b4c] text-xl sm:text-2xl">Flash Sale</h2>
+                <h2 className="font-['Manrope',sans-serif] font-semibold text-[#073b4c] text-lg sm:text-2xl">Flash Sale</h2>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[#3e4a3f] text-xs sm:text-sm">Ends in:</span>
@@ -335,26 +335,26 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
             </div>
             <button onClick={() => onNavigate("offers")} className="font-bold text-[#006a39] text-xs sm:text-sm hover:underline">View All</button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex lg:grid lg:grid-cols-4 gap-3 sm:gap-4 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
             {FLASH.map((p) => (
               <div
                 key={p.name}
                 onClick={() => setSelectedProduct({ id: nameToId(p.name), name: p.name, sub: p.sub, price: p.price, orig: p.orig, disc: p.disc, cat: p.cat, brand: p.brand, img: p.img })}
-                className="bg-white rounded-2xl border border-[rgba(189,202,188,0.4)] overflow-hidden flex flex-col group hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+                className="w-[170px] sm:w-[220px] lg:w-auto shrink-0 snap-start bg-white rounded-2xl border border-[rgba(189,202,188,0.4)] overflow-hidden flex flex-col group hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
               >
-                <div className="bg-[#f8fafb] h-36 sm:h-40 relative overflow-hidden flex items-center justify-center">
-                  <span className="absolute top-2 left-2 z-10 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase" style={{ backgroundColor: p.color }}>{p.badge}</span>
+                <div className="bg-[#f8fafb] h-32 sm:h-40 relative overflow-hidden flex items-center justify-center">
+                  <span className="absolute top-2 left-2 z-10 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded uppercase" style={{ backgroundColor: p.color }}>{p.badge}</span>
                   <img src={p.img} alt={p.name} className="h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
                 </div>
-                <div className="p-3.5 sm:p-4 flex flex-col gap-1 flex-1">
+                <div className="p-3 sm:p-4 flex flex-col gap-1 flex-1">
                   <p className="font-bold text-[#073b4c] text-xs sm:text-sm leading-5 line-clamp-2">{p.name}</p>
-                  <p className="text-[#3e4a3f] text-[11px] sm:text-xs">{p.sub}</p>
+                  <p className="text-[#3e4a3f] text-[10px] sm:text-xs">{p.sub}</p>
                   <div className="flex items-end justify-between mt-auto pt-2">
                     <div className="flex items-baseline gap-1.5">
-                      <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg">{p.price}</span>
-                      {p.orig && <span className="text-[#9aa89b] text-xs line-through">MRP {p.orig}</span>}
+                      <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-lg">{p.price}</span>
+                      {p.orig && <span className="text-[#9aa89b] text-[10px] sm:text-xs line-through">MRP {p.orig}</span>}
                     </div>
-                    <button onClick={(e) => e.stopPropagation()} className="w-8 h-8 bg-[#e9f0e7] rounded-full flex items-center justify-center hover:bg-[#006a39] hover:text-white text-[#006a39] transition-colors" aria-label="Add to cart">
+                    <button onClick={(e) => e.stopPropagation()} className="w-7 h-7 sm:w-8 sm:h-8 bg-[#e9f0e7] rounded-full flex items-center justify-center hover:bg-[#006a39] hover:text-white text-[#006a39] transition-colors" aria-label="Add to cart">
                       <PlusIcon />
                     </button>
                   </div>
