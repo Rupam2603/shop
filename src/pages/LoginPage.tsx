@@ -393,52 +393,6 @@ export default function LoginPage() {
                 {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                 {loading ? "Signing in…" : `Sign In as ${cfg.label}`}
               </button>
-
-              {/* Quick Demo Credentials */}
-              <div className="bg-[#f8fafb] border border-[#e4ede2] rounded-2xl p-4 mt-2 flex flex-col gap-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#6d7a6f]">Quick Demo Logins</span>
-                  <span className="text-[9px] text-[#9aa89b] font-mono">Password: SubhOne@2026</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedRole("admin");
-                      setEmail("admin@subhone.com");
-                      setPassword("SubhOne@2026");
-                      setError("");
-                    }}
-                    className="py-2 px-1 rounded-xl bg-white border border-[#e4ede2] text-[11px] font-bold text-[#073b4c] hover:bg-[#e8f4f8] transition-colors text-center"
-                  >
-                    🛡️ Admin
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedRole("retailer");
-                      setEmail("retailer@subhone.com");
-                      setPassword("SubhOne@2026");
-                      setError("");
-                    }}
-                    className="py-2 px-1 rounded-xl bg-white border border-[#e4ede2] text-[11px] font-bold text-[#006a39] hover:bg-[#e8f5ee] transition-colors text-center"
-                  >
-                    🏪 Retailer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedRole("customer");
-                      setEmail("customer@subhone.com");
-                      setPassword("SubhOne@2026");
-                      setError("");
-                    }}
-                    className="py-2 px-1 rounded-xl bg-white border border-[#e4ede2] text-[11px] font-bold text-[#0369a1] hover:bg-[#e0f2fe] transition-colors text-center"
-                  >
-                    👤 Customer
-                  </button>
-                </div>
-              </div>
             </form>
           )}
 
