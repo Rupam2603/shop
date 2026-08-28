@@ -450,7 +450,7 @@ export default function LoginPage() {
                 <div className="flex-1 h-px bg-[#e4ede2]" />
               </div>
 
-              <SignInButton mode="modal">
+              <SignInButton mode="modal" fallbackRedirectUrl="/" forceRedirectUrl="/">
                 <button
                   type="button"
                   className="w-full py-3 px-4 rounded-xl border border-[#e4ede2] bg-[#f8fafb] hover:bg-[#f0f4f0] text-[#073b4c] text-xs sm:text-sm font-bold flex items-center justify-center gap-2.5 transition-all shadow-xs"
@@ -534,7 +534,7 @@ export default function LoginPage() {
                 <div className="flex-1 h-px bg-[#e4ede2]" />
               </div>
 
-              <SignUpButton mode="modal">
+              <SignUpButton mode="modal" fallbackRedirectUrl="/" forceRedirectUrl="/">
                 <button
                   type="button"
                   className="w-full py-3 px-4 rounded-xl border border-[#e4ede2] bg-[#f8fafb] hover:bg-[#f0f4f0] text-[#073b4c] text-xs sm:text-sm font-bold flex items-center justify-center gap-2.5 transition-all shadow-xs"

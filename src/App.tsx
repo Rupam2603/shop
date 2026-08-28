@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
 import HomePage from "./pages/HomePage";
@@ -96,6 +96,20 @@ export default function App() {
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
+
+  const prevUserRef = useRef(appUser);
+
+  useEffect(() => {
+    // When transitioning from not logged in (null/undefined) to logged in, always open the Home page
+    if (!prevUserRef.current && appUser) {
+      if (appUser.profile?.role !== "admin") {
+        setActivePage("home");
+        replacePageState("home", "All");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+    prevUserRef.current = appUser;
+  }, [appUser]);
 
   const navigateTo = (page: Page, category = "All") => {
     pushPageState(page, category);
