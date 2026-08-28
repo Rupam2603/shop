@@ -7,6 +7,7 @@ import {
   updateProduct as dbUpdateProduct,
   deleteProduct as dbDeleteProduct,
   updateProductStock as dbUpdateStock,
+  subscribeToProductsRealtime,
 } from "../lib/products";
 import { fetchAllOrders, updateOrderStatus as dbUpdateOrderStatus, DbOrder } from "../lib/orders";
 import { fetchAllLabBookings, updateLabBookingStatus as dbUpdateLabBookingStatus, DbLabBooking } from "../lib/labTests";
@@ -524,7 +525,57 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       }
     });
 
-    return () => { mounted = false; };
+    // Real-time Supabase product & inventory listener
+    const unsubscribeProducts = subscribeToProductsRealtime((payload) => {
+      if (payload.eventType === "UPDATE" && payload.new) {
+        setProducts((prev) =>
+          prev.map((p) =>
+            p.dbId === payload.new.id || p.id === payload.new.numeric_id
+              ? {
+                  ...p,
+                  dbId: payload.new.id,
+                  name: payload.new.name,
+                  category: payload.new.category_name,
+                  brand: payload.new.brand,
+                  mrp: Number(payload.new.mrp),
+                  customerPrice: Number(payload.new.customer_price),
+                  retailerPrice: Number(payload.new.retailer_price),
+                  stock: payload.new.stock,
+                  image: payload.new.image_url,
+                  details: payload.new.details || "",
+                }
+              : p
+          )
+        );
+      } else if (payload.eventType === "INSERT" && payload.new) {
+        const newP = payload.new;
+        setProducts((prev) => [
+          {
+            id: newP.numeric_id,
+            dbId: newP.id,
+            name: newP.name,
+            category: newP.category_name,
+            brand: newP.brand,
+            sku: newP.sku || `SKU-${newP.numeric_id}`,
+            hsn: newP.hsn || "3004",
+            mrp: Number(newP.mrp),
+            customerPrice: Number(newP.customer_price),
+            retailerPrice: Number(newP.retailer_price),
+            stock: newP.stock,
+            image: newP.image_url,
+            details: newP.details || "",
+          },
+          ...prev,
+        ]);
+      } else if (payload.eventType === "DELETE" && payload.old) {
+        setProducts((prev) => prev.filter((p) => p.dbId !== payload.old.id));
+      }
+    });
+
+    return () => {
+      mounted = false;
+      unsubscribeProducts();
+    };
   }, []);
 
   const [dbLabBookings, setDbLabBookings] = useState<DbLabBooking[]>([]);
@@ -1144,15 +1195,57 @@ function InventoryTab({ products, filter, setFilter, search, setSearch, stockEdi
                       <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ color: st.color, backgroundColor: st.bg }}>{st.label}</span>
                     </td>
                     <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <input type="number" min="0" value={stockEdits[p.id] ?? ""}
-                          onChange={(e) => setStockEdits((prev) => ({ ...prev, [p.id]: e.target.value }))}
-                          placeholder={String(p.stock)}
-                          className="w-20 bg-[#f8fafb] border border-[#e4ede2] rounded-lg px-2.5 py-1.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#073b4c] transition-colors" />
-                        <button onClick={() => onApplyStock(p.id)} disabled={!stockEdits[p.id]}
-                          className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#073b4c] text-white transition-colors disabled:opacity-40 hover:opacity-90">
-                          Save
-                        </button>
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            value={stockEdits[p.id] ?? ""}
+                            onChange={(e) => setStockEdits((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                            onKeyDown={(e) => { if (e.key === "Enter") onApplyStock(p.id); }}
+                            placeholder={String(p.stock)}
+                            className="w-20 bg-[#f8fafb] border border-[#e4ede2] rounded-lg px-2.5 py-1.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#073b4c] transition-colors"
+                          />
+                          <button
+                            onClick={() => onApplyStock(p.id)}
+                            disabled={!stockEdits[p.id]}
+                            className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#073b4c] text-white transition-colors disabled:opacity-40 hover:opacity-90"
+                          >
+                            Save
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => {
+                              setStockEdits((prev) => ({ ...prev, [p.id]: String(p.stock + 10) }));
+                              setTimeout(() => onApplyStock(p.id), 50);
+                            }}
+                            className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#e8f5ee] text-[#006a39] hover:bg-[#d1fae5] transition-colors"
+                            title="Add 10 units"
+                          >
+                            +10
+                          </button>
+                          <button
+                            onClick={() => {
+                              setStockEdits((prev) => ({ ...prev, [p.id]: String(p.stock + 50) }));
+                              setTimeout(() => onApplyStock(p.id), 50);
+                            }}
+                            className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#e8f5ee] text-[#006a39] hover:bg-[#d1fae5] transition-colors"
+                            title="Add 50 units"
+                          >
+                            +50
+                          </button>
+                          <button
+                            onClick={() => {
+                              setStockEdits((prev) => ({ ...prev, [p.id]: "0" }));
+                              setTimeout(() => onApplyStock(p.id), 50);
+                            }}
+                            className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#fee2e2] text-[#b91c1c] hover:bg-[#fecaca] transition-colors"
+                            title="Set to Out of Stock (0)"
+                          >
+                            Out (0)
+                          </button>
+                        </div>
                       </div>
                     </td>
                   </tr>

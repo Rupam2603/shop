@@ -177,11 +177,15 @@ export async function updateProductStock(
 }
 
 /**
- * Subscribe to real-time changes on the products table
+ * Subscribe to real-time changes on the products table with auto-reconnection & fallback
  */
-export function subscribeToProductsRealtime(callback: (payload: { eventType: string; new: DbProduct; old: Partial<DbProduct> }) => void) {
+export function subscribeToProductsRealtime(
+  callback: (payload: { eventType: string; new: DbProduct; old: Partial<DbProduct> }) => void
+) {
+  let isSubscribed = false;
+
   const channel = supabase
-    .channel(`realtime-products-${Date.now()}`)
+    .channel(`realtime-products-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`)
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "products" },
@@ -189,9 +193,45 @@ export function subscribeToProductsRealtime(callback: (payload: { eventType: str
         callback(payload as unknown as { eventType: string; new: DbProduct; old: Partial<DbProduct> });
       }
     )
-    .subscribe();
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        isSubscribed = true;
+      }
+    });
+
+  // Fallback: When app tab regains focus or comes back online, fetch latest products
+  const handleVisibilityOrOnline = () => {
+    if (document.visibilityState === "visible" || navigator.onLine) {
+      fetchProducts().then((latest) => {
+        if (latest && latest.length > 0) {
+          latest.forEach((p) => {
+            callback({ eventType: "UPDATE", new: p, old: { id: p.id } });
+          });
+        }
+      }).catch((e) => console.warn("Fallback inventory sync warning:", e));
+    }
+  };
+
+  window.addEventListener("online", handleVisibilityOrOnline);
+  document.addEventListener("visibilitychange", handleVisibilityOrOnline);
+
+  // Background fallback poll every 25 seconds to guarantee fresh inventory
+  const pollInterval = setInterval(() => {
+    if (document.visibilityState === "visible") {
+      fetchProducts().then((latest) => {
+        if (latest && latest.length > 0) {
+          latest.forEach((p) => {
+            callback({ eventType: "UPDATE", new: p, old: { id: p.id } });
+          });
+        }
+      }).catch(() => {});
+    }
+  }, 25000);
 
   return () => {
+    window.removeEventListener("online", handleVisibilityOrOnline);
+    document.removeEventListener("visibilitychange", handleVisibilityOrOnline);
+    clearInterval(pollInterval);
     supabase.removeChannel(channel);
   };
 }

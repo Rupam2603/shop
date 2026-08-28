@@ -156,11 +156,40 @@ export async function fetchAllOrders(): Promise<DbOrder[]> {
 
 /**
  * Update order status (Admin only)
+ * If status is updated to 'Cancelled', automatically restores stock to products
  */
 export async function updateOrderStatus(
   orderId: string,
   status: "Processing" | "Shipped" | "Delivered" | "Cancelled"
 ): Promise<{ error: string | null }> {
+  // If order is cancelled, restore item stocks in database
+  if (status === "Cancelled") {
+    try {
+      const { data: orderItems } = await supabase
+        .from("order_items")
+        .select("product_id, product_name, quantity")
+        .eq("order_id", orderId);
+
+      if (orderItems && orderItems.length > 0) {
+        for (const item of orderItems) {
+          if (item.product_id) {
+            const { data: prod } = await supabase.from("products").select("stock").eq("id", item.product_id).single();
+            if (prod) {
+              await supabase.from("products").update({ stock: prod.stock + item.quantity }).eq("id", item.product_id);
+            }
+          } else if (item.product_name) {
+            const { data: prod } = await supabase.from("products").select("id, stock").eq("name", item.product_name).maybeSingle();
+            if (prod) {
+              await supabase.from("products").update({ stock: prod.stock + item.quantity }).eq("id", prod.id);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Stock restoration warning:", e);
+    }
+  }
+
   const { error } = await supabase
     .from("orders")
     .update({ status })

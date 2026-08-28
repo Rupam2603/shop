@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useCart } from "../contexts/CartContext";
 import { useModalBackHandler } from "../lib/navigation";
+import { subscribeToProductsRealtime } from "../lib/products";
 
 export interface PopupProduct {
   id: number;
@@ -141,6 +142,7 @@ export default function ProductDetailModal({
   useModalBackHandler(true, onClose, `product-${product.id}`);
 
   const { addToCart } = useCart();
+  const [liveStock, setLiveStock] = useState<number>(product.stock ?? 50);
   const [qty, setQty] = useState(1);
   const reviews = useMemo(() => getProductReviews(product.id), [product.id]);
   const avgRating = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
@@ -155,6 +157,22 @@ export default function ProductDetailModal({
   }));
 
   useEffect(() => {
+    setLiveStock(product.stock ?? 50);
+    const unsubscribe = subscribeToProductsRealtime((payload) => {
+      if (payload.eventType === "UPDATE" && payload.new) {
+        if (
+          payload.new.id === (product as any).dbId ||
+          payload.new.numeric_id === product.id ||
+          payload.new.name.trim().toLowerCase() === product.name.trim().toLowerCase()
+        ) {
+          setLiveStock(payload.new.stock);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, [product]);
+
+  useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handleEsc);
     document.body.style.overflow = "hidden";
@@ -163,6 +181,9 @@ export default function ProductDetailModal({
       document.body.style.overflow = "";
     };
   }, [onClose]);
+
+  const isOutOfStock = liveStock <= 0;
+  const isLowStock = liveStock > 0 && liveStock <= (isRetailer ? 20 : 10);
 
   return (
     <div
@@ -218,21 +239,23 @@ export default function ProductDetailModal({
                 </div>
               )}
               <div className="col-span-2 md:col-span-1">
-                <p className="text-[9px] font-bold uppercase tracking-[0.7px] text-[#9aa89b] mb-1">Availability</p>
-                {product.stock !== undefined && product.stock <= 0 ? (
+                <p className="text-[9px] font-bold uppercase tracking-[0.7px] text-[#9aa89b] mb-1">
+                  {isRetailer ? "Wholesale Stock" : "Availability"}
+                </p>
+                {isOutOfStock ? (
                   <span className="inline-flex items-center gap-1.5 text-[#b91c1c] text-xs font-bold bg-[#fee2e2] px-2.5 py-1 rounded-full">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#b91c1c] inline-block" />
-                    Out of Stock
+                    {isRetailer ? "Stock Out (0 units)" : "Out of Stock"}
                   </span>
-                ) : product.stock !== undefined && product.stock <= 10 ? (
+                ) : isLowStock ? (
                   <span className="inline-flex items-center gap-1.5 text-[#b45309] text-xs font-bold bg-[#fef3c7] px-2.5 py-1 rounded-full">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#b45309] inline-block animate-pulse" />
-                    Only {product.stock} left in stock!
+                    {isRetailer ? `Low Stock (${liveStock} units)` : `Only ${liveStock} left!`}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 text-[#047857] text-xs font-semibold bg-[#d1fae5] px-2.5 py-1 rounded-full">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#047857] inline-block" />
-                    In Stock {product.stock !== undefined ? `(${product.stock} units)` : ""}
+                    {isRetailer ? `${liveStock} units available` : `In Stock (${liveStock} units)`}
                   </span>
                 )}
               </div>
@@ -326,24 +349,24 @@ export default function ProductDetailModal({
             <div className="flex items-center gap-2 sm:gap-3 mt-auto">
               <div className="flex items-center border border-[#e4ede2] rounded-xl overflow-hidden">
                 <button
-                  disabled={product.stock !== undefined && product.stock <= 0}
+                  disabled={isOutOfStock}
                   onClick={() => setQty((q) => Math.max(1, q - 1))}
                   className="w-8 sm:w-9 h-9 sm:h-10 flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-bold text-base sm:text-lg"
                 >
                   −
                 </button>
                 <span className="w-8 sm:w-10 text-center font-['Manrope',sans-serif] font-bold text-sm sm:text-base text-[#073b4c]">
-                  {product.stock !== undefined && product.stock <= 0 ? 0 : qty}
+                  {isOutOfStock ? 0 : qty}
                 </span>
                 <button
-                  disabled={product.stock !== undefined && (product.stock <= 0 || qty >= product.stock)}
-                  onClick={() => setQty((q) => q + 1)}
+                  disabled={isOutOfStock || qty >= liveStock}
+                  onClick={() => setQty((q) => Math.min(liveStock, q + 1))}
                   className="w-8 sm:w-9 h-9 sm:h-10 flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-bold text-base sm:text-lg"
                 >
                   +
                 </button>
               </div>
-              {product.stock !== undefined && product.stock <= 0 ? (
+              {isOutOfStock ? (
                 <button
                   disabled
                   className="flex-1 py-2.5 rounded-xl bg-[#e5e7eb] text-[#9ca3af] font-bold text-xs sm:text-sm cursor-not-allowed"
@@ -353,7 +376,7 @@ export default function ProductDetailModal({
               ) : (
                 <button
                   onClick={() => {
-                    addToCart(product, qty);
+                    addToCart({ ...product, stock: liveStock }, qty);
                     onClose();
                   }}
                   className="flex-1 py-2.5 rounded-xl text-white font-bold text-xs sm:text-sm hover:opacity-90 active:scale-[0.98] transition-all"
