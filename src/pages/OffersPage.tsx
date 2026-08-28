@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useCart } from "../contexts/CartContext";
+import { fetchProducts, DbProduct } from "../lib/products";
 import imgMainFeatured from "@/imports/HealthSupplementsSubhOne/12180d12bdb759cb4c1126433eb9617bcf5f0e37.png";
 import imgVitamins from "@/imports/HealthSupplementsSubhOne/82fde6fb40fb3f0de4e0ae8e660633ef3205b656.png";
 import imgAyurveda from "@/imports/HealthSupplementsSubhOne/5bf6c30bcdaa73c2f154fa0056e19083a2be7538.png";
@@ -93,6 +94,53 @@ export default function OffersPage() {
   const { addToCart } = useCart();
   const [activeTab, setActiveTab] = useState("All Supplements");
   const [wishlist, setWishlist] = useState<number[]>([]);
+  const [dbProducts, setDbProducts] = useState<DbProduct[] | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    fetchProducts().then((data) => {
+      if (mounted && data && data.length > 0) {
+        setDbProducts(data);
+      }
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  const displayProducts = useMemo(() => {
+    if (!dbProducts || dbProducts.length === 0) return bestSellers;
+
+    const suppProducts = dbProducts.filter((p) =>
+      p.category_name === "Energy, Hydration & Supplements" ||
+      p.category_name === "Skin Care, Powders & Ointments" ||
+      p.discount_percent >= 15
+    );
+
+    if (suppProducts.length === 0) return bestSellers;
+
+    let filtered = suppProducts;
+    if (activeTab === "Protein") {
+      filtered = suppProducts.filter((p) => p.name.toLowerCase().includes("protein") || p.name.toLowerCase().includes("glucon"));
+    } else if (activeTab === "Vitamins & Minerals") {
+      filtered = suppProducts.filter((p) => p.name.toLowerCase().includes("vitamin") || p.name.toLowerCase().includes("zinc") || p.name.toLowerCase().includes("chyawanprash"));
+    } else if (activeTab === "Omega & Fish Oil") {
+      filtered = suppProducts.filter((p) => p.name.toLowerCase().includes("omega") || p.name.toLowerCase().includes("oil"));
+    } else if (activeTab === "Immunity Boosters") {
+      filtered = suppProducts.filter((p) => p.name.toLowerCase().includes("chyawanprash") || p.name.toLowerCase().includes("honey") || p.name.toLowerCase().includes("ors"));
+    }
+
+    if (filtered.length === 0) filtered = suppProducts;
+
+    return filtered.slice(0, 8).map((p) => ({
+      img: p.image_url,
+      badge: p.discount_percent >= 25 ? "BEST VALUE" : p.discount_percent > 0 ? `${p.discount_percent}% OFF` : "",
+      brand: p.brand,
+      brandColor: "#006a39",
+      name: p.name,
+      rating: "4.8",
+      reviews: `(${p.stock + 120})`,
+      price: `₹${Math.round(p.customer_price)}`,
+    }));
+  }, [dbProducts, activeTab]);
 
   const toggleWishlist = (i: number) => {
     setWishlist((prev) => prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]);
@@ -191,7 +239,7 @@ export default function OffersPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {bestSellers.map((p, i) => (
+            {displayProducts.map((p, i) => (
               <div
                 key={p.name}
                 className="bg-white rounded-xl border border-[#d5dcd3] overflow-hidden hover:shadow-md transition-shadow flex flex-col"

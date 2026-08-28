@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { Page } from "../App";
 import ProductDetailModal, { nameToId, type PopupProduct } from "../components/ProductModal";
 import { useCart } from "../contexts/CartContext";
+import { fetchProducts, DbProduct } from "../lib/products";
 import imgHeroBg from "@/imports/SubhOneHomeYourWellnessPartner/ebb34ae9c328f1310a1fb45e38080c80fbd47637.png";
 import imgProduct1 from "@/imports/SubhOneHomeYourWellnessPartner/ed2cee3d70ea8b6d972ea44b1746b961d47ff5b3.png";
 import imgProduct2 from "@/imports/SubhOneHomeYourWellnessPartner/a57c492ebf391250fdba394a1ec646ea8a83b1ed.png";
@@ -287,6 +288,61 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
   const isRetailer = userRole === "retailer";
   const { addToCart } = useCart();
   const [selectedProduct, setSelectedProduct] = useState<PopupProduct | null>(null);
+  const [dbProducts, setDbProducts] = useState<DbProduct[] | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    fetchProducts().then((data) => {
+      if (mounted && data && data.length > 0) {
+        setDbProducts(data);
+      }
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  const categoriesData = useMemo(() => {
+    if (!dbProducts || dbProducts.length === 0) return ALL_CATEGORIES;
+
+    return ALL_CATEGORIES.map((catConfig) => {
+      const prodsForCat = dbProducts.filter((p) => p.category_name === catConfig.cat);
+      if (prodsForCat.length === 0) return catConfig;
+
+      return {
+        ...catConfig,
+        count: prodsForCat.length,
+        products: prodsForCat.slice(0, 4).map((p) => ({
+          name: p.name,
+          sub: p.details || p.subtitle || p.brand,
+          price: isRetailer ? `₹${Math.round(p.retailer_price)}` : `₹${Math.round(p.customer_price)}`,
+          orig: p.mrp > p.customer_price ? `₹${Math.round(p.mrp)}` : "",
+          disc: p.discount_percent > 0 ? `${p.discount_percent}%` : "",
+          img: p.image_url,
+          brand: p.brand,
+          cat: p.category_name,
+        })),
+      };
+    });
+  }, [dbProducts, isRetailer]);
+
+  const flashSaleData = useMemo(() => {
+    if (!dbProducts || dbProducts.length === 0) return FLASH;
+
+    const flashFromDb = dbProducts.filter((p) => p.is_flash_sale || p.discount_percent >= 20);
+    if (flashFromDb.length === 0) return FLASH;
+
+    return flashFromDb.slice(0, 4).map((p) => ({
+      name: p.name,
+      sub: p.details || p.subtitle || p.brand,
+      price: isRetailer ? `₹${Math.round(p.retailer_price)}` : `₹${Math.round(p.customer_price)}`,
+      orig: p.mrp > p.customer_price ? `₹${Math.round(p.mrp)}` : "",
+      disc: `${p.discount_percent}%`,
+      cat: p.category_name,
+      brand: p.brand,
+      img: p.image_url,
+      badge: `${p.discount_percent}% OFF`,
+      color: "#ba1a1a",
+    }));
+  }, [dbProducts, isRetailer]);
 
   const handleAddToCartFromCategory = (p: typeof ALL_CATEGORIES[0]["products"][0], cat: string) => {
     addToCart({
@@ -342,7 +398,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
             </button>
           </div>
           <div className="flex md:grid md:grid-cols-8 gap-2 sm:gap-2.5 overflow-x-auto md:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
-            {ALL_CATEGORIES.map((c) => (
+            {categoriesData.map((c) => (
               <button
                 key={c.cat}
                 onClick={() => onNavigate("medicines", c.cat)}
@@ -361,7 +417,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
         <div className="border-t border-[#dee4db]" />
 
         {/* Category sections */}
-        {ALL_CATEGORIES.map((item) => (
+        {categoriesData.map((item) => (
           <CategorySection
             key={item.cat}
             item={item}
@@ -389,7 +445,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
             <button onClick={() => onNavigate("offers")} className="font-bold text-[#006a39] text-xs sm:text-sm hover:underline">View All</button>
           </div>
           <div className="flex lg:grid lg:grid-cols-4 gap-3 sm:gap-4 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
-            {FLASH.map((p) => (
+            {flashSaleData.map((p) => (
               <div
                 key={p.name}
                 onClick={() => setSelectedProduct({ id: nameToId(p.name), name: p.name, sub: p.sub, price: p.price, orig: p.orig, disc: p.disc, cat: p.cat, brand: p.brand, img: p.img })}

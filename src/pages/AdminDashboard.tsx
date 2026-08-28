@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import type { CurrentUser } from "../App";
+import { supabase } from "../lib/supabase";
 import {
   fetchProducts,
   createProduct as dbCreateProduct,
@@ -617,8 +618,18 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       closeModal();
 
       // Persist edit to Supabase
-      if (target?.dbId) {
-        await dbUpdateProduct(target.dbId, {
+      let dbId = target?.dbId;
+      if (!dbId) {
+        const { data: found } = await supabase
+          .from("products")
+          .select("id")
+          .or(`numeric_id.eq.${form.id},name.eq.${form.name}`)
+          .maybeSingle();
+        if (found) dbId = found.id;
+      }
+
+      if (dbId) {
+        const { data: updated } = await dbUpdateProduct(dbId, {
           name: form.name,
           category_name: form.category,
           brand: form.brand,
@@ -632,6 +643,9 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           image_url: form.image,
           details: form.details,
         });
+        if (updated) {
+          setProducts((prev) => prev.map((p) => (p.id === form.id ? ({ ...form, dbId: updated.id } as Product) : p)));
+        }
       }
     }
   };
@@ -640,8 +654,17 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     const target = products.find((p) => p.id === id);
     setProducts((prev) => prev.filter((p) => p.id !== id));
     setDeleteId(null);
-    if (target?.dbId) {
-      await dbDeleteProduct(target.dbId);
+    let dbId = target?.dbId;
+    if (!dbId) {
+      const { data: found } = await supabase
+        .from("products")
+        .select("id")
+        .eq("numeric_id", id)
+        .maybeSingle();
+      if (found) dbId = found.id;
+    }
+    if (dbId) {
+      await dbDeleteProduct(dbId);
     }
   };
 
@@ -650,8 +673,17 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     if (!isNaN(val) && val >= 0) {
       const target = products.find((p) => p.id === id);
       setProducts((prev) => prev.map((p) => p.id === id ? { ...p, stock: val } : p));
-      if (target?.dbId) {
-        await dbUpdateStock(target.dbId, val);
+      let dbId = target?.dbId;
+      if (!dbId) {
+        const { data: found } = await supabase
+          .from("products")
+          .select("id")
+          .eq("numeric_id", id)
+          .maybeSingle();
+        if (found) dbId = found.id;
+      }
+      if (dbId) {
+        await dbUpdateStock(dbId, val);
       }
     }
     setStockEdits((prev) => { const n = { ...prev }; delete n[id]; return n; });
