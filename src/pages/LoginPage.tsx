@@ -111,9 +111,27 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Auto-populate remembered credentials on mount
+  useEffect(() => {
+    try {
+      const savedEmail = localStorage.getItem("subhone_remember_email");
+      const savedRole = localStorage.getItem("subhone_remember_role") as UserRole | null;
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+        if (savedRole && (savedRole === "admin" || savedRole === "retailer" || savedRole === "customer")) {
+          setSelectedRole(savedRole);
+        }
+      }
+    } catch {
+      // LocalStorage access restricted
+    }
+  }, []);
 
   // Forgot password modal state
   const [showForgot, setShowForgot] = useState(false);
@@ -154,7 +172,10 @@ export default function LoginPage() {
   };
 
   const handleRoleSelect = (role: UserRole) => {
-    setSelectedRole(role); setError(""); setSuccess(""); setEmail(""); setPassword("");
+    setSelectedRole(role); setError(""); setSuccess("");
+    if (mode === "login" && role === "admin" && !email) {
+      setEmail("admin@subhone.com");
+    }
   };
 
   const switchMode = (m: "login" | "signup") => {
@@ -173,8 +194,21 @@ export default function LoginPage() {
     if (!email.trim()) { setError("Please enter your email address."); return; }
     if (!password) { setError("Please enter your password."); return; }
 
+    // Save or clear remember credentials
+    try {
+      if (rememberMe) {
+        localStorage.setItem("subhone_remember_email", email.trim());
+        localStorage.setItem("subhone_remember_role", selectedRole);
+      } else {
+        localStorage.removeItem("subhone_remember_email");
+        localStorage.removeItem("subhone_remember_role");
+      }
+    } catch {
+      // Ignore storage error
+    }
+
     setLoading(true);
-    const { error: authError } = await signIn(email.trim(), password);
+    const { error: authError } = await signIn(email.trim(), password, selectedRole);
     setLoading(false);
 
     if (authError) {
@@ -385,10 +419,26 @@ export default function LoginPage() {
                   </button>
                 </div>
               </div>
+
+              {/* Remember Me Checkbox */}
+              <div className="flex items-center justify-between py-0.5">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 rounded border-[#e4ede2] text-[#006a39] focus:ring-[#006a39] accent-[#006a39] cursor-pointer"
+                  />
+                  <span className="text-xs text-[#6d7a6f] font-medium hover:text-[#073b4c] transition-colors">
+                    Remember my credentials
+                  </span>
+                </label>
+              </div>
+
               {error && <ErrorBox msg={error} />}
               {success && <SuccessBox msg={success} />}
               <button type="submit" disabled={loading}
-                className="w-full py-3 sm:py-3.5 rounded-xl font-['Manrope',sans-serif] font-bold text-sm sm:text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 mt-1 flex items-center justify-center gap-2"
+                className="w-full py-3 sm:py-3.5 rounded-xl font-['Manrope',sans-serif] font-bold text-sm sm:text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 mt-1 flex items-center justify-center gap-2 cursor-pointer"
                 style={{ backgroundColor: cfg.accent }}>
                 {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                 {loading ? "Signing in…" : `Sign In as ${cfg.label}`}

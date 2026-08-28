@@ -17,7 +17,7 @@ interface AuthContextValue {
   /** null = not logged in, undefined = still loading */
   appUser: AppUser | null | undefined;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string, expectedRole?: UserRole) => Promise<{ error: string | null }>;
   signUp: (opts: SignUpOptions) => Promise<{ error: string | null; emailConfirmationRequired: boolean }>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
@@ -75,42 +75,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profile = await fetchProfile(user);
       if (profile) {
         setAppUser({ authUser: user, profile });
-        setLoading(false);
       } else {
-        // If profile query fails or trigger hasn't completed yet,
-        // construct profile from user_metadata so the user is never locked out.
-        const meta = user.user_metadata || {};
-        const safeRole: UserRole = meta.role === "admin" ? "admin" : meta.role === "retailer" ? "retailer" : "customer";
-        const fallbackProfile: Profile = {
-          id: user.id,
-          full_name: meta.full_name || user.email?.split("@")[0] || "User",
-          role: safeRole,
-          phone: meta.phone ?? null,
-          shop_name: meta.shop_name ?? null,
-          avatar_url: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-
-        setAppUser({ authUser: user, profile: fallbackProfile });
-        setLoading(false);
-
-        // Attempt background insert if missing
-        supabase
-          .from("profiles")
-          .upsert({
-            id: user.id,
-            full_name: fallbackProfile.full_name,
-            role: safeRole,
-            phone: fallbackProfile.phone,
-            shop_name: fallbackProfile.shop_name,
-          })
-          .then(({ data: upserted }) => {
-            if (upserted) {
-              setAppUser({ authUser: user, profile: upserted as Profile });
-            }
-          });
+        // Profile may not exist yet (trigger latency on first signup).
+        // Retry once after a short delay.
+        setTimeout(async () => {
+          const retried = await fetchProfile(user);
+          setAppUser(retried ? { authUser: user, profile: retried } : null);
+          setLoading(false);
+        }, 1500);
+        return;
       }
+      setLoading(false);
     },
     [fetchProfile]
   );
@@ -134,19 +109,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Sign In ──────────────────────────────────────────────────────────────────
   const signIn = useCallback(
-    async (email: string, password: string): Promise<{ error: string | null }> => {
+    async (email: string, password: string, expectedRole?: UserRole): Promise<{ error: string | null }> => {
       setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) {
         setLoading(false);
         return { error: friendlyAuthError(error) };
       }
+
       if (data.user) {
+        // Enforce strict role match with the selected login tab
+        const profile = await fetchProfile(data.user);
+        const userRole: UserRole =
+          profile?.role ||
+          (data.user.user_metadata?.role as UserRole) ||
+          "customer";
+
+        if (expectedRole && userRole !== expectedRole) {
+          await supabase.auth.signOut();
+          setAppUser(null);
+          setLoading(false);
+
+          if (expectedRole === "admin") {
+            return { error: "Access denied. This account does not have Admin privileges." };
+          } else if (expectedRole === "retailer") {
+            return {
+              error: `This account is registered as a ${userRole === "admin" ? "Admin" : "Customer"}. Please switch to the ${userRole === "admin" ? "Admin" : "Customer"} tab to sign in.`,
+            };
+          } else if (expectedRole === "customer") {
+            return {
+              error: `This account is registered as a ${userRole === "admin" ? "Admin" : "Retailer"}. Please switch to the ${userRole === "admin" ? "Admin" : "Retailer"} tab to sign in.`,
+            };
+          }
+        }
+
         await hydrateUser(data.user);
       }
+
       return { error: null };
     },
-    [hydrateUser]
+    [fetchProfile, hydrateUser]
   );
 
   // ── Sign Up ──────────────────────────────────────────────────────────────────
@@ -179,15 +181,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // If email confirmation is required, the session will be null
       const emailConfirmationRequired = !data.session;
 
+      // Update the profile with the role/shop after trigger creates it
+      // We do this server-side via the trigger with metadata, but also
+      // try to patch the role if email confirmation isn't needed.
       if (data.session && data.user) {
-        await hydrateUser(data.user);
-      } else {
+        // Give trigger ~500ms to run, then patch role/shop_name
+        setTimeout(async () => {
+          await supabase
+            .from("profiles")
+            .update({
+              full_name: opts.fullName,
+              phone: opts.phone ?? null,
+              shop_name: opts.shopName ?? null,
+            })
+            .eq("id", data.user!.id);
+        }, 800);
+      }
+
+      if (emailConfirmationRequired) {
         setLoading(false);
       }
+      // else onAuthStateChange fires and hydrateUser handles state
 
       return { error: null, emailConfirmationRequired };
     },
-    [hydrateUser]
+    []
   );
 
   // ── Reset Password ──────────────────────────────────────────────────────────
@@ -257,7 +275,7 @@ function friendlyAuthError(error: AuthError): string {
   const msg = error.message.toLowerCase();
 
   if (msg.includes("invalid login credentials") || msg.includes("invalid credentials"))
-    return "Incorrect email or password. Please verify your credentials and try again.";
+    return "Incorrect email or password. Please try again.";
   if (msg.includes("email not confirmed"))
     return "Please confirm your email address first. Check your inbox.";
   if (msg.includes("user already registered") || msg.includes("already been registered"))
@@ -269,12 +287,12 @@ function friendlyAuthError(error: AuthError): string {
   if (msg.includes("signup is disabled"))
     return "New registrations are temporarily disabled. Please contact support.";
   if (msg.includes("network") || msg.includes("fetch"))
-    return "Network connection error. Please check your internet connection and try again.";
+    return "Network error. Please check your internet connection and try again.";
   if (msg.includes("rate limit") || msg.includes("too many"))
-    return "Too many attempts. Please wait a moment before trying again.";
+    return "Too many attempts. Please wait a moment and try again.";
 
-  // Fallback — return error message or default
-  return error.message || "Incorrect email or password. Please try again.";
+  // Fallback — don't expose raw DB/internal errors
+  return "Something went wrong. Please try again.";
 }
 
 // ─── Utility — convert AppUser to the legacy CurrentUser shape ────────────────
@@ -293,40 +311,18 @@ export interface LegacyCurrentUser {
 
 export function toLegacyUser(appUser: AppUser): LegacyCurrentUser {
   const { authUser, profile } = appUser;
-  const rawMeta = authUser?.user_metadata || {};
-  const name =
-    profile?.full_name ||
-    rawMeta.full_name ||
-    authUser?.email?.split("@")[0] ||
-    "User";
-
-  const safeRole: UserRole =
-    profile?.role === "admin"
-      ? "admin"
-      : profile?.role === "retailer"
-      ? "retailer"
-      : "customer";
-
-  const joinedDate = profile?.created_at
-    ? new Date(profile.created_at).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
-    : new Date().toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-
   return {
-    role: safeRole,
-    email: authUser?.email ?? "",
-    name,
-    phone: profile?.phone || rawMeta.phone || undefined,
-    profileImage: profile?.avatar_url || rawMeta.avatar_url || undefined,
-    shopName: profile?.shop_name || rawMeta.shop_name || undefined,
+    role: profile.role,
+    email: authUser.email ?? "",
+    name: profile.full_name,
+    phone: profile.phone ?? undefined,
+    profileImage: profile.avatar_url ?? undefined,
+    shopName: profile.shop_name ?? undefined,
     addresses: [],
-    joinedDate,
+    joinedDate: new Date(profile.created_at).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }),
   };
 }
