@@ -176,8 +176,7 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
   return (
     <>
       <header
-        className="sticky top-0 z-50 bg-white border-b border-[#bdcabc]"
-        style={{ boxShadow: "0px 1px 1px rgba(0,0,0,0.05)" }}
+        className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#e4ede2]/80 shadow-xs transition-all"
       >
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4">
           {/* Mobile Hamburger Button */}

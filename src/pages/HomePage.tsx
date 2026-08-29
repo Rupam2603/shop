@@ -3,7 +3,8 @@ import type { Page } from "../App";
 import ProductDetailModal, { nameToId, type PopupProduct } from "../components/ProductModal";
 import { useCart } from "../contexts/CartContext";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
-import imgHeroBg from "@/imports/SubhOneHomeYourWellnessPartner/ebb34ae9c328f1310a1fb45e38080c80fbd47637.png";
+import imgHeroBg from "@/assets/hero-banner.jpg";
+import imgPromoShelf from "@/assets/pharmacy-shelf.jpg";
 import imgProduct1 from "@/imports/SubhOneHomeYourWellnessPartner/ed2cee3d70ea8b6d972ea44b1746b961d47ff5b3.png";
 import imgProduct2 from "@/imports/SubhOneHomeYourWellnessPartner/a57c492ebf391250fdba394a1ec646ea8a83b1ed.png";
 import imgProduct3 from "@/imports/SubhOneHomeYourWellnessPartner/fd45459640081f88735ba0ccaedc003e03983ae7.png";
@@ -420,20 +421,71 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 flex flex-col gap-6 sm:gap-10">
 
         {/* Hero */}
-        <div className="relative rounded-2xl overflow-hidden min-h-[240px] sm:min-h-[320px] md:h-[360px] shadow-sm bg-gradient-to-r from-[rgba(15,157,88,0.15)] to-[rgba(0,129,138,0.1)] flex items-center">
-          <div className="absolute right-0 top-0 w-full sm:w-2/3 h-full opacity-30 sm:opacity-100">
-            <img src={imgHeroBg} alt="Health products" className="w-full h-full object-cover object-right" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#f5fbf2] sm:via-[rgba(245,251,242,0.4)] to-transparent" />
+        <div className="relative rounded-3xl overflow-hidden min-h-[300px] sm:min-h-[360px] md:h-[400px] shadow-lg border border-[#e4ede2]/60 flex items-center bg-[#073b4c]">
+          {/* High-res background image with progressive gradient overlay */}
+          <div className="absolute inset-0 w-full h-full">
+            <img
+              src={imgHeroBg}
+              alt="SubhOne Pharmacy & Healthcare"
+              className="w-full h-full object-cover object-right sm:object-center"
+            />
+            {/* Multi-stage progressive gradient overlay for ultra-crisp text readability & ambient glow */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#073b4c]/95 via-[#073b4c]/85 sm:via-[#073b4c]/70 md:via-[#073b4c]/40 to-transparent" />
+            <div className="absolute inset-0 bg-radial at-top-left from-[#006a39]/30 to-transparent" />
           </div>
-          <div className="relative z-10 flex flex-col gap-2 sm:gap-3.5 p-4 sm:p-10 lg:p-14 max-w-[540px] justify-center h-full">
-            <span className="inline-flex bg-[#ba1a1a] text-white text-[9px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full w-fit uppercase tracking-[0.6px] font-semibold">Limited Time</span>
-            <h1 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-2xl sm:text-4xl lg:text-5xl leading-tight sm:leading-[46px] lg:leading-[56px] tracking-tight">
-              Flat 20% Off on<br />First Order
+
+          {/* Hero Content */}
+          <div className="relative z-10 flex flex-col gap-3 sm:gap-4 p-6 sm:p-10 lg:p-14 max-w-[620px] justify-center h-full">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 bg-[#ba1a1a] text-white text-[10px] sm:text-xs px-3 py-1 rounded-full uppercase tracking-wider font-bold shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                Limited Time Offer
+              </span>
+              <span className="hidden sm:inline-flex items-center gap-1 bg-white/20 backdrop-blur-md text-white text-xs px-3 py-1 rounded-full font-medium border border-white/20">
+                ✨ 100% Genuine Pharmacy
+              </span>
+            </div>
+
+            <h1 className="font-['Manrope',sans-serif] font-extrabold text-white text-3xl sm:text-4xl lg:text-5xl leading-tight sm:leading-[1.15] tracking-tight">
+              Flat <span className="text-[#82fde6] underline decoration-[#006a39] underline-offset-4">20% Off</span> on First Order
             </h1>
-            <p className="text-[#3e4a3f] text-xs sm:text-base leading-relaxed">Medicines, balms, supplements, baby care & more — delivered fast.</p>
-            <button onClick={() => onNavigate("medicines")} className="bg-[#0f9d58] text-white text-xs sm:text-sm font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg shadow-md hover:bg-[#0b8a4d] transition-colors w-fit mt-1">
-              Shop Now
-            </button>
+
+            <p className="text-white/90 text-xs sm:text-base leading-relaxed font-normal max-w-lg drop-shadow-xs">
+              Genuine medicines, certified wellness supplements, baby care & emergency essentials — delivered to your doorstep in 30 mins.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <button
+                onClick={() => onNavigate("medicines")}
+                className="bg-[#006a39] hover:bg-[#005a30] text-white text-xs sm:text-sm font-bold px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl shadow-lg hover:shadow-emerald-900/30 active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <span>Shop Medicines</span>
+                <ArrowRight />
+              </button>
+
+              <button
+                onClick={() => onNavigate("offers")}
+                className="bg-white/15 hover:bg-white/25 text-white backdrop-blur-md text-xs sm:text-sm font-semibold px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl border border-white/30 hover:border-white transition-all cursor-pointer"
+              >
+                Explore Deals & Offers
+              </button>
+            </div>
+
+            {/* Micro Trust badges */}
+            <div className="flex items-center gap-4 sm:gap-6 pt-2 border-t border-white/15 text-white/85 text-[11px] sm:text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="text-emerald-400 font-bold">⚡</span>
+                <span>30-Min Fast Delivery</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-emerald-400 font-bold">🛡️</span>
+                <span>Batch Verified</span>
+              </div>
+              <div className="hidden sm:flex items-center gap-1.5">
+                <span className="text-emerald-400 font-bold">🩺</span>
+                <span>Licensed Pharmacists</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -580,6 +632,49 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
                 </div>
               );
             })}
+          </div>
+        </section>
+
+        {/* Quality Promise & Certified Pharmacy Banner */}
+        <section className="relative rounded-3xl overflow-hidden shadow-lg border border-[#e4ede2]/70 bg-[#073b4c] text-white">
+          <div className="absolute inset-0">
+            <img
+              src={imgPromoShelf}
+              alt="Certified Pharmacy & Laboratory"
+              className="w-full h-full object-cover object-center opacity-25 mix-blend-luminosity"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#073b4c] via-[#073b4c]/90 to-[#073b4c]/65" />
+          </div>
+
+          <div className="relative z-10 p-6 sm:p-10 lg:p-12 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex flex-col gap-2.5 max-w-xl text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-2">
+                <span className="text-[10px] sm:text-xs font-extrabold text-[#82fde6] uppercase tracking-wider bg-white/10 px-3 py-1 rounded-full backdrop-blur-xs border border-white/10">
+                  🛡️ SubhOne Certified Quality Network
+                </span>
+              </div>
+              <h3 className="font-['Manrope',sans-serif] font-extrabold text-2xl sm:text-3xl text-white leading-tight">
+                Direct from Licensed Distributors with 100% Cold-Chain Integrity
+              </h3>
+              <p className="text-white/80 text-xs sm:text-sm leading-relaxed">
+                Every medication, wellness supplement, and baby care product undergoes strict batch-tracking and climate-controlled storage before reaching your hands.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row md:flex-col gap-3 shrink-0 w-full sm:w-auto">
+              <button
+                onClick={() => onNavigate("medicines")}
+                className="bg-[#006a39] hover:bg-[#005a30] text-white font-bold text-xs sm:text-sm px-6 py-3.5 rounded-xl transition-all shadow-md text-center active:scale-[0.98] cursor-pointer"
+              >
+                Browse All Medicines
+              </button>
+              <button
+                onClick={() => onNavigate("lab-tests")}
+                className="bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm px-6 py-3.5 rounded-xl transition-all border border-white/30 text-center backdrop-blur-md cursor-pointer"
+              >
+                Book Home Lab Tests
+              </button>
+            </div>
           </div>
         </section>
 
