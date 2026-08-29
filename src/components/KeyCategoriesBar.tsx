@@ -216,10 +216,10 @@ export default function KeyCategoriesBar({
   className = "",
 }: KeyCategoriesBarProps) {
   return (
-    <div className={`w-full bg-white border-b border-[#e4ede2] ${className}`}>
-      <div className="max-w-[1280px] mx-auto px-2 sm:px-4 lg:px-8">
+    <div className={`w-full bg-white ${className}`}>
+      <div className="w-full px-2 sm:px-4">
         <div
-          className="flex items-end gap-1.5 sm:gap-4 overflow-x-auto py-2.5 sm:py-3.5 scroll-smooth select-none"
+          className="flex items-end justify-between sm:justify-start gap-1 sm:gap-3 lg:gap-4 overflow-x-auto py-2.5 sm:py-3.5 scroll-smooth select-none no-scrollbar"
           style={{
             scrollbarWidth: "none",
             msOverflowStyle: "none",

@@ -435,9 +435,17 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
 
   return (
     <div className="bg-[#f5fbf2] min-h-screen">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 flex flex-col gap-6 sm:gap-10">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col gap-5 sm:gap-8">
 
-        {/* Hero */}
+        {/* ── Key Categories Bar (ABOVE BANNER IMAGE) ── */}
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#e4ede2] shadow-sm overflow-hidden">
+          <KeyCategoriesBar
+            selectedId={activeKeyCat}
+            onSelectCategory={handleSelectKeyCategory}
+          />
+        </div>
+
+        {/* Hero Banner */}
         <div className="relative rounded-3xl overflow-hidden min-h-[300px] sm:min-h-[360px] md:h-[400px] shadow-lg border border-[#e4ede2]/60 flex items-center bg-[#073b4c]">
           {/* High-res background image with progressive gradient overlay */}
           <div className="absolute inset-0 w-full h-full">
@@ -504,14 +512,6 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* ── Key Categories Bar (All, Skin, Insurance, Checkups, 50% OFF, Weight Loss, Wellness, Monsoon, Baby, Women, Men, Vaccines, Diet, Hair) ── */}
-        <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#e4ede2] shadow-xs overflow-hidden">
-          <KeyCategoriesBar
-            selectedId={activeKeyCat}
-            onSelectCategory={handleSelectKeyCategory}
-          />
         </div>
 
         {/* Quick Actions */}
