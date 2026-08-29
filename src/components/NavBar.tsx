@@ -502,45 +502,7 @@ export default function NavBar({
           </div>
         </div>
 
-        {/* Tier 2: Category Quick Bar (Desktop/Tablet) */}
-        <div className="hidden md:block bg-[#f8fafb] border-t border-[#e4ede2] px-4 sm:px-6">
-          <div className="max-w-[1480px] mx-auto flex items-center justify-between h-10">
-            <nav className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-              {navCategories.map(({ label, page, isTrack }) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => handleNavClick(page, isTrack)}
-                  className={`px-3 py-1 text-xs font-bold transition-all rounded-lg cursor-pointer whitespace-nowrap ${
-                    !isTrack && activePage === page
-                      ? "bg-[#006a39] text-white shadow-xs"
-                      : "text-[#3e4a3f] hover:text-[#006a39] hover:bg-[#e8f5ee]"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </nav>
 
-            {/* 24/7 Quality & Pharmacist Guarantee Pill */}
-            <div className="hidden lg:flex items-center gap-3 text-xs font-bold text-[#006a39]">
-              <span className="flex items-center gap-1">
-                <span>⚡</span>
-                <span>30-min Delivery</span>
-              </span>
-              <span className="text-[#d5dcd3]">|</span>
-              <span className="flex items-center gap-1">
-                <span>🛡️</span>
-                <span>100% Genuine Pharmacy</span>
-              </span>
-              <span className="text-[#d5dcd3]">|</span>
-              <span className="flex items-center gap-1">
-                <span>📞</span>
-                <span>24/7 Pharmacist Support</span>
-              </span>
-            </div>
-          </div>
-        </div>
 
         {/* Mobile Dedicated Search Bar (Visible on mobile screens < md) */}
         <div className="md:hidden px-3 pt-1 pb-2.5 bg-white border-t border-[#f0f4f0] relative">

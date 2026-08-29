@@ -160,17 +160,15 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
   },
   {
     id: "vaccines",
-    name: "Vaccines & Medical Disposables",
+    name: "Vaccines & Immunization Services",
     short: "Vaccines",
-    tagline: "Surgical 3-ply face masks, sterile first-aid & clinical supplies",
-    description: "Hospital-grade protection gear including certified 3-ply disposable surgical face masks, hospital disinfectants, sanitizers, and diagnostic kits.",
-    accent: "#475569",
-    lightBg: "#f8fafc",
-    iconBg: "#e2e8f0",
-    filterFn: (p) =>
-      /mask|surgical|dettol|sanitizer|first aid|medical|antiseptic|pheneol|disposable/i.test(
-        p.name + " " + (p.sub || "") + " " + p.cat
-      ),
+    tagline: "Certified Cold-Chain Vaccines & Safe Home Immunization",
+    description: "Book adult & pediatric vaccines with 2°C–8°C strict cold-chain tracking and licensed nurse visits for Flu, HPV, Hepatitis B, Tetanus, Typhoid, and Pneumonia.",
+    accent: "#0f766e",
+    lightBg: "#f0fdfa",
+    iconBg: "#99f6e4",
+    route: "vaccines",
+    filterFn: () => true,
   },
   {
     id: "diet",

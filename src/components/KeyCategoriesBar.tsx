@@ -161,7 +161,7 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
     id: "vaccines",
     name: "Vaccines",
     filterCat: "Vaccines",
-    route: "lab-tests",
+    route: "vaccines",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="4" y="8" width="8" height="12" rx="2" />
