@@ -454,7 +454,7 @@ export default function NavBar({
               )}
             </button>
 
-            {/* Highly Visible User Profile Button */}
+            {/* User Profile Button */}
             {user && (
               <button
                 type="button"
@@ -462,16 +462,16 @@ export default function NavBar({
                   onProfile?.();
                   setMobileMenuOpen(false);
                 }}
-                className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-2xl bg-[#e8f5ee] hover:bg-[#d1fae5] border border-[#a7f3d0] transition-all cursor-pointer shadow-xs group"
+                className="flex items-center gap-1.5 sm:gap-2 p-1 sm:px-3 sm:py-1.5 rounded-2xl bg-[#e8f5ee] hover:bg-[#d1fae5] border border-[#a7f3d0] transition-all cursor-pointer shadow-2xs group shrink-0"
                 title="View Profile & Account Details"
               >
                 <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-black text-xs text-white shrink-0 shadow-sm ring-2 ring-white"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-black text-xs text-white shrink-0 shadow-sm ring-1 ring-white"
                   style={{ backgroundColor: ROLE_COLORS[user.role] ?? "#006a39" }}
                 >
                   {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
                 </div>
-                <div className="flex flex-col leading-tight text-left max-w-[85px] sm:max-w-[130px] md:max-w-[160px]">
+                <div className="hidden sm:flex flex-col leading-tight text-left max-w-[100px] md:max-w-[140px] lg:max-w-[160px]">
                   <span className="text-xs font-black text-[#073b4c] truncate group-hover:text-[#006a39]">
                     {user.name || "My Account"}
                   </span>
@@ -482,20 +482,21 @@ export default function NavBar({
               </button>
             )}
 
-            {/* Highly Visible Red Logout Button */}
+            {/* Red Logout Button */}
             {user && (
               <button
                 type="button"
                 onClick={onLogout}
-                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-2xl bg-[#dc2626] hover:bg-[#b91c1c] text-white border border-[#b91c1c] transition-all text-xs sm:text-sm font-black whitespace-nowrap cursor-pointer shadow-md hover:shadow-lg active:scale-95 shrink-0"
+                className="flex items-center justify-center gap-1.5 p-2 sm:px-3.5 sm:py-2 rounded-2xl bg-[#dc2626] hover:bg-[#b91c1c] text-white border border-[#b91c1c] transition-all text-xs sm:text-sm font-black whitespace-nowrap cursor-pointer shadow-md hover:shadow-lg active:scale-95 shrink-0"
                 title="Sign Out of Your Account"
+                aria-label="Logout"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                   <polyline points="16 17 21 12 16 7" />
                   <line x1="21" y1="12" x2="9" y2="12" />
                 </svg>
-                <span>Logout</span>
+                <span className="hidden sm:inline">Logout</span>
               </button>
             )}
           </div>
