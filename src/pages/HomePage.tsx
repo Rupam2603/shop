@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import type { Page } from "../App";
 import ProductDetailModal, { nameToId, type PopupProduct } from "../components/ProductModal";
+import KeyCategoriesBar, { KeyCategoryItem } from "../components/KeyCategoriesBar";
+import InsuranceModal from "../components/InsuranceModal";
 import { useCart } from "../contexts/CartContext";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
 import imgHeroBg from "@/assets/hero-banner.jpg";
@@ -328,6 +330,21 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
   const { addToCart } = useCart();
   const [selectedProduct, setSelectedProduct] = useState<PopupProduct | null>(null);
   const [dbProducts, setDbProducts] = useState<DbProduct[] | null>(null);
+  const [showInsuranceModal, setShowInsuranceModal] = useState(false);
+  const [activeKeyCat, setActiveKeyCat] = useState("all");
+
+  const handleSelectKeyCategory = (cat: KeyCategoryItem) => {
+    setActiveKeyCat(cat.id);
+    if (cat.id === "insurance") {
+      setShowInsuranceModal(true);
+      return;
+    }
+    if (cat.route) {
+      onNavigate(cat.route as Page);
+      return;
+    }
+    onNavigate("medicines", cat.filterCat || cat.name);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -487,6 +504,14 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* ── Key Categories Bar (All, Skin, Insurance, Checkups, 50% OFF, Weight Loss, Wellness, Monsoon, Baby, Women, Men, Vaccines, Diet, Hair) ── */}
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#e4ede2] shadow-xs overflow-hidden">
+          <KeyCategoriesBar
+            selectedId={activeKeyCat}
+            onSelectCategory={handleSelectKeyCategory}
+          />
         </div>
 
         {/* Quick Actions */}
@@ -687,6 +712,12 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
           onClose={() => setSelectedProduct(null)}
         />
       )}
+
+      <InsuranceModal
+        isOpen={showInsuranceModal}
+        onClose={() => setShowInsuranceModal(false)}
+        isRetailer={isRetailer}
+      />
     </div>
   );
 }

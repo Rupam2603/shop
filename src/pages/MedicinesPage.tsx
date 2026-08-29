@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import ProductDetailModal, { CAT_COLORS, HSN_BY_CAT, retailerPrice, PopupProduct } from "../components/ProductModal";
+import KeyCategoriesBar, { KeyCategoryItem } from "../components/KeyCategoriesBar";
+import InsuranceModal from "../components/InsuranceModal";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
 import { useCart } from "../contexts/CartContext";
 
@@ -162,10 +164,25 @@ function Collapsible({ title, children, defaultOpen = true }: { title: string; c
   );
 }
 
-export default function MedicinesPage({ initialCategory = "All", userRole }: { initialCategory?: string; userRole?: string }) {
+export default function MedicinesPage({
+  initialCategory = "All",
+  userRole,
+  onNavigate,
+}: {
+  initialCategory?: string;
+  userRole?: string;
+  onNavigate?: (page: string) => void;
+}) {
   const { addToCart } = useCart();
   const isRetailer = userRole === "retailer";
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [activeKeyCat, setActiveKeyCat] = useState(() => {
+    const found = KEY_CATEGORIES.find(
+      (k) => k.filterCat === initialCategory || k.name.toLowerCase() === initialCategory.toLowerCase()
+    );
+    return found ? found.id : "all";
+  });
+  const [showInsuranceModal, setShowInsuranceModal] = useState(false);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedPriceIdx, setSelectedPriceIdx] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState("featured");
@@ -175,6 +192,26 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
   const [dbProducts, setDbProducts] = useState<DbProduct[] | null>(null);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const PER_PAGE = 24;
+
+  const handleSelectKeyCategory = (cat: KeyCategoryItem) => {
+    setActiveKeyCat(cat.id);
+    setPage(1);
+
+    if (cat.id === "insurance") {
+      setShowInsuranceModal(true);
+      return;
+    }
+    if (cat.route && onNavigate) {
+      onNavigate(cat.route);
+      return;
+    }
+
+    if (cat.filterCat) {
+      setSelectedCategory(cat.filterCat);
+    } else {
+      setSelectedCategory(cat.name);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -237,17 +274,76 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
 
   const filtered = useMemo(() => {
     let list = productList;
-    if (selectedCategory !== "All") list = list.filter((p) => p.cat === selectedCategory);
-    if (selectedBrands.length)      list = list.filter((p) => selectedBrands.includes(p.brand));
+
+    // Filter by Key Category ID or selected category
+    if (activeKeyCat === "50-off") {
+      list = list.filter((p) => parseInt(p.disc || "0") >= 20 || parseInt(p.orig ? "1" : "0") > 0);
+    } else if (activeKeyCat === "skin") {
+      list = list.filter((p) =>
+        p.cat.includes("Skin") ||
+        /cream|powder|ointment|antifungal|gel|boroline|salical|b-tex|ring guard/i.test(p.name + " " + p.sub)
+      );
+    } else if (activeKeyCat === "weight-loss") {
+      list = list.filter((p) =>
+        /sugar free|isabgol|softovac|weight|slimming|supplement|diet|chyawanprash/i.test(p.name + " " + p.sub + " " + p.cat)
+      );
+    } else if (activeKeyCat === "wellness") {
+      list = list.filter((p) =>
+        p.cat.includes("Energy") ||
+        /wellness|chyawanprash|honey|ors|glucon|tonic|ayurvedic/i.test(p.name + " " + p.sub)
+      );
+    } else if (activeKeyCat === "monsoon") {
+      list = list.filter((p) =>
+        /dettol|antiseptic|hansaplast|suthol|dusting|candid|cough|vicks|boroline/i.test(p.name + " " + p.sub + " " + p.cat)
+      );
+    } else if (activeKeyCat === "baby") {
+      list = list.filter((p) => p.cat.includes("Baby") || /baby|nipple|bottle/i.test(p.name + " " + p.sub));
+    } else if (activeKeyCat === "women") {
+      list = list.filter((p) =>
+        /v wash|veet|hair remover|body oil|intimate|women|hygiene|skincare/i.test(p.name + " " + p.sub + " " + p.cat)
+      );
+    } else if (activeKeyCat === "men") {
+      list = list.filter((p) =>
+        /balm|volini|amrutanjan|energy|glucon|pain relief|oil|soap|sanitizer/i.test(p.name + " " + p.sub + " " + p.cat)
+      );
+    } else if (activeKeyCat === "vaccines") {
+      list = list.filter((p) =>
+        /mask|surgical|dettol|sanitizer|first aid|medical|antiseptic/i.test(p.name + " " + p.sub + " " + p.cat)
+      );
+    } else if (activeKeyCat === "diet") {
+      list = list.filter((p) =>
+        p.cat.includes("Digestion") ||
+        /eno|sugar free|isabgol|softovac|pet safa|honey|ors|laxative/i.test(p.name + " " + p.sub)
+      );
+    } else if (activeKeyCat === "hair") {
+      list = list.filter((p) =>
+        /hair|oil|love nature|scalp|shampoo|dandruff|body oil/i.test(p.name + " " + p.sub + " " + p.cat)
+      );
+    } else if (selectedCategory !== "All") {
+      list = list.filter((p) => p.cat === selectedCategory);
+    }
+
+    if (selectedBrands.length) {
+      list = list.filter((p) => selectedBrands.includes(p.brand));
+    }
     if (selectedPriceIdx !== null) {
       const r = PRICE_RANGES[selectedPriceIdx];
-      list = list.filter((p) => { const v = parsePrice(p.price); return v >= r.min && v <= r.max; });
+      list = list.filter((p) => {
+        const v = parsePrice(isRetailer && p.retailerPrice ? p.retailerPrice : p.price);
+        return v >= r.min && v <= r.max;
+      });
     }
-    if (sortBy === "price-asc")  list = [...list].sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
-    if (sortBy === "price-desc") list = [...list].sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
-    if (sortBy === "discount")   list = [...list].sort((a, b) => parseInt(b.disc || "0") - parseInt(a.disc || "0"));
+    if (sortBy === "price-asc") {
+      list = [...list].sort((a, b) => parsePrice(isRetailer ? a.retailerPrice : a.price) - parsePrice(isRetailer ? b.retailerPrice : b.price));
+    }
+    if (sortBy === "price-desc") {
+      list = [...list].sort((a, b) => parsePrice(isRetailer ? b.retailerPrice : b.price) - parsePrice(isRetailer ? a.retailerPrice : a.price));
+    }
+    if (sortBy === "discount") {
+      list = [...list].sort((a, b) => parseInt(b.disc || "0") - parseInt(a.disc || "0"));
+    }
     return list;
-  }, [productList, selectedCategory, selectedBrands, selectedPriceIdx, sortBy]);
+  }, [productList, activeKeyCat, selectedCategory, selectedBrands, selectedPriceIdx, sortBy, isRetailer]);
 
   const paginated = filtered.slice(0, page * PER_PAGE);
 
@@ -259,24 +355,38 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-2 sm:py-2.5 flex items-center gap-2.5 sm:gap-3">
             <span className="bg-[#0369a1] text-white text-[10px] font-bold px-2 py-0.5 sm:py-1 rounded uppercase tracking-wide shrink-0">Retailer</span>
             <p className="text-xs sm:text-sm font-medium">
-              Viewing <span className="font-bold text-[#7dd3fc]">retailer prices</span> — approx. 15% below customer price.
+              Viewing <span className="font-bold text-[#7dd3fc]">wholesale retailer prices</span> — approx. 15-20% below standard MRP for verified store owners.
             </p>
           </div>
         </div>
       )}
+
+      {/* Key Categories Bar (All 14 categories) */}
+      <KeyCategoriesBar
+        selectedId={activeKeyCat}
+        onSelectCategory={handleSelectKeyCategory}
+      />
+
       {/* Page header */}
       <div className="bg-white border-b border-[#e4ede2]">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-2xl sm:text-3xl">OTC & Medical Supplies</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-2xl sm:text-3xl">
+                {KEY_CATEGORIES.find((k) => k.id === activeKeyCat)?.name || selectedCategory}
+              </h1>
+              <span className="bg-[#e8f5ee] text-[#006a39] text-xs font-bold px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
+                {filtered.length} items
+              </span>
+            </div>
             <p className="text-[#6d7a6f] text-xs sm:text-sm mt-0.5 sm:mt-1">
-              {ALL_PRODUCTS.length} products · {CATEGORY_LIST.length - 1} categories
+              Live Verified Inventory · Genuine Quality Guaranteed
             </p>
           </div>
           <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl border border-[#d5dcd3] bg-white text-[#073b4c] text-xs sm:text-sm font-semibold hover:border-[#006a39] transition-colors"
+              className="relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl border border-[#d5dcd3] bg-white text-[#073b4c] text-xs sm:text-sm font-semibold hover:border-[#006a39] transition-colors cursor-pointer"
             >
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2 4H14M4 8H12M6 12H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
               {showFilters ? "Hide Filters" : "Show Filters"}
@@ -296,31 +406,6 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
               <option value="price-desc">Price: High to Low</option>
               <option value="discount">Best Discount</option>
             </select>
-          </div>
-        </div>
-
-        {/* Category tabs */}
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10">
-          <div className="flex gap-2 overflow-x-auto pb-3 pt-1" style={{ scrollbarWidth: "none" }}>
-            {CATEGORY_LIST.map((cat) => {
-              const count = cat === "All" ? ALL_PRODUCTS.length : ALL_PRODUCTS.filter((p) => p.cat === cat).length;
-              const accent = cat !== "All" ? CAT_COLORS[cat] : "#006a39";
-              const isActive = selectedCategory === cat;
-              return (
-                <button
-                  key={cat}
-                  onClick={() => { setSelectedCategory(cat); setPage(1); }}
-                  className="shrink-0 px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border"
-                  style={isActive
-                    ? { backgroundColor: accent, color: "#fff", borderColor: accent }
-                    : { backgroundColor: "#f0f7ee", color: "#3e4a3f", borderColor: "transparent" }
-                  }
-                >
-                  {cat}
-                  <span className="ml-1 text-[10px] opacity-70">({count})</span>
-                </button>
-              );
-            })}
           </div>
         </div>
       </div>
@@ -512,6 +597,12 @@ export default function MedicinesPage({ initialCategory = "All", userRole }: { i
           onClose={() => setSelectedProduct(null)}
         />
       )}
+
+      <InsuranceModal
+        isOpen={showInsuranceModal}
+        onClose={() => setShowInsuranceModal(false)}
+        isRetailer={isRetailer}
+      />
     </div>
   );
 }
