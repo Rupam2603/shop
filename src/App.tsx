@@ -221,6 +221,8 @@ export default function App() {
           name: currentUser.name,
           email: currentUser.email,
           phone: currentUser.phone,
+          role: currentUser.role,
+          shopName: currentUser.shopName,
         }}
       />
 

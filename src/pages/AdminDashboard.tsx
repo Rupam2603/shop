@@ -785,12 +785,27 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       return dbOrders
         .filter((o) => !deletedOrderIds.includes(o.id) && !deletedOrderIds.includes(o.order_number))
         .map((o) => {
-          const isRetailerInferred =
-            o.user_role === "retailer" ||
-            o.customer_name?.toLowerCase().includes("store") ||
-            o.customer_name?.toLowerCase().includes("pharmacy") ||
-            o.customer_name?.toLowerCase().includes("medical") ||
-            o.customer_name?.toLowerCase().includes("pharma");
+          const shipAddr = (o.shipping_address || {}) as any;
+          const isExplicitRetailer = o.user_role === "retailer" || shipAddr?.user_role === "retailer";
+          const isExplicitCustomer = o.user_role === "customer" || shipAddr?.user_role === "customer";
+
+          const finalRole: "retailer" | "customer" = isExplicitRetailer
+            ? "retailer"
+            : isExplicitCustomer
+            ? "customer"
+            : o.shop_name ||
+              shipAddr?.shop_name ||
+              o.customer_name?.toLowerCase().includes("store") ||
+              o.customer_name?.toLowerCase().includes("pharmacy") ||
+              o.customer_name?.toLowerCase().includes("medical") ||
+              o.customer_name?.toLowerCase().includes("pharma")
+            ? "retailer"
+            : "customer";
+
+          const finalShopName =
+            o.shop_name ||
+            shipAddr?.shop_name ||
+            (finalRole === "retailer" ? o.customer_name : undefined);
 
           const dateObj = new Date(o.created_at);
           const dateStr = !isNaN(dateObj.getTime())
@@ -811,8 +826,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             date: dateStr,
             rawDate: rawDateStr,
             payment: o.payment_method,
-            role: (o.user_role || (isRetailerInferred ? "retailer" : "customer")) as "retailer" | "customer",
-            shopName: o.shop_name || (isRetailerInferred ? o.customer_name : undefined),
+            role: finalRole,
+            shopName: finalShopName,
           };
         });
     }

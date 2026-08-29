@@ -8,7 +8,13 @@ interface CheckoutModalProps {
   open: boolean;
   onClose: () => void;
   onOrderSuccess: (orderId: string, orderNumber?: string) => void;
-  user: { name: string; email: string; phone?: string };
+  user: {
+    name: string;
+    email: string;
+    phone?: string;
+    role?: "retailer" | "customer" | "admin";
+    shopName?: string;
+  };
 }
 
 export default function CheckoutModal({
@@ -30,7 +36,15 @@ export default function CheckoutModal({
 
   const { items, subtotal, savings, clearCart } = useCart();
   const { appUser } = useAuth();
-  const isRetailer = appUser?.profile?.role === "retailer";
+  const isRetailer =
+    appUser?.profile?.role === "retailer" ||
+    (appUser?.authUser?.user_metadata?.role as string) === "retailer" ||
+    user.role === "retailer";
+  const effectiveShopName =
+    appUser?.profile?.shop_name ||
+    (appUser?.authUser?.user_metadata?.shop_name as string) ||
+    user.shopName ||
+    (isRetailer ? (user.name || appUser?.profile?.full_name) : undefined);
   const [addresses, setAddresses] = useState<DbAddress[]>([]);
   const [selectedAddrId, setSelectedAddrId] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<"UPI" | "Card" | "COD">("UPI");
@@ -148,9 +162,9 @@ export default function CheckoutModal({
       items,
       totalAmount: finalTotal,
       paymentMethod,
-      userId: appUser?.authUser?.id,
+      userId: appUser?.authUser?.id || appUser?.profile?.id,
       userRole: isRetailer ? "retailer" : "customer",
-      shopName: appUser?.profile?.shop_name,
+      shopName: effectiveShopName || null,
     });
     setLoading(false);
 

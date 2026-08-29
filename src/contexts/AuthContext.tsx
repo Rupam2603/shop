@@ -279,18 +279,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.user) {
+        const newProfile: Profile = {
+          id: data.user.id,
+          full_name: opts.fullName.trim(),
+          role: safeRole,
+          phone: opts.phone?.trim() || null,
+          shop_name: opts.shopName?.trim() || null,
+          avatar_url: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        // Persist profile to public.profiles table in Supabase
+        try {
+          await supabase.from("profiles").upsert(newProfile);
+        } catch (profErr) {
+          console.warn("Notice: could not upsert profile on signup:", profErr);
+        }
+
         setAppUser({
           authUser: data.user,
-          profile: {
-            id: data.user.id,
-            full_name: opts.fullName.trim(),
-            role: safeRole,
-            phone: opts.phone?.trim() || null,
-            shop_name: opts.shopName?.trim() || null,
-            avatar_url: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
+          profile: newProfile,
         });
       }
 

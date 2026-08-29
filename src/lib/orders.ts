@@ -108,6 +108,12 @@ export async function placeOrder(params: {
     let orderData: any = null;
     let orderId = `ord_${Date.now()}`;
 
+    const effectiveShippingAddress = {
+      ...(params.shippingAddress || {}),
+      user_role: params.userRole || "customer",
+      shop_name: params.shopName || null,
+    };
+
     // 1. Insert order record into Supabase
     try {
       const { data, error } = await supabase
@@ -118,7 +124,7 @@ export async function placeOrder(params: {
             user_id: userId,
             customer_name: params.customerName || "Customer",
             customer_phone: params.customerPhone || "+91 98765 00000",
-            shipping_address: params.shippingAddress,
+            shipping_address: effectiveShippingAddress,
             total_amount: params.totalAmount,
             payment_method: params.paymentMethod || "UPI",
             payment_status: "Paid",
@@ -195,15 +201,15 @@ export async function placeOrder(params: {
       user_id: userId,
       customer_name: params.customerName || "Customer",
       customer_phone: params.customerPhone || "+91 98765 00000",
-      shipping_address: params.shippingAddress,
+      shipping_address: effectiveShippingAddress,
       total_amount: params.totalAmount,
       payment_method: params.paymentMethod || "UPI",
       payment_status: "Paid",
       status: "Processing",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      user_role: params.userRole,
-      shop_name: params.shopName,
+      user_role: params.userRole || "customer",
+      shop_name: params.shopName || null,
       order_items: orderItemsPayload,
     };
 
@@ -265,39 +271,62 @@ export async function fetchAllOrders(): Promise<DbOrder[]> {
       return getLocalOrders();
     }
 
-    if (orders && orders.length > 0) {
-      const userIds = Array.from(new Set(orders.map((o) => o.user_id).filter(Boolean)));
+    const deletedIds = getDeletedOrderIds();
+    const activeOrders = (orders || []).filter(
+      (o) => !deletedIds.includes(o.id) && !deletedIds.includes(o.order_number)
+    );
+
+    if (activeOrders.length > 0) {
+      const userIds = Array.from(new Set(activeOrders.map((o) => o.user_id).filter(Boolean)));
+      let profileMap = new Map<string, any>();
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
           .from("profiles")
           .select("id, role, shop_name, full_name, phone")
           .in("id", userIds);
 
-        const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
-        return orders.map((o) => {
-          const prof = profileMap.get(o.user_id);
-          const inferredRole: "retailer" | "customer" =
-            prof?.role ||
-            (o.customer_name?.toLowerCase().includes("store") ||
-            o.customer_name?.toLowerCase().includes("pharmacy") ||
-            o.customer_name?.toLowerCase().includes("medical")
-              ? "retailer"
-              : "customer");
-
-          return {
-            ...o,
-            user_role: inferredRole,
-            shop_name: prof?.shop_name || null,
-          };
-        }) as DbOrder[];
+        profileMap = new Map((profiles || []).map((p) => [p.id, p]));
       }
+
+      return activeOrders.map((o) => {
+        const prof = profileMap.get(o.user_id);
+        const shipAddr = (o.shipping_address || {}) as any;
+
+        // Role resolution:
+        // 1. From database profile record
+        // 2. From order user_role or shipping_address user_role metadata
+        // 3. Fallback inference from shop name
+        let resolvedRole: "retailer" | "customer" = "customer";
+        if (prof?.role === "retailer" || o.user_role === "retailer" || shipAddr?.user_role === "retailer") {
+          resolvedRole = "retailer";
+        } else if (prof?.role === "customer" || o.user_role === "customer" || shipAddr?.user_role === "customer") {
+          resolvedRole = "customer";
+        } else if (
+          prof?.shop_name ||
+          o.shop_name ||
+          shipAddr?.shop_name ||
+          o.customer_name?.toLowerCase().includes("store") ||
+          o.customer_name?.toLowerCase().includes("pharmacy") ||
+          o.customer_name?.toLowerCase().includes("medical")
+        ) {
+          resolvedRole = "retailer";
+        }
+
+        const resolvedShopName =
+          prof?.shop_name ||
+          o.shop_name ||
+          shipAddr?.shop_name ||
+          (resolvedRole === "retailer" ? o.customer_name : null);
+
+        return {
+          ...o,
+          user_role: resolvedRole,
+          shop_name: resolvedShopName,
+        };
+      }) as DbOrder[];
     }
 
-    const deletedIds = getDeletedOrderIds();
-    const finalOrders = (orders || []).filter(
-      (o) => !deletedIds.includes(o.id) && !deletedIds.includes(o.order_number)
-    );
-    return finalOrders as DbOrder[];
+    return getLocalOrders();
   } catch (e) {
     console.error("Error in fetchAllOrders:", e);
     return getLocalOrders();
