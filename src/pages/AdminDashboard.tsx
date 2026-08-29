@@ -868,6 +868,26 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     await dbDeleteOrder(target?.id || orderId);
   };
 
+  const [isRefreshingOrders, setIsRefreshingOrders] = useState(false);
+
+  const handleRefreshOrders = async () => {
+    setIsRefreshingOrders(true);
+    try {
+      const freshOrders = await fetchAllOrders();
+      if (freshOrders) {
+        setDbOrders(freshOrders);
+      }
+      const allDeleted = getDeletedOrderIds();
+      setDeletedOrderIds([...allDeleted]);
+    } catch (err) {
+      console.error("Error refreshing orders:", err);
+    } finally {
+      setTimeout(() => {
+        setIsRefreshingOrders(false);
+      }, 500);
+    }
+  };
+
   const openAdd = () => { setForm(emptyForm(categories[0])); setModal({ open: true, mode: "add" }); };
   const openEdit = (p: Product) => {
     setForm({
@@ -1123,6 +1143,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               setFilter={setOrderFilter}
               onUpdateStatus={handleUpdateOrderStatus}
               onDeleteOrder={handleDeleteOrder}
+              onRefresh={handleRefreshOrders}
+              isRefreshing={isRefreshingOrders}
               settings={settings}
             />
           )}
@@ -1591,6 +1613,9 @@ function OrdersTab({
   filter,
   setFilter,
   onUpdateStatus,
+  onDeleteOrder,
+  onRefresh,
+  isRefreshing = false,
   settings,
 }: {
   orders: {
@@ -1613,6 +1638,8 @@ function OrdersTab({
     newStatus: "Processing" | "Dispatched" | "Shipped" | "Out for Delivery" | "Delivered" | "Cancelled"
   ) => void;
   onDeleteOrder?: (orderId: string) => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   settings?: Settings;
 }) {
   const [roleSegment, setRoleSegment] = useState<"all" | "retailer" | "customer">("all");
@@ -1954,6 +1981,22 @@ function OrdersTab({
             </select>
           )}
 
+          {/* Action: Reload Orders */}
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className={`bg-white/20 hover:bg-white/30 text-white font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl transition-all border border-white/30 flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95 ${
+                isRefreshing ? "opacity-75 cursor-not-allowed" : ""
+              }`}
+              title="Reload live orders from database"
+            >
+              <span className={`text-sm ${isRefreshing ? "animate-spin inline-block" : ""}`}>🔄</span>
+              <span>{isRefreshing ? "Reloading…" : "Reload"}</span>
+            </button>
+          )}
+
           {/* Action: Preview */}
           <button
             type="button"
@@ -2124,18 +2167,38 @@ function OrdersTab({
           </button>
         </div>
 
-        {/* Search Input */}
-        <div className="relative flex-1 max-w-md">
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa89b]">
-            <path d="M13 13L10 10M11.5 6.5C11.5 9.26 9.26 11.5 6.5 11.5C3.74 11.5 1.5 9.26 1.5 6.5C1.5 3.74 3.74 1.5 6.5 1.5C9.26 1.5 11.5 3.74 11.5 6.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search order ID, customer name, pharmacy, phone…"
-            className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-[#f8fafb] border border-[#e4ede2] rounded-xl focus:outline-none focus:border-[#073b4c]"
-          />
+        {/* Right: Search Input & Dedicated Reload Button */}
+        <div className="flex items-center gap-2 flex-1 max-w-lg">
+          <div className="relative flex-1">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa89b]">
+              <path d="M13 13L10 10M11.5 6.5C11.5 9.26 9.26 11.5 6.5 11.5C3.74 11.5 1.5 9.26 1.5 6.5C1.5 3.74 3.74 1.5 6.5 1.5C9.26 1.5 11.5 3.74 11.5 6.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search order ID, customer name, pharmacy, phone…"
+              className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-[#f8fafb] border border-[#e4ede2] rounded-xl focus:outline-none focus:border-[#073b4c]"
+            />
+          </div>
+
+          {/* Dedicated Reload Button */}
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95 ${
+                isRefreshing
+                  ? "bg-[#e8f5ee] text-[#006a39] border-[#bbf7d0] cursor-not-allowed"
+                  : "bg-white text-[#073b4c] border-[#e4ede2] hover:bg-[#f0f7ee] hover:border-[#006a39]/40 hover:text-[#006a39]"
+              }`}
+              title="Reload live orders from database"
+            >
+              <span className={`text-sm ${isRefreshing ? "animate-spin inline-block" : ""}`}>🔄</span>
+              <span>{isRefreshing ? "Reloading…" : "Reload"}</span>
+            </button>
+          )}
         </div>
       </div>
 
