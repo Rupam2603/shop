@@ -1,16 +1,22 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../contexts/CartContext";
-import { useModalBackHandler } from "../lib/navigation";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
-import ProductDetailModal, { nameToId, type PopupProduct } from "./ProductModal";
+import ProductDetailModal, { type PopupProduct } from "./ProductModal";
+import LocationModal from "./LocationModal";
+import {
+  UserLocation,
+  getSavedLocation,
+  saveLocation,
+  detectBrowserLocation,
+} from "../lib/location";
 import { UserButton, SignedIn } from "@clerk/clerk-react";
 
-type Page = "home" | "medicines" | "lab-tests" | "consult" | "offers" | "profile";
+type Page = "home" | "medicines" | "lab-tests" | "consult" | "offers" | "profile" | "checkout";
 
 interface NavBarProps {
   activePage: Page;
   onNavigate: (page: Page) => void;
-  user?: { role: string; name: string; email: string } | null;
+  user?: { role: string; name: string; email: string; id?: string } | null;
   onLogout?: () => void;
   onProfile?: () => void;
   onTrackOrder?: (orderNumber?: string) => void;
@@ -22,20 +28,9 @@ function SearchIcon() {
       <path
         d="M16.5 16.5L12.875 12.875M14.8333 8.16667C14.8333 11.8486 11.8486 14.8333 8.16667 14.8333C4.48477 14.8333 1.5 11.8486 1.5 8.16667C1.5 4.48477 4.48477 1.5 8.16667 1.5C11.8486 1.5 14.8333 4.48477 14.8333 8.16667Z"
         stroke="#073B4C"
-        strokeWidth="1.66667"
+        strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function LocationIcon() {
-  return (
-    <svg width="14" height="18" viewBox="0 0 14 18" fill="none">
-      <path
-        d="M7 0C3.13 0 0 3.13 0 7C0 12.25 7 18 7 18C7 18 14 12.25 14 7C14 3.13 10.87 0 7 0ZM7 9.5C5.62 9.5 4.5 8.38 4.5 7C4.5 5.62 5.62 4.5 7 4.5C8.38 4.5 9.5 5.62 9.5 7C9.5 8.38 8.38 9.5 7 9.5Z"
-        fill="#006A39"
       />
     </svg>
   );
@@ -55,28 +50,13 @@ function CartIcon() {
   );
 }
 
-function AccountIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <circle cx="10" cy="6" r="4" stroke="#006A39" strokeWidth="1.5" />
-      <path
-        d="M2 18C2 14.6863 5.58172 12 10 12C14.4183 12 18 14.6863 18 18"
-        stroke="#006A39"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
 const navLinks: { label: string; page: Page; isTrack?: boolean }[] = [
   { label: "Home", page: "home" },
-  { label: "OTC & Wellness", page: "medicines" },
+  { label: "OTC & Medicines", page: "medicines" },
   { label: "Lab Tests", page: "lab-tests" },
   { label: "Consult", page: "consult" },
   { label: "Offers", page: "offers" },
   { label: "🚚 Track Order", page: "home", isTrack: true },
-  { label: "My Profile", page: "profile" },
 ];
 
 const ROLE_COLORS: Record<string, string> = {
@@ -85,18 +65,79 @@ const ROLE_COLORS: Record<string, string> = {
   admin: "#073b4c",
 };
 
-export default function NavBar({ activePage, onNavigate, user, onLogout, onProfile, onTrackOrder }: NavBarProps) {
+export default function NavBar({
+  activePage,
+  onNavigate,
+  user,
+  onLogout,
+  onProfile,
+  onTrackOrder,
+}: NavBarProps) {
   const { itemCount, openCart } = useCart();
   const [searchValue, setSearchValue] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dbProducts, setDbProducts] = useState<DbProduct[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<PopupProduct | null>(null);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [location, setLocation] = useState<UserLocation>(() => getSavedLocation());
+  const [isLocating, setIsLocating] = useState(false);
+
   const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const isRetailer = user?.role === "retailer";
 
-  useModalBackHandler(mobileMenuOpen, () => setMobileMenuOpen(false), "mobile-menu");
+  // 1. Automatically detect current location when user logs in or on first visit
+  useEffect(() => {
+    let active = true;
 
+    const handleAutoLocation = async () => {
+      // If user is logged in, try to auto-detect live location if not already detected
+      if (user && !location.isAutoDetected) {
+        setIsLocating(true);
+        try {
+          const loc = await detectBrowserLocation();
+          if (active) {
+            setLocation(loc);
+          }
+        } catch (e) {
+          // If denied, fallback to saved or default location
+        } finally {
+          if (active) setIsLocating(false);
+        }
+      }
+    };
+
+    handleAutoLocation();
+
+    // Listen to location change events across components
+    const onLocationUpdate = (e: Event) => {
+      const detail = (e as CustomEvent<UserLocation>).detail;
+      if (detail && active) setLocation(detail);
+    };
+
+    window.addEventListener("subhone:location_changed", onLocationUpdate);
+
+    return () => {
+      active = false;
+      window.removeEventListener("subhone:location_changed", onLocationUpdate);
+    };
+  }, [user]);
+
+  // 2. Global keyboard shortcut (Cmd+K / Ctrl+K) to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // 3. Load DB products for live search
   useEffect(() => {
     let mounted = true;
     fetchProducts().then((data) => {
@@ -105,7 +146,9 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
 
     const unsubscribe = subscribeToProductsRealtime((payload) => {
       if (payload.eventType === "UPDATE" && payload.new) {
-        setDbProducts((prev) => prev.map((p) => (p.id === payload.new.id ? { ...p, ...payload.new } : p)));
+        setDbProducts((prev) =>
+          prev.map((p) => (p.id === payload.new.id ? { ...p, ...payload.new } : p))
+        );
       } else if (payload.eventType === "INSERT" && payload.new) {
         setDbProducts((prev) => [payload.new, ...prev]);
       } else if (payload.eventType === "DELETE" && payload.old) {
@@ -140,7 +183,7 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
           p.brand.toLowerCase().includes(query) ||
           p.category_name.toLowerCase().includes(query)
       )
-      .slice(0, 6);
+      .slice(0, 8);
   }, [searchValue, dbProducts]);
 
   const handleNavClick = (page: Page, isTrack?: boolean) => {
@@ -161,7 +204,9 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
       dbId: p.id,
       name: p.name,
       sub: p.details || p.subtitle || p.brand,
-      price: isRetailer ? `₹${Math.round(p.retailer_price)}` : `₹${Math.round(p.customer_price)}`,
+      price: isRetailer
+        ? `₹${Math.round(p.retailer_price)}`
+        : `₹${Math.round(p.customer_price)}`,
       orig: p.mrp > p.customer_price ? `₹${Math.round(p.mrp)}` : "",
       disc: p.discount_percent > 0 ? `${p.discount_percent}%` : "",
       cat: p.category_name,
@@ -175,52 +220,118 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
 
   return (
     <>
-      <header
-        className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#e4ede2]/80 shadow-xs transition-all"
-      >
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4">
-          {/* Mobile Hamburger Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-[#073b4c] hover:bg-[#f0f7f0] transition-colors"
-            aria-label="Toggle navigation menu"
-          >
-            {mobileMenuOpen ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            )}
-          </button>
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#e4ede2]/80 shadow-xs transition-all">
+        {/* Main Nav Container */}
+        <div className="max-w-[1440px] mx-auto px-3 sm:px-6 h-18 flex items-center justify-between gap-2 sm:gap-4">
+          {/* Left section: Hamburger & Logo & Location Pill */}
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            {/* Mobile Hamburger Button */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 rounded-xl text-[#073b4c] hover:bg-[#f0f7f0] transition-colors cursor-pointer"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? (
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              ) : (
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              )}
+            </button>
 
-          {/* Logo */}
-          <button
-            onClick={() => handleNavClick("home")}
-            className="flex items-center gap-2 cursor-pointer focus:outline-none"
-          >
-            <div className="w-8 h-8 rounded-lg bg-[#006a39] flex items-center justify-center shadow-sm">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" fill="white" />
-              </svg>
-            </div>
-            <span className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-xl sm:text-2xl tracking-tight">
-              SubhOne
-            </span>
-          </button>
+            {/* Logo */}
+            <button
+              type="button"
+              onClick={() => handleNavClick("home")}
+              className="flex items-center gap-2 cursor-pointer focus:outline-none"
+            >
+              <div className="w-9 h-9 rounded-xl bg-linear-to-br from-[#006a39] to-[#047857] flex items-center justify-center shadow-sm">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" fill="white" />
+                </svg>
+              </div>
+              <div className="flex flex-col text-left leading-none">
+                <span className="font-['Manrope',sans-serif] font-black text-[#006a39] text-xl sm:text-2xl tracking-tight">
+                  SubhOne
+                </span>
+                <span className="text-[9px] font-bold text-[#6d7a6f] tracking-wider uppercase hidden sm:inline">
+                  Pharmacy & Health
+                </span>
+              </div>
+            </button>
 
-          {/* Desktop Search bar with Live Stock Results */}
-          <div ref={searchRef} className="hidden md:flex flex-1 max-w-[420px] mx-2 lg:mx-6 relative">
-            <div className="relative w-full">
-              <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-[#6d7a6f]">
+            {/* Location Selector Widget (Desktop) */}
+            <button
+              type="button"
+              onClick={() => setIsLocationModalOpen(true)}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#e4ede2] bg-[#f8fafb] hover:bg-[#f0f7f0] hover:border-[#bbf7d0] transition-all text-left cursor-pointer group shadow-2xs"
+              title="Change Delivery Location"
+            >
+              <div className="w-7 h-7 rounded-lg bg-[#e8f5ee] text-[#006a39] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                {isLocating ? (
+                  <span className="w-3.5 h-3.5 border-2 border-[#006a39] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z"
+                      fill="#006a39"
+                    />
+                  </svg>
+                )}
+              </div>
+              <div className="flex flex-col leading-tight max-w-[130px] lg:max-w-[160px]">
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-extrabold text-[#6d7a6f] uppercase tracking-wider">
+                    Express to
+                  </span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
+                </div>
+                <span className="text-xs font-bold text-[#073b4c] truncate group-hover:text-[#006a39] flex items-center gap-1">
+                  {location.city} {location.pincode ? `(${location.pincode})` : ""}
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="shrink-0 text-[#9aa89b]">
+                    <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              </div>
+            </button>
+          </div>
+
+          {/* Center: WIDE Premium Search Bar */}
+          <div
+            ref={searchRef}
+            className="flex-1 max-w-[540px] md:max-w-[620px] lg:max-w-[700px] xl:max-w-[780px] mx-1 sm:mx-4 relative"
+          >
+            <div className="relative w-full group">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-[#6d7a6f] group-focus-within:text-[#006a39] transition-colors">
                 <SearchIcon />
               </div>
               <input
+                ref={searchInputRef}
                 type="text"
                 value={searchValue}
                 onFocus={() => setIsSearchOpen(true)}
@@ -234,24 +345,50 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
                     onNavigate("medicines");
                   }
                 }}
-                placeholder="Search medicines, stock, brands…"
-                className="w-full pl-10 pr-4 py-2 bg-[#f0f4f0] border border-transparent rounded-full text-xs sm:text-sm text-[#073b4c] placeholder:text-[#6d7a6f] focus:outline-none focus:bg-white focus:border-[#006a39] transition-all"
+                placeholder="Search medicines, health supplements, lab tests, active stock…"
+                className="w-full pl-11 pr-20 py-2.5 sm:py-3 bg-[#f0f4f0] hover:bg-[#ebf2eb] border border-transparent rounded-2xl text-xs sm:text-sm text-[#073b4c] placeholder:text-[#6d7a6f] focus:outline-none focus:bg-white focus:border-[#006a39] focus:ring-3 focus:ring-[#006a39]/10 transition-all shadow-2xs font-medium"
               />
+
+              {/* Clear button or Keyboard Shortcut Hint */}
+              <div className="absolute inset-y-0 right-3 flex items-center gap-1.5">
+                {searchValue.trim() ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchValue("");
+                      searchInputRef.current?.focus();
+                    }}
+                    className="p-1 rounded-full text-[#9aa89b] hover:text-[#073b4c] hover:bg-gray-200 transition-colors"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                ) : (
+                  <kbd className="hidden lg:inline-flex items-center px-2 py-0.5 text-[10px] font-semibold text-[#8b998a] bg-white border border-[#d5ded4] rounded-md shadow-2xs">
+                    Ctrl K
+                  </kbd>
+                )}
+              </div>
             </div>
 
-            {/* Live Real-Time Search Results Dropdown */}
+            {/* Live Search Results Dropdown */}
             {isSearchOpen && searchValue.trim().length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-[#e4ede2] overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                <div className="p-2 border-b border-[#f0f4f0] bg-[#f8fafb] flex items-center justify-between text-[11px] text-[#6d7a6f] px-3">
-                  <span>Live Product & Stock Search</span>
-                  <span>{searchResults.length} match{searchResults.length === 1 ? "" : "es"}</span>
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-[#e4ede2] overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="p-3 border-b border-[#f0f4f0] bg-[#f8fafb] flex items-center justify-between text-xs text-[#6d7a6f] px-4">
+                  <span className="font-bold text-[#073b4c]">Live Pharmacy Results</span>
+                  <span className="bg-[#e8f5ee] text-[#006a39] font-bold text-[10px] px-2 py-0.5 rounded-full">
+                    {searchResults.length} match{searchResults.length === 1 ? "" : "es"}
+                  </span>
                 </div>
+
                 {searchResults.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-[#9aa89b]">
-                    No products found matching "{searchValue}"
+                  <div className="p-6 text-center text-xs text-[#9aa89b]">
+                    No medicines found for &quot;{searchValue}&quot;. Try searching generic name or category.
                   </div>
                 ) : (
-                  <div className="max-h-[320px] overflow-y-auto divide-y divide-[#f0f4f0]">
+                  <div className="max-h-[360px] overflow-y-auto divide-y divide-[#f0f4f0]">
                     {searchResults.map((p) => {
                       const isOutOfStock = p.stock <= 0;
                       const isLow = p.stock > 0 && p.stock <= (isRetailer ? 20 : 10);
@@ -260,32 +397,43 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
                         <div
                           key={p.id}
                           onClick={() => handleProductSelect(p)}
-                          className="p-2.5 sm:p-3 hover:bg-[#f5fbf2] transition-colors flex items-center gap-3 cursor-pointer group"
+                          className="p-3 hover:bg-[#f5fbf2] transition-colors flex items-center gap-3.5 cursor-pointer group"
                         >
-                          <div className="w-10 h-10 bg-[#f8fafb] border border-[#e4ede2] rounded-lg overflow-hidden shrink-0 flex items-center justify-center p-0.5">
-                            <img src={p.image_url} alt={p.name} className="h-full max-w-full object-contain" />
+                          <div className="w-12 h-12 bg-[#f8fafb] border border-[#e4ede2] rounded-xl overflow-hidden shrink-0 flex items-center justify-center p-1 group-hover:border-[#006a39] transition-colors">
+                            <img
+                              src={p.image_url}
+                              alt={p.name}
+                              className="h-full max-w-full object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src =
+                                  "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80";
+                              }}
+                            />
                           </div>
+
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-bold text-[#073b4c] truncate group-hover:text-[#006a39]">
                               {p.name}
                             </p>
-                            <p className="text-[10px] text-[#9aa89b] truncate">{p.brand} · {p.category_name}</p>
+                            <p className="text-[11px] text-[#6d7a6f] truncate">
+                              {p.brand} · <span className="text-[#006a39]">{p.category_name}</span>
+                            </p>
                           </div>
-                          <div className="text-right shrink-0 flex flex-col items-end gap-0.5">
-                            <span className="font-['Manrope',sans-serif] font-bold text-xs text-[#073b4c]">
+
+                          <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                            <span className="font-['Manrope',sans-serif] font-extrabold text-sm text-[#073b4c]">
                               ₹{Math.round(isRetailer ? p.retailer_price : p.customer_price)}
                             </span>
-                            {/* Stock Badge in Search Dropdown */}
                             {isOutOfStock ? (
-                              <span className="text-[9px] font-extrabold text-[#b91c1c] bg-[#fee2e2] border border-[#fecaca] px-1.5 py-0.2 rounded uppercase">
+                              <span className="text-[9px] font-extrabold text-[#b91c1c] bg-[#fee2e2] border border-[#fecaca] px-1.5 py-0.5 rounded uppercase">
                                 Out of Stock
                               </span>
                             ) : isLow ? (
-                              <span className="text-[9px] font-bold text-[#b45309] bg-[#fef3c7] border border-[#fde68a] px-1.5 py-0.2 rounded animate-pulse">
+                              <span className="text-[9px] font-bold text-[#b45309] bg-[#fef3c7] border border-[#fde68a] px-1.5 py-0.5 rounded animate-pulse">
                                 Only {p.stock} Left
                               </span>
                             ) : (
-                              <span className="text-[9px] font-bold text-[#047857] bg-[#d1fae5] px-1.5 py-0.2 rounded">
+                              <span className="text-[9px] font-bold text-[#047857] bg-[#d1fae5] px-1.5 py-0.5 rounded">
                                 {p.stock} in stock
                               </span>
                             )}
@@ -295,153 +443,131 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
                     })}
                   </div>
                 )}
-                <div className="p-2 bg-[#f8fafb] border-t border-[#f0f4f0] text-center">
+
+                <div className="p-3 bg-[#f8fafb] border-t border-[#f0f4f0] text-center">
                   <button
+                    type="button"
                     onClick={() => {
                       setIsSearchOpen(false);
                       onNavigate("medicines");
                     }}
-                    className="text-xs font-bold text-[#006a39] hover:underline"
+                    className="text-xs font-bold text-[#006a39] hover:underline cursor-pointer"
                   >
-                    View all medicines & stock →
+                    View entire medicine catalog & active stock →
                   </button>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Desktop Navigation links */}
-          <nav className="hidden md:flex items-center gap-1 lg:gap-2">
-            {navLinks.map(({ label, page, isTrack }) => (
-              <button
-                key={label}
-                onClick={() => handleNavClick(page, isTrack)}
-                className={`relative px-3 py-2 text-xs sm:text-sm font-semibold transition-colors rounded-lg cursor-pointer ${
-                  !isTrack && activePage === page
-                    ? "text-[#006a39]"
-                    : "text-[#3e4a3f] hover:text-[#006a39]"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-
-          {/* Trailing icons */}
+          {/* Right section: Desktop Nav Links & User Icons */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            <button className="hidden sm:flex p-2 rounded-full hover:bg-[#f0f7f0] transition-colors relative text-[#006a39]" title="Location">
-              <LocationIcon />
-            </button>
+            {/* Desktop Navigation links */}
+            <nav className="hidden xl:flex items-center gap-1">
+              {navLinks.map(({ label, page, isTrack }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => handleNavClick(page, isTrack)}
+                  className={`px-3 py-2 text-xs font-bold transition-colors rounded-xl cursor-pointer ${
+                    !isTrack && activePage === page
+                      ? "bg-[#e8f5ee] text-[#006a39]"
+                      : "text-[#3e4a3f] hover:text-[#006a39] hover:bg-[#f0f7f0]"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </nav>
+
+            {/* Shopping Cart Button */}
             <button
+              type="button"
               onClick={openCart}
-              className="p-2 rounded-full hover:bg-[#f0f7f0] transition-colors relative text-[#006a39]"
+              className="p-2.5 rounded-xl hover:bg-[#f0f7f0] border border-transparent hover:border-[#e4ede2] transition-all relative text-[#006a39] cursor-pointer flex items-center gap-1.5"
               title="Shopping Cart"
+              aria-label="Shopping Cart"
             >
               <CartIcon />
               {itemCount > 0 && (
-                <span className="absolute top-1 right-1 bg-[#0f9d58] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                <span className="bg-[#006a39] text-white text-[11px] font-extrabold rounded-full px-1.5 py-0.5 min-w-[20px] text-center shadow-xs">
                   {itemCount}
                 </span>
               )}
             </button>
-            {user ? (
-              <div className="flex items-center gap-1.5 sm:gap-2.5 pl-1.5 sm:pl-3 border-l border-[#e2e8df]">
+
+            {/* Profile / Auth Section */}
+            {user && (
+              <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-[#e2e8df]">
                 <SignedIn>
                   <div className="flex items-center">
                     <UserButton afterSignOutUrl="/" />
                   </div>
                 </SignedIn>
                 <button
-                  onClick={() => { onProfile?.(); setMobileMenuOpen(false); }}
+                  type="button"
+                  onClick={() => {
+                    onProfile?.();
+                    setMobileMenuOpen(false);
+                  }}
                   className="flex items-center gap-2 group cursor-pointer"
                   title="View profile"
                 >
                   <div
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-['Manrope',sans-serif] font-bold text-xs sm:text-sm text-white shrink-0 group-hover:ring-2 group-hover:ring-offset-1 transition-all"
+                    className="w-8 h-8 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-xs text-white shrink-0 group-hover:ring-2 group-hover:ring-offset-1 transition-all shadow-xs"
                     style={{ backgroundColor: ROLE_COLORS[user.role] ?? "#073b4c" }}
                   >
                     {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
                   </div>
                   <div className="hidden lg:flex flex-col leading-none text-left">
-                    <span className="text-xs font-bold text-[#073b4c] group-hover:underline">{user.name || "My Account"}</span>
-                    <span className="text-[10px] text-[#9aa89b] capitalize mt-0.5">{user.role}</span>
+                    <span className="text-xs font-bold text-[#073b4c] group-hover:underline truncate max-w-[100px]">
+                      {user.name || "My Account"}
+                    </span>
+                    <span className="text-[10px] text-[#006a39] font-bold capitalize mt-0.5">
+                      {user.role}
+                    </span>
                   </div>
                 </button>
                 <button
+                  type="button"
                   onClick={onLogout}
-                  className="hidden sm:inline-block ml-1 text-xs font-bold text-[#c0392b] hover:text-[#9a2e1e] transition-colors whitespace-nowrap"
+                  className="hidden sm:inline-block ml-1 text-xs font-bold text-[#c0392b] hover:text-[#9a2e1e] transition-colors whitespace-nowrap cursor-pointer"
                 >
                   Logout
                 </button>
               </div>
-            ) : (
-              <button className="p-2 rounded-full hover:bg-[#f0f7f0] transition-colors">
-                <AccountIcon />
-              </button>
             )}
           </div>
         </div>
 
-        {/* Mobile Drawer Menu with Search & Links */}
+        {/* Mobile Location Strip */}
+        <div className="md:hidden px-4 py-2 bg-[#f8fafb] border-t border-[#e4ede2] flex items-center justify-between text-xs">
+          <button
+            type="button"
+            onClick={() => setIsLocationModalOpen(true)}
+            className="flex items-center gap-1.5 text-[#073b4c] font-bold truncate cursor-pointer"
+          >
+            <span className="text-[#006a39]">📍</span>
+            <span className="truncate">
+              Deliver to: <strong>{location.area || location.city} ({location.pincode})</strong>
+            </span>
+            <span className="text-[#9aa89b]">▼</span>
+          </button>
+          <span className="text-[10px] font-extrabold text-[#006a39] bg-[#d1fae5] px-2 py-0.5 rounded-full shrink-0">
+            ⚡ 30-min Express
+          </span>
+        </div>
+
+        {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-[#e4ede2] bg-white px-4 py-4 shadow-lg animate-in slide-in-from-top-2 duration-200">
-            {/* Mobile Search */}
-            <div className="mb-4 relative">
-              <div className="relative w-full">
-                <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-[#6d7a6f]">
-                  <SearchIcon />
-                </div>
-                <input
-                  type="text"
-                  value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && searchValue.trim()) {
-                      setMobileMenuOpen(false);
-                      onNavigate("medicines");
-                    }
-                  }}
-                  placeholder="Search medicines, stock, brands…"
-                  className="w-full pl-10 pr-4 py-2.5 bg-[#f0f4f0] border border-transparent rounded-xl text-xs text-[#073b4c] placeholder:text-[#6d7a6f] focus:outline-none focus:bg-white focus:border-[#006a39] transition-all"
-                />
-              </div>
-
-              {searchValue.trim().length > 0 && (
-                <div className="mt-2 bg-white rounded-xl shadow-md border border-[#e4ede2] overflow-hidden max-h-[220px] overflow-y-auto divide-y divide-[#f0f4f0]">
-                  {searchResults.map((p) => {
-                    const isOutOfStock = p.stock <= 0;
-                    const isLow = p.stock > 0 && p.stock <= (isRetailer ? 20 : 10);
-                    return (
-                      <div
-                        key={p.id}
-                        onClick={() => {
-                          handleProductSelect(p);
-                          setMobileMenuOpen(false);
-                        }}
-                        className="p-2.5 flex items-center justify-between text-xs cursor-pointer hover:bg-[#f5fbf2]"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <img src={p.image_url} alt={p.name} className="w-7 h-7 object-contain rounded" />
-                          <span className="font-semibold text-[#073b4c] truncate">{p.name}</span>
-                        </div>
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
-                          isOutOfStock ? "bg-red-100 text-red-700" : isLow ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
-                        }`}>
-                          {isOutOfStock ? "Out" : `${p.stock} in stock`}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <nav className="flex flex-col gap-1">
+          <div className="lg:hidden border-t border-[#e4ede2] bg-white px-4 py-4 shadow-xl animate-in slide-in-from-top-2 duration-200">
+            <nav className="flex flex-col gap-1.5">
               {navLinks.map(({ label, page, isTrack }) => (
                 <button
                   key={label}
+                  type="button"
                   onClick={() => handleNavClick(page, isTrack)}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-colors cursor-pointer ${
+                  className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-bold transition-colors cursor-pointer ${
                     !isTrack && activePage === page
                       ? "bg-[#e8f5ee] text-[#006a39]"
                       : "text-[#3e4a3f] hover:bg-[#f8fafb]"
@@ -456,25 +582,35 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
             </nav>
 
             {user && (
-              <div className="mt-4 pt-3 border-t border-[#f0f4f0] flex flex-col gap-2">
+              <div className="mt-4 pt-4 border-t border-[#f0f4f0] flex flex-col gap-2">
                 <button
-                  onClick={() => { onProfile?.(); setMobileMenuOpen(false); }}
-                  className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[#f8fafb] transition-colors text-left"
+                  type="button"
+                  onClick={() => {
+                    onProfile?.();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#f8fafb] transition-colors text-left"
                 >
                   <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center font-['Manrope',sans-serif] font-bold text-sm text-white shrink-0"
+                    className="w-9 h-9 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-bold text-sm text-white shrink-0"
                     style={{ backgroundColor: ROLE_COLORS[user.role] ?? "#073b4c" }}
                   >
                     {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-[#073b4c] truncate">{user.name}</p>
-                    <p className="text-xs text-[#9aa89b] capitalize">{user.role} · View Profile</p>
+                    <p className="text-xs text-[#006a39] font-semibold capitalize">
+                      {user.role} · View Profile
+                    </p>
                   </div>
                 </button>
                 <button
-                  onClick={() => { onLogout?.(); setMobileMenuOpen(false); }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-sm font-bold text-[#c0392b] hover:bg-[#fee2e2] transition-colors"
+                  type="button"
+                  onClick={() => {
+                    onLogout?.();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-bold text-[#c0392b] hover:bg-[#fee2e2] transition-colors cursor-pointer"
                 >
                   Logout
                 </button>
@@ -484,6 +620,7 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
         )}
       </header>
 
+      {/* Product Detail Modal */}
       {selectedProduct && (
         <ProductDetailModal
           product={selectedProduct}
@@ -491,7 +628,15 @@ export default function NavBar({ activePage, onNavigate, user, onLogout, onProfi
           onClose={() => setSelectedProduct(null)}
         />
       )}
+
+      {/* Location Modal */}
+      <LocationModal
+        isOpen={isLocationModalOpen}
+        onClose={() => setIsLocationModalOpen(false)}
+        currentLocation={location}
+        onLocationChange={(newLoc) => setLocation(newLoc)}
+        userId={user?.id}
+      />
     </>
   );
 }
-
