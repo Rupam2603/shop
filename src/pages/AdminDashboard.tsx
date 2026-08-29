@@ -28,6 +28,23 @@ interface Props {
 
 type AdminTab = "dashboard" | "products" | "inventory" | "orders" | "lab-tests" | "revenue" | "settings";
 
+export type ProductBadge = {
+  id: string;
+  name: string;
+  checked: boolean;
+};
+
+export const DEFAULT_PRODUCT_BADGES: ProductBadge[] = [
+  { id: "featured", name: "Featured Product", checked: true },
+  { id: "rx", name: "Prescription Required (Rx)", checked: false },
+  { id: "cold-chain", name: "Cold-Chain Storage (2°C - 8°C)", checked: false },
+  { id: "bestseller", name: "Best Seller", checked: false },
+  { id: "genuine", name: "100% Genuine Guaranteed", checked: true },
+  { id: "fast-delivery", name: "30-Min Fast Delivery", checked: true },
+  { id: "flash-deal", name: "Flash Sale Deal", checked: false },
+  { id: "bulk-discount", name: "Wholesale Bulk Pack", checked: false },
+];
+
 type Product = {
   id: number;
   dbId?: string;
@@ -42,6 +59,7 @@ type Product = {
   stock: number;
   image?: string;
   details?: string;
+  badges?: ProductBadge[];
 };
 
 type Settings = {
@@ -216,6 +234,7 @@ type ProductFormState = Omit<Product, "id"> & { id?: number };
 const emptyForm = (category = INITIAL_CATEGORIES[0]): ProductFormState => ({
   name: "", category, brand: "", sku: "", hsn: CAT_HSN[category] ?? "", mrp: 0,
   customerPrice: 0, retailerPrice: 0, stock: 0, image: undefined, details: "",
+  badges: DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
 });
 
 /* ─── Product Modal ─── */
@@ -265,17 +284,52 @@ function ProductModal({
     setNewCatName("");
   };
 
+  const currentBadges = form.badges || DEFAULT_PRODUCT_BADGES;
+
+  const handleToggleBadge = (index: number, checked: boolean) => {
+    setForm((p) => {
+      const updated = [...(p.badges || DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })))];
+      updated[index] = { ...updated[index], checked };
+      return { ...p, badges: updated };
+    });
+  };
+
+  const handleUpdateBadgeName = (index: number, name: string) => {
+    setForm((p) => {
+      const updated = [...(p.badges || DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })))];
+      updated[index] = { ...updated[index], name };
+      return { ...p, badges: updated };
+    });
+  };
+
+  const handleAddCustomBadge = () => {
+    setForm((p) => {
+      const updated = [...(p.badges || DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })))];
+      const newId = `custom-badge-${Date.now()}`;
+      updated.push({ id: newId, name: "New Feature Tag", checked: true });
+      return { ...p, badges: updated };
+    });
+  };
+
+  const handleRemoveBadge = (index: number) => {
+    setForm((p) => {
+      const updated = [...(p.badges || DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })))];
+      updated.splice(index, 1);
+      return { ...p, badges: updated };
+    });
+  };
+
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-[560px] shadow-2xl my-4" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl w-full max-w-[580px] shadow-2xl my-4" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-7 py-5 border-b border-[#e4ede2]">
           <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg">
             {mode === "add" ? "Add New Product" : "Edit Product"}
           </h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-[#f0f4f0] flex items-center justify-center hover:bg-[#e4ede2] transition-colors">
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-[#f0f4f0] flex items-center justify-center hover:bg-[#e4ede2] transition-colors cursor-pointer">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1L11 11M11 1L1 11" stroke="#073b4c" strokeWidth="1.5" strokeLinecap="round" /></svg>
           </button>
         </div>
@@ -350,12 +404,21 @@ function ProductModal({
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px]">Category</label>
               <button type="button" onClick={() => setShowAddCat(!showAddCat)}
-                className="text-[10px] font-bold text-[#006a39] hover:underline flex items-center gap-1">
+                className="text-[10px] font-bold text-[#006a39] hover:underline flex items-center gap-1 cursor-pointer">
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1V9M1 5H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
                 Add Category
               </button>
             </div>
-            <select value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+            <select
+              value={form.category}
+              onChange={(e) => {
+                const selected = e.target.value;
+                setForm((p) => ({
+                  ...p,
+                  category: selected,
+                  hsn: CAT_HSN[selected] || p.hsn || "3004",
+                }));
+              }}
               className={INPUT_CLS}>
               {categories.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -447,6 +510,64 @@ function ProductModal({
               onChange={(e) => setForm((p) => ({ ...p, stock: Number(e.target.value) }))}
               placeholder="0" className={INPUT_CLS} />
           </Field>
+
+          {/* ── Custom Feature Badges & Tags (Editable Name Checkboxes) ── */}
+          <div className="bg-[#f8fafb] rounded-2xl p-4 border border-[#e4ede2] flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block">
+                  Product Badges & Tags (Checkboxes)
+                </label>
+                <p className="text-[10px] text-[#6d7a6f]">Toggle checkboxes & edit tag names directly</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddCustomBadge}
+                className="text-[10px] font-bold text-[#006a39] bg-[#eef7f0] hover:bg-[#dcfce7] px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer border border-[#bbf7d0]"
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M5 1V9M1 5H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                + Add Checkbox
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              {currentBadges.map((badge, idx) => (
+                <div
+                  key={badge.id}
+                  className={`flex items-center gap-2 p-2 rounded-xl border transition-all ${
+                    badge.checked
+                      ? "bg-white border-[#006a39] shadow-2xs ring-1 ring-[#006a39]/20"
+                      : "bg-white/70 border-[#e4ede2] opacity-80 hover:opacity-100"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    id={`badge-${badge.id}-${idx}`}
+                    checked={badge.checked}
+                    onChange={(e) => handleToggleBadge(idx, e.target.checked)}
+                    className="w-4 h-4 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39] shrink-0"
+                  />
+                  <input
+                    type="text"
+                    value={badge.name}
+                    onChange={(e) => handleUpdateBadgeName(idx, e.target.value)}
+                    placeholder="Badge Name (Click to edit)"
+                    className="flex-1 bg-transparent text-xs font-semibold text-[#073b4c] focus:outline-none focus:bg-white focus:ring-1 focus:ring-[#006a39] px-1.5 py-0.5 rounded transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveBadge(idx)}
+                    className="w-5 h-5 rounded flex items-center justify-center text-[#9aa89b] hover:text-[#ba1a1a] hover:bg-[#fee2e2] text-xs font-bold transition-colors cursor-pointer shrink-0"
+                    title="Remove this checkbox"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
@@ -704,7 +825,13 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   };
 
   const openAdd = () => { setForm(emptyForm(categories[0])); setModal({ open: true, mode: "add" }); };
-  const openEdit = (p: Product) => { setForm({ ...p }); setModal({ open: true, mode: "edit" }); };
+  const openEdit = (p: Product) => {
+    setForm({
+      ...p,
+      badges: p.badges && p.badges.length > 0 ? p.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
+    });
+    setModal({ open: true, mode: "edit" });
+  };
   const closeModal = () => setModal({ open: false, mode: "add" });
 
   const addCategory = (name: string) => {
@@ -712,6 +839,9 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   };
 
   const saveProduct = async () => {
+    const isFeatured = form.badges?.some((b) => b.id === "featured" && b.checked) ?? false;
+    const isFlashSale = form.badges?.some((b) => b.id === "flash-deal" && b.checked) ?? false;
+
     if (modal.mode === "add") {
       const tempId = Date.now();
       const newProd: Product = { ...form, id: tempId } as Product;
@@ -734,8 +864,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         stock: form.stock || 0,
         image_url: form.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80",
         details: form.details || null,
-        is_flash_sale: false,
-        is_featured: false,
+        is_flash_sale: isFlashSale,
+        is_featured: isFeatured,
       });
 
       if (data) {
