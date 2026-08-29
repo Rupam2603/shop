@@ -223,7 +223,10 @@ function stockStatus(s: number): { label: string; color: string; bg: string } {
 function orderStatus(s: string): { color: string; bg: string } {
   switch (s) {
     case "Delivered": return { color: "#047857", bg: "#d1fae5" };
+    case "Out for Delivery": return { color: "#0284c7", bg: "#e0f2fe" };
     case "Shipped": return { color: "#1d4ed8", bg: "#dbeafe" };
+    case "Dispatched":
+    case "Dispatch": return { color: "#7c3aed", bg: "#ede9fe" };
     case "Processing": return { color: "#d97706", bg: "#fef3c7" };
     case "Cancelled": return { color: "#b91c1c", bg: "#fee2e2" };
     default: return { color: "#374151", bg: "#f3f4f6" };
@@ -813,7 +816,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
   const handleUpdateOrderStatus = async (
     orderId: string,
-    newStatus: "Processing" | "Shipped" | "Delivered" | "Cancelled"
+    newStatus: "Processing" | "Dispatched" | "Shipped" | "Out for Delivery" | "Delivered" | "Cancelled"
   ) => {
     setDbOrders((prev) =>
       prev.map((o) => (o.id === orderId || o.order_number === orderId ? { ...o, status: newStatus } : o))
@@ -2092,16 +2095,34 @@ function OrdersTab({
         {/* Right: Bulk Action Controls */}
         {selectedOrderIds.length > 0 ? (
           <div className="flex items-center flex-wrap gap-2 animate-in fade-in duration-200">
-            <span className="text-xs font-semibold text-[#6d7a6f] hidden md:inline">Bulk Actions:</span>
+            <span className="text-xs font-semibold text-[#6d7a6f] hidden md:inline">Update {selectedOrderIds.length} Orders:</span>
             
             {/* Bulk Status Buttons */}
+            <button
+              type="button"
+              onClick={() => handleBulkStatusUpdate("Dispatched")}
+              className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+            >
+              <span>📦</span>
+              <span>Mark Dispatched</span>
+            </button>
+
             <button
               type="button"
               onClick={() => handleBulkStatusUpdate("Shipped")}
               className="bg-[#0369a1] hover:bg-[#0284c7] text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer flex items-center gap-1"
             >
               <span>🚚</span>
-              <span>Mark Shipped ({selectedOrderIds.length})</span>
+              <span>Mark Shipped</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleBulkStatusUpdate("Out for Delivery")}
+              className="bg-[#0284c7] hover:bg-[#0369a1] text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+            >
+              <span>🛵</span>
+              <span>Out for Delivery</span>
             </button>
 
             <button
@@ -2112,6 +2133,23 @@ function OrdersTab({
               <span>✅</span>
               <span>Mark Delivered</span>
             </button>
+
+            {/* Quick Status Dropdown */}
+            <select
+              onChange={(e) => {
+                if (e.target.value) handleBulkStatusUpdate(e.target.value as any);
+              }}
+              defaultValue=""
+              className="text-xs font-bold bg-[#f8fafb] border border-[#d2e0cf] rounded-xl px-2 py-1.5 text-[#073b4c] focus:outline-none focus:border-[#006a39] cursor-pointer"
+            >
+              <option value="" disabled>More Status...</option>
+              <option value="Processing">Processing ⏳</option>
+              <option value="Dispatched">Dispatched 📦</option>
+              <option value="Shipped">Shipped 🚚</option>
+              <option value="Out for Delivery">Out for Delivery 🛵</option>
+              <option value="Delivered">Delivered ✅</option>
+              <option value="Cancelled">Cancelled ❌</option>
+            </select>
 
             <button
               type="button"
@@ -2133,7 +2171,7 @@ function OrdersTab({
           </div>
         ) : (
           <div className="text-xs text-[#9aa89b] font-medium hidden sm:block">
-            Tip: Check individual orders or click "Select All" to perform bulk status updates or batch printing.
+            Tip: Check individual orders or click "Select All" to update delivery status to Dispatched, Shipped, Delivered or batch print.
           </div>
         )}
       </div>
@@ -2156,8 +2194,8 @@ function OrdersTab({
                 key={group.date}
                 className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden shadow-xs"
               >
-                {/* Day Header Banner with Day Selection Checkbox */}
-                <div className="bg-[#f0f7f0] border-b border-[#d8ead8] px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                {/* Day Header Banner with Day Selection Checkbox & Delivery Status Update Section */}
+                <div className="bg-[#f0f7f0] border-b border-[#d8ead8] px-4 sm:px-6 py-3.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5">
                     <input
                       type="checkbox"
@@ -2182,7 +2220,7 @@ function OrdersTab({
                     </div>
                   </div>
 
-                  {/* Day Summary Badges & 1-Click Day Report Button */}
+                  {/* Day Summary Badges, Status Update Section, and 1-Click Day Report Button */}
                   <div className="flex items-center flex-wrap gap-2 text-xs">
                     <span className="bg-white border border-[#c3dec0] text-[#006a39] font-black px-2.5 py-1 rounded-xl shadow-2xs">
                       Day Total: ₹{group.totalAmount.toLocaleString()}
@@ -2197,6 +2235,33 @@ function OrdersTab({
                         {group.deliveredCount} Delivered
                       </span>
                     )}
+
+                    {/* ── Day Delivery Status Update Section ── */}
+                    <div className="flex items-center gap-1.5 bg-white border border-[#bbf7d0] rounded-xl px-2.5 py-1 shadow-2xs">
+                      <span className="text-[11px] font-extrabold text-[#006a39]">Status:</span>
+                      <select
+                        onChange={(e) => {
+                          const newSt = e.target.value as any;
+                          if (newSt) {
+                            for (const item of group.items) {
+                              onUpdateStatus?.(item.dbId || item.id, newSt);
+                            }
+                          }
+                          e.target.value = "";
+                        }}
+                        defaultValue=""
+                        className="bg-transparent text-xs font-bold text-[#073b4c] focus:outline-none cursor-pointer"
+                        title="Update all orders on this date"
+                      >
+                        <option value="" disabled>Update Day ({group.items.length}) ▾</option>
+                        <option value="Processing">Processing ⏳</option>
+                        <option value="Dispatched">Dispatched 📦</option>
+                        <option value="Shipped">Shipped 🚚</option>
+                        <option value="Out for Delivery">Out for Delivery 🛵</option>
+                        <option value="Delivered">Delivered ✅</option>
+                        <option value="Cancelled">Cancelled ❌</option>
+                      </select>
+                    </div>
 
                     <button
                       type="button"
@@ -2279,7 +2344,7 @@ function OrdersTab({
                           </div>
                         </div>
 
-                        {/* Middle: Amount & Status */}
+                        {/* Middle: Amount & Status Dropdown with Dispatched & Out for Delivery */}
                         <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 border-t md:border-t-0 pt-2 md:pt-0 border-[#f0f4f0]">
                           <div className="text-left md:text-right">
                             <p className="font-['Manrope',sans-serif] font-black text-sm sm:text-base text-[#073b4c]">
@@ -2299,13 +2364,15 @@ function OrdersTab({
                             onChange={(e) =>
                               onUpdateStatus?.(
                                 o.dbId || o.id,
-                                e.target.value as "Processing" | "Shipped" | "Delivered" | "Cancelled"
+                                e.target.value as any
                               )
                             }
                             className="text-xs font-bold bg-[#f8fafb] border border-[#d2e0cf] rounded-xl px-2.5 py-1.5 text-[#073b4c] focus:outline-none focus:border-[#006a39] cursor-pointer shadow-2xs"
                           >
                             <option value="Processing">Processing</option>
+                            <option value="Dispatched">Dispatched</option>
                             <option value="Shipped">Shipped</option>
+                            <option value="Out for Delivery">Out for Delivery</option>
                             <option value="Delivered">Delivered</option>
                             <option value="Cancelled">Cancelled</option>
                           </select>

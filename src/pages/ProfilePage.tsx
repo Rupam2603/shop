@@ -35,11 +35,14 @@ const RETAILER_ORDERS = [
 
 function orderStatusStyle(s: string): { color: string; bg: string } {
   switch (s) {
-    case "Delivered":  return { color: "#047857", bg: "#d1fae5" };
-    case "Shipped":    return { color: "#1d4ed8", bg: "#dbeafe" };
-    case "Processing": return { color: "#d97706", bg: "#fef3c7" };
-    case "Cancelled":  return { color: "#b91c1c", bg: "#fee2e2" };
-    default:           return { color: "#374151", bg: "#f3f4f6" };
+    case "Delivered":        return { color: "#047857", bg: "#d1fae5" };
+    case "Out for Delivery": return { color: "#0284c7", bg: "#e0f2fe" };
+    case "Shipped":          return { color: "#1d4ed8", bg: "#dbeafe" };
+    case "Dispatched":
+    case "Dispatch":         return { color: "#7c3aed", bg: "#ede9fe" };
+    case "Processing":       return { color: "#d97706", bg: "#fef3c7" };
+    case "Cancelled":        return { color: "#b91c1c", bg: "#fee2e2" };
+    default:                 return { color: "#374151", bg: "#f3f4f6" };
   }
 }
 

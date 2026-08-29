@@ -2,6 +2,14 @@ import { supabase } from "./supabase";
 import { DbAddress, getEffectiveUserId } from "./addresses";
 import { CartItem } from "../contexts/CartContext";
 
+export type OrderStatus =
+  | "Processing"
+  | "Dispatched"
+  | "Shipped"
+  | "Out for Delivery"
+  | "Delivered"
+  | "Cancelled";
+
 export interface DbOrder {
   id: string;
   order_number: string;
@@ -12,7 +20,7 @@ export interface DbOrder {
   total_amount: number;
   payment_method: string;
   payment_status: string;
-  status: "Processing" | "Shipped" | "Delivered" | "Cancelled";
+  status: OrderStatus;
   created_at: string;
   updated_at: string;
   order_items?: DbOrderItem[];
@@ -271,7 +279,7 @@ export async function fetchAllOrders(): Promise<DbOrder[]> {
  */
 export async function updateOrderStatus(
   orderId: string,
-  status: "Processing" | "Shipped" | "Delivered" | "Cancelled"
+  status: OrderStatus
 ): Promise<{ error: string | null }> {
   if (status === "Cancelled") {
     try {
