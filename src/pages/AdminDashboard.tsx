@@ -21,6 +21,9 @@ import { fetchAllLabBookings, updateLabBookingStatus as dbUpdateLabBookingStatus
 import {
   fetchAllRetailers,
   updateRetailerApprovalStatus,
+  deleteRetailer,
+  deleteMultipleRetailers,
+  bulkUpdateRetailerApprovalStatus,
   subscribeToRetailersRealtime,
   RetailerAccount,
 } from "../lib/retailers";
@@ -923,6 +926,36 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     await updateRetailerApprovalStatus(retailerId, newStatus);
   };
 
+  const handleDeleteRetailer = async (retailerId: string) => {
+    setRetailers((prev) =>
+      prev.filter((r) => r.id !== retailerId && r.email.toLowerCase() !== retailerId.toLowerCase())
+    );
+    await deleteRetailer(retailerId);
+  };
+
+  const handleBulkDeleteRetailers = async (retailerIds: string[]) => {
+    const idSet = new Set(retailerIds.map((i) => i.toLowerCase()));
+    setRetailers((prev) =>
+      prev.filter((r) => !idSet.has(r.id.toLowerCase()) && !idSet.has(r.email.toLowerCase()))
+    );
+    await deleteMultipleRetailers(retailerIds);
+  };
+
+  const handleBulkUpdateRetailers = async (
+    retailerIds: string[],
+    newStatus: "pending" | "approved" | "rejected"
+  ) => {
+    const idSet = new Set(retailerIds.map((i) => i.toLowerCase()));
+    setRetailers((prev) =>
+      prev.map((r) =>
+        idSet.has(r.id.toLowerCase()) || idSet.has(r.email.toLowerCase())
+          ? { ...r, approvalStatus: newStatus }
+          : r
+      )
+    );
+    await bulkUpdateRetailerApprovalStatus(retailerIds, newStatus);
+  };
+
   const handleRefreshRetailers = async () => {
     setIsRefreshingRetailers(true);
     try {
@@ -1217,6 +1250,9 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             <RetailersTab
               retailers={retailers}
               onUpdateApproval={handleUpdateRetailerApproval}
+              onDeleteRetailer={handleDeleteRetailer}
+              onBulkDeleteRetailers={handleBulkDeleteRetailers}
+              onBulkUpdateApproval={handleBulkUpdateRetailers}
               onRefresh={handleRefreshRetailers}
               isRefreshing={isRefreshingRetailers}
             />
@@ -2961,20 +2997,30 @@ function OrdersTab({
   );
 }
 
-/* ─── Retailers Tab (Role-Based Approvals Management) ─── */
+/* ─── Retailers Tab (Role-Based Approvals & Management) ─── */
 function RetailersTab({
   retailers,
   onUpdateApproval,
+  onDeleteRetailer,
+  onBulkDeleteRetailers,
+  onBulkUpdateApproval,
   onRefresh,
   isRefreshing = false,
 }: {
   retailers: RetailerAccount[];
   onUpdateApproval: (retailerId: string, status: "pending" | "approved" | "rejected") => void;
+  onDeleteRetailer?: (retailerId: string) => Promise<void>;
+  onBulkDeleteRetailers?: (retailerIds: string[]) => Promise<void>;
+  onBulkUpdateApproval?: (retailerIds: string[], status: "pending" | "approved" | "rejected") => Promise<void>;
   onRefresh: () => void;
   isRefreshing?: boolean;
 }) {
   const [filter, setFilter] = useState<"All" | "pending" | "approved" | "rejected">("All");
   const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteModalRetailer, setDeleteModalRetailer] = useState<RetailerAccount | null>(null);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const pendingCount = useMemo(() => retailers.filter((r) => r.approvalStatus === "pending").length, [retailers]);
   const approvedCount = useMemo(() => retailers.filter((r) => r.approvalStatus === "approved").length, [retailers]);
@@ -2985,9 +3031,9 @@ function RetailersTab({
       if (filter !== "All" && r.approvalStatus !== filter) return false;
       if (search.trim() !== "") {
         const q = search.toLowerCase();
-        const matchShop = r.shopName.toLowerCase().includes(q);
-        const matchName = r.fullName.toLowerCase().includes(q);
-        const matchEmail = r.email.toLowerCase().includes(q);
+        const matchShop = (r.shopName || "").toLowerCase().includes(q);
+        const matchName = (r.fullName || "").toLowerCase().includes(q);
+        const matchEmail = (r.email || "").toLowerCase().includes(q);
         const matchPhone = r.phone ? r.phone.includes(q) : false;
         if (!matchShop && !matchName && !matchEmail && !matchPhone) return false;
       }
@@ -2995,25 +3041,91 @@ function RetailersTab({
     });
   }, [retailers, filter, search]);
 
+  const isAllSelected = filteredRetailers.length > 0 && selectedIds.length === filteredRetailers.length;
+  const isPartiallySelected = selectedIds.length > 0 && selectedIds.length < filteredRetailers.length;
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredRetailers.map((r) => r.id));
+    }
+  };
+
+  const handleToggleSelectRow = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkStatusChange = async (status: "pending" | "approved" | "rejected") => {
+    if (selectedIds.length === 0 || isProcessing) return;
+    setIsProcessing(true);
+    try {
+      if (onBulkUpdateApproval) {
+        await onBulkUpdateApproval(selectedIds, status);
+      } else {
+        for (const id of selectedIds) {
+          onUpdateApproval(id, status);
+        }
+      }
+      setSelectedIds([]);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleConfirmSingleDelete = async () => {
+    if (!deleteModalRetailer || isProcessing) return;
+    setIsProcessing(true);
+    try {
+      if (onDeleteRetailer) {
+        await onDeleteRetailer(deleteModalRetailer.id);
+      }
+      setSelectedIds((prev) => prev.filter((id) => id !== deleteModalRetailer.id));
+      setDeleteModalRetailer(null);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    if (selectedIds.length === 0 || isProcessing) return;
+    setIsProcessing(true);
+    try {
+      if (onBulkDeleteRetailers) {
+        await onBulkDeleteRetailers(selectedIds);
+      } else if (onDeleteRetailer) {
+        for (const id of selectedIds) {
+          await onDeleteRetailer(id);
+        }
+      }
+      setSelectedIds([]);
+      setConfirmBulkDelete(false);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const getStatusBadge = (status: "pending" | "approved" | "rejected") => {
     switch (status) {
       case "approved":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-extrabold bg-[#d1fae5] text-[#047857] border border-[#a7f3d0]">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-[#d1fae5] text-[#047857] border border-[#a7f3d0] whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-[#047857]" />
             Approved & Active
           </span>
         );
       case "pending":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-extrabold bg-[#fef3c7] text-[#d97706] border border-[#fde68a] animate-pulse">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-[#fef3c7] text-[#d97706] border border-[#fde68a] animate-pulse whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-[#d97706]" />
             Pending Approval
           </span>
         );
       case "rejected":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-extrabold bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca]">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-[#b91c1c]" />
             Declined / Suspended
           </span>
@@ -3022,38 +3134,38 @@ function RetailersTab({
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5 sm:gap-6 w-full max-w-full overflow-hidden">
       {/* ── Summary KPI Cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Retailers */}
         <div
           onClick={() => setFilter("All")}
-          className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+          className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
             filter === "All"
               ? "bg-[#073b4c] text-white border-[#073b4c] shadow-md ring-2 ring-[#073b4c]/20"
               : "bg-white text-[#073b4c] border-[#e4ede2] hover:border-[#073b4c]/30"
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className={`text-xs font-bold uppercase tracking-wider ${filter === "All" ? "text-white/70" : "text-[#9aa89b]"}`}>
+            <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider ${filter === "All" ? "text-white/70" : "text-[#9aa89b]"}`}>
               Total Retailers
             </span>
-            <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${filter === "All" ? "bg-white/20 text-white" : "bg-[#f0f4f0] text-[#073b4c]"}`}>
-              {retailers.length} registered
+            <span className={`text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-full ${filter === "All" ? "bg-white/20 text-white" : "bg-[#f0f4f0] text-[#073b4c]"}`}>
+              {retailers.length}
             </span>
           </div>
           <p className={`font-['Manrope',sans-serif] font-extrabold text-2xl sm:text-3xl ${filter === "All" ? "text-white" : "text-[#073b4c]"}`}>
             {retailers.length}
           </p>
-          <p className={`text-xs mt-1.5 ${filter === "All" ? "text-white/60" : "text-[#6d7a6f]"}`}>
-            Platform wholesale partners
+          <p className={`text-[11px] mt-1 truncate ${filter === "All" ? "text-white/60" : "text-[#6d7a6f]"}`}>
+            Wholesale partners
           </p>
         </div>
 
         {/* Pending Approvals */}
         <div
           onClick={() => setFilter("pending")}
-          className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+          className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
             filter === "pending"
               ? "bg-[#d97706] text-white border-[#d97706] shadow-md ring-2 ring-[#d97706]/30"
               : "bg-white text-[#073b4c] border-[#e4ede2] hover:border-[#d97706]/40"
@@ -3061,27 +3173,27 @@ function RetailersTab({
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
-              <span className="text-base">⏳</span>
-              <span className={`text-xs font-bold uppercase tracking-wider ${filter === "pending" ? "text-white/80" : "text-[#d97706]"}`}>
-                Pending Approvals
+              <span className="text-sm sm:text-base">⏳</span>
+              <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider ${filter === "pending" ? "text-white/80" : "text-[#d97706]"}`}>
+                Pending
               </span>
             </div>
-            <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${filter === "pending" ? "bg-white/20 text-white" : "bg-[#fef3c7] text-[#d97706]"}`}>
-              {pendingCount} action req.
+            <span className={`text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-full ${filter === "pending" ? "bg-white/20 text-white" : "bg-[#fef3c7] text-[#d97706]"}`}>
+              {pendingCount}
             </span>
           </div>
           <p className={`font-['Manrope',sans-serif] font-extrabold text-2xl sm:text-3xl ${filter === "pending" ? "text-white" : "text-[#d97706]"}`}>
             {pendingCount}
           </p>
-          <p className={`text-xs mt-1.5 ${filter === "pending" ? "text-white/70" : "text-[#6d7a6f]"}`}>
-            {pendingCount > 0 ? "Requires admin review" : "All applications reviewed"}
+          <p className={`text-[11px] mt-1 truncate ${filter === "pending" ? "text-white/70" : "text-[#6d7a6f]"}`}>
+            {pendingCount > 0 ? "Requires manual approval" : "All reviewed"}
           </p>
         </div>
 
         {/* Approved Retailers */}
         <div
           onClick={() => setFilter("approved")}
-          className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+          className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
             filter === "approved"
               ? "bg-[#006a39] text-white border-[#006a39] shadow-md ring-2 ring-[#006a39]/30"
               : "bg-white text-[#073b4c] border-[#e4ede2] hover:border-[#006a39]/40"
@@ -3089,27 +3201,27 @@ function RetailersTab({
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
-              <span className="text-base">✅</span>
-              <span className={`text-xs font-bold uppercase tracking-wider ${filter === "approved" ? "text-white/80" : "text-[#006a39]"}`}>
-                Active Retailers
+              <span className="text-sm sm:text-base">✅</span>
+              <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider ${filter === "approved" ? "text-white/80" : "text-[#006a39]"}`}>
+                Approved
               </span>
             </div>
-            <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${filter === "approved" ? "bg-white/20 text-white" : "bg-[#d1fae5] text-[#006a39]"}`}>
-              {approvedCount} active
+            <span className={`text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-full ${filter === "approved" ? "bg-white/20 text-white" : "bg-[#d1fae5] text-[#006a39]"}`}>
+              {approvedCount}
             </span>
           </div>
           <p className={`font-['Manrope',sans-serif] font-extrabold text-2xl sm:text-3xl ${filter === "approved" ? "text-white" : "text-[#006a39]"}`}>
             {approvedCount}
           </p>
-          <p className={`text-xs mt-1.5 ${filter === "approved" ? "text-white/70" : "text-[#6d7a6f]"}`}>
-            Full login & wholesale ordering access
+          <p className={`text-[11px] mt-1 truncate ${filter === "approved" ? "text-white/70" : "text-[#6d7a6f]"}`}>
+            Active wholesale access
           </p>
         </div>
 
         {/* Declined / Suspended */}
         <div
           onClick={() => setFilter("rejected")}
-          className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+          className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
             filter === "rejected"
               ? "bg-[#b91c1c] text-white border-[#b91c1c] shadow-md ring-2 ring-[#b91c1c]/30"
               : "bg-white text-[#073b4c] border-[#e4ede2] hover:border-[#b91c1c]/40"
@@ -3117,31 +3229,31 @@ function RetailersTab({
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
-              <span className="text-base">❌</span>
-              <span className={`text-xs font-bold uppercase tracking-wider ${filter === "rejected" ? "text-white/80" : "text-[#b91c1c]"}`}>
-                Declined / Suspended
+              <span className="text-sm sm:text-base">❌</span>
+              <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider ${filter === "rejected" ? "text-white/80" : "text-[#b91c1c]"}`}>
+                Declined
               </span>
             </div>
-            <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${filter === "rejected" ? "bg-white/20 text-white" : "bg-[#fee2e2] text-[#b91c1c]"}`}>
+            <span className={`text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-full ${filter === "rejected" ? "bg-white/20 text-white" : "bg-[#fee2e2] text-[#b91c1c]"}`}>
               {rejectedCount}
             </span>
           </div>
           <p className={`font-['Manrope',sans-serif] font-extrabold text-2xl sm:text-3xl ${filter === "rejected" ? "text-white" : "text-[#b91c1c]"}`}>
             {rejectedCount}
           </p>
-          <p className={`text-xs mt-1.5 ${filter === "rejected" ? "text-white/70" : "text-[#6d7a6f]"}`}>
-            Blocked from logging in
+          <p className={`text-[11px] mt-1 truncate ${filter === "rejected" ? "text-white/70" : "text-[#6d7a6f]"}`}>
+            Blocked access
           </p>
         </div>
       </div>
 
       {/* ── Toolbar: Filter Tabs, Search & Dedicated Reload Button ── */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-[#e4ede2]">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-[#e4ede2]">
         {/* Status Filter Tabs */}
         <div className="flex items-center gap-1 bg-[#f0f4f0] p-1 rounded-xl overflow-x-auto no-scrollbar">
           <button
             onClick={() => setFilter("All")}
-            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               filter === "All" ? "bg-white text-[#073b4c] shadow-xs" : "text-[#6d7a6f] hover:text-[#073b4c]"
             }`}
           >
@@ -3149,7 +3261,7 @@ function RetailersTab({
           </button>
           <button
             onClick={() => setFilter("pending")}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               filter === "pending" ? "bg-[#d97706] text-white shadow-xs" : "text-[#6d7a6f] hover:text-[#d97706]"
             }`}
           >
@@ -3160,7 +3272,7 @@ function RetailersTab({
           </button>
           <button
             onClick={() => setFilter("approved")}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               filter === "approved" ? "bg-[#006a39] text-white shadow-xs" : "text-[#6d7a6f] hover:text-[#006a39]"
             }`}
           >
@@ -3171,7 +3283,7 @@ function RetailersTab({
           </button>
           <button
             onClick={() => setFilter("rejected")}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               filter === "rejected" ? "bg-[#b91c1c] text-white shadow-xs" : "text-[#6d7a6f] hover:text-[#b91c1c]"
             }`}
           >
@@ -3184,16 +3296,16 @@ function RetailersTab({
 
         {/* Right: Search & Dedicated Reload Button */}
         <div className="flex items-center gap-2 flex-1 max-w-lg">
-          <div className="relative flex-1">
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa89b]">
+          <div className="relative flex-1 min-w-0">
+            <svg width="14" height="14" viewBox="0 0 15 15" fill="none" className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa89b]">
               <path d="M13 13L10 10M11.5 6.5C11.5 9.26 9.26 11.5 6.5 11.5C3.74 11.5 1.5 9.26 1.5 6.5C1.5 3.74 3.74 1.5 6.5 1.5C9.26 1.5 11.5 3.74 11.5 6.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search shop, retailer name, email, phone…"
-              className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-[#f8fafb] border border-[#e4ede2] rounded-xl focus:outline-none focus:border-[#073b4c]"
+              placeholder="Search shop, name, email, phone…"
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#f8fafb] border border-[#e4ede2] rounded-xl focus:outline-none focus:border-[#073b4c]"
             />
           </div>
 
@@ -3201,7 +3313,7 @@ function RetailersTab({
             type="button"
             onClick={onRefresh}
             disabled={isRefreshing}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95 ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95 ${
               isRefreshing
                 ? "bg-[#e8f5ee] text-[#006a39] border-[#bbf7d0] cursor-not-allowed"
                 : "bg-white text-[#073b4c] border-[#e4ede2] hover:bg-[#f0f7ee] hover:border-[#006a39]/40 hover:text-[#006a39]"
@@ -3214,155 +3326,334 @@ function RetailersTab({
         </div>
       </div>
 
-      {/* ── Retailers List Table ── */}
-      <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" style={{ minWidth: "850px" }}>
-            <thead>
-              <tr className="border-b border-[#e4ede2] bg-[#f8fafb]">
-                <th className="text-left px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px]">
-                  Shop & Business
-                </th>
-                <th className="text-left px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px]">
-                  Owner / Contact
-                </th>
-                <th className="text-left px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px]">
-                  Registration Date
-                </th>
-                <th className="text-left px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px]">
-                  Status
-                </th>
-                <th className="text-right px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px]">
-                  Approval Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRetailers.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-[#9aa89b]">
-                    <div className="text-3xl mb-2">🏪</div>
-                    <p className="text-sm font-semibold text-[#073b4c]">No retailers found</p>
-                    <p className="text-xs text-[#9aa89b] mt-0.5">Try adjusting your search query or status filter.</p>
-                  </td>
-                </tr>
-              ) : (
-                filteredRetailers.map((r) => {
-                  const regDate = new Date(r.createdAt);
-                  const regDateStr = !isNaN(regDate.getTime())
-                    ? regDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
-                    : "Recent";
+      {/* ── Selection & Bulk Actions Floating Bar ── */}
+      {selectedIds.length > 0 && (
+        <div className="bg-[#073b4c] text-white p-3 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-lg border border-[#0a5568] animate-in slide-in-from-top-2 duration-150">
+          <div className="flex items-center gap-2">
+            <span className="bg-white/20 text-white text-xs font-extrabold px-2.5 py-1 rounded-lg">
+              {selectedIds.length} Selected
+            </span>
+            <p className="text-xs text-white/80 hidden sm:inline">
+              Bulk actions for selected retailer applications
+            </p>
+          </div>
 
-                  return (
-                    <tr
-                      key={r.id}
-                      className="border-b border-[#f0f4f0] last:border-0 hover:bg-[#fafcfa] transition-colors"
-                    >
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#e0f2fe] text-[#0369a1] flex items-center justify-center font-bold text-lg shrink-0">
-                            🏪
-                          </div>
-                          <div>
-                            <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm leading-tight">
-                              {r.shopName}
-                            </p>
-                            <span className="inline-block text-[10px] bg-[#f0f4f0] text-[#6d7a6f] px-2 py-0.5 rounded font-mono mt-1">
-                              ID: {r.id.slice(0, 16)}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <p className="font-semibold text-[#073b4c] text-xs sm:text-sm">{r.fullName}</p>
-                        <p className="text-[#6d7a6f] text-xs mt-0.5">{r.email}</p>
-                        {r.phone && <p className="text-[#9aa89b] text-[11px] mt-0.5">{r.phone}</p>}
-                      </td>
-
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <p className="text-xs font-semibold text-[#073b4c]">{regDateStr}</p>
-                        <p className="text-[10px] text-[#9aa89b]">Role: Retailer</p>
-                      </td>
-
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        {getStatusBadge(r.approvalStatus)}
-                      </td>
-
-                      <td className="px-4 py-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-2">
-                          {r.approvalStatus === "pending" && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => onUpdateApproval(r.id, "approved")}
-                                className="px-3.5 py-1.5 rounded-xl bg-[#006a39] hover:bg-[#005a30] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
-                                title="Approve retailer to grant immediate login access"
-                              >
-                                <span>✅</span>
-                                <span>Approve Retailer</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => onUpdateApproval(r.id, "rejected")}
-                                className="px-3 py-1.5 rounded-xl border border-[#fecaca] bg-[#fff5f5] hover:bg-[#fee2e2] text-[#b91c1c] text-xs font-bold transition-all cursor-pointer"
-                                title="Decline this retailer registration"
-                              >
-                                <span>❌ Decline</span>
-                              </button>
-                            </>
-                          )}
-
-                          {r.approvalStatus === "approved" && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => onUpdateApproval(r.id, "pending")}
-                                className="px-3 py-1.5 rounded-xl border border-[#e4ede2] bg-white hover:bg-[#fef3c7] text-[#d97706] text-xs font-bold transition-all cursor-pointer"
-                                title="Set back to pending verification"
-                              >
-                                <span>⏳ Set Pending</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => onUpdateApproval(r.id, "rejected")}
-                                className="px-3 py-1.5 rounded-xl border border-[#fecaca] bg-white hover:bg-[#fee2e2] text-[#b91c1c] text-xs font-bold transition-all cursor-pointer"
-                                title="Suspend retailer access"
-                              >
-                                <span>Suspend</span>
-                              </button>
-                            </>
-                          )}
-
-                          {r.approvalStatus === "rejected" && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => onUpdateApproval(r.id, "approved")}
-                                className="px-3.5 py-1.5 rounded-xl bg-[#006a39] hover:bg-[#005a30] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
-                                title="Approve and reinstate retailer access"
-                              >
-                                <span>✅ Approve</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => onUpdateApproval(r.id, "pending")}
-                                className="px-3 py-1.5 rounded-xl border border-[#e4ede2] bg-white hover:bg-[#f0f4f0] text-[#6d7a6f] text-xs font-bold transition-all cursor-pointer"
-                              >
-                                <span>Set Pending</span>
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+          <div className="flex items-center flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => handleBulkStatusChange("approved")}
+              className="px-3 py-1.5 rounded-xl bg-[#006a39] hover:bg-[#005a30] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-95"
+            >
+              <span>✅ Approve Selected ({selectedIds.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBulkStatusChange("pending")}
+              className="px-3 py-1.5 rounded-xl bg-[#d97706] hover:bg-[#b45309] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-95"
+            >
+              <span>⏳ Set Pending</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmBulkDelete(true)}
+              className="px-3 py-1.5 rounded-xl bg-[#b91c1c] hover:bg-[#991b1b] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-95"
+            >
+              <span>🗑️ Delete Selected ({selectedIds.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
+            >
+              Clear Selection
+            </button>
+          </div>
         </div>
+      )}
+
+      {/* ── Retailers List Table (Zero Horizontal Scrollbar, Responsive Fluid Layout) ── */}
+      <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden shadow-xs w-full">
+        <table className="w-full text-left border-collapse table-auto">
+          <thead>
+            <tr className="border-b border-[#e4ede2] bg-[#f8fafb]">
+              <th className="w-10 px-3 py-3 text-center">
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = isPartiallySelected;
+                  }}
+                  onChange={handleToggleSelectAll}
+                  className="w-4 h-4 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39]"
+                  title="Select / Deselect all visible retailers"
+                />
+              </th>
+              <th className="px-3 py-3 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px]">
+                Shop & Retailer Details
+              </th>
+              <th className="px-3 py-3 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px] hidden md:table-cell">
+                Contact
+              </th>
+              <th className="px-3 py-3 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px] hidden lg:table-cell">
+                Registered
+              </th>
+              <th className="px-3 py-3 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px]">
+                Approval Status
+              </th>
+              <th className="px-3 py-3 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px] text-right">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#f0f4f0]">
+            {filteredRetailers.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center text-[#9aa89b]">
+                  <div className="text-3xl mb-2">🏪</div>
+                  <p className="text-sm font-semibold text-[#073b4c]">No retailers found</p>
+                  <p className="text-xs text-[#9aa89b] mt-0.5">Try adjusting your search query or status filter.</p>
+                </td>
+              </tr>
+            ) : (
+              filteredRetailers.map((r) => {
+                const regDate = new Date(r.createdAt);
+                const regDateStr = !isNaN(regDate.getTime())
+                  ? regDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+                  : "Recent";
+                const isSelected = selectedIds.includes(r.id);
+
+                return (
+                  <tr
+                    key={r.id}
+                    className={`transition-colors hover:bg-[#fafcfa] ${
+                      isSelected ? "bg-[#f0fdf4]" : ""
+                    }`}
+                  >
+                    {/* Checkbox */}
+                    <td className="w-10 px-3 py-3 text-center align-middle">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleToggleSelectRow(r.id)}
+                        className="w-4 h-4 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39]"
+                      />
+                    </td>
+
+                    {/* Shop & Retailer Info */}
+                    <td className="px-3 py-3 align-middle">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-[#e0f2fe] text-[#0369a1] flex items-center justify-center font-bold text-base shrink-0">
+                          🏪
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xs sm:text-sm leading-tight truncate">
+                            {r.shopName || "Medical Store"}
+                          </p>
+                          <p className="text-[11px] text-[#6d7a6f] truncate font-medium">
+                            {r.fullName}
+                          </p>
+                          {/* Mobile-only contact snippet */}
+                          <div className="md:hidden mt-0.5 text-[10px] text-[#9aa89b] truncate">
+                            {r.email} {r.phone ? `• ${r.phone}` : ""}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Contact Info (Desktop) */}
+                    <td className="px-3 py-3 align-middle hidden md:table-cell">
+                      <p className="text-xs text-[#073b4c] font-medium truncate max-w-[200px]" title={r.email}>
+                        {r.email}
+                      </p>
+                      {r.phone && (
+                        <p className="text-[11px] text-[#9aa89b] font-mono mt-0.5 truncate">
+                          {r.phone}
+                        </p>
+                      )}
+                    </td>
+
+                    {/* Registration Date (Desktop) */}
+                    <td className="px-3 py-3 align-middle hidden lg:table-cell">
+                      <p className="text-xs font-semibold text-[#073b4c]">{regDateStr}</p>
+                      <span className="text-[10px] text-[#9aa89b]">Role: Retailer</span>
+                    </td>
+
+                    {/* Approval Status Badge */}
+                    <td className="px-3 py-3 align-middle">
+                      {getStatusBadge(r.approvalStatus)}
+                    </td>
+
+                    {/* Actions: Manual Approve/Reject/Delete */}
+                    <td className="px-3 py-3 text-right align-middle">
+                      <div className="flex items-center justify-end flex-wrap gap-1.5">
+                        {r.approvalStatus === "pending" && (
+                          <button
+                            type="button"
+                            onClick={() => onUpdateApproval(r.id, "approved")}
+                            className="px-2.5 py-1.5 rounded-lg bg-[#006a39] hover:bg-[#005a30] text-white text-[11px] font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-95 whitespace-nowrap"
+                            title="Manually approve this retailer to grant login access"
+                          >
+                            <span>✅ Approve</span>
+                          </button>
+                        )}
+
+                        {r.approvalStatus === "approved" && (
+                          <button
+                            type="button"
+                            onClick={() => onUpdateApproval(r.id, "pending")}
+                            className="px-2.5 py-1.5 rounded-lg border border-[#e4ede2] bg-white hover:bg-[#fef3c7] text-[#d97706] text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap"
+                            title="Set back to pending verification"
+                          >
+                            <span>⏳ Set Pending</span>
+                          </button>
+                        )}
+
+                        {r.approvalStatus === "rejected" && (
+                          <button
+                            type="button"
+                            onClick={() => onUpdateApproval(r.id, "approved")}
+                            className="px-2.5 py-1.5 rounded-lg bg-[#006a39] hover:bg-[#005a30] text-white text-[11px] font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-95 whitespace-nowrap"
+                            title="Reinstate and approve retailer access"
+                          >
+                            <span>✅ Approve</span>
+                          </button>
+                        )}
+
+                        {r.approvalStatus !== "rejected" && (
+                          <button
+                            type="button"
+                            onClick={() => onUpdateApproval(r.id, "rejected")}
+                            className="px-2 py-1.5 rounded-lg border border-[#fecaca] bg-white hover:bg-[#fee2e2] text-[#b91c1c] text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap"
+                            title="Decline / Suspend this retailer"
+                          >
+                            <span>Decline</span>
+                          </button>
+                        )}
+
+                        {/* Individual Delete Button */}
+                        <button
+                          type="button"
+                          onClick={() => setDeleteModalRetailer(r)}
+                          className="px-2 py-1.5 rounded-lg border border-[#fee2e2] bg-[#fff5f5] hover:bg-[#fee2e2] text-[#b91c1c] text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap"
+                          title="Permanently delete this retailer account"
+                        >
+                          <span>🗑️ Delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
       </div>
+
+      {/* ── Single Retailer Delete Confirmation Modal ── */}
+      {deleteModalRetailer && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+          onClick={() => !isProcessing && setDeleteModalRetailer(null)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#fee2e2] flex flex-col gap-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#fee2e2] text-[#b91c1c] flex items-center justify-center text-2xl shrink-0">
+                ⚠️
+              </div>
+              <div>
+                <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg">
+                  Delete Retailer Application?
+                </h3>
+                <p className="text-xs text-[#9aa89b]">Confirm permanent deletion from database</p>
+              </div>
+            </div>
+
+            <div className="bg-[#fef2f2] border border-[#fecaca] p-3.5 rounded-xl text-xs text-[#7f1d1d] flex flex-col gap-1 leading-relaxed">
+              <p>
+                Are you sure you want to permanently delete retailer application for:
+              </p>
+              <div className="bg-white/80 p-2.5 rounded-lg border border-[#fecaca] mt-1 text-[#073b4c]">
+                <p className="font-bold text-sm">{deleteModalRetailer.shopName || "Medical Store"}</p>
+                <p className="text-xs text-[#6d7a6f]">{deleteModalRetailer.fullName} • {deleteModalRetailer.email}</p>
+              </div>
+              <p className="mt-1 font-bold text-[#b91c1c]">This action cannot be undone and will delete the record completely.</p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={() => setDeleteModalRetailer(null)}
+                className="px-4 py-2.5 rounded-xl border border-[#e4ede2] text-xs font-bold text-[#073b4c] hover:bg-[#f0f4f0] transition-colors cursor-pointer disabled:opacity-60"
+              >
+                No, Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={handleConfirmSingleDelete}
+                className="px-5 py-2.5 rounded-xl bg-[#b91c1c] hover:bg-[#991b1b] text-white text-xs font-extrabold transition-all shadow-md cursor-pointer active:scale-95 flex items-center gap-1.5 disabled:opacity-60"
+              >
+                {isProcessing && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                <span>{isProcessing ? "Deleting…" : "Yes, Delete Retailer"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Bulk Retailers Delete Confirmation Modal ── */}
+      {confirmBulkDelete && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+          onClick={() => !isProcessing && setConfirmBulkDelete(false)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#fee2e2] flex flex-col gap-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#fee2e2] text-[#b91c1c] flex items-center justify-center text-2xl shrink-0">
+                ⚠️
+              </div>
+              <div>
+                <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg">
+                  Delete {selectedIds.length} Retailers?
+                </h3>
+                <p className="text-xs text-[#9aa89b]">Please confirm bulk permanent deletion</p>
+              </div>
+            </div>
+
+            <div className="bg-[#fef2f2] border border-[#fecaca] p-3.5 rounded-xl text-xs text-[#7f1d1d] leading-relaxed">
+              Are you sure you want to permanently delete all <strong>{selectedIds.length} selected retailer accounts</strong> from the database?
+              <p className="mt-1 font-bold text-[#b91c1c]">This action cannot be undone.</p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={() => setConfirmBulkDelete(false)}
+                className="px-4 py-2.5 rounded-xl border border-[#e4ede2] text-xs font-bold text-[#073b4c] hover:bg-[#f0f4f0] transition-colors cursor-pointer disabled:opacity-60"
+              >
+                No, Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={handleConfirmBulkDelete}
+                className="px-5 py-2.5 rounded-xl bg-[#b91c1c] hover:bg-[#991b1b] text-white text-xs font-extrabold transition-all shadow-md cursor-pointer active:scale-95 flex items-center gap-1.5 disabled:opacity-60"
+              >
+                {isProcessing && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                <span>{isProcessing ? "Deleting…" : `Yes, Delete All (${selectedIds.length})`}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

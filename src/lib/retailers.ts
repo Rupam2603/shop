@@ -152,7 +152,7 @@ export async function fetchAllRetailers(): Promise<RetailerAccount[]> {
         const emailKey = (p as any).email ? (p as any).email.toLowerCase() : "";
         const existing = map.get(p.id) || (emailKey ? map.get(emailKey) : null);
         const status: "pending" | "approved" | "rejected" =
-          (p as any).approval_status || existing?.approvalStatus || "approved";
+          (p as any).approval_status || existing?.approvalStatus || "pending";
 
         const rec: RetailerAccount = {
           id: p.id,
@@ -348,6 +348,104 @@ export async function updateRetailerApprovalStatus(
   }
 
   return { success: true, retailer: updatedRec };
+}
+
+/**
+ * Delete a single retailer from DB and local cache
+ */
+export async function deleteRetailer(retailerId: string): Promise<{ success: boolean; error?: string }> {
+  const localList = getLocalRetailers();
+  const searchKey = retailerId.toLowerCase();
+  const target = localList.find((r) => r.id === retailerId || r.email.toLowerCase() === searchKey);
+  const targetEmail = target?.email?.toLowerCase() || (retailerId.includes("@") ? searchKey : "");
+
+  // 1. Remove from local cache
+  const nextList = localList.filter((r) => r.id !== retailerId && r.email.toLowerCase() !== searchKey && (targetEmail ? r.email.toLowerCase() !== targetEmail : true));
+  saveLocalRetailers(nextList);
+
+  // 2. Delete from Supabase retailer_approvals
+  try {
+    let q = supabase.from("retailer_approvals").delete();
+    if (targetEmail) {
+      q = q.or(`id.eq.${retailerId},email.eq.${targetEmail}`);
+    } else {
+      q = q.eq("id", retailerId);
+    }
+    await q;
+  } catch (err) {
+    console.warn("Could not delete from retailer_approvals:", err);
+  }
+
+  // 3. Delete from Supabase profiles (if matching UUID)
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(retailerId);
+  if (isUuid) {
+    try {
+      await supabase.from("profiles").delete().eq("id", retailerId);
+    } catch (err) {
+      console.warn("Could not delete from profiles:", err);
+    }
+  }
+
+  return { success: true };
+}
+
+/**
+ * Delete multiple retailers in bulk
+ */
+export async function deleteMultipleRetailers(retailerIds: string[]): Promise<{ success: boolean; deletedCount: number }> {
+  if (!retailerIds || retailerIds.length === 0) return { success: true, deletedCount: 0 };
+
+  const idSet = new Set(retailerIds.map((id) => id.toLowerCase()));
+  const localList = getLocalRetailers();
+
+  // Find all emails corresponding to these IDs
+  const emailsToDelete = new Set<string>();
+  for (const r of localList) {
+    if (idSet.has(r.id.toLowerCase()) || idSet.has(r.email.toLowerCase())) {
+      emailsToDelete.add(r.email.toLowerCase());
+      idSet.add(r.id.toLowerCase());
+    }
+  }
+
+  // 1. Update local cache
+  const nextList = localList.filter(
+    (r) => !idSet.has(r.id.toLowerCase()) && !emailsToDelete.has(r.email.toLowerCase())
+  );
+  saveLocalRetailers(nextList);
+
+  // 2. Delete from Supabase retailer_approvals
+  try {
+    await supabase
+      .from("retailer_approvals")
+      .delete()
+      .in("id", retailerIds);
+
+    if (emailsToDelete.size > 0) {
+      await supabase
+        .from("retailer_approvals")
+        .delete()
+        .in("email", Array.from(emailsToDelete));
+    }
+  } catch (err) {
+    console.warn("Could not bulk delete from retailer_approvals:", err);
+  }
+
+  return { success: true, deletedCount: retailerIds.length };
+}
+
+/**
+ * Bulk update approval status for multiple retailers
+ */
+export async function bulkUpdateRetailerApprovalStatus(
+  retailerIds: string[],
+  newStatus: "pending" | "approved" | "rejected"
+): Promise<{ success: boolean; count: number }> {
+  if (!retailerIds || retailerIds.length === 0) return { success: true, count: 0 };
+
+  for (const id of retailerIds) {
+    await updateRetailerApprovalStatus(id, newStatus);
+  }
+  return { success: true, count: retailerIds.length };
 }
 
 /**
