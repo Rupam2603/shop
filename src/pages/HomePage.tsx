@@ -51,17 +51,6 @@ function FlashIcon() {
   );
 }
 
-const QUICK_ACTIONS = [
-  { label: "Upload Prescription", bg: "bg-[#bde9ff]",
-    icon: <svg width="24" height="26" viewBox="0 0 24 26" fill="none"><path d="M19 2H5C3.9 2 3 2.9 3 4V22C3 23.1 3.9 24 5 24H19C20.1 24 21 23.1 21 22V4C21 2.9 20.1 2 19 2ZM7 7H17V9H7V7ZM7 11H17V13H7V11ZM7 15H13V17H7V15Z" fill="#3F6A7C"/></svg> },
-  { label: "Consult Doctor",       bg: "bg-[rgba(0,134,73,0.15)]",
-    icon: <svg width="26" height="21" viewBox="0 0 26 21" fill="none"><path d="M13 0C10.2 0 8 2.2 8 5C8 7.8 10.2 10 13 10C15.8 10 18 7.8 18 5C18 2.2 15.8 0 13 0ZM13 12C8.33 12 0 14.17 0 18.5V21H26V18.5C26 14.17 17.67 12 13 12Z" fill="#006A39"/></svg> },
-  { label: "Book Lab Test",         bg: "bg-[#b3ebff]",
-    icon: <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M9 0V9L3 15C1.7 16.3 1.7 18.4 3 19.7C3.6 20.3 4.4 20.7 5.3 20.7H15.7C16.6 20.7 17.4 20.3 18 19.7C19.3 18.4 19.3 16.3 18 15L12 9V0H9Z" fill="#001F27"/></svg> },
-  { label: "Special Offers",        bg: "bg-[rgba(255,183,3,0.18)]",
-    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12.79 2.71L2.71 12.79C2.32 13.18 2.32 13.82 2.71 14.21L9.79 21.29C10.18 21.68 10.82 21.68 11.21 21.29L21.29 11.21C21.68 10.82 21.68 10.18 21.29 9.79L14.21 2.71C13.82 2.32 13.18 2.32 12.79 2.71Z" fill="#073B4C"/></svg> },
-];
-
 /* ─── 8 real store categories from Categorized_Items_List ─── */
 const ALL_CATEGORIES = [
   {
@@ -512,16 +501,6 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
-          {QUICK_ACTIONS.map((a) => (
-            <button key={a.label} className="bg-white rounded-2xl border border-[rgba(189,202,188,0.3)] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-3 sm:p-5 flex flex-col items-center gap-2 sm:gap-3">
-              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${a.bg} flex items-center justify-center shrink-0`}>{a.icon}</div>
-              <span className="font-bold text-[#073b4c] text-xs sm:text-sm tracking-[0.5px] text-center">{a.label}</span>
-            </button>
-          ))}
         </div>
 
         {/* Category browser — compact */}
