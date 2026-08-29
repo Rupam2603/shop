@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { UserRole } from "../App";
 import { useAuth } from "../contexts/AuthContext";
 import { SignInButton, SignUpButton } from "@clerk/clerk-react";
-import { lookupRetailerApprovalStatus, RetailerAccount } from "../lib/retailers";
+import { lookupRetailerApprovalStatus, registerOrUpdateRetailer, RetailerAccount } from "../lib/retailers";
 
 // ─── Role UI configuration ────────────────────────────────────────────────────
 
@@ -262,6 +262,22 @@ export default function LoginPage() {
     const safeRole: "customer" | "retailer" = selectedRole === "retailer" ? "retailer" : "customer";
 
     setLoading(true);
+
+    // If retailer, immediately persist application to Supabase retailer_approvals
+    if (safeRole === "retailer") {
+      try {
+        await registerOrUpdateRetailer({
+          fullName: signupName.trim(),
+          email: email.trim(),
+          phone: signupPhone || null,
+          shopName: signupShop.trim() || `${signupName.trim()}'s Store`,
+          approvalStatus: "pending",
+        });
+      } catch (regErr) {
+        console.warn("Notice saving retailer approval request:", regErr);
+      }
+    }
+
     const { error: authError, emailConfirmationRequired } = await signUp({
       email: email.trim(),
       password,
@@ -552,7 +568,10 @@ export default function LoginPage() {
               <SignInButton mode="modal" fallbackRedirectUrl="/" forceRedirectUrl="/">
                 <button
                   type="button"
-                  className="w-full py-3 px-4 rounded-xl border border-[#e4ede2] bg-[#f8fafb] hover:bg-[#f0f4f0] text-[#073b4c] text-xs sm:text-sm font-bold flex items-center justify-center gap-2.5 transition-all shadow-xs"
+                  onClick={() => {
+                    sessionStorage.setItem("subhone_signing_up_role", selectedRole);
+                  }}
+                  className="w-full py-3 px-4 rounded-xl border border-[#e4ede2] bg-[#f8fafb] hover:bg-[#f0f4f0] text-[#073b4c] text-xs sm:text-sm font-bold flex items-center justify-center gap-2.5 transition-all shadow-xs cursor-pointer"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
@@ -636,7 +655,13 @@ export default function LoginPage() {
               <SignUpButton mode="modal" fallbackRedirectUrl="/" forceRedirectUrl="/">
                 <button
                   type="button"
-                  className="w-full py-3 px-4 rounded-xl border border-[#e4ede2] bg-[#f8fafb] hover:bg-[#f0f4f0] text-[#073b4c] text-xs sm:text-sm font-bold flex items-center justify-center gap-2.5 transition-all shadow-xs"
+                  onClick={() => {
+                    sessionStorage.setItem("subhone_signing_up_role", selectedRole);
+                    if (signupShop.trim()) {
+                      sessionStorage.setItem("subhone_signing_up_shop", signupShop.trim());
+                    }
+                  }}
+                  className="w-full py-3 px-4 rounded-xl border border-[#e4ede2] bg-[#f8fafb] hover:bg-[#f0f4f0] text-[#073b4c] text-xs sm:text-sm font-bold flex items-center justify-center gap-2.5 transition-all shadow-xs cursor-pointer"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>

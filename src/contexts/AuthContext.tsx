@@ -97,16 +97,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const email = clerkUser.primaryEmailAddress?.emailAddress || "";
       const isAdmin = email.toLowerCase() === "admin@subhone.com";
 
+      const savedRole = (sessionStorage.getItem("subhone_signing_up_role") as UserRole) || null;
+      const savedShop = sessionStorage.getItem("subhone_signing_up_shop") || null;
+      if (savedRole) sessionStorage.removeItem("subhone_signing_up_role");
+      if (savedShop) sessionStorage.removeItem("subhone_signing_up_shop");
+
       const rawRole =
         (clerkUser.unsafeMetadata?.role as string) ||
         (clerkUser.publicMetadata?.role as string) ||
+        savedRole ||
         (isAdmin ? "admin" : "customer");
 
       const role: UserRole = isAdmin ? "admin" : rawRole === "retailer" ? "retailer" : "customer";
       const fullName = clerkUser.fullName || clerkUser.firstName || email.split("@")[0] || "User";
       const phone = clerkUser.primaryPhoneNumber?.phoneNumber || (clerkUser.unsafeMetadata?.phone as string) || null;
-      const shopName = (clerkUser.unsafeMetadata?.shopName as string) || (role === "retailer" ? `${fullName}'s Store` : null);
+      const shopName =
+        (clerkUser.unsafeMetadata?.shopName as string) ||
+        savedShop ||
+        (role === "retailer" ? `${fullName}'s Medical Store` : null);
       const avatarUrl = clerkUser.imageUrl || null;
+
+      // Update Clerk metadata if not yet written
+      if (role === "retailer" && clerkUser.unsafeMetadata?.role !== "retailer") {
+        clerkUser.update({
+          unsafeMetadata: {
+            ...clerkUser.unsafeMetadata,
+            role: "retailer",
+            shopName: shopName || "Medical Store",
+            approval_status: (clerkUser.unsafeMetadata?.approval_status as string) || "pending",
+          },
+        }).catch(() => {});
+      }
 
       // Check approval status for Retailers
       let approvalStatus: "pending" | "approved" | "rejected" = "approved";

@@ -1173,7 +1173,13 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
           {activeTab === "dashboard" && (
-            <DashboardTab products={products} lowStockCount={lowStockCount} outOfStockCount={outOfStockCount} onNavigate={setActiveTab} />
+            <DashboardTab
+              products={products}
+              lowStockCount={lowStockCount}
+              outOfStockCount={outOfStockCount}
+              pendingRetailersCount={pendingRetailersCount}
+              onNavigate={setActiveTab}
+            />
           )}
           {activeTab === "products" && (
             <ProductsTab
@@ -1264,13 +1270,23 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 }
 
 /* ─── Dashboard Tab ─── */
-function DashboardTab({ products, lowStockCount, outOfStockCount, onNavigate }: {
-  products: Product[]; lowStockCount: number; outOfStockCount: number; onNavigate: (t: AdminTab) => void;
+function DashboardTab({
+  products,
+  lowStockCount,
+  outOfStockCount,
+  pendingRetailersCount = 0,
+  onNavigate,
+}: {
+  products: Product[];
+  lowStockCount: number;
+  outOfStockCount: number;
+  pendingRetailersCount?: number;
+  onNavigate: (t: AdminTab) => void;
 }) {
   const stats = [
     { label: "Total Products", value: products.length, unit: "SKUs", color: "#073b4c" },
     { label: "Low / Out of Stock", value: lowStockCount + outOfStockCount, unit: "alerts", color: "#c2410c" },
-    { label: "Categories", value: INITIAL_CATEGORIES.length, unit: "active", color: "#047857" },
+    { label: "Pending Retailers", value: pendingRetailersCount, unit: pendingRetailersCount > 0 ? "action needed" : "all reviewed", color: "#d97706" },
     { label: "Today's Orders", value: 23, unit: "orders", color: "#1d4ed8" },
   ];
   const recentActivity = [
@@ -1284,6 +1300,38 @@ function DashboardTab({ products, lowStockCount, outOfStockCount, onNavigate }: 
 
   return (
     <div className="flex flex-col gap-5 sm:gap-7">
+      {/* Pending Retailers Action Card */}
+      {pendingRetailersCount > 0 && (
+        <div className="bg-[#fffbeb] border border-[#fde68a] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in duration-200">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-[#fef3c7] text-[#d97706] flex items-center justify-center text-2xl shrink-0">
+              ⏳
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="font-['Manrope',sans-serif] font-extrabold text-[#92400e] text-sm sm:text-base">
+                  {pendingRetailersCount} Retailer {pendingRetailersCount === 1 ? "Application" : "Applications"} Awaiting Approval
+                </h4>
+                <span className="text-[10px] bg-[#d97706] text-white font-extrabold px-2 py-0.5 rounded-full animate-pulse">
+                  Action Required
+                </span>
+              </div>
+              <p className="text-xs text-[#b45309] mt-0.5">
+                New wholesale partners have registered and are waiting for your approval to start ordering.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigate("retailers")}
+            className="px-4 py-2 rounded-xl bg-[#d97706] hover:bg-[#b45309] text-white text-xs sm:text-sm font-bold transition-all shadow-xs shrink-0 cursor-pointer active:scale-95 flex items-center gap-1.5 self-end sm:self-center"
+          >
+            <span>Review Applications</span>
+            <span>→</span>
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         {stats.map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-[#e4ede2] p-4 sm:p-5 flex flex-col gap-2 sm:gap-3">
