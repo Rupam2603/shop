@@ -72,6 +72,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [items]);
 
+  // Returns true if the userId looks like a real Supabase UUID (not a Clerk ID or random fallback)
+  const isSupabaseUserId = (uid: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid);
+
   // Sync with Supabase on auth state change without clearing local cart if unauthenticated
   const loadCartFromDb = useCallback(async (uid: string) => {
     try {
@@ -184,15 +187,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80";
 
       // Optimistic update
+      let isNewItem = false;
       setItems((prev) => {
         const existingIdx = prev.findIndex(
           (item) => item.productNumericId === numId || item.name.toLowerCase() === prodName.toLowerCase()
         );
         if (existingIdx >= 0) {
           const updated = [...prev];
-          updated[existingIdx].quantity += qty;
+          updated[existingIdx] = { ...updated[existingIdx], quantity: updated[existingIdx].quantity + qty };
           return updated;
         }
+        isNewItem = true;
         return [
           ...prev,
           {
@@ -210,10 +215,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         ];
       });
 
-      setIsCartOpen(true);
+      // Only open cart drawer when adding a brand-new item (not on quantity increment)
+      if (isNewItem) setIsCartOpen(true);
 
-      // Persist to Supabase if logged in
-      if (userId) {
+      // Persist to Supabase if logged in with a real Supabase UUID
+      if (userId && isSupabaseUserId(userId)) {
         let targetUuid = typeof product.id === "string" && product.id.includes("-") ? product.id : "";
         if (!targetUuid) {
           try {
@@ -258,57 +264,57 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      setItems((prev) =>
-        prev.map((item) => {
+      // Use functional updater to avoid stale closure on items
+      let targetProductId: string | null = null;
+      setItems((prev) => {
+        const updated = prev.map((item) => {
           if (item.productId === productId || item.productNumericId === productId || item.name === productId) {
+            if (!targetProductId && item.productId) targetProductId = item.productId;
             return { ...item, quantity: qty };
           }
           return item;
-        })
-      );
+        });
+        return updated;
+      });
 
-      if (userId) {
-        const item = items.find(
-          (i) => i.productId === productId || i.productNumericId === productId || i.name === productId
-        );
-        if (item?.productId) {
-          try {
-            await supabase
-              .from("cart_items")
-              .update({ quantity: qty })
-              .eq("user_id", userId)
-              .eq("product_id", item.productId);
-          } catch {}
-        }
+      if (userId && isSupabaseUserId(userId) && targetProductId) {
+        try {
+          await supabase
+            .from("cart_items")
+            .update({ quantity: qty })
+            .eq("user_id", userId)
+            .eq("product_id", targetProductId);
+        } catch {}
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userId, items]
+    [userId]
   );
 
   const removeFromCart = useCallback(
     async (productId: string | number) => {
-      const itemToRemove = items.find(
-        (i) => i.productId === productId || i.productNumericId === productId || i.name === productId
-      );
-
-      setItems((prev) =>
-        prev.filter(
+      // Use functional updater to avoid stale closure — extract the item to remove inside the updater
+      let removedProductId: string | null = null;
+      setItems((prev) => {
+        const itemToRemove = prev.find(
+          (i) => i.productId === productId || i.productNumericId === productId || i.name === productId
+        );
+        if (itemToRemove?.productId) removedProductId = itemToRemove.productId;
+        return prev.filter(
           (i) => i.productId !== productId && i.productNumericId !== productId && i.name !== productId
-        )
-      );
+        );
+      });
 
-      if (userId && itemToRemove?.productId) {
+      if (userId && isSupabaseUserId(userId) && removedProductId) {
         try {
           await supabase
             .from("cart_items")
             .delete()
             .eq("user_id", userId)
-            .eq("product_id", itemToRemove.productId);
+            .eq("product_id", removedProductId);
         } catch {}
       }
     },
-    [userId, items]
+    [userId]
   );
 
   const clearCart = useCallback(async () => {
@@ -316,7 +322,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       localStorage.removeItem(CART_STORAGE_KEY);
     } catch {}
-    if (userId) {
+    if (userId && isSupabaseUserId(userId)) {
       try {
         await supabase.from("cart_items").delete().eq("user_id", userId);
       } catch {}

@@ -130,9 +130,8 @@ export default function CheckoutModal({
         return;
       }
       shippingAddress = found;
+      setLoading(true);
     }
-
-    if (!loading) setLoading(true);
 
     const { data: order, error: orderErr } = await placeOrder({
       customerName: shippingAddress.name || user.name || appUser?.profile?.full_name || "Customer",

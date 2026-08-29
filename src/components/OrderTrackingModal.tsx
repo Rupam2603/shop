@@ -181,7 +181,7 @@ export default function OrderTrackingModal({
         role: isRetailer ? "retailer" : "customer",
         shopName: activeOrder.shop_name || (isRetailer ? "Retailer Pharmacy Store" : undefined),
         address: typeof activeOrder.shipping_address === "object"
-          ? `${activeOrder.shipping_address?.address || ""}, ${activeOrder.shipping_address?.city || ""}, ${activeOrder.shipping_address?.state || ""} - ${activeOrder.shipping_address?.pincode || ""}`
+          ? `${activeOrder.shipping_address?.line1 || ""}, ${activeOrder.shipping_address?.city || ""}, ${activeOrder.shipping_address?.state || ""} - ${activeOrder.shipping_address?.pincode || ""}`
           : "Delivery Address Provided",
         items: activeOrder.order_items?.length || 1,
         amount: activeOrder.total_amount,

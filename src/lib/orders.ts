@@ -107,9 +107,8 @@ export async function placeOrder(params: {
       console.warn("Supabase order insert error:", e);
     }
 
-    // 2. Insert order items
-    const orderItemsPayload = params.items.map((item, idx) => ({
-      id: `item_${idx}_${Date.now()}`,
+    // 2. Insert order items (no `id` — let Supabase auto-generate the UUID primary key)
+    const orderItemsPayload = params.items.map((item) => ({
       order_id: orderId,
       product_id: item.productId || null,
       product_name: item.name,
