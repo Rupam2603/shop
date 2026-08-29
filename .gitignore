@@ -21,3 +21,4 @@ logs/
 /.opencode-skills/
 clerk-react/
 login.txt
+.vercel
