@@ -1576,6 +1576,9 @@ function OrdersTab({
     return today.toISOString().split("T")[0]; // YYYY-MM-DD
   });
 
+  // Selected orders state
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+
   // Modal & download states
   const [previewInvoice, setPreviewInvoice] = useState<InvoiceOrderData | null>(null);
   const [showDailyModal, setShowDailyModal] = useState(false);
@@ -1583,6 +1586,62 @@ function OrdersTab({
   const [downloadingDaily, setDownloadingDaily] = useState(false);
 
   const STATUS_FILTERS = ["All", "Processing", "Shipped", "Delivered", "Cancelled"];
+
+  // Toggle single order selection
+  const toggleSelectOrder = (orderId: string) => {
+    setSelectedOrderIds((prev) =>
+      prev.includes(orderId) ? prev.filter((id) => id !== orderId) : [...prev, orderId]
+    );
+  };
+
+  // Select/Deselect all visible orders
+  const handleToggleSelectAllVisible = () => {
+    if (selectedOrderIds.length === displayedOrders.length && displayedOrders.length > 0) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(displayedOrders.map((o) => o.id));
+    }
+  };
+
+  // Select/Deselect all orders for a specific day
+  const handleToggleSelectDay = (dayItems: { id: string }[]) => {
+    const dayIds = dayItems.map((o) => o.id);
+    const allDaySelected = dayIds.every((id) => selectedOrderIds.includes(id));
+    if (allDaySelected) {
+      setSelectedOrderIds((prev) => prev.filter((id) => !dayIds.includes(id)));
+    } else {
+      setSelectedOrderIds((prev) => Array.from(new Set([...prev, ...dayIds])));
+    }
+  };
+
+  // Bulk update status for all selected orders
+  const handleBulkStatusUpdate = (newStatus: "Processing" | "Shipped" | "Delivered" | "Cancelled") => {
+    if (selectedOrderIds.length === 0) return;
+    for (const ordId of selectedOrderIds) {
+      const target = orders.find((o) => o.id === ordId);
+      if (target) {
+        onUpdateStatus?.(target.dbId || target.id, newStatus);
+      }
+    }
+    setSelectedOrderIds([]);
+  };
+
+  // Bulk print/download invoices for selected orders
+  const handleBulkPrintSelectedInvoices = () => {
+    const selectedList = orders.filter((o) => selectedOrderIds.includes(o.id));
+    if (selectedList.length === 0) return;
+    printOrDownloadDailyReport(`Selected Batch (${selectedList.length} Orders)`, selectedList, settings);
+  };
+
+  // Selected orders summary metrics
+  const selectedOrdersData = useMemo(
+    () => orders.filter((o) => selectedOrderIds.includes(o.id)),
+    [orders, selectedOrderIds]
+  );
+  const selectedTotalAmount = useMemo(
+    () => selectedOrdersData.reduce((sum, o) => sum + o.amount, 0),
+    [selectedOrdersData]
+  );
 
   // Metrics computation
   const retailerOrders = useMemo(() => orders.filter((o) => o.role === "retailer"), [orders]);
@@ -2007,6 +2066,78 @@ function OrdersTab({
         ))}
       </div>
 
+      {/* ── Selection Toolbar & Bulk Actions Bar (Checkboxes) ── */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-[#e4ede2] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Left: Master Select All Checkbox */}
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={displayedOrders.length > 0 && selectedOrderIds.length === displayedOrders.length}
+              onChange={handleToggleSelectAllVisible}
+              className="w-4 h-4 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39]"
+            />
+            <span className="text-xs sm:text-sm font-bold text-[#073b4c]">
+              Select All Visible ({displayedOrders.length})
+            </span>
+          </label>
+
+          {selectedOrderIds.length > 0 && (
+            <span className="bg-[#e8f5ee] text-[#006a39] text-xs font-extrabold px-2.5 py-1 rounded-full border border-[#bbf7d0]">
+              {selectedOrderIds.length} Selected (₹{selectedTotalAmount.toLocaleString()})
+            </span>
+          )}
+        </div>
+
+        {/* Right: Bulk Action Controls */}
+        {selectedOrderIds.length > 0 ? (
+          <div className="flex items-center flex-wrap gap-2 animate-in fade-in duration-200">
+            <span className="text-xs font-semibold text-[#6d7a6f] hidden md:inline">Bulk Actions:</span>
+            
+            {/* Bulk Status Buttons */}
+            <button
+              type="button"
+              onClick={() => handleBulkStatusUpdate("Shipped")}
+              className="bg-[#0369a1] hover:bg-[#0284c7] text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+            >
+              <span>🚚</span>
+              <span>Mark Shipped ({selectedOrderIds.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleBulkStatusUpdate("Delivered")}
+              className="bg-[#006a39] hover:bg-[#00542d] text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+            >
+              <span>✅</span>
+              <span>Mark Delivered</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleBulkPrintSelectedInvoices}
+              className="bg-[#073b4c] hover:bg-[#0f4b5e] text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+            >
+              <span>🖨️</span>
+              <span>Print Selected Bills</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedOrderIds([])}
+              className="bg-[#fee2e2] hover:bg-[#fecaca] text-[#b91c1c] text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all cursor-pointer"
+              title="Clear selection"
+            >
+              Clear (✕)
+            </button>
+          </div>
+        ) : (
+          <div className="text-xs text-[#9aa89b] font-medium hidden sm:block">
+            Tip: Check individual orders or click "Select All" to perform bulk status updates or batch printing.
+          </div>
+        )}
+      </div>
+
       {/* ── Day-wise Separated Orders Section (Zero Horizontal Scrollbar, Compact Layout) ── */}
       <div className="flex flex-col gap-6">
         {groupedOrdersByDate.length === 0 ? (
@@ -2016,183 +2147,209 @@ function OrdersTab({
             <p className="text-xs text-[#6d7a6f]">No orders match the selected filters or search query.</p>
           </div>
         ) : (
-          groupedOrdersByDate.map((group) => (
-            <div
-              key={group.date}
-              className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden shadow-xs"
-            >
-              {/* Day Header Banner */}
-              <div className="bg-[#f0f7f0] border-b border-[#d8ead8] px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#006a39] text-white flex items-center justify-center text-sm shadow-xs shrink-0">
-                    📅
-                  </div>
-                  <div>
-                    <h4 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base">
-                      {group.date}
-                    </h4>
-                    <p className="text-[11px] text-[#6d7a6f] font-medium">
-                      {group.items.length} {group.items.length === 1 ? "Order" : "Orders"} placed on this day
-                    </p>
-                  </div>
-                </div>
+          groupedOrdersByDate.map((group) => {
+            const isDayAllSelected = group.items.length > 0 && group.items.every((item) => selectedOrderIds.includes(item.id));
+            const isDayPartiallySelected = group.items.some((item) => selectedOrderIds.includes(item.id));
 
-                {/* Day Summary Badges & 1-Click Day Report Button */}
-                <div className="flex items-center flex-wrap gap-2 text-xs">
-                  <span className="bg-white border border-[#c3dec0] text-[#006a39] font-black px-2.5 py-1 rounded-xl shadow-2xs">
-                    Day Total: ₹{group.totalAmount.toLocaleString()}
-                  </span>
-                  {group.pendingCount > 0 && (
-                    <span className="bg-[#fef3c7] border border-[#fde68a] text-[#b45309] font-black px-2.5 py-1 rounded-xl">
-                      {group.pendingCount} Pending
-                    </span>
-                  )}
-                  {group.deliveredCount > 0 && (
-                    <span className="bg-[#d1fae5] border border-[#a7f3d0] text-[#047857] font-black px-2.5 py-1 rounded-xl">
-                      {group.deliveredCount} Delivered
-                    </span>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => handlePrintDailyPdf(group.date)}
-                    className="bg-[#006a39] hover:bg-[#00542d] text-white font-bold px-3 py-1 rounded-xl transition-all shadow-2xs flex items-center gap-1 cursor-pointer active:scale-95 ml-1"
-                    title={`Print or Download Daily Report for ${group.date}`}
-                  >
-                    <span>📄</span>
-                    <span>Day PDF Report</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Day Orders Compact List (No Horizontal Scrollbar) */}
-              <div className="divide-y divide-[#f0f4f0]">
-                {group.items.map((o) => {
-                  const st = orderStatus(o.status);
-                  const isRetailerOrder = o.role === "retailer";
-                  const isDownloadingThis = downloadingId === o.id;
-
-                  return (
-                    <div
-                      key={o.id}
-                      className="p-3.5 sm:p-4 hover:bg-[#fafcfa] transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4"
-                    >
-                      {/* Left: Order ID, Role Badge, Customer / Shop Info */}
-                      <div className="flex items-start gap-3 min-w-0 flex-1">
-                        <div className="w-9 h-9 rounded-xl bg-[#f0fdf4] border border-[#bbf7d0] text-[#006a39] flex items-center justify-center font-mono font-bold text-xs shrink-0 mt-0.5">
-                          {isRetailerOrder ? "🏪" : "👤"}
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono text-xs font-bold text-[#006a39]">
-                              {o.id}
-                            </span>
-                            {isRetailerOrder ? (
-                              <span className="inline-flex items-center gap-1 bg-[#e0f2fe] text-[#0369a1] text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase border border-[#bae6fd]">
-                                Retailer
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 bg-[#d1fae5] text-[#047857] text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase border border-[#a7f3d0]">
-                                Customer
-                              </span>
-                            )}
-                            <span className="text-[10px] text-[#9aa89b] font-medium">
-                              {o.date}
-                            </span>
-                          </div>
-
-                          <p className="font-bold text-[#073b4c] text-xs sm:text-sm mt-0.5 truncate">
-                            {o.customer}
-                            {isRetailerOrder && o.shopName && (
-                              <span className="text-[#0369a1] font-semibold text-xs ml-1.5">
-                                · {o.shopName}
-                              </span>
-                            )}
-                          </p>
-
-                          <div className="flex items-center gap-2 text-[11px] text-[#6d7a6f] mt-0.5 flex-wrap">
-                            <span className="font-mono">📞 {o.phone}</span>
-                            <span>•</span>
-                            <span>{o.items} {o.items === 1 ? "item" : "items"}</span>
-                            <span>•</span>
-                            <span className="bg-[#f0f4f0] text-[#475569] font-bold px-1.5 py-0.2 rounded text-[10px]">
-                              {o.payment}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Middle: Amount & Status */}
-                      <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 border-t md:border-t-0 pt-2 md:pt-0 border-[#f0f4f0]">
-                        <div className="text-left md:text-right">
-                          <p className="font-['Manrope',sans-serif] font-black text-sm sm:text-base text-[#073b4c]">
-                            ₹{o.amount.toLocaleString()}
-                          </p>
-                          <span
-                            className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5"
-                            style={{ color: st.color, backgroundColor: st.bg }}
-                          >
-                            {o.status}
-                          </span>
-                        </div>
-
-                        {/* Status dropdown */}
-                        <select
-                          value={o.status}
-                          onChange={(e) =>
-                            onUpdateStatus?.(
-                              o.dbId || o.id,
-                              e.target.value as "Processing" | "Shipped" | "Delivered" | "Cancelled"
-                            )
-                          }
-                          className="text-xs font-bold bg-[#f8fafb] border border-[#d2e0cf] rounded-xl px-2.5 py-1.5 text-[#073b4c] focus:outline-none focus:border-[#006a39] cursor-pointer shadow-2xs"
-                        >
-                          <option value="Processing">Processing</option>
-                          <option value="Shipped">Shipped</option>
-                          <option value="Delivered">Delivered</option>
-                          <option value="Cancelled">Cancelled</option>
-                        </select>
-                      </div>
-
-                      {/* Right: Compact Action Buttons */}
-                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-                        <button
-                          type="button"
-                          onClick={() => handlePrintInvoice(o)}
-                          title="Print or Save PDF Invoice"
-                          className="flex items-center gap-1 bg-[#006a39] hover:bg-[#00542d] text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95"
-                        >
-                          <span>🖨️</span>
-                          <span className="hidden sm:inline">PDF Bill</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadInvoice(o)}
-                          title="Download Invoice HTML"
-                          className="flex items-center gap-1 bg-[#f0f7ee] hover:bg-[#dcf0db] text-[#006a39] text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all border border-[#c3dec0] cursor-pointer"
-                        >
-                          <span>📥</span>
-                          <span className="hidden sm:inline">{isDownloadingThis ? "..." : "Save"}</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setPreviewInvoice(o)}
-                          title="Inspect full order details"
-                          className="flex items-center gap-1 bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#334155] text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all cursor-pointer"
-                        >
-                          <span>👁️</span>
-                          <span>Details</span>
-                        </button>
-                      </div>
+            return (
+              <div
+                key={group.date}
+                className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden shadow-xs"
+              >
+                {/* Day Header Banner with Day Selection Checkbox */}
+                <div className="bg-[#f0f7f0] border-b border-[#d8ead8] px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <input
+                      type="checkbox"
+                      checked={isDayAllSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = isDayPartiallySelected && !isDayAllSelected;
+                      }}
+                      onChange={() => handleToggleSelectDay(group.items)}
+                      className="w-4 h-4 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39] shrink-0"
+                      title="Select/Deselect all orders for this day"
+                    />
+                    <div className="w-8 h-8 rounded-xl bg-[#006a39] text-white flex items-center justify-center text-sm shadow-xs shrink-0">
+                      📅
                     </div>
-                  );
-                })}
+                    <div>
+                      <h4 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base">
+                        {group.date}
+                      </h4>
+                      <p className="text-[11px] text-[#6d7a6f] font-medium">
+                        {group.items.length} {group.items.length === 1 ? "Order" : "Orders"} placed on this day
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Day Summary Badges & 1-Click Day Report Button */}
+                  <div className="flex items-center flex-wrap gap-2 text-xs">
+                    <span className="bg-white border border-[#c3dec0] text-[#006a39] font-black px-2.5 py-1 rounded-xl shadow-2xs">
+                      Day Total: ₹{group.totalAmount.toLocaleString()}
+                    </span>
+                    {group.pendingCount > 0 && (
+                      <span className="bg-[#fef3c7] border border-[#fde68a] text-[#b45309] font-black px-2.5 py-1 rounded-xl">
+                        {group.pendingCount} Pending
+                      </span>
+                    )}
+                    {group.deliveredCount > 0 && (
+                      <span className="bg-[#d1fae5] border border-[#a7f3d0] text-[#047857] font-black px-2.5 py-1 rounded-xl">
+                        {group.deliveredCount} Delivered
+                      </span>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handlePrintDailyPdf(group.date)}
+                      className="bg-[#006a39] hover:bg-[#00542d] text-white font-bold px-3 py-1 rounded-xl transition-all shadow-2xs flex items-center gap-1 cursor-pointer active:scale-95 ml-1"
+                      title={`Print or Download Daily Report for ${group.date}`}
+                    >
+                      <span>📄</span>
+                      <span>Day PDF Report</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Day Orders Compact List with Checkboxes (No Horizontal Scrollbar) */}
+                <div className="divide-y divide-[#f0f4f0]">
+                  {group.items.map((o) => {
+                    const st = orderStatus(o.status);
+                    const isRetailerOrder = o.role === "retailer";
+                    const isDownloadingThis = downloadingId === o.id;
+                    const isSelected = selectedOrderIds.includes(o.id);
+
+                    return (
+                      <div
+                        key={o.id}
+                        className={`p-3.5 sm:p-4 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 ${
+                          isSelected ? "bg-[#f4fbf5] ring-1 ring-[#006a39]/30" : "hover:bg-[#fafcfa]"
+                        }`}
+                      >
+                        {/* Left: Row Selection Checkbox, Order ID, Role Badge, Customer / Shop Info */}
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectOrder(o.id)}
+                            className="w-4 h-4 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39] shrink-0 mt-2.5"
+                            title={`Select Order #${o.id}`}
+                          />
+
+                          <div className="w-9 h-9 rounded-xl bg-[#f0fdf4] border border-[#bbf7d0] text-[#006a39] flex items-center justify-center font-mono font-bold text-xs shrink-0 mt-0.5">
+                            {isRetailerOrder ? "🏪" : "👤"}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-mono text-xs font-bold text-[#006a39]">
+                                {o.id}
+                              </span>
+                              {isRetailerOrder ? (
+                                <span className="inline-flex items-center gap-1 bg-[#e0f2fe] text-[#0369a1] text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase border border-[#bae6fd]">
+                                  Retailer
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 bg-[#d1fae5] text-[#047857] text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase border border-[#a7f3d0]">
+                                  Customer
+                                </span>
+                              )}
+                              <span className="text-[10px] text-[#9aa89b] font-medium">
+                                {o.date}
+                              </span>
+                            </div>
+
+                            <p className="font-bold text-[#073b4c] text-xs sm:text-sm mt-0.5 truncate">
+                              {o.customer}
+                              {isRetailerOrder && o.shopName && (
+                                <span className="text-[#0369a1] font-semibold text-xs ml-1.5">
+                                  · {o.shopName}
+                                </span>
+                              )}
+                            </p>
+
+                            <div className="flex items-center gap-2 text-[11px] text-[#6d7a6f] mt-0.5 flex-wrap">
+                              <span className="font-mono">📞 {o.phone}</span>
+                              <span>•</span>
+                              <span>{o.items} {o.items === 1 ? "item" : "items"}</span>
+                              <span>•</span>
+                              <span className="bg-[#f0f4f0] text-[#475569] font-bold px-1.5 py-0.2 rounded text-[10px]">
+                                {o.payment}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Middle: Amount & Status */}
+                        <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 border-t md:border-t-0 pt-2 md:pt-0 border-[#f0f4f0]">
+                          <div className="text-left md:text-right">
+                            <p className="font-['Manrope',sans-serif] font-black text-sm sm:text-base text-[#073b4c]">
+                              ₹{o.amount.toLocaleString()}
+                            </p>
+                            <span
+                              className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5"
+                              style={{ color: st.color, backgroundColor: st.bg }}
+                            >
+                              {o.status}
+                            </span>
+                          </div>
+
+                          {/* Status dropdown */}
+                          <select
+                            value={o.status}
+                            onChange={(e) =>
+                              onUpdateStatus?.(
+                                o.dbId || o.id,
+                                e.target.value as "Processing" | "Shipped" | "Delivered" | "Cancelled"
+                              )
+                            }
+                            className="text-xs font-bold bg-[#f8fafb] border border-[#d2e0cf] rounded-xl px-2.5 py-1.5 text-[#073b4c] focus:outline-none focus:border-[#006a39] cursor-pointer shadow-2xs"
+                          >
+                            <option value="Processing">Processing</option>
+                            <option value="Shipped">Shipped</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Cancelled">Cancelled</option>
+                          </select>
+                        </div>
+
+                        {/* Right: Compact Action Buttons */}
+                        <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                          <button
+                            type="button"
+                            onClick={() => handlePrintInvoice(o)}
+                            title="Print or Save PDF Invoice"
+                            className="flex items-center gap-1 bg-[#006a39] hover:bg-[#00542d] text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95"
+                          >
+                            <span>🖨️</span>
+                            <span className="hidden sm:inline">PDF Bill</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadInvoice(o)}
+                            title="Download Invoice HTML"
+                            className="flex items-center gap-1 bg-[#f0f7ee] hover:bg-[#dcf0db] text-[#006a39] text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all border border-[#c3dec0] cursor-pointer"
+                          >
+                            <span>📥</span>
+                            <span className="hidden sm:inline">{isDownloadingThis ? "..." : "Save"}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setPreviewInvoice(o)}
+                            title="Inspect full order details"
+                            className="flex items-center gap-1 bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#334155] text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all cursor-pointer"
+                          >
+                            <span>👁️</span>
+                            <span>Details</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
