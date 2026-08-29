@@ -205,6 +205,10 @@ export default function MedicinesPage({
       onNavigate(cat.route);
       return;
     }
+    if (onNavigate) {
+      onNavigate("category", cat.id);
+      return;
+    }
 
     if (cat.filterCat) {
       setSelectedCategory(cat.filterCat);

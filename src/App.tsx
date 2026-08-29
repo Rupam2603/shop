@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
 import HomePage from "./pages/HomePage";
+import CategoryPage from "./pages/CategoryPage";
 import LabTestsPage from "./pages/LabTestsPage";
 import MedicinesPage from "./pages/MedicinesPage";
 import OffersPage from "./pages/OffersPage";
@@ -14,7 +15,7 @@ import OrderTrackingModal from "./components/OrderTrackingModal";
 import { useAuth, toLegacyUser } from "./contexts/AuthContext";
 import { parseHashToState, pushPageState, replacePageState } from "./lib/navigation";
 
-export type Page = "home" | "medicines" | "lab-tests" | "consult" | "offers" | "profile" | "checkout";
+export type Page = "home" | "medicines" | "category" | "lab-tests" | "consult" | "offers" | "profile" | "checkout";
 export type UserRole = "admin" | "retailer" | "customer";
 
 export interface Address {
@@ -160,6 +161,7 @@ export default function App() {
     switch (activePage) {
       case "home": return <HomePage onNavigate={navigateTo} userRole={currentUser.role} />;
       case "lab-tests": return <LabTestsPage user={currentUser} />;
+      case "category": return <CategoryPage categoryId={initialCategory || "all"} userRole={currentUser.role} onNavigate={navigateTo} />;
       case "checkout":
       case "medicines": return <MedicinesPage initialCategory={initialCategory} userRole={currentUser.role} onNavigate={navigateTo} />;
       case "offers": return <OffersPage userRole={currentUser.role} onNavigate={navigateTo} />;

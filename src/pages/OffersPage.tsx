@@ -212,7 +212,7 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
       return;
     }
     if (onNavigate) {
-      onNavigate("medicines", cat.filterCat || cat.name);
+      onNavigate("category", cat.id);
     }
   };
 

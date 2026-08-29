@@ -343,7 +343,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
       onNavigate(cat.route as Page);
       return;
     }
-    onNavigate("medicines", cat.filterCat || cat.name);
+    onNavigate("category" as any, cat.id);
   };
 
   useEffect(() => {
