@@ -1055,6 +1055,7 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
 }) {
   return (
     <div className="flex flex-col gap-5">
+      {/* Search & Category Filter Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative flex-1">
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa89b]">
@@ -1062,102 +1063,144 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
           </svg>
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, brand, SKU or HSN…"
-            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-[#e4ede2] rounded-xl focus:outline-none focus:border-[#073b4c] transition-colors" />
+            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-[#e4ede2] rounded-xl focus:outline-none focus:border-[#073b4c] transition-colors font-medium" />
         </div>
         <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)}
-          className="bg-white border border-[#e4ede2] rounded-xl px-3.5 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#073b4c] transition-colors w-full sm:w-auto">
+          className="bg-white border border-[#e4ede2] rounded-xl px-3.5 py-2.5 text-sm font-semibold text-[#073b4c] focus:outline-none focus:border-[#073b4c] transition-colors w-full sm:w-auto cursor-pointer">
           <option value="All">All Categories ({allProductCount})</option>
           {categories.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <p className="text-[#9aa89b] text-sm ml-auto">{products.length} result{products.length !== 1 ? "s" : ""}</p>
+        <p className="text-[#9aa89b] text-xs sm:text-sm ml-auto font-medium">{products.length} product{products.length !== 1 ? "s" : ""}</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" style={{ minWidth: "1100px" }}>
-            <thead>
-              <tr className="border-b border-[#e4ede2] bg-[#f8fafb]">
-                {["", "SKU", "Product Name", "HSN", "Category", "Brand", "MRP", "Customer ₹", "Retailer ₹", "Stock", "Status", "Actions"].map((h) => (
-                  <th key={h} className="text-left px-3.5 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.7px] whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p) => {
-                const st = stockStatus(p.stock);
-                const catColor = CAT_ACCENT[p.category] ?? "#374151";
-                return (
-                  <tr key={p.id} className="border-b border-[#f0f4f0] last:border-0 hover:bg-[#fafcfa] transition-colors">
-                    {/* Thumbnail */}
-                    <td className="px-3.5 py-3">
-                      {p.image ? (
-                        <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover border border-[#e4ede2]" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm" style={{ backgroundColor: catColor + "18", color: catColor }}>
-                          {p.name[0]}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3.5 py-3 text-[#9aa89b] font-mono text-xs">{p.sku}</td>
-                    <td className="px-3.5 py-3 max-w-[200px]">
-                      <p className="font-semibold text-[#073b4c] truncate text-[13px]">{p.name}</p>
-                      {p.details && (
-                        <span className="inline-block text-[9px] font-bold bg-[#f0fdf4] text-[#047857] border border-[#bbf7d0] px-1.5 py-0.5 rounded-full mt-0.5 leading-none">{p.details}</span>
-                      )}
-                    </td>
-                    <td className="px-3.5 py-3">
-                      <span className="font-mono text-xs bg-[#f0f9ff] text-[#0369a1] border border-[#bae6fd] px-1.5 py-0.5 rounded font-bold">{p.hsn}</span>
-                    </td>
-                    <td className="px-3.5 py-3">
-                      <span className="text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap" style={{ color: catColor, backgroundColor: catColor + "18" }}>
+      {/* Responsive Compact Products Card List (Zero Horizontal Scrollbar) */}
+      <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden shadow-xs">
+        <div className="divide-y divide-[#f0f4f0]">
+          {products.map((p) => {
+            const st = stockStatus(p.stock);
+            const catColor = CAT_ACCENT[p.category] ?? "#006a39";
+
+            return (
+              <div
+                key={p.id}
+                className="p-3.5 sm:p-4 hover:bg-[#fafcfa] transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3.5"
+              >
+                {/* Left: Image, Product Name, SKU, HSN, Category, Details */}
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <div className="w-12 h-12 rounded-xl border border-[#e4ede2] overflow-hidden shrink-0 bg-[#f8fafb] flex items-center justify-center p-1">
+                    {p.image ? (
+                      <img src={p.image} alt={p.name} className="h-full max-w-full object-contain" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center font-bold text-sm" style={{ backgroundColor: catColor + "18", color: catColor }}>
+                        {p.name[0]}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="font-bold text-[#073b4c] text-sm truncate">{p.name}</p>
+                      <span className="font-mono text-[10px] bg-[#f0f9ff] text-[#0369a1] border border-[#bae6fd] px-1.5 py-0.2 rounded font-bold">
+                        HSN: {p.hsn}
+                      </span>
+                      <span className="font-mono text-[10px] text-[#9aa89b]">
+                        {p.sku}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ color: catColor, backgroundColor: catColor + "18" }}
+                      >
                         {p.category.split(",")[0].split(" & ")[0]}
                       </span>
-                    </td>
-                    <td className="px-3.5 py-3 text-[#6d7a6f] text-[13px]">{p.brand}</td>
-                    <td className="px-3.5 py-3 text-[#9aa89b] text-[13px]">₹{p.mrp}</td>
-                    <td className="px-3.5 py-3">
-                      <div className="flex items-center gap-1">
-                        <span className="font-bold text-[#073b4c] text-[13px]">₹{p.customerPrice}</span>
-                        {p.mrp > p.customerPrice && (
-                          <span className="text-[9px] bg-[#d1fae5] text-[#047857] px-1 py-0.5 rounded font-bold">
-                            {Math.round(((p.mrp - p.customerPrice) / p.mrp) * 100)}% off
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-3.5 py-3">
-                      <div className="flex items-center gap-1">
-                        <span className="font-bold text-[#0369a1] text-[13px]">₹{p.retailerPrice}</span>
-                        {p.customerPrice > p.retailerPrice && (
-                          <span className="text-[9px] bg-[#dbeafe] text-[#1d4ed8] px-1 py-0.5 rounded font-bold">
-                            {Math.round(((p.customerPrice - p.retailerPrice) / p.customerPrice) * 100)}% off
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-3.5 py-3 font-bold text-[#073b4c] text-[13px]">{p.stock}</td>
-                    <td className="px-3.5 py-3">
-                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap" style={{ color: st.color, backgroundColor: st.bg }}>{st.label}</span>
-                    </td>
-                    <td className="px-3.5 py-3">
-                      <div className="flex items-center gap-1.5">
-                        <button onClick={() => onEdit(p)} className="w-7 h-7 rounded-lg bg-[#e0f2fe] text-[#0369a1] flex items-center justify-center hover:opacity-80 transition-opacity" title="Edit">
-                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M8.5 1.5L11.5 4.5M1 12L2 9L9.5 1.5L12.5 4.5L5 12H1V12Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" /></svg>
-                        </button>
-                        <button onClick={() => onDelete(p.id)} className="w-7 h-7 rounded-lg bg-[#fee2e2] text-[#b91c1c] flex items-center justify-center hover:opacity-80 transition-opacity" title="Delete">
-                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 4H11M4.5 4V2.5H8.5V4M5.5 6.5V10M7.5 6.5V10M3 4L3.75 11H9.25L10 4H3Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {products.length === 0 && (
-            <div className="py-16 text-center text-[#9aa89b] text-sm">No products match your search.</div>
-          )}
+                      <span className="text-xs text-[#6d7a6f] font-medium">{p.brand}</span>
+                      {p.details && (
+                        <span className="text-[10px] font-semibold bg-[#f0fdf4] text-[#047857] border border-[#bbf7d0] px-1.5 py-0.2 rounded">
+                          {p.details}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Middle: Pricing Structure (MRP, Customer Price, Retailer Price) */}
+                <div className="flex items-center gap-4 text-left md:text-right shrink-0 border-t md:border-t-0 pt-2 md:pt-0 border-[#f0f4f0] flex-wrap justify-between md:justify-end">
+                  {/* MRP */}
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-[#9aa89b] uppercase">MRP</span>
+                    <span className="text-xs text-[#9aa89b] line-through font-semibold">₹{p.mrp}</span>
+                  </div>
+
+                  {/* Customer Price */}
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-[#006a39] uppercase">Customer</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs sm:text-sm font-extrabold text-[#073b4c]">₹{p.customerPrice}</span>
+                      {p.mrp > p.customerPrice && (
+                        <span className="text-[9px] bg-[#d1fae5] text-[#047857] px-1 py-0.2 rounded font-bold">
+                          {Math.round(((p.mrp - p.customerPrice) / p.mrp) * 100)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Retailer Price */}
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-[#0369a1] uppercase">Retailer</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs sm:text-sm font-extrabold text-[#0369a1]">₹{p.retailerPrice}</span>
+                      {p.customerPrice > p.retailerPrice && (
+                        <span className="text-[9px] bg-[#dbeafe] text-[#1d4ed8] px-1 py-0.2 rounded font-bold">
+                          {Math.round(((p.customerPrice - p.retailerPrice) / p.customerPrice) * 100)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Stock & Status */}
+                  <div className="flex flex-col items-start md:items-end">
+                    <span className="text-xs font-black text-[#073b4c]">{p.stock} units</span>
+                    <span
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5"
+                      style={{ color: st.color, backgroundColor: st.bg }}
+                    >
+                      {st.label}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right: Actions */}
+                <div className="flex items-center gap-1.5 shrink-0 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(p)}
+                    className="p-2 rounded-xl bg-[#e0f2fe] text-[#0369a1] hover:bg-[#bae6fd] transition-colors cursor-pointer shadow-2xs"
+                    title="Edit Product"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 13 13" fill="none"><path d="M8.5 1.5L11.5 4.5M1 12L2 9L9.5 1.5L12.5 4.5L5 12H1V12Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /></svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(p.id)}
+                    className="p-2 rounded-xl bg-[#fee2e2] text-[#b91c1c] hover:bg-[#fecaca] transition-colors cursor-pointer shadow-2xs"
+                    title="Delete Product"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 13 13" fill="none"><path d="M2 4H11M4.5 4V2.5H8.5V4M5.5 6.5V10M7.5 6.5V10M3 4L3.75 11H9.25L10 4H3Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
+
+        {products.length === 0 && (
+          <div className="py-16 text-center text-[#9aa89b] text-sm flex flex-col items-center gap-2">
+            <span className="text-3xl">🔍</span>
+            <p>No products match your search or filter.</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1194,125 +1237,138 @@ function InventoryTab({ products, filter, setFilter, search, setSearch, stockEdi
           </button>
         )}
       </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {[{ label: "In Stock", count: inStockCount, color: "#047857", bg: "#d1fae5" }, { label: "Low Stock", count: lowStockCount, color: "#c2410c", bg: "#ffedd5" }, { label: "Out of Stock", count: outOfStockCount, color: "#b91c1c", bg: "#fee2e2" }].map((s) => (
-          <button key={s.label} onClick={() => setFilter(s.label)} className="bg-white rounded-2xl border border-[#e4ede2] p-4 sm:p-5 flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow text-left">
+          <button key={s.label} onClick={() => setFilter(s.label)} className="bg-white rounded-2xl border border-[#e4ede2] p-4 sm:p-5 flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow text-left cursor-pointer">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-lg sm:text-xl shrink-0" style={{ color: s.color, backgroundColor: s.bg }}>{s.count}</div>
-            <div><p className="font-semibold text-[#073b4c] text-sm">{s.label}</p><p className="text-[#9aa89b] text-xs mt-0.5">products</p></div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#9aa89b]">{s.label}</p>
+              <p className="text-xs text-[#6d7a6f] mt-0.5">{s.count === 0 ? "No items" : `${s.count} products`}</p>
+            </div>
           </button>
         ))}
       </div>
-      <div className="flex items-center gap-2 flex-wrap">
+
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
         {FILTERS.map((f) => (
-          <button key={f} onClick={() => setFilter(f)} className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
-            style={filter === f ? { backgroundColor: "#073b4c", color: "white" } : { backgroundColor: "white", color: "#6d7a6f", border: "1px solid #e4ede2" }}>
-            {f} ({filterCounts[f]})
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0 cursor-pointer"
+            style={
+              filter === f
+                ? { backgroundColor: "#073b4c", color: "white" }
+                : { backgroundColor: "white", color: "#6d7a6f", border: "1px solid #e4ede2" }
+            }
+          >
+            {f} ({filterCounts[f] ?? 0})
           </button>
         ))}
-        <p className="text-[#9aa89b] text-sm ml-auto">
-          {products.length} result{products.length !== 1 ? "s" : ""}
-          {search.trim() && <span> for "<span className="text-[#073b4c] font-semibold">{search}</span>"</span>}
-        </p>
       </div>
-      <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" style={{ minWidth: "800px" }}>
-            <thead>
-              <tr className="border-b border-[#e4ede2] bg-[#f8fafb]">
-                {["Product", "HSN", "Category", "Stock", "Status", "Update Stock"].map((h) => (
-                  <th key={h} className="text-left px-5 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px]">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p) => {
-                const st = stockStatus(p.stock);
-                const catColor = CAT_ACCENT[p.category] ?? "#374151";
-                const pct = Math.min((p.stock / 200) * 100, 100);
-                return (
-                  <tr key={p.id} className="border-b border-[#f0f4f0] last:border-0 hover:bg-[#fafcfa] transition-colors">
-                    <td className="px-5 py-3.5">
-                      <p className="font-semibold text-[#073b4c]">{p.name}</p>
-                      <p className="text-[#9aa89b] text-xs mt-0.5">{p.sku}</p>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className="font-mono text-xs bg-[#f0f9ff] text-[#0369a1] border border-[#bae6fd] px-1.5 py-0.5 rounded font-bold">{p.hsn}</span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ color: catColor, backgroundColor: catColor + "18" }}>
-                        {p.category.split(",")[0].split(" & ")[0]}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] w-8 text-right">{p.stock}</span>
-                        <div className="w-24 h-2 bg-[#f0f4f0] rounded-full overflow-hidden">
-                          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: st.color }} />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ color: st.color, backgroundColor: st.bg }}>{st.label}</span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex flex-col gap-1.5">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            min="0"
-                            value={stockEdits[p.id] ?? ""}
-                            onChange={(e) => setStockEdits((prev) => ({ ...prev, [p.id]: e.target.value }))}
-                            onKeyDown={(e) => { if (e.key === "Enter") onApplyStock(p.id); }}
-                            placeholder={String(p.stock)}
-                            className="w-20 bg-[#f8fafb] border border-[#e4ede2] rounded-lg px-2.5 py-1.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#073b4c] transition-colors"
-                          />
-                          <button
-                            onClick={() => onApplyStock(p.id)}
-                            disabled={!stockEdits[p.id]}
-                            className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#073b4c] text-white transition-colors disabled:opacity-40 hover:opacity-90"
-                          >
-                            Save
-                          </button>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => {
-                              setStockEdits((prev) => ({ ...prev, [p.id]: String(p.stock + 10) }));
-                              setTimeout(() => onApplyStock(p.id), 50);
-                            }}
-                            className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#e8f5ee] text-[#006a39] hover:bg-[#d1fae5] transition-colors"
-                            title="Add 10 units"
-                          >
-                            +10
-                          </button>
-                          <button
-                            onClick={() => {
-                              setStockEdits((prev) => ({ ...prev, [p.id]: String(p.stock + 50) }));
-                              setTimeout(() => onApplyStock(p.id), 50);
-                            }}
-                            className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#e8f5ee] text-[#006a39] hover:bg-[#d1fae5] transition-colors"
-                            title="Add 50 units"
-                          >
-                            +50
-                          </button>
-                          <button
-                            onClick={() => {
-                              setStockEdits((prev) => ({ ...prev, [p.id]: "0" }));
-                              setTimeout(() => onApplyStock(p.id), 50);
-                            }}
-                            className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#fee2e2] text-[#b91c1c] hover:bg-[#fecaca] transition-colors"
-                            title="Set to Out of Stock (0)"
-                          >
-                            Out (0)
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+
+      {/* Inventory Compact List (Zero Horizontal Scrollbar) */}
+      <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden shadow-xs">
+        <div className="divide-y divide-[#f0f4f0]">
+          {products.map((p) => {
+            const st = stockStatus(p.stock);
+            const catColor = CAT_ACCENT[p.category] ?? "#374151";
+            const pct = Math.min((p.stock / 200) * 100, 100);
+
+            return (
+              <div
+                key={p.id}
+                className="p-3.5 sm:p-4 hover:bg-[#fafcfa] transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3.5"
+              >
+                {/* Product Identity */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-bold text-[#073b4c] text-sm truncate">{p.name}</p>
+                    <span className="font-mono text-[10px] bg-[#f0f9ff] text-[#0369a1] border border-[#bae6fd] px-1.5 py-0.2 rounded font-bold">
+                      HSN: {p.hsn}
+                    </span>
+                    <span className="font-mono text-[10px] text-[#9aa89b]">{p.sku}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color: catColor, backgroundColor: catColor + "18" }}>
+                      {p.category.split(",")[0].split(" & ")[0]}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Stock Progress Bar & Count */}
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-['Manrope',sans-serif] font-black text-sm text-[#073b4c] w-9 text-right">{p.stock}</span>
+                    <div className="w-20 sm:w-28 h-2 bg-[#f0f4f0] rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: st.color }} />
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap" style={{ color: st.color, backgroundColor: st.bg }}>
+                    {st.label}
+                  </span>
+                </div>
+
+                {/* Quick Stock Updater Controls */}
+                <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      min="0"
+                      value={stockEdits[p.id] ?? ""}
+                      onChange={(e) => setStockEdits((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                      onKeyDown={(e) => { if (e.key === "Enter") onApplyStock(p.id); }}
+                      placeholder={String(p.stock)}
+                      className="w-18 bg-[#f8fafb] border border-[#e4ede2] rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#073b4c] focus:outline-none focus:border-[#073b4c] transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => onApplyStock(p.id)}
+                      disabled={!stockEdits[p.id]}
+                      className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#073b4c] text-white transition-colors disabled:opacity-30 hover:opacity-90 cursor-pointer shadow-2xs"
+                    >
+                      Save
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStockEdits((prev) => ({ ...prev, [p.id]: String(p.stock + 10) }));
+                        setTimeout(() => onApplyStock(p.id), 50);
+                      }}
+                      className="text-[10px] font-black px-2 py-1 rounded-lg bg-[#e8f5ee] text-[#006a39] hover:bg-[#d1fae5] transition-colors cursor-pointer"
+                      title="Add 10 units"
+                    >
+                      +10
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStockEdits((prev) => ({ ...prev, [p.id]: String(p.stock + 50) }));
+                        setTimeout(() => onApplyStock(p.id), 50);
+                      }}
+                      className="text-[10px] font-black px-2 py-1 rounded-lg bg-[#e8f5ee] text-[#006a39] hover:bg-[#d1fae5] transition-colors cursor-pointer"
+                      title="Add 50 units"
+                    >
+                      +50
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStockEdits((prev) => ({ ...prev, [p.id]: "0" }));
+                        setTimeout(() => onApplyStock(p.id), 50);
+                      }}
+                      className="text-[10px] font-black px-2 py-1 rounded-lg bg-[#fee2e2] text-[#b91c1c] hover:bg-[#fecaca] transition-colors cursor-pointer"
+                      title="Set to Out of Stock (0)"
+                    >
+                      0
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
