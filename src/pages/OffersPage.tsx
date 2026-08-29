@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useCart } from "../contexts/CartContext";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
 import ProductDetailModal, { nameToId, type PopupProduct } from "../components/ProductModal";
+import KeyCategoriesBar, { KeyCategoryItem } from "../components/KeyCategoriesBar";
+import InsuranceModal from "../components/InsuranceModal";
 import type { Page } from "../App";
 import imgMainFeatured from "@/imports/HealthSupplementsSubhOne/12180d12bdb759cb4c1126433eb9617bcf5f0e37.png";
 import imgVitamins from "@/imports/HealthSupplementsSubhOne/82fde6fb40fb3f0de4e0ae8e660633ef3205b656.png";
@@ -196,9 +198,35 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
     setWishlist((prev) => prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]);
   };
 
+  const [showInsuranceModal, setShowInsuranceModal] = useState(false);
+  const [activeKeyCat, setActiveKeyCat] = useState("50-off");
+
+  const handleSelectKeyCategory = (cat: KeyCategoryItem) => {
+    setActiveKeyCat(cat.id);
+    if (cat.id === "insurance") {
+      setShowInsuranceModal(true);
+      return;
+    }
+    if (cat.route && onNavigate) {
+      onNavigate(cat.route as Page);
+      return;
+    }
+    if (onNavigate) {
+      onNavigate("medicines", cat.filterCat || cat.name);
+    }
+  };
+
   return (
     <div className="bg-[#f5fbf2] min-h-screen">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-6 sm:gap-8">
+      <div className="max-w-[1280px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 flex flex-col gap-3.5 sm:gap-6">
+
+        {/* ── Key Categories Bar ── */}
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#e4ede2] shadow-xs overflow-hidden">
+          <KeyCategoriesBar
+            selectedId={activeKeyCat}
+            onSelectCategory={handleSelectKeyCategory}
+          />
+        </div>
 
         {/* Featured Hero Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -437,6 +465,12 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
           onClose={() => setSelectedProduct(null)}
         />
       )}
+
+      <InsuranceModal
+        isOpen={showInsuranceModal}
+        onClose={() => setShowInsuranceModal(false)}
+        isRetailer={isRetailer}
+      />
     </div>
   );
 }

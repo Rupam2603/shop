@@ -41,9 +41,6 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
   {
     id: "insurance",
     name: "Insurance",
-    badge: "GET CIRCLE",
-    badgeBg: "#f59e0b",
-    badgeColor: "#ffffff",
     filterCat: "Insurance",
     route: "insurance",
     icon: (

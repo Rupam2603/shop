@@ -26,10 +26,10 @@ export default function InsuranceModal({
           </button>
 
           <div className="flex items-center gap-2 mb-2">
-            <span className="bg-[#f59e0b] text-white text-[10px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full shadow-2xs">
-              GET CIRCLE
+            <span className="bg-white/20 text-white text-[10px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full shadow-2xs border border-white/20">
+              🛡️ SubhOne Insurance
             </span>
-            <span className="text-white/80 text-xs font-semibold">SubhOne Care Circle Protection</span>
+            <span className="text-white/80 text-xs font-semibold">Health & Pharmacy Care Protection</span>
           </div>
 
           <h2 className="font-['Manrope',sans-serif] font-black text-xl sm:text-2xl leading-tight">

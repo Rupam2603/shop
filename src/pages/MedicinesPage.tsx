@@ -214,6 +214,14 @@ export default function MedicinesPage({
   };
 
   useEffect(() => {
+    setSelectedCategory(initialCategory);
+    const found = KEY_CATEGORIES.find(
+      (k) => k.filterCat === initialCategory || k.name.toLowerCase() === initialCategory.toLowerCase()
+    );
+    setActiveKeyCat(found ? found.id : (initialCategory === "All" ? "all" : ""));
+  }, [initialCategory]);
+
+  useEffect(() => {
     let mounted = true;
     setLoadingProducts(true);
     fetchProducts().then((data) => {
