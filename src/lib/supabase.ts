@@ -28,6 +28,7 @@ export interface Profile {
   phone: string | null;
   shop_name: string | null;
   avatar_url: string | null;
+  approval_status?: "pending" | "approved" | "rejected";
   created_at: string;
   updated_at: string;
 }

@@ -19,6 +19,11 @@ import {
 } from "../lib/orders";
 import { fetchAllLabBookings, updateLabBookingStatus as dbUpdateLabBookingStatus, DbLabBooking } from "../lib/labTests";
 import {
+  fetchAllRetailers,
+  updateRetailerApprovalStatus,
+  RetailerAccount,
+} from "../lib/retailers";
+import {
   printOrDownloadInvoice,
   downloadInvoiceFile,
   printOrDownloadDailyReport,
@@ -33,7 +38,7 @@ interface Props {
   onLogout: () => void;
 }
 
-type AdminTab = "dashboard" | "products" | "inventory" | "orders" | "lab-tests" | "revenue" | "settings";
+type AdminTab = "dashboard" | "products" | "inventory" | "orders" | "retailers" | "lab-tests" | "revenue" | "settings";
 
 export type ProductBadge = {
   id: string;
@@ -216,6 +221,7 @@ const TAB_ITEMS: { id: AdminTab; label: string; icon: React.ReactElement }[] = [
   { id: "products", label: "Products", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 1L17 5V13L9 17L1 13V5L9 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M9 9L17 5M9 9L1 5M9 9V17" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg> },
   { id: "inventory", label: "Inventory", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 13L5 15L9 13L13 15L17 13V5L13 3L9 5L5 3L1 5V13Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M9 5V13M5 3V15M13 3V15" stroke="currentColor" strokeWidth="1.5" /></svg> },
   { id: "orders", label: "Orders", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 1H14C15.1 1 16 1.9 16 3V17L13 15.5L9 17L5 15.5L2 17V3C2 1.9 2.9 1 4 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M5 6H13M5 9H13M5 12H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg> },
+  { id: "retailers", label: "Retailers", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
   { id: "lab-tests", label: "Lab Bookings", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M9 3H6v6L2 15c-.83 1.39-.83 3.08 0 4.47C2.83 20.86 4.33 22 6 22h12c1.67 0 3.17-1.14 4-2.53.83-1.39.83-3.08 0-4.47L18 9V3h-3M9 3v6l-4 6h14L15 9V3M9 3h6"/></svg> },
   { id: "revenue", label: "Revenue", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 13L5 9L8 11L12 6L17 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M1 17H17M13 2H17V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg> },
   { id: "settings", label: "Settings", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 11.5C10.38 11.5 11.5 10.38 11.5 9C11.5 7.62 10.38 6.5 9 6.5C7.62 6.5 6.5 7.62 6.5 9C6.5 10.38 7.62 11.5 9 11.5Z" stroke="currentColor" strokeWidth="1.5" /><path d="M15.1 9C15.1 8.71 15.07 8.43 15.04 8.15L16.86 6.74L14.86 3.26L12.74 4.22C12.27 3.87 11.77 3.57 11.22 3.34L10.9 1H7.1L6.78 3.34C6.23 3.57 5.73 3.87 5.26 4.22L3.14 3.26L1.14 6.74L2.96 8.15C2.93 8.43 2.9 8.71 2.9 9C2.9 9.29 2.93 9.57 2.96 9.85L1.14 11.26L3.14 14.74L5.26 13.78C5.73 14.13 6.23 14.43 6.78 14.66L7.1 17H10.9L11.22 14.66C11.77 14.43 12.27 14.13 12.74 13.78L14.86 14.74L16.86 11.26L15.04 9.85C15.07 9.57 15.1 9.29 15.1 9Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg> },
@@ -608,6 +614,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [categories, setCategories] = useState<string[]>(INITIAL_CATEGORIES);
+  const [retailers, setRetailers] = useState<RetailerAccount[]>([]);
+  const [isRefreshingRetailers, setIsRefreshingRetailers] = useState(false);
 
   // Product management state
   const [search, setSearch] = useState("");
@@ -711,6 +719,12 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     fetchAllLabBookings().then((data) => {
       if (mounted && data) {
         setDbLabBookings(data);
+      }
+    });
+
+    fetchAllRetailers().then((data) => {
+      if (mounted && data) {
+        setRetailers(data);
       }
     });
 
@@ -888,6 +902,35 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     }
   };
 
+  const handleUpdateRetailerApproval = async (
+    retailerId: string,
+    newStatus: "pending" | "approved" | "rejected"
+  ) => {
+    setRetailers((prev) =>
+      prev.map((r) => (r.id === retailerId || r.email.toLowerCase() === retailerId.toLowerCase() ? { ...r, approvalStatus: newStatus } : r))
+    );
+    await updateRetailerApprovalStatus(retailerId, newStatus);
+  };
+
+  const handleRefreshRetailers = async () => {
+    setIsRefreshingRetailers(true);
+    try {
+      const fresh = await fetchAllRetailers();
+      if (fresh) setRetailers(fresh);
+    } catch (e) {
+      console.error("Error refreshing retailers:", e);
+    } finally {
+      setTimeout(() => {
+        setIsRefreshingRetailers(false);
+      }, 400);
+    }
+  };
+
+  const pendingRetailersCount = useMemo(
+    () => retailers.filter((r) => r.approvalStatus === "pending").length,
+    [retailers]
+  );
+
   const openAdd = () => { setForm(emptyForm(categories[0])); setModal({ open: true, mode: "add" }); };
   const openEdit = (p: Product) => {
     setForm({
@@ -1056,6 +1099,11 @@ export default function AdminDashboard({ user, onLogout }: Props) {
                   {lowStockCount + outOfStockCount}
                 </span>
               )}
+              {t.id === "retailers" && pendingRetailersCount > 0 && (
+                <span className="ml-auto bg-[#d97706] text-white text-[10px] font-extrabold rounded-full px-1.5 py-0.5 min-w-[20px] text-center animate-pulse">
+                  {pendingRetailersCount}
+                </span>
+              )}
             </button>
           ))}
 
@@ -1146,6 +1194,14 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               onRefresh={handleRefreshOrders}
               isRefreshing={isRefreshingOrders}
               settings={settings}
+            />
+          )}
+          {activeTab === "retailers" && (
+            <RetailersTab
+              retailers={retailers}
+              onUpdateApproval={handleUpdateRetailerApproval}
+              onRefresh={handleRefreshRetailers}
+              isRefreshing={isRefreshingRetailers}
             />
           )}
           {activeTab === "lab-tests" && (
@@ -2842,6 +2898,412 @@ function OrdersTab({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ─── Retailers Tab (Role-Based Approvals Management) ─── */
+function RetailersTab({
+  retailers,
+  onUpdateApproval,
+  onRefresh,
+  isRefreshing = false,
+}: {
+  retailers: RetailerAccount[];
+  onUpdateApproval: (retailerId: string, status: "pending" | "approved" | "rejected") => void;
+  onRefresh: () => void;
+  isRefreshing?: boolean;
+}) {
+  const [filter, setFilter] = useState<"All" | "pending" | "approved" | "rejected">("All");
+  const [search, setSearch] = useState("");
+
+  const pendingCount = useMemo(() => retailers.filter((r) => r.approvalStatus === "pending").length, [retailers]);
+  const approvedCount = useMemo(() => retailers.filter((r) => r.approvalStatus === "approved").length, [retailers]);
+  const rejectedCount = useMemo(() => retailers.filter((r) => r.approvalStatus === "rejected").length, [retailers]);
+
+  const filteredRetailers = useMemo(() => {
+    return retailers.filter((r) => {
+      if (filter !== "All" && r.approvalStatus !== filter) return false;
+      if (search.trim() !== "") {
+        const q = search.toLowerCase();
+        const matchShop = r.shopName.toLowerCase().includes(q);
+        const matchName = r.fullName.toLowerCase().includes(q);
+        const matchEmail = r.email.toLowerCase().includes(q);
+        const matchPhone = r.phone ? r.phone.includes(q) : false;
+        if (!matchShop && !matchName && !matchEmail && !matchPhone) return false;
+      }
+      return true;
+    });
+  }, [retailers, filter, search]);
+
+  const getStatusBadge = (status: "pending" | "approved" | "rejected") => {
+    switch (status) {
+      case "approved":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-extrabold bg-[#d1fae5] text-[#047857] border border-[#a7f3d0]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#047857]" />
+            Approved & Active
+          </span>
+        );
+      case "pending":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-extrabold bg-[#fef3c7] text-[#d97706] border border-[#fde68a] animate-pulse">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#d97706]" />
+            Pending Approval
+          </span>
+        );
+      case "rejected":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-extrabold bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#b91c1c]" />
+            Declined / Suspended
+          </span>
+        );
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* ── Summary KPI Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Retailers */}
+        <div
+          onClick={() => setFilter("All")}
+          className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+            filter === "All"
+              ? "bg-[#073b4c] text-white border-[#073b4c] shadow-md ring-2 ring-[#073b4c]/20"
+              : "bg-white text-[#073b4c] border-[#e4ede2] hover:border-[#073b4c]/30"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className={`text-xs font-bold uppercase tracking-wider ${filter === "All" ? "text-white/70" : "text-[#9aa89b]"}`}>
+              Total Retailers
+            </span>
+            <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${filter === "All" ? "bg-white/20 text-white" : "bg-[#f0f4f0] text-[#073b4c]"}`}>
+              {retailers.length} registered
+            </span>
+          </div>
+          <p className={`font-['Manrope',sans-serif] font-extrabold text-2xl sm:text-3xl ${filter === "All" ? "text-white" : "text-[#073b4c]"}`}>
+            {retailers.length}
+          </p>
+          <p className={`text-xs mt-1.5 ${filter === "All" ? "text-white/60" : "text-[#6d7a6f]"}`}>
+            Platform wholesale partners
+          </p>
+        </div>
+
+        {/* Pending Approvals */}
+        <div
+          onClick={() => setFilter("pending")}
+          className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+            filter === "pending"
+              ? "bg-[#d97706] text-white border-[#d97706] shadow-md ring-2 ring-[#d97706]/30"
+              : "bg-white text-[#073b4c] border-[#e4ede2] hover:border-[#d97706]/40"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">⏳</span>
+              <span className={`text-xs font-bold uppercase tracking-wider ${filter === "pending" ? "text-white/80" : "text-[#d97706]"}`}>
+                Pending Approvals
+              </span>
+            </div>
+            <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${filter === "pending" ? "bg-white/20 text-white" : "bg-[#fef3c7] text-[#d97706]"}`}>
+              {pendingCount} action req.
+            </span>
+          </div>
+          <p className={`font-['Manrope',sans-serif] font-extrabold text-2xl sm:text-3xl ${filter === "pending" ? "text-white" : "text-[#d97706]"}`}>
+            {pendingCount}
+          </p>
+          <p className={`text-xs mt-1.5 ${filter === "pending" ? "text-white/70" : "text-[#6d7a6f]"}`}>
+            {pendingCount > 0 ? "Requires admin review" : "All applications reviewed"}
+          </p>
+        </div>
+
+        {/* Approved Retailers */}
+        <div
+          onClick={() => setFilter("approved")}
+          className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+            filter === "approved"
+              ? "bg-[#006a39] text-white border-[#006a39] shadow-md ring-2 ring-[#006a39]/30"
+              : "bg-white text-[#073b4c] border-[#e4ede2] hover:border-[#006a39]/40"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">✅</span>
+              <span className={`text-xs font-bold uppercase tracking-wider ${filter === "approved" ? "text-white/80" : "text-[#006a39]"}`}>
+                Active Retailers
+              </span>
+            </div>
+            <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${filter === "approved" ? "bg-white/20 text-white" : "bg-[#d1fae5] text-[#006a39]"}`}>
+              {approvedCount} active
+            </span>
+          </div>
+          <p className={`font-['Manrope',sans-serif] font-extrabold text-2xl sm:text-3xl ${filter === "approved" ? "text-white" : "text-[#006a39]"}`}>
+            {approvedCount}
+          </p>
+          <p className={`text-xs mt-1.5 ${filter === "approved" ? "text-white/70" : "text-[#6d7a6f]"}`}>
+            Full login & wholesale ordering access
+          </p>
+        </div>
+
+        {/* Declined / Suspended */}
+        <div
+          onClick={() => setFilter("rejected")}
+          className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+            filter === "rejected"
+              ? "bg-[#b91c1c] text-white border-[#b91c1c] shadow-md ring-2 ring-[#b91c1c]/30"
+              : "bg-white text-[#073b4c] border-[#e4ede2] hover:border-[#b91c1c]/40"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">❌</span>
+              <span className={`text-xs font-bold uppercase tracking-wider ${filter === "rejected" ? "text-white/80" : "text-[#b91c1c]"}`}>
+                Declined / Suspended
+              </span>
+            </div>
+            <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${filter === "rejected" ? "bg-white/20 text-white" : "bg-[#fee2e2] text-[#b91c1c]"}`}>
+              {rejectedCount}
+            </span>
+          </div>
+          <p className={`font-['Manrope',sans-serif] font-extrabold text-2xl sm:text-3xl ${filter === "rejected" ? "text-white" : "text-[#b91c1c]"}`}>
+            {rejectedCount}
+          </p>
+          <p className={`text-xs mt-1.5 ${filter === "rejected" ? "text-white/70" : "text-[#6d7a6f]"}`}>
+            Blocked from logging in
+          </p>
+        </div>
+      </div>
+
+      {/* ── Toolbar: Filter Tabs, Search & Dedicated Reload Button ── */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-[#e4ede2]">
+        {/* Status Filter Tabs */}
+        <div className="flex items-center gap-1 bg-[#f0f4f0] p-1 rounded-xl overflow-x-auto no-scrollbar">
+          <button
+            onClick={() => setFilter("All")}
+            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+              filter === "All" ? "bg-white text-[#073b4c] shadow-xs" : "text-[#6d7a6f] hover:text-[#073b4c]"
+            }`}
+          >
+            All ({retailers.length})
+          </button>
+          <button
+            onClick={() => setFilter("pending")}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+              filter === "pending" ? "bg-[#d97706] text-white shadow-xs" : "text-[#6d7a6f] hover:text-[#d97706]"
+            }`}
+          >
+            <span>⏳ Pending</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${filter === "pending" ? "bg-white/25 text-white" : "bg-[#fef3c7] text-[#d97706]"}`}>
+              {pendingCount}
+            </span>
+          </button>
+          <button
+            onClick={() => setFilter("approved")}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+              filter === "approved" ? "bg-[#006a39] text-white shadow-xs" : "text-[#6d7a6f] hover:text-[#006a39]"
+            }`}
+          >
+            <span>✅ Approved</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${filter === "approved" ? "bg-white/25 text-white" : "bg-[#d1fae5] text-[#006a39]"}`}>
+              {approvedCount}
+            </span>
+          </button>
+          <button
+            onClick={() => setFilter("rejected")}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+              filter === "rejected" ? "bg-[#b91c1c] text-white shadow-xs" : "text-[#6d7a6f] hover:text-[#b91c1c]"
+            }`}
+          >
+            <span>❌ Declined</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${filter === "rejected" ? "bg-white/25 text-white" : "bg-[#fee2e2] text-[#b91c1c]"}`}>
+              {rejectedCount}
+            </span>
+          </button>
+        </div>
+
+        {/* Right: Search & Dedicated Reload Button */}
+        <div className="flex items-center gap-2 flex-1 max-w-lg">
+          <div className="relative flex-1">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa89b]">
+              <path d="M13 13L10 10M11.5 6.5C11.5 9.26 9.26 11.5 6.5 11.5C3.74 11.5 1.5 9.26 1.5 6.5C1.5 3.74 3.74 1.5 6.5 1.5C9.26 1.5 11.5 3.74 11.5 6.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search shop, retailer name, email, phone…"
+              className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-[#f8fafb] border border-[#e4ede2] rounded-xl focus:outline-none focus:border-[#073b4c]"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer shadow-2xs shrink-0 active:scale-95 ${
+              isRefreshing
+                ? "bg-[#e8f5ee] text-[#006a39] border-[#bbf7d0] cursor-not-allowed"
+                : "bg-white text-[#073b4c] border-[#e4ede2] hover:bg-[#f0f7ee] hover:border-[#006a39]/40 hover:text-[#006a39]"
+            }`}
+            title="Reload retailers and live approval statuses"
+          >
+            <span className={`text-sm ${isRefreshing ? "animate-spin inline-block" : ""}`}>🔄</span>
+            <span>{isRefreshing ? "Reloading…" : "Reload"}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── Retailers List Table ── */}
+      <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden shadow-xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm" style={{ minWidth: "850px" }}>
+            <thead>
+              <tr className="border-b border-[#e4ede2] bg-[#f8fafb]">
+                <th className="text-left px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px]">
+                  Shop & Business
+                </th>
+                <th className="text-left px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px]">
+                  Owner / Contact
+                </th>
+                <th className="text-left px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px]">
+                  Registration Date
+                </th>
+                <th className="text-left px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px]">
+                  Status
+                </th>
+                <th className="text-right px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px]">
+                  Approval Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRetailers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-[#9aa89b]">
+                    <div className="text-3xl mb-2">🏪</div>
+                    <p className="text-sm font-semibold text-[#073b4c]">No retailers found</p>
+                    <p className="text-xs text-[#9aa89b] mt-0.5">Try adjusting your search query or status filter.</p>
+                  </td>
+                </tr>
+              ) : (
+                filteredRetailers.map((r) => {
+                  const regDate = new Date(r.createdAt);
+                  const regDateStr = !isNaN(regDate.getTime())
+                    ? regDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+                    : "Recent";
+
+                  return (
+                    <tr
+                      key={r.id}
+                      className="border-b border-[#f0f4f0] last:border-0 hover:bg-[#fafcfa] transition-colors"
+                    >
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#e0f2fe] text-[#0369a1] flex items-center justify-center font-bold text-lg shrink-0">
+                            🏪
+                          </div>
+                          <div>
+                            <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm leading-tight">
+                              {r.shopName}
+                            </p>
+                            <span className="inline-block text-[10px] bg-[#f0f4f0] text-[#6d7a6f] px-2 py-0.5 rounded font-mono mt-1">
+                              ID: {r.id.slice(0, 16)}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <p className="font-semibold text-[#073b4c] text-xs sm:text-sm">{r.fullName}</p>
+                        <p className="text-[#6d7a6f] text-xs mt-0.5">{r.email}</p>
+                        {r.phone && <p className="text-[#9aa89b] text-[11px] mt-0.5">{r.phone}</p>}
+                      </td>
+
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <p className="text-xs font-semibold text-[#073b4c]">{regDateStr}</p>
+                        <p className="text-[10px] text-[#9aa89b]">Role: Retailer</p>
+                      </td>
+
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        {getStatusBadge(r.approvalStatus)}
+                      </td>
+
+                      <td className="px-4 py-4 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-2">
+                          {r.approvalStatus === "pending" && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => onUpdateApproval(r.id, "approved")}
+                                className="px-3.5 py-1.5 rounded-xl bg-[#006a39] hover:bg-[#005a30] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+                                title="Approve retailer to grant immediate login access"
+                              >
+                                <span>✅</span>
+                                <span>Approve Retailer</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onUpdateApproval(r.id, "rejected")}
+                                className="px-3 py-1.5 rounded-xl border border-[#fecaca] bg-[#fff5f5] hover:bg-[#fee2e2] text-[#b91c1c] text-xs font-bold transition-all cursor-pointer"
+                                title="Decline this retailer registration"
+                              >
+                                <span>❌ Decline</span>
+                              </button>
+                            </>
+                          )}
+
+                          {r.approvalStatus === "approved" && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => onUpdateApproval(r.id, "pending")}
+                                className="px-3 py-1.5 rounded-xl border border-[#e4ede2] bg-white hover:bg-[#fef3c7] text-[#d97706] text-xs font-bold transition-all cursor-pointer"
+                                title="Set back to pending verification"
+                              >
+                                <span>⏳ Set Pending</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onUpdateApproval(r.id, "rejected")}
+                                className="px-3 py-1.5 rounded-xl border border-[#fecaca] bg-white hover:bg-[#fee2e2] text-[#b91c1c] text-xs font-bold transition-all cursor-pointer"
+                                title="Suspend retailer access"
+                              >
+                                <span>Suspend</span>
+                              </button>
+                            </>
+                          )}
+
+                          {r.approvalStatus === "rejected" && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => onUpdateApproval(r.id, "approved")}
+                                className="px-3.5 py-1.5 rounded-xl bg-[#006a39] hover:bg-[#005a30] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+                                title="Approve and reinstate retailer access"
+                              >
+                                <span>✅ Approve</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onUpdateApproval(r.id, "pending")}
+                                className="px-3 py-1.5 rounded-xl border border-[#e4ede2] bg-white hover:bg-[#f0f4f0] text-[#6d7a6f] text-xs font-bold transition-all cursor-pointer"
+                              >
+                                <span>Set Pending</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

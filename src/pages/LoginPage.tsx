@@ -105,7 +105,7 @@ const FIELD_CLS = "w-full bg-[#f8fafb] border border-[#e4ede2] rounded-xl px-4 p
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
-  const { signIn, signUp, resetPassword } = useAuth();
+  const { signIn, signUp, resetPassword, pendingApprovalInfo, clearPendingApproval } = useAuth();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [selectedRole, setSelectedRole] = useState<UserRole>("customer");
@@ -383,6 +383,50 @@ export default function LoginPage() {
               <p className="text-[10px] text-[#9aa89b] mt-0.5">Admin accounts are created by platform management only.</p>
             )}
           </div>
+
+          {/* ── PENDING RETAILER APPROVAL NOTICE ── */}
+          {pendingApprovalInfo && (
+            <div className="bg-[#fffbeb] border border-[#fde68a] rounded-2xl p-4 sm:p-5 mb-4 shadow-sm animate-in fade-in duration-200">
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-[#fef3c7] text-[#d97706] flex items-center justify-center text-xl shrink-0">
+                  ⏳
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="font-['Manrope',sans-serif] font-extrabold text-[#92400e] text-sm sm:text-base">
+                      {pendingApprovalInfo.status === "rejected" ? "Application Declined" : "Retailer Account Pending Approval"}
+                    </h4>
+                    <span className="text-[10px] bg-[#fef3c7] text-[#b45309] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      {pendingApprovalInfo.status === "rejected" ? "Declined" : "Pending Verification"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#b45309] mt-1.5 leading-relaxed">
+                    Retailer application for <strong>{pendingApprovalInfo.shopName}</strong> ({pendingApprovalInfo.email}) is currently awaiting administrator verification.
+                  </p>
+                  <p className="text-[11px] text-[#78350f] mt-1 font-medium">
+                    Once approved by the SubhOne Admin in the dashboard, you will be granted full access to the Retailer Wholesale portal.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-3 pt-2.5 border-t border-[#fde68a]">
+                    <button
+                      type="button"
+                      onClick={() => window.location.reload()}
+                      className="px-3.5 py-1.5 rounded-xl bg-[#d97706] hover:bg-[#b45309] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    >
+                      <span>🔄</span>
+                      <span>Check Approval Status</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearPendingApproval}
+                      className="px-3.5 py-1.5 rounded-xl bg-white border border-[#fde68a] text-[#92400e] hover:bg-[#fef3c7] text-xs font-bold transition-all cursor-pointer"
+                    >
+                      Sign In with Another Account
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ── LOGIN FORM ── */}
           {mode === "login" && (

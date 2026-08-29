@@ -4,6 +4,7 @@ import type { User, AuthError } from "@supabase/supabase-js";
 import { useUser, useClerk } from "@clerk/clerk-react";
 import { supabase } from "../lib/supabase";
 import type { Profile, UserRole } from "../lib/supabase";
+import { checkRetailerApprovalStatus, registerOrUpdateRetailer } from "../lib/retailers";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -18,12 +19,20 @@ export interface AppUser {
   profile: Profile;
 }
 
+export interface PendingApprovalInfo {
+  email: string;
+  shopName: string;
+  status: "pending" | "rejected";
+}
+
 interface AuthContextValue {
   /** null = not logged in, undefined = still loading */
   appUser: AppUser | null | undefined;
   loading: boolean;
+  pendingApprovalInfo: PendingApprovalInfo | null;
+  clearPendingApproval: () => void;
   signIn: (email: string, password: string, expectedRole?: UserRole) => Promise<{ error: string | null }>;
-  signUp: (opts: SignUpOptions) => Promise<{ error: string | null; emailConfirmationRequired: boolean }>;
+  signUp: (opts: SignUpOptions) => Promise<{ error: string | null; emailConfirmationRequired: boolean; isPendingApproval?: boolean }>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Pick<Profile, "full_name" | "phone" | "shop_name" | "avatar_url">>) => Promise<{ error: string | null }>;
@@ -50,7 +59,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clerk = useClerk();
 
   const [appUser, setAppUser] = useState<AppUser | null | undefined>(undefined);
+  const [pendingApprovalInfo, setPendingApprovalInfo] = useState<PendingApprovalInfo | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const clearPendingApproval = useCallback(() => {
+    setPendingApprovalInfo(null);
+  }, []);
 
   /**
    * Fetches the profile row from the database for a given user ID.
@@ -74,23 +88,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
-   * Sync Clerk user to Supabase profile and hydrate state
+   * Sync Clerk user to Supabase profile and hydrate state with Role & Approval checks
    */
   useEffect(() => {
     if (!isClerkLoaded) return;
 
     if (isClerkSignedIn && clerkUser) {
       const email = clerkUser.primaryEmailAddress?.emailAddress || "";
+      const isAdmin = email.toLowerCase() === "admin@subhone.com";
+
       const rawRole =
         (clerkUser.unsafeMetadata?.role as string) ||
         (clerkUser.publicMetadata?.role as string) ||
-        (email.toLowerCase() === "admin@subhone.com" ? "admin" : "customer");
+        (isAdmin ? "admin" : "customer");
 
-      const role: UserRole = rawRole === "admin" ? "admin" : rawRole === "retailer" ? "retailer" : "customer";
+      const role: UserRole = isAdmin ? "admin" : rawRole === "retailer" ? "retailer" : "customer";
       const fullName = clerkUser.fullName || clerkUser.firstName || email.split("@")[0] || "User";
       const phone = clerkUser.primaryPhoneNumber?.phoneNumber || (clerkUser.unsafeMetadata?.phone as string) || null;
-      const shopName = (clerkUser.unsafeMetadata?.shopName as string) || null;
+      const shopName = (clerkUser.unsafeMetadata?.shopName as string) || (role === "retailer" ? `${fullName}'s Store` : null);
       const avatarUrl = clerkUser.imageUrl || null;
+
+      // Check approval status for Retailers
+      let approvalStatus: "pending" | "approved" | "rejected" = "approved";
+      if (role === "retailer" && !isAdmin) {
+        const clerkMetaStatus =
+          (clerkUser.unsafeMetadata?.approval_status as "pending" | "approved" | "rejected") ||
+          (clerkUser.publicMetadata?.approval_status as "pending" | "approved" | "rejected");
+        const registryStatus = checkRetailerApprovalStatus(email || clerkUser.id);
+        approvalStatus = clerkMetaStatus || registryStatus || "pending";
+
+        // Register / sync in retailer registry so admin sees them in dashboard in real-time
+        registerOrUpdateRetailer({
+          id: clerkUser.id,
+          fullName,
+          email,
+          phone,
+          shopName: shopName || "Medical Store",
+          approvalStatus,
+          clerkId: clerkUser.id,
+        });
+
+        if (approvalStatus !== "approved") {
+          // Block login until approved
+          setPendingApprovalInfo({
+            email,
+            shopName: shopName || "Medical Store",
+            status: approvalStatus,
+          });
+          setAppUser(null);
+          setLoading(false);
+          return;
+        }
+      }
+
+      setPendingApprovalInfo(null);
 
       const profile: Profile = {
         id: clerkUser.id,
@@ -99,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         phone,
         shop_name: shopName,
         avatar_url: avatarUrl,
+        approval_status: approvalStatus,
         created_at: clerkUser.createdAt ? new Date(clerkUser.createdAt).toISOString() : new Date().toISOString(),
         updated_at: clerkUser.updatedAt ? new Date(clerkUser.updatedAt).toISOString() : new Date().toISOString(),
       };
@@ -107,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authUser: {
           id: clerkUser.id,
           email,
-          user_metadata: { role, full_name: fullName, phone, shop_name: shopName },
+          user_metadata: { role, full_name: fullName, phone, shop_name: shopName, approval_status: approvalStatus },
         },
         profile,
       });
@@ -118,21 +170,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check Supabase session if Clerk is not signed in
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
+        const email = session.user.email || "";
+        const isAdmin = email.toLowerCase() === "admin@subhone.com";
         const profile = await fetchProfile(session.user.id);
+        
         if (profile) {
+          const role = isAdmin ? "admin" : profile.role;
+          if (role === "retailer" && !isAdmin) {
+            const status = profile.approval_status || checkRetailerApprovalStatus(email || session.user.id);
+            if (status !== "approved") {
+              setPendingApprovalInfo({
+                email,
+                shopName: profile.shop_name || "Medical Store",
+                status,
+              });
+              setAppUser(null);
+              setLoading(false);
+              return;
+            }
+          }
+          setPendingApprovalInfo(null);
           setAppUser({
             authUser: session.user,
-            profile,
+            profile: { ...profile, role },
           });
         } else {
           const rawMeta = session.user.user_metadata || {};
+          const role: UserRole = isAdmin ? "admin" : (rawMeta.role as UserRole) || "customer";
+          
+          if (role === "retailer" && !isAdmin) {
+            const status = (rawMeta.approval_status as any) || checkRetailerApprovalStatus(email);
+            if (status !== "approved") {
+              setPendingApprovalInfo({
+                email,
+                shopName: rawMeta.shop_name || "Medical Store",
+                status,
+              });
+              setAppUser(null);
+              setLoading(false);
+              return;
+            }
+          }
+          setPendingApprovalInfo(null);
+
           const fallbackProfile: Profile = {
             id: session.user.id,
             full_name: rawMeta.full_name || session.user.email?.split("@")[0] || "User",
-            role: (rawMeta.role as UserRole) || "customer",
+            role,
             phone: rawMeta.phone || null,
             shop_name: rawMeta.shop_name || null,
             avatar_url: rawMeta.avatar_url || null,
+            approval_status: "approved",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           };
@@ -232,6 +320,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
         }
 
+        if (userRole === "retailer") {
+          const approvalStatus = profile?.approval_status || checkRetailerApprovalStatus(cleanEmail);
+          if (approvalStatus !== "approved") {
+            await supabase.auth.signOut();
+            setAppUser(null);
+            setLoading(false);
+            return {
+              error:
+                approvalStatus === "rejected"
+                  ? "Access denied: Your retailer account application was rejected. Please contact support@subhone.com."
+                  : "Access restricted: Your retailer account is currently pending admin approval. You will receive access once approved by the administrator.",
+            };
+          }
+        }
+
         setAppUser({
           authUser: data.user,
           profile: profile || {
@@ -255,10 +358,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Sign Up ──────────────────────────────────────────────────────────────────
   const signUp = useCallback(
-    async (opts: SignUpOptions): Promise<{ error: string | null; emailConfirmationRequired: boolean }> => {
+    async (opts: SignUpOptions): Promise<{ error: string | null; emailConfirmationRequired: boolean; isPendingApproval?: boolean }> => {
       setLoading(true);
 
       const safeRole: "customer" | "retailer" = opts.role === "retailer" ? "retailer" : "customer";
+      const approvalStatus: "pending" | "approved" = safeRole === "retailer" ? "pending" : "approved";
 
       const { data, error } = await supabase.auth.signUp({
         email: opts.email.trim(),
@@ -269,6 +373,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role: safeRole,
             phone: opts.phone?.trim() || null,
             shop_name: opts.shopName?.trim() || null,
+            approval_status: approvalStatus,
           },
         },
       });
@@ -276,6 +381,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         setLoading(false);
         return { error: friendlyAuthError(error), emailConfirmationRequired: false };
+      }
+
+      if (safeRole === "retailer") {
+        // Register in retailer registry as pending
+        await registerOrUpdateRetailer({
+          id: data.user?.id,
+          fullName: opts.fullName.trim(),
+          email: opts.email.trim(),
+          phone: opts.phone?.trim() || null,
+          shopName: opts.shopName?.trim() || `${opts.fullName.trim()}'s Medical Store`,
+          approvalStatus: "pending",
+        });
       }
 
       if (data.user) {
@@ -286,6 +403,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           phone: opts.phone?.trim() || null,
           shop_name: opts.shopName?.trim() || null,
           avatar_url: null,
+          approval_status: approvalStatus,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
@@ -297,6 +415,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.warn("Notice: could not upsert profile on signup:", profErr);
         }
 
+        if (safeRole === "retailer") {
+          // Keep retailer signed out until approved
+          await supabase.auth.signOut();
+          setAppUser(null);
+          setPendingApprovalInfo({
+            email: opts.email.trim(),
+            shopName: opts.shopName?.trim() || "Medical Store",
+            status: "pending",
+          });
+          setLoading(false);
+          return { error: null, emailConfirmationRequired: false, isPendingApproval: true };
+        }
+
+        // Customers are approved freely and logged in immediately!
         setAppUser({
           authUser: data.user,
           profile: newProfile,
@@ -334,6 +466,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.auth.signOut();
     } catch {}
     setAppUser(null);
+    setPendingApprovalInfo(null);
     setLoading(false);
   }, [clerkUser, clerk]);
 
@@ -377,7 +510,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <AuthContext.Provider value={{ appUser, loading, signIn, signUp, resetPassword, signOut, updateProfile, setRole }}>
+    <AuthContext.Provider
+      value={{
+        appUser,
+        loading,
+        pendingApprovalInfo,
+        clearPendingApproval,
+        signIn,
+        signUp,
+        resetPassword,
+        signOut,
+        updateProfile,
+        setRole,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
