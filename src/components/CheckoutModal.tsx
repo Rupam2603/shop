@@ -3,7 +3,6 @@ import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { fetchUserAddresses, DbAddress, createAddress } from "../lib/addresses";
 import { placeOrder } from "../lib/orders";
-import { useModalBackHandler } from "../lib/navigation";
 
 interface CheckoutModalProps {
   open: boolean;
@@ -18,7 +17,16 @@ export default function CheckoutModal({
   onOrderSuccess,
   user,
 }: CheckoutModalProps) {
-  useModalBackHandler(open, onClose, "checkout");
+  // Listen for Escape key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && open) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
 
   const { items, subtotal, savings, clearCart } = useCart();
   const { appUser } = useAuth();

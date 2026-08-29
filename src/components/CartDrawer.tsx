@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
-import { useModalBackHandler } from "../lib/navigation";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
 
 interface CartDrawerProps {
@@ -10,14 +9,33 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
-  const { items, itemCount, subtotal, savings, isCartOpen, closeCart, updateQuantity, removeFromCart } =
-    useCart();
+  const {
+    items,
+    itemCount,
+    subtotal,
+    savings,
+    isCartOpen,
+    closeCart,
+    updateQuantity,
+    removeFromCart,
+  } = useCart();
+
   const { appUser } = useAuth();
   const isRetailer = appUser?.profile?.role === "retailer";
   const [dbProducts, setDbProducts] = useState<DbProduct[]>([]);
 
-  useModalBackHandler(isCartOpen, closeCart, "cart");
+  // Listen for Escape key to close cart
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isCartOpen) {
+        closeCart();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isCartOpen, closeCart]);
 
+  // Fetch real-time products to check live stock
   useEffect(() => {
     let mounted = true;
     fetchProducts().then((prods) => {
@@ -28,7 +46,9 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
 
     const unsubscribe = subscribeToProductsRealtime((payload) => {
       if (payload.eventType === "UPDATE" && payload.new) {
-        setDbProducts((prev) => prev.map((p) => (p.id === payload.new.id ? { ...p, ...payload.new } : p)));
+        setDbProducts((prev) =>
+          prev.map((p) => (p.id === payload.new.id ? { ...p, ...payload.new } : p))
+        );
       } else if (payload.eventType === "INSERT" && payload.new) {
         setDbProducts((prev) => [payload.new, ...prev]);
       } else if (payload.eventType === "DELETE" && payload.old) {
@@ -40,19 +60,19 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
       mounted = false;
       unsubscribe();
     };
-  }, [isCartOpen]);
+  }, []);
 
   if (!isCartOpen) return null;
 
-  // Helper to find live stock of a cart item
+  // Helper to match live stock
   const getLiveStock = (item: typeof items[0]): number => {
     const matched = dbProducts.find(
       (p) =>
-        p.id === item.productId ||
-        p.numeric_id === item.productNumericId ||
+        (item.productId && p.id === item.productId) ||
+        (item.productNumericId && p.numeric_id === item.productNumericId) ||
         p.name.trim().toLowerCase() === item.name.trim().toLowerCase()
     );
-    return matched ? matched.stock : 50; // fallback to 50 if db product not loaded yet
+    return matched ? matched.stock : 50;
   };
 
   const hasOutOfStockItems = items.some((item) => getLiveStock(item) <= 0);
@@ -64,15 +84,23 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
   const deliveryFee = items.length === 0 ? 0 : isFreeDelivery ? 0 : 40;
   const totalAmount = subtotal + deliveryFee;
 
+  const handleProceedToCheckout = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeCart();
+    onCheckout();
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
         onClick={closeCart}
+        aria-hidden="true"
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10 z-10">
         <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
           {/* Header */}
           <div className="px-5 py-4 border-b border-[#e4ede2] flex items-center justify-between bg-[#f8fafb]">
@@ -85,12 +113,18 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
               </span>
             </div>
             <button
+              type="button"
               onClick={closeCart}
-              className="w-8 h-8 rounded-full bg-white border border-[#e4ede2] flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] transition-colors"
+              className="w-8 h-8 rounded-full bg-white border border-[#e4ede2] flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] transition-colors cursor-pointer"
               aria-label="Close cart"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M1 1L11 11M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path
+                  d="M1 1L11 11M11 1L1 11"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
           </div>
@@ -101,26 +135,39 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
               {isRetailer ? (
                 <p className="text-xs text-[#047857] font-semibold flex items-center gap-1.5">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 0C3.13 0 0 3.13 0 7C0 10.87 3.13 14 7 14C10.87 14 14 10.87 14 7C14 3.13 10.87 0 7 0ZM5.6 10.5L2.1 7L3.08 6.02L5.6 8.54L10.92 3.22L11.9 4.2L5.6 10.5Z" fill="#047857" />
+                    <path
+                      d="M7 0C3.13 0 0 3.13 0 7C0 10.87 3.13 14 7 14C10.87 14 14 10.87 14 7C14 3.13 10.87 0 7 0ZM5.6 10.5L2.1 7L3.08 6.02L5.6 8.54L10.92 3.22L11.9 4.2L5.6 10.5Z"
+                      fill="#047857"
+                    />
                   </svg>
-                  <span>✨ <strong>Retailer Benefit:</strong> FREE Delivery on every order!</span>
+                  <span>
+                    ✨ <strong>Retailer Benefit:</strong> FREE Delivery on every order!
+                  </span>
                 </p>
               ) : isFreeDelivery ? (
                 <p className="text-xs text-[#047857] font-semibold flex items-center gap-1.5">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 0C3.13 0 0 3.13 0 7C0 10.87 3.13 14 7 14C10.87 14 14 10.87 14 7C14 3.13 10.87 0 7 0ZM5.6 10.5L2.1 7L3.08 6.02L5.6 8.54L10.92 3.22L11.9 4.2L5.6 10.5Z" fill="#047857" />
+                    <path
+                      d="M7 0C3.13 0 0 3.13 0 7C0 10.87 3.13 14 7 14C10.87 14 14 10.87 14 7C14 3.13 10.87 0 7 0ZM5.6 10.5L2.1 7L3.08 6.02L5.6 8.54L10.92 3.22L11.9 4.2L5.6 10.5Z"
+                      fill="#047857"
+                    />
                   </svg>
-                  You unlocked <strong>FREE Delivery</strong> on this order!
+                  <span>
+                    You unlocked <strong>FREE Delivery</strong> on this order!
+                  </span>
                 </p>
               ) : (
                 <div>
                   <p className="text-xs text-[#073b4c] mb-1.5">
-                    Add <strong className="text-[#006a39]">₹{amountNeeded}</strong> more for <strong>FREE Delivery</strong> (orders above ₹150)
+                    Add <strong className="text-[#006a39]">₹{amountNeeded}</strong> more for{" "}
+                    <strong>FREE Delivery</strong> (orders above ₹150)
                   </p>
                   <div className="w-full h-1.5 bg-[#e4ede2] rounded-full overflow-hidden">
                     <div
                       className="h-full bg-[#006a39] rounded-full transition-all duration-300"
-                      style={{ width: `${Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100)}%` }}
+                      style={{
+                        width: `${Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100)}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -149,108 +196,112 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
                   Explore thousands of genuine medicines, healthcare supplements, and wellness items.
                 </p>
                 <button
+                  type="button"
                   onClick={() => {
                     closeCart();
                     onBrowse();
                   }}
-                  className="bg-[#006a39] text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:bg-[#005a30] transition-colors"
+                  className="bg-[#006a39] text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:bg-[#005a30] transition-colors cursor-pointer"
                 >
                   Start Shopping
                 </button>
               </div>
             ) : (
               items.map((item) => {
-                const stock = getLiveStock(item);
-                const isOutOfStock = stock <= 0;
-                const isOverStock = item.quantity > stock && stock > 0;
-                const isLow = stock > 0 && stock <= 5;
+                const liveStock = getLiveStock(item);
+                const isOutOfStock = liveStock <= 0;
+                const isExceeded = item.quantity > liveStock;
 
                 return (
-                  <div key={item.productId || item.name} className={`py-4 first:pt-0 last:pb-0 flex gap-3 ${isOutOfStock ? "opacity-75" : ""}`}>
-                    <div className="w-16 h-16 bg-[#f8fafb] border border-[#e4ede2] rounded-xl overflow-hidden shrink-0 flex items-center justify-center p-1 relative">
-                      <img src={item.imageUrl} alt={item.name} className="h-full max-w-full object-contain" />
-                      {isOutOfStock && (
-                        <span className="absolute inset-0 bg-red-900/60 flex items-center justify-center text-white text-[9px] font-extrabold uppercase text-center p-1 leading-tight">
-                          Out of Stock
-                        </span>
-                      )}
+                  <div key={item.id} className="py-4 first:pt-0 last:pb-0 flex gap-3.5 items-center">
+                    <div className="w-16 h-16 rounded-xl bg-[#f8fafb] border border-[#e4ede2] p-1.5 flex items-center justify-center shrink-0 overflow-hidden">
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80";
+                        }}
+                      />
                     </div>
-                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-[#006a39] block">
-                            {item.brand}
-                          </span>
-                          <h4 className="font-bold text-[#073b4c] text-xs leading-snug line-clamp-1">
+                          <h4 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xs leading-snug line-clamp-1">
                             {item.name}
                           </h4>
+                          <span className="text-[10px] text-[#9aa89b]">{item.brand}</span>
                         </div>
                         <button
-                          onClick={() => removeFromCart(item.productId || item.productNumericId)}
-                          className="text-[#9aa89b] hover:text-[#c0392b] transition-colors p-1"
-                          title="Remove"
+                          type="button"
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-[#c0392b] hover:text-[#ba1a1a] p-1 -mr-1 rounded-md transition-colors cursor-pointer"
+                          title="Remove item"
+                          aria-label="Remove item"
                         >
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path d="M2 3.5H12M4.5 3.5V2C4.5 1.7 4.7 1.5 5 1.5H9C9.3 1.5 9.5 1.7 9.5 2V3.5M5.5 6V10.5M8.5 6V10.5M3 3.5L3.7 12C3.7 12.3 4 12.5 4.3 12.5H9.7C10 12.5 10.3 12.3 10.3 12L11 3.5H3Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                            <path
+                              d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
                           </svg>
                         </button>
                       </div>
 
-                      {/* Stock Warning Messages in Cart */}
-                      <div className="my-1">
-                        {isOutOfStock ? (
-                          <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded inline-block">
-                            🔴 Out of Stock - Please remove to checkout
-                          </span>
-                        ) : isOverStock ? (
-                          <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded inline-block">
-                            ⚠️ Only {stock} units available in stock
-                          </span>
-                        ) : isLow ? (
-                          <span className="text-[10px] font-medium text-amber-600 inline-block">
-                            ⚠️ Only {stock} units left in stock
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-medium text-emerald-600 inline-block">
-                            🟢 {stock} in stock
-                          </span>
-                        )}
-                      </div>
+                      {/* Stock Warnings */}
+                      {isOutOfStock ? (
+                        <p className="text-[10px] text-red-600 font-bold mt-0.5">
+                          ⚠️ Out of stock — Please remove
+                        </p>
+                      ) : isExceeded ? (
+                        <p className="text-[10px] text-amber-600 font-semibold mt-0.5">
+                          ⚠️ Only {liveStock} units available
+                        </p>
+                      ) : null}
 
-                      <div className="flex items-center justify-between mt-1">
-                        <div className="flex items-center border border-[#e4ede2] rounded-lg overflow-hidden bg-white">
-                          <button
-                            onClick={() => updateQuantity(item.productId || item.productNumericId, item.quantity - 1)}
-                            className="w-6 h-6 flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] transition-colors font-bold text-xs"
-                          >
-                            −
-                          </button>
-                          <span className="w-7 text-center font-bold text-xs text-[#073b4c]">
-                            {item.quantity}
-                          </span>
-                          <button
-                            disabled={isOutOfStock || item.quantity >= stock}
-                            onClick={() => updateQuantity(item.productId || item.productNumericId, item.quantity + 1)}
-                            className={`w-6 h-6 flex items-center justify-center text-[#073b4c] transition-colors font-bold text-xs ${
-                              isOutOfStock || item.quantity >= stock
-                                ? "opacity-30 cursor-not-allowed bg-gray-100"
-                                : "hover:bg-[#f0f4f0]"
-                            }`}
-                            title={item.quantity >= stock ? `Max available stock reached (${stock})` : "Add one"}
-                          >
-                            +
-                          </button>
-                        </div>
-
-                        <div className="text-right">
-                          <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm">
+                      <div className="flex items-center justify-between mt-2.5">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm">
                             ₹{item.price * item.quantity}
                           </span>
                           {item.mrp > item.price && (
-                            <span className="text-[10px] text-[#9aa89b] line-through block">
+                            <span className="text-[10px] text-[#9aa89b] line-through">
                               ₹{item.mrp * item.quantity}
                             </span>
                           )}
+                        </div>
+
+                        {/* Quantity Stepper */}
+                        <div className="flex items-center border border-[#e4ede2] rounded-lg bg-white overflow-hidden shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="w-7 h-7 flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] font-bold text-xs transition-colors cursor-pointer"
+                            aria-label="Decrease quantity"
+                          >
+                            −
+                          </button>
+                          <span className="w-8 text-center text-xs font-bold text-[#073b4c]">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={item.quantity >= liveStock}
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className={`w-7 h-7 flex items-center justify-center font-bold text-xs transition-colors cursor-pointer ${
+                              item.quantity >= liveStock
+                                ? "text-gray-300 bg-gray-50 cursor-not-allowed"
+                                : "text-[#073b4c] hover:bg-[#f0f4f0]"
+                            }`}
+                            aria-label="Increase quantity"
+                          >
+                            +
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -290,7 +341,13 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
                 )}
                 <div className="flex justify-between">
                   <span>Delivery Fee</span>
-                  <span>{isFreeDelivery ? <strong className="text-[#047857] uppercase">Free</strong> : `₹${deliveryFee}`}</span>
+                  <span>
+                    {isFreeDelivery ? (
+                      <strong className="text-[#047857] uppercase">Free</strong>
+                    ) : (
+                      `₹${deliveryFee}`
+                    )}
+                  </span>
                 </div>
                 <div className="border-t border-[#e4ede2] pt-2 mt-1 flex justify-between text-sm font-['Manrope',sans-serif] font-bold text-[#073b4c]">
                   <span>To Pay</span>
@@ -299,12 +356,10 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
               </div>
 
               <button
+                type="button"
                 disabled={hasOutOfStockItems || hasExceededStockItems}
-                onClick={() => {
-                  closeCart();
-                  onCheckout();
-                }}
-                className={`w-full py-3 font-['Manrope',sans-serif] font-bold text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 ${
+                onClick={handleProceedToCheckout}
+                className={`w-full py-3.5 font-['Manrope',sans-serif] font-bold text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer ${
                   hasOutOfStockItems || hasExceededStockItems
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
                     : "bg-[#006a39] text-white hover:bg-[#005a30] active:scale-[0.98]"
@@ -312,7 +367,13 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
               >
                 <span>{hasOutOfStockItems ? "Remove Out of Stock Items" : "Proceed to Checkout"}</span>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M2.5 7H11.5M7.5 3L11.5 7L7.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M2.5 7H11.5M7.5 3L11.5 7L7.5 11"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
             </div>
@@ -322,4 +383,3 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
     </div>
   );
 }
-

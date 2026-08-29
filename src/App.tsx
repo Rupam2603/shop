@@ -14,7 +14,7 @@ import OrderTrackingModal from "./components/OrderTrackingModal";
 import { useAuth, toLegacyUser } from "./contexts/AuthContext";
 import { parseHashToState, pushPageState, replacePageState } from "./lib/navigation";
 
-export type Page = "home" | "medicines" | "lab-tests" | "consult" | "offers" | "profile";
+export type Page = "home" | "medicines" | "lab-tests" | "consult" | "offers" | "profile" | "checkout";
 export type UserRole = "admin" | "retailer" | "customer";
 
 export interface Address {
@@ -160,6 +160,7 @@ export default function App() {
     switch (activePage) {
       case "home": return <HomePage onNavigate={navigateTo} userRole={currentUser.role} />;
       case "lab-tests": return <LabTestsPage user={currentUser} />;
+      case "checkout":
       case "medicines": return <MedicinesPage initialCategory={initialCategory} userRole={currentUser.role} />;
       case "offers": return <OffersPage userRole={currentUser.role} onNavigate={navigateTo} />;
       case "consult": return <ConsultPage />;
@@ -195,9 +196,15 @@ export default function App() {
 
       {/* Checkout Modal */}
       <CheckoutModal
-        open={checkoutOpen}
-        onClose={() => setCheckoutOpen(false)}
+        open={checkoutOpen || activePage === "checkout"}
+        onClose={() => {
+          setCheckoutOpen(false);
+          if (activePage === "checkout") {
+            navigateTo("medicines");
+          }
+        }}
         onOrderSuccess={(_orderId, orderNum) => {
+          setCheckoutOpen(false);
           if (orderNum) {
             openTracking(orderNum);
           } else {

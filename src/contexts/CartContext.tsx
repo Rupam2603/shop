@@ -3,9 +3,9 @@ import { supabase } from "../lib/supabase";
 import { DbProduct, fetchProducts } from "../lib/products";
 
 export interface CartItem {
-  id: string; // cart_item db id or temp local id
-  productId: string;
-  productNumericId: number;
+  id: string; // unique item id
+  productId: string; // Supabase product UUID (if known)
+  productNumericId: number; // Numeric ID (if known)
   name: string;
   brand: string;
   category: string;
@@ -13,6 +13,25 @@ export interface CartItem {
   mrp: number;
   imageUrl: string;
   quantity: number;
+}
+
+export interface AddToCartPayload {
+  id?: string | number;
+  dbId?: string;
+  numeric_id?: number;
+  name: string;
+  brand?: string;
+  category_name?: string;
+  category?: string;
+  cat?: string;
+  sub?: string;
+  customer_price?: number;
+  retailer_price?: number;
+  price?: string | number;
+  mrp?: number;
+  orig?: string | number;
+  image_url?: string;
+  img?: string;
 }
 
 interface CartContextValue {
@@ -23,73 +42,71 @@ interface CartContextValue {
   isCartOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  addToCart: (
-    product: {
-      id?: string | number;
-      numeric_id?: number;
-      name: string;
-      brand: string;
-      category_name?: string;
-      cat?: string;
-      sub?: string;
-      customer_price?: number;
-      price?: string | number;
-      mrp?: number;
-      orig?: string | number;
-      image_url?: string;
-      img?: string;
-    },
-    qty?: number
-  ) => Promise<void>;
-  updateQuantity: (productId: string | number, qty: number) => Promise<void>;
-  removeFromCart: (productId: string | number) => Promise<void>;
+  addToCart: (product: AddToCartPayload, qty?: number) => Promise<void>;
+  updateQuantity: (identifier: string | number, qty: number) => Promise<void>;
+  removeFromCart: (identifier: string | number) => Promise<void>;
   clearCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-const CART_STORAGE_KEY = "subhone_cart_items_v2";
+const STORAGE_KEY = "subhone_cart_v3";
+
+function parseNumericPrice(val: unknown, fallback = 0): number {
+  if (typeof val === "number" && !isNaN(val)) return val;
+  if (typeof val === "string") {
+    const cleaned = val.replace(/[^0-9.]/g, "");
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? fallback : parsed;
+  }
+  return fallback;
+}
+
+const isUuid = (str: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
     try {
-      const saved = localStorage.getItem(CART_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.warn("Could not load cart from localStorage:", e);
     }
+    return [];
   });
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Keep localStorage continuously in sync
+  // Sync to localStorage whenever items change
   useEffect(() => {
     try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch (e) {
-      console.warn("Could not persist cart to localStorage:", e);
+      console.warn("Could not save cart to localStorage:", e);
     }
   }, [items]);
 
-  // Returns true if the userId looks like a real Supabase UUID (not a Clerk ID or random fallback)
-  const isSupabaseUserId = (uid: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid);
-
-  // Sync with Supabase on auth state change without clearing local cart if unauthenticated
-  const loadCartFromDb = useCallback(async (uid: string) => {
+  // Load from Supabase on auth change
+  const loadCartFromSupabase = useCallback(async (uid: string) => {
+    if (!isUuid(uid)) return;
     try {
-      const { data: cartData, error: cartError } = await supabase
+      const { data, error } = await supabase
         .from("cart_items")
         .select("id, product_id, quantity, products(*)")
         .eq("user_id", uid);
 
-      if (cartError) {
-        console.warn("Notice loading cart from db:", cartError.message);
+      if (error) {
+        console.warn("Notice loading cart from Supabase:", error.message);
         return;
       }
 
-      if (cartData && cartData.length > 0) {
-        const loaded: CartItem[] = cartData
+      if (data && data.length > 0) {
+        const loaded: CartItem[] = data
           .filter((row) => row.products)
           .map((row) => {
             const p = row.products as unknown as DbProduct;
@@ -98,12 +115,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               productId: p.id,
               productNumericId: p.numeric_id,
               name: p.name,
-              brand: p.brand,
-              category: p.category_name,
-              price: Number(p.customer_price),
-              mrp: Number(p.mrp),
-              imageUrl: p.image_url,
-              quantity: row.quantity,
+              brand: p.brand || "Generic",
+              category: p.category_name || "Medicines",
+              price: Number(p.customer_price) || 0,
+              mrp: Number(p.mrp) || Number(p.customer_price) || 0,
+              imageUrl: p.image_url || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80",
+              quantity: Math.max(1, row.quantity || 1),
             };
           });
 
@@ -112,145 +129,137 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (err) {
-      console.warn("loadCartFromDb error:", err);
+      console.warn("Supabase cart sync error:", err);
     }
   }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
+      if (user?.id) {
         setUserId(user.id);
-        loadCartFromDb(user.id);
-      } else {
-        setUserId(null);
+        loadCartFromSupabase(user.id);
       }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
+      if (session?.user?.id) {
         setUserId(session.user.id);
-        loadCartFromDb(session.user.id);
+        loadCartFromSupabase(session.user.id);
       } else {
         setUserId(null);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [loadCartFromDb]);
+  }, [loadCartFromSupabase]);
 
-  const openCart = () => setIsCartOpen(true);
-  const closeCart = () => setIsCartOpen(false);
+  const openCart = useCallback(() => setIsCartOpen(true), []);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
 
   const addToCart = useCallback(
-    async (
-      product: {
-        id?: string | number;
-        numeric_id?: number;
-        name: string;
-        brand: string;
-        category_name?: string;
-        cat?: string;
-        customer_price?: number;
-        price?: string | number;
-        mrp?: number;
-        orig?: string | number;
-        image_url?: string;
-        img?: string;
-      },
-      qty = 1
-    ) => {
+    async (product: AddToCartPayload, qty = 1) => {
+      const quantityToAdd = Math.max(1, qty);
+      const name = (product.name || "Product").trim();
       const numId =
-        typeof product.id === "number"
+        typeof product.numeric_id === "number"
+          ? product.numeric_id
+          : typeof product.id === "number"
           ? product.id
-          : product.numeric_id ?? (typeof product.id === "string" ? parseInt(product.id) || 1 : 1);
+          : typeof product.id === "string" && !isNaN(parseInt(product.id))
+          ? parseInt(product.id)
+          : 0;
 
-      const priceVal =
-        product.customer_price ??
-        (typeof product.price === "string"
-          ? parseFloat(product.price.replace(/[₹,]/g, "")) || 0
-          : product.price || 0);
-
-      const mrpVal =
-        product.mrp ??
-        (typeof product.orig === "string"
-          ? parseFloat(product.orig.replace(/[₹,]/g, "")) || priceVal
-          : product.orig || priceVal);
-
-      const prodName = product.name;
-      const prodBrand = product.brand || "Generic";
-      const prodCat = product.category_name || product.cat || "OTC & Wellness";
-      const prodImg =
+      const price = parseNumericPrice(
+        product.customer_price ?? product.price,
+        100
+      );
+      const mrp = parseNumericPrice(
+        product.mrp ?? product.orig,
+        price
+      );
+      const brand = product.brand || "SubhOne Health";
+      const category = product.category || product.category_name || product.cat || "Medicines";
+      const imageUrl =
         product.image_url ||
         product.img ||
         "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80";
 
-      // Optimistic update
-      let isNewItem = false;
+      const rawUuid =
+        product.dbId ||
+        (typeof product.id === "string" && isUuid(product.id) ? product.id : "");
+
+      let isNew = false;
+
       setItems((prev) => {
-        const existingIdx = prev.findIndex(
-          (item) => item.productNumericId === numId || item.name.toLowerCase() === prodName.toLowerCase()
+        const idx = prev.findIndex(
+          (item) =>
+            (rawUuid && item.productId === rawUuid) ||
+            (numId > 0 && item.productNumericId === numId) ||
+            item.name.toLowerCase() === name.toLowerCase()
         );
-        if (existingIdx >= 0) {
+
+        if (idx >= 0) {
           const updated = [...prev];
-          updated[existingIdx] = { ...updated[existingIdx], quantity: updated[existingIdx].quantity + qty };
+          updated[idx] = {
+            ...updated[idx],
+            quantity: updated[idx].quantity + quantityToAdd,
+          };
           return updated;
         }
-        isNewItem = true;
-        return [
-          ...prev,
-          {
-            id: `temp-${Date.now()}`,
-            productId: typeof product.id === "string" && product.id.length > 5 ? product.id : "",
-            productNumericId: numId,
-            name: prodName,
-            brand: prodBrand,
-            category: prodCat,
-            price: priceVal,
-            mrp: mrpVal,
-            imageUrl: prodImg,
-            quantity: qty,
-          },
-        ];
+
+        isNew = true;
+        const newItem: CartItem = {
+          id: `item_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          productId: rawUuid,
+          productNumericId: numId,
+          name,
+          brand,
+          category,
+          price,
+          mrp,
+          imageUrl,
+          quantity: quantityToAdd,
+        };
+        return [...prev, newItem];
       });
 
-      // Only open cart drawer when adding a brand-new item (not on quantity increment)
-      if (isNewItem) setIsCartOpen(true);
+      if (isNew) {
+        setIsCartOpen(true);
+      }
 
-      // Persist to Supabase if logged in with a real Supabase UUID
-      if (userId && isSupabaseUserId(userId)) {
-        let targetUuid = typeof product.id === "string" && product.id.includes("-") ? product.id : "";
-        if (!targetUuid) {
-          try {
-            const allProds = await fetchProducts();
-            const match = allProds.find((p) => p.numeric_id === numId || p.name === prodName);
-            if (match) targetUuid = match.id;
-          } catch {}
-        }
+      // Background sync to Supabase if UUID user
+      if (userId && isUuid(userId)) {
+        try {
+          let targetUuid = rawUuid;
+          if (!targetUuid) {
+            const all = await fetchProducts();
+            const found = all.find((p) => (numId > 0 && p.numeric_id === numId) || p.name.toLowerCase() === name.toLowerCase());
+            if (found) targetUuid = found.id;
+          }
 
-        if (targetUuid) {
-          try {
-            const { data: existingItem } = await supabase
+          if (targetUuid) {
+            const { data: existing } = await supabase
               .from("cart_items")
               .select("id, quantity")
               .eq("user_id", userId)
               .eq("product_id", targetUuid)
               .maybeSingle();
 
-            if (existingItem) {
+            if (existing) {
               await supabase
                 .from("cart_items")
-                .update({ quantity: existingItem.quantity + qty })
-                .eq("id", existingItem.id);
+                .update({ quantity: existing.quantity + quantityToAdd })
+                .eq("id", existing.id);
             } else {
               await supabase
                 .from("cart_items")
-                .insert([{ user_id: userId, product_id: targetUuid, quantity: qty }]);
+                .insert([{ user_id: userId, product_id: targetUuid, quantity: quantityToAdd }]);
             }
-          } catch (e) {
-            console.warn("Notice syncing cart to Supabase:", e);
           }
+        } catch (e) {
+          console.warn("Notice syncing cart item to Supabase:", e);
         }
       }
     },
@@ -258,32 +267,37 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   );
 
   const updateQuantity = useCallback(
-    async (productId: string | number, qty: number) => {
+    async (identifier: string | number, qty: number) => {
       if (qty <= 0) {
-        removeFromCart(productId);
+        removeFromCart(identifier);
         return;
       }
 
-      // Use functional updater to avoid stale closure on items
-      let targetProductId: string | null = null;
-      setItems((prev) => {
-        const updated = prev.map((item) => {
-          if (item.productId === productId || item.productNumericId === productId || item.name === productId) {
-            if (!targetProductId && item.productId) targetProductId = item.productId;
+      let matchedProductId: string | null = null;
+
+      setItems((prev) =>
+        prev.map((item) => {
+          const isMatch =
+            item.id === identifier ||
+            item.productId === identifier ||
+            item.productNumericId === identifier ||
+            item.name.toLowerCase() === String(identifier).toLowerCase();
+
+          if (isMatch) {
+            if (item.productId) matchedProductId = item.productId;
             return { ...item, quantity: qty };
           }
           return item;
-        });
-        return updated;
-      });
+        })
+      );
 
-      if (userId && isSupabaseUserId(userId) && targetProductId) {
+      if (userId && isUuid(userId) && matchedProductId) {
         try {
           await supabase
             .from("cart_items")
             .update({ quantity: qty })
             .eq("user_id", userId)
-            .eq("product_id", targetProductId);
+            .eq("product_id", matchedProductId);
         } catch {}
       }
     },
@@ -291,26 +305,35 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   );
 
   const removeFromCart = useCallback(
-    async (productId: string | number) => {
-      // Use functional updater to avoid stale closure — extract the item to remove inside the updater
-      let removedProductId: string | null = null;
+    async (identifier: string | number) => {
+      let matchedProductId: string | null = null;
+
       setItems((prev) => {
-        const itemToRemove = prev.find(
-          (i) => i.productId === productId || i.productNumericId === productId || i.name === productId
+        const found = prev.find(
+          (item) =>
+            item.id === identifier ||
+            item.productId === identifier ||
+            item.productNumericId === identifier ||
+            item.name.toLowerCase() === String(identifier).toLowerCase()
         );
-        if (itemToRemove?.productId) removedProductId = itemToRemove.productId;
+        if (found?.productId) matchedProductId = found.productId;
+
         return prev.filter(
-          (i) => i.productId !== productId && i.productNumericId !== productId && i.name !== productId
+          (item) =>
+            item.id !== identifier &&
+            item.productId !== identifier &&
+            item.productNumericId !== identifier &&
+            item.name.toLowerCase() !== String(identifier).toLowerCase()
         );
       });
 
-      if (userId && isSupabaseUserId(userId) && removedProductId) {
+      if (userId && isUuid(userId) && matchedProductId) {
         try {
           await supabase
             .from("cart_items")
             .delete()
             .eq("user_id", userId)
-            .eq("product_id", removedProductId);
+            .eq("product_id", matchedProductId);
         } catch {}
       }
     },
@@ -320,9 +343,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = useCallback(async () => {
     setItems([]);
     try {
-      localStorage.removeItem(CART_STORAGE_KEY);
+      localStorage.removeItem(STORAGE_KEY);
     } catch {}
-    if (userId && isSupabaseUserId(userId)) {
+
+    if (userId && isUuid(userId)) {
       try {
         await supabase.from("cart_items").delete().eq("user_id", userId);
       } catch {}
@@ -330,19 +354,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [userId]);
 
   const itemCount = useMemo(
-    () => items.reduce((total, item) => total + item.quantity, 0),
+    () => items.reduce((sum, item) => sum + (item.quantity || 0), 0),
     [items]
   );
 
   const subtotal = useMemo(
-    () => items.reduce((total, item) => total + item.price * item.quantity, 0),
+    () => items.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0),
     [items]
   );
 
   const savings = useMemo(
     () =>
       items.reduce(
-        (total, item) => total + Math.max(0, item.mrp - item.price) * item.quantity,
+        (sum, item) =>
+          sum + Math.max(0, (item.mrp || item.price) - item.price) * (item.quantity || 0),
         0
       ),
     [items]

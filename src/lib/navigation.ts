@@ -18,7 +18,7 @@ export function parseHashToState(): { page: Page; category: string } {
   // Remove any modal suffix if present in hash
   const cleanHash = hash.split("-modal")[0];
   const [pagePart, queryPart] = cleanHash.split("?");
-  const validPages: Page[] = ["home", "medicines", "lab-tests", "consult", "offers", "profile"];
+  const validPages: Page[] = ["home", "medicines", "lab-tests", "consult", "offers", "profile", "checkout"];
   const page = validPages.includes(pagePart as Page) ? (pagePart as Page) : "home";
 
   let category = "All";
@@ -73,7 +73,7 @@ export function replacePageState(page: Page, category = "All") {
  * When `isOpen` is true:
  * 1. Pushes a modal state to window.history so mobile back closes the modal.
  * 2. Listens for popstate and triggers `onClose` if popped.
- * 3. If closed programmatically by user clicking X/backdrop, cleans up history.
+ * 3. If closed programmatically by user clicking X/backdrop, cleans up history via replaceState.
  */
 export function useModalBackHandler(isOpen: boolean, onClose: () => void, modalId: string) {
   const isPushedRef = useRef(false);
@@ -87,14 +87,16 @@ export function useModalBackHandler(isOpen: boolean, onClose: () => void, modalI
       const baseHash = currentHash.split("-modal")[0];
       const modalHash = `${baseHash}-modal-${modalId}`;
 
-      window.history.pushState(
-        { modal: modalId, originalHash: baseHash, timestamp: Date.now() },
-        "",
-        modalHash
-      );
+      if (window.location.hash !== modalHash) {
+        window.history.pushState(
+          { modal: modalId, originalHash: baseHash, timestamp: Date.now() },
+          "",
+          modalHash
+        );
+      }
 
-      const handlePopState = () => {
-        if (isPushedRef.current) {
+      const handlePopState = (e: PopStateEvent) => {
+        if (isPushedRef.current && e.state?.modal !== modalId) {
           isPushedRef.current = false;
           onCloseRef.current();
         }
@@ -104,11 +106,17 @@ export function useModalBackHandler(isOpen: boolean, onClose: () => void, modalI
 
       return () => {
         window.removeEventListener("popstate", handlePopState);
-        // If modal was closed via UI click rather than back button, remove the modal entry from history
+        // If modal was closed programmatically, replace hash cleanly without dispatching unexpected popstate to sibling modals
         if (isPushedRef.current) {
           isPushedRef.current = false;
-          if (window.history.state?.modal === modalId) {
-            window.history.back();
+          const currentH = window.location.hash;
+          if (currentH.includes(`-modal-${modalId}`)) {
+            const clean = currentH.replace(`-modal-${modalId}`, "");
+            window.history.replaceState(
+              { modal: null, timestamp: Date.now() },
+              "",
+              clean || "#home"
+            );
           }
         }
       };
