@@ -40,11 +40,34 @@ export interface DbOrderItem {
 }
 
 const LOCAL_ORDERS_KEY = "subhone_local_orders_v2";
+const DELETED_ORDERS_KEY = "subhone_deleted_order_ids_v1";
+
+export function getDeletedOrderIds(): string[] {
+  try {
+    const raw = localStorage.getItem(DELETED_ORDERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function markOrderAsDeletedLocally(orderId: string, orderNumber?: string) {
+  try {
+    const list = getDeletedOrderIds();
+    const toAdd = [orderId, orderNumber].filter(Boolean) as string[];
+    const updated = Array.from(new Set([...list, ...toAdd]));
+    localStorage.setItem(DELETED_ORDERS_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.warn("Could not mark order deleted locally:", e);
+  }
+}
 
 function getLocalOrders(): DbOrder[] {
   try {
     const raw = localStorage.getItem(LOCAL_ORDERS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const list: DbOrder[] = raw ? JSON.parse(raw) : [];
+    const deleted = getDeletedOrderIds();
+    return list.filter((o) => !deleted.includes(o.id) && !deleted.includes(o.order_number));
   } catch {
     return [];
   }
@@ -267,7 +290,11 @@ export async function fetchAllOrders(): Promise<DbOrder[]> {
       }
     }
 
-    return (orders || []) as DbOrder[];
+    const deletedIds = getDeletedOrderIds();
+    const finalOrders = (orders || []).filter(
+      (o) => !deletedIds.includes(o.id) && !deletedIds.includes(o.order_number)
+    );
+    return finalOrders as DbOrder[];
   } catch (e) {
     console.error("Error in fetchAllOrders:", e);
     return getLocalOrders();
@@ -321,31 +348,73 @@ export async function updateOrderStatus(
 
 /**
  * Delete order by ID or order number (Admin only)
+ * Completely deletes the order and its child items from Supabase database
  */
 export async function deleteOrder(orderId: string): Promise<{ error: string | null }> {
   try {
-    // Delete from Supabase
-    const { error } = await supabase
-      .from("orders")
-      .delete()
-      .or(`id.eq.${orderId},order_number.eq.${orderId}`);
+    const trimmed = orderId.trim();
+    markOrderAsDeletedLocally(trimmed);
 
-    // Clean up local storage cache if any
+    // 1. Locate all matching order records from database
+    let targetUuids: string[] = [];
+    try {
+      const { data: matched } = await supabase
+        .from("orders")
+        .select("id, order_number")
+        .or(`id.eq.${trimmed},order_number.eq.${trimmed}`);
+
+      if (matched && matched.length > 0) {
+        targetUuids = matched.map((m) => m.id);
+        for (const m of matched) {
+          markOrderAsDeletedLocally(m.id, m.order_number);
+        }
+      }
+    } catch (findErr) {
+      console.warn("Could not query matching orders before deletion:", findErr);
+    }
+
+    if (targetUuids.length === 0) {
+      targetUuids = [trimmed];
+    }
+
+    // 2. Cascade delete from order_items table first (avoids foreign key constraint violation)
+    for (const uuid of targetUuids) {
+      try {
+        await supabase.from("order_items").delete().eq("order_id", uuid);
+      } catch (itemDelErr) {
+        console.warn("order_items delete note:", itemDelErr);
+      }
+    }
+
+    // 3. Delete from orders table
+    let dbError: string | null = null;
+    for (const uuid of targetUuids) {
+      const { error } = await supabase.from("orders").delete().eq("id", uuid);
+      if (error) {
+        console.warn("Database order delete by ID warning:", error);
+        dbError = error.message;
+      }
+    }
+
+    // Also attempt delete by order_number
+    try {
+      await supabase.from("orders").delete().eq("order_number", trimmed);
+    } catch {
+      // ignore
+    }
+
+    // 4. Clean up local storage cache
     try {
       const locals = getLocalOrders();
       const updated = locals.filter(
-        (o) => o.id !== orderId && o.order_number !== orderId
+        (o) => o.id !== trimmed && o.order_number !== trimmed && !targetUuids.includes(o.id)
       );
       localStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(updated));
     } catch {
       // ignore
     }
 
-    if (error) {
-      console.warn("Supabase deleteOrder warning:", error);
-      return { error: error.message };
-    }
-    return { error: null };
+    return { error: dbError };
   } catch (e: any) {
     console.error("Error deleting order:", e);
     return { error: e.message || "Failed to delete order" };

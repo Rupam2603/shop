@@ -13,6 +13,8 @@ import {
   fetchAllOrders,
   updateOrderStatus as dbUpdateOrderStatus,
   deleteOrder as dbDeleteOrder,
+  getDeletedOrderIds,
+  markOrderAsDeletedLocally,
   DbOrder,
 } from "../lib/orders";
 import { fetchAllLabBookings, updateLabBookingStatus as dbUpdateLabBookingStatus, DbLabBooking } from "../lib/labTests";
@@ -778,40 +780,45 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   };
 
   const liveOrders = useMemo(() => {
+    const deletedOrderIds = getDeletedOrderIds();
     if (dbOrders.length > 0) {
-      return dbOrders.map((o) => {
-        const isRetailerInferred =
-          o.user_role === "retailer" ||
-          o.customer_name?.toLowerCase().includes("store") ||
-          o.customer_name?.toLowerCase().includes("pharmacy") ||
-          o.customer_name?.toLowerCase().includes("medical") ||
-          o.customer_name?.toLowerCase().includes("pharma");
+      return dbOrders
+        .filter((o) => !deletedOrderIds.includes(o.id) && !deletedOrderIds.includes(o.order_number))
+        .map((o) => {
+          const isRetailerInferred =
+            o.user_role === "retailer" ||
+            o.customer_name?.toLowerCase().includes("store") ||
+            o.customer_name?.toLowerCase().includes("pharmacy") ||
+            o.customer_name?.toLowerCase().includes("medical") ||
+            o.customer_name?.toLowerCase().includes("pharma");
 
-        const dateObj = new Date(o.created_at);
-        const dateStr = !isNaN(dateObj.getTime())
-          ? dateObj.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
-          : "Today";
-        const rawDateStr = !isNaN(dateObj.getTime())
-          ? dateObj.toISOString().split("T")[0]
-          : undefined;
+          const dateObj = new Date(o.created_at);
+          const dateStr = !isNaN(dateObj.getTime())
+            ? dateObj.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+            : "Today";
+          const rawDateStr = !isNaN(dateObj.getTime())
+            ? dateObj.toISOString().split("T")[0]
+            : undefined;
 
-        return {
-          id: o.order_number,
-          dbId: o.id,
-          customer: o.customer_name,
-          phone: o.customer_phone,
-          items: o.order_items?.length || 1,
-          amount: Number(o.total_amount),
-          status: o.status,
-          date: dateStr,
-          rawDate: rawDateStr,
-          payment: o.payment_method,
-          role: (o.user_role || (isRetailerInferred ? "retailer" : "customer")) as "retailer" | "customer",
-          shopName: o.shop_name || (isRetailerInferred ? o.customer_name : undefined),
-        };
-      });
+          return {
+            id: o.order_number,
+            dbId: o.id,
+            customer: o.customer_name,
+            phone: o.customer_phone,
+            items: o.order_items?.length || 1,
+            amount: Number(o.total_amount),
+            status: o.status,
+            date: dateStr,
+            rawDate: rawDateStr,
+            payment: o.payment_method,
+            role: (o.user_role || (isRetailerInferred ? "retailer" : "customer")) as "retailer" | "customer",
+            shopName: o.shop_name || (isRetailerInferred ? o.customer_name : undefined),
+          };
+        });
     }
-    return MOCK_ORDERS.map((o) => ({ ...o, dbId: "", rawDate: undefined }));
+    return MOCK_ORDERS
+      .filter((o) => !deletedOrderIds.includes(o.id))
+      .map((o) => ({ ...o, dbId: "", rawDate: undefined }));
   }, [dbOrders]);
 
   const filteredOrders = useMemo(() => {
@@ -833,15 +840,15 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   };
 
   const handleDeleteOrder = async (orderId: string) => {
+    markOrderAsDeletedLocally(orderId);
+    const target = dbOrders.find((o) => o.id === orderId || o.order_number === orderId);
+    if (target) {
+      markOrderAsDeletedLocally(target.id, target.order_number);
+    }
     setDbOrders((prev) =>
       prev.filter((o) => o.id !== orderId && o.order_number !== orderId)
     );
-    const target = dbOrders.find((o) => o.id === orderId || o.order_number === orderId);
-    if (target?.id) {
-      await dbDeleteOrder(target.id);
-    } else {
-      await dbDeleteOrder(orderId);
-    }
+    await dbDeleteOrder(target?.id || orderId);
   };
 
   const openAdd = () => { setForm(emptyForm(categories[0])); setModal({ open: true, mode: "add" }); };
