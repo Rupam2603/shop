@@ -164,7 +164,7 @@ export default function App() {
       case "home": return <HomePage onNavigate={navigateTo} userRole={currentUser.role} />;
       case "insurance": return <InsurancePage userRole={currentUser.role} onNavigate={navigateTo} />;
       case "vaccines": return <VaccinesPage userRole={currentUser.role} onNavigate={navigateTo} />;
-      case "lab-tests": return <LabTestsPage user={currentUser} />;
+      case "lab-tests": return <LabTestsPage user={currentUser} onNavigate={navigateTo} />;
       case "category": return <CategoryPage categoryId={initialCategory || "all"} userRole={currentUser.role} onNavigate={navigateTo} />;
       case "checkout":
       case "medicines": return <MedicinesPage initialCategory={initialCategory} userRole={currentUser.role} onNavigate={navigateTo} />;

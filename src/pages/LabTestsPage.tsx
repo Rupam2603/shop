@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import imgLabTesting from "@/imports/LabTestsCheckupsSubhOne/95108217d5cffd6c578e7bce86ceab631910923e.png";
 import LabBookingModal from "../components/LabBookingModal";
+import KeyCategoriesBar, { KeyCategoryItem } from "../components/KeyCategoriesBar";
 import { fetchLabPackages, DbLabPackage, DbLabBooking } from "../lib/labTests";
-import type { CurrentUser } from "../App";
+import type { CurrentUser, Page } from "../App";
 
 function CheckCircleIcon() {
   return (
@@ -171,7 +172,13 @@ const WHY_CHOOSE = [
   { icon: <svg width="21" height="27" viewBox="0 0 21 27" fill="none"><path d="M10.5 0L0 4.5V12C0 18.63 4.48 24.78 10.5 27C16.52 24.78 21 18.63 21 12V4.5L10.5 0ZM10.5 5.25L18.375 8.25V12C18.375 17.24 14.93 22.12 10.5 24.09C6.07 22.12 2.625 17.24 2.625 12V8.25L10.5 5.25Z" fill="#006a39" /></svg>, title: "100% Secure Data", desc: "Your health records are encrypted and kept strictly confidential." },
 ];
 
-export default function LabTestsPage({ user }: { user?: CurrentUser }) {
+export default function LabTestsPage({
+  user,
+  onNavigate,
+}: {
+  user?: CurrentUser;
+  onNavigate?: (page: Page, category?: string) => void;
+}) {
   const [packages, setPackages] = useState<DbLabPackage[]>(FALLBACK_PACKAGES);
   const [selectedCat, setSelectedCat] = useState("All Packages");
   const [search, setSearch] = useState("");
@@ -206,6 +213,17 @@ export default function LabTestsPage({ user }: { user?: CurrentUser }) {
     setTimeout(() => setToastMessage(null), 5000);
   };
 
+  const handleSelectKeyCategory = (cat: KeyCategoryItem) => {
+    if (cat.id === "checkups") return;
+    if (cat.route && onNavigate) {
+      onNavigate(cat.route as Page);
+      return;
+    }
+    if (onNavigate) {
+      onNavigate("category", cat.id);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f5fbf2]">
       {/* Toast Notification */}
@@ -216,7 +234,15 @@ export default function LabTestsPage({ user }: { user?: CurrentUser }) {
         </div>
       )}
 
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-6 sm:gap-8">
+      <div className="max-w-[1280px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 flex flex-col gap-4 sm:gap-6">
+
+        {/* ── Key Categories Bar ── */}
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#e4ede2] shadow-xs overflow-hidden">
+          <KeyCategoriesBar
+            selectedId="checkups"
+            onSelectCategory={handleSelectKeyCategory}
+          />
+        </div>
 
         {/* Hero Section */}
         <div className="bg-[#eff6ec] rounded-3xl shadow-sm overflow-hidden border border-[#e4ede2]">
