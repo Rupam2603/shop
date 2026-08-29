@@ -222,9 +222,9 @@ export default function NavBar({
     <>
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#e4ede2]/80 shadow-xs transition-all">
         {/* Main Nav Container */}
-        <div className="max-w-[1440px] mx-auto px-3 sm:px-6 h-18 flex items-center justify-between gap-2 sm:gap-4">
-          {/* Left section: Hamburger & Logo & Location Pill */}
-          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+        <div className="max-w-[1440px] mx-auto px-3 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
+          {/* Left section: Hamburger, Logo & Location */}
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* Mobile Hamburger Button */}
             <button
               type="button"
@@ -268,15 +268,15 @@ export default function NavBar({
             <button
               type="button"
               onClick={() => handleNavClick("home")}
-              className="flex items-center gap-2 cursor-pointer focus:outline-none"
+              className="flex items-center gap-1.5 sm:gap-2 cursor-pointer focus:outline-none"
             >
-              <div className="w-9 h-9 rounded-xl bg-linear-to-br from-[#006a39] to-[#047857] flex items-center justify-center shadow-sm">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-linear-to-br from-[#006a39] to-[#047857] flex items-center justify-center shadow-sm shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" fill="white" />
                 </svg>
               </div>
               <div className="flex flex-col text-left leading-none">
-                <span className="font-['Manrope',sans-serif] font-black text-[#006a39] text-xl sm:text-2xl tracking-tight">
+                <span className="font-['Manrope',sans-serif] font-black text-[#006a39] text-lg sm:text-2xl tracking-tight">
                   SubhOne
                 </span>
                 <span className="text-[9px] font-bold text-[#6d7a6f] tracking-wider uppercase hidden sm:inline">
@@ -285,18 +285,18 @@ export default function NavBar({
               </div>
             </button>
 
-            {/* Location Selector Widget (Desktop) */}
+            {/* Location Selector Widget (Desktop & Tablet) */}
             <button
               type="button"
               onClick={() => setIsLocationModalOpen(true)}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#e4ede2] bg-[#f8fafb] hover:bg-[#f0f7f0] hover:border-[#bbf7d0] transition-all text-left cursor-pointer group shadow-2xs"
+              className="hidden sm:flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#e4ede2] bg-[#f8fafb] hover:bg-[#f0f7f0] hover:border-[#bbf7d0] transition-all text-left cursor-pointer group shadow-2xs shrink-0"
               title="Change Delivery Location"
             >
-              <div className="w-7 h-7 rounded-lg bg-[#e8f5ee] text-[#006a39] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-[#e8f5ee] text-[#006a39] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                 {isLocating ? (
-                  <span className="w-3.5 h-3.5 border-2 border-[#006a39] border-t-transparent rounded-full animate-spin" />
+                  <span className="w-3 h-3 border-2 border-[#006a39] border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z"
                       fill="#006a39"
@@ -304,15 +304,15 @@ export default function NavBar({
                   </svg>
                 )}
               </div>
-              <div className="flex flex-col leading-tight max-w-[130px] lg:max-w-[160px]">
+              <div className="flex flex-col leading-tight max-w-[90px] md:max-w-[130px] lg:max-w-[160px]">
                 <div className="flex items-center gap-1">
-                  <span className="text-[10px] font-extrabold text-[#6d7a6f] uppercase tracking-wider">
+                  <span className="text-[9px] sm:text-[10px] font-extrabold text-[#6d7a6f] uppercase tracking-wider">
                     Express to
                   </span>
                   <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
                 </div>
-                <span className="text-xs font-bold text-[#073b4c] truncate group-hover:text-[#006a39] flex items-center gap-1">
-                  {location.city} {location.pincode ? `(${location.pincode})` : ""}
+                <span className="text-[11px] sm:text-xs font-bold text-[#073b4c] truncate group-hover:text-[#006a39] flex items-center gap-0.5">
+                  <span className="truncate">{location.city} {location.pincode ? `(${location.pincode})` : ""}</span>
                   <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="shrink-0 text-[#9aa89b]">
                     <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -321,13 +321,13 @@ export default function NavBar({
             </button>
           </div>
 
-          {/* Center: WIDE Premium Search Bar */}
+          {/* Center: Flexible Responsive Search Bar (Tablet & Desktop) */}
           <div
             ref={searchRef}
-            className="flex-1 max-w-[540px] md:max-w-[620px] lg:max-w-[700px] xl:max-w-[780px] mx-1 sm:mx-4 relative"
+            className="hidden md:flex flex-1 min-w-[200px] max-w-full lg:max-w-2xl xl:max-w-3xl mx-2 lg:mx-4 relative"
           >
             <div className="relative w-full group">
-              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-[#6d7a6f] group-focus-within:text-[#006a39] transition-colors">
+              <div className="absolute inset-y-0 left-3.5 sm:left-4 flex items-center pointer-events-none text-[#6d7a6f] group-focus-within:text-[#006a39] transition-colors">
                 <SearchIcon />
               </div>
               <input
@@ -345,12 +345,12 @@ export default function NavBar({
                     onNavigate("medicines");
                   }
                 }}
-                placeholder="Search medicines, health supplements, lab tests, active stock…"
-                className="w-full pl-11 pr-20 py-2.5 sm:py-3 bg-[#f0f4f0] hover:bg-[#ebf2eb] border border-transparent rounded-2xl text-xs sm:text-sm text-[#073b4c] placeholder:text-[#6d7a6f] focus:outline-none focus:bg-white focus:border-[#006a39] focus:ring-3 focus:ring-[#006a39]/10 transition-all shadow-2xs font-medium"
+                placeholder="Search medicines, supplements, brands, active stock…"
+                className="w-full pl-10 sm:pl-11 pr-16 sm:pr-20 py-2 sm:py-2.5 bg-[#f0f4f0] hover:bg-[#ebf2eb] border border-transparent rounded-2xl text-xs sm:text-sm text-[#073b4c] placeholder:text-[#6d7a6f] focus:outline-none focus:bg-white focus:border-[#006a39] focus:ring-3 focus:ring-[#006a39]/10 transition-all shadow-2xs font-medium"
               />
 
               {/* Clear button or Keyboard Shortcut Hint */}
-              <div className="absolute inset-y-0 right-3 flex items-center gap-1.5">
+              <div className="absolute inset-y-0 right-2.5 sm:right-3 flex items-center gap-1.5">
                 {searchValue.trim() ? (
                   <button
                     type="button"
@@ -366,14 +366,14 @@ export default function NavBar({
                     </svg>
                   </button>
                 ) : (
-                  <kbd className="hidden lg:inline-flex items-center px-2 py-0.5 text-[10px] font-semibold text-[#8b998a] bg-white border border-[#d5ded4] rounded-md shadow-2xs">
+                  <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[9px] font-semibold text-[#8b998a] bg-white border border-[#d5ded4] rounded-md shadow-2xs">
                     Ctrl K
                   </kbd>
                 )}
               </div>
             </div>
 
-            {/* Live Search Results Dropdown */}
+            {/* Live Search Results Dropdown (Desktop/Tablet) */}
             {isSearchOpen && searchValue.trim().length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-[#e4ede2] overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                 <div className="p-3 border-b border-[#f0f4f0] bg-[#f8fafb] flex items-center justify-between text-xs text-[#6d7a6f] px-4">
@@ -484,13 +484,13 @@ export default function NavBar({
             <button
               type="button"
               onClick={openCart}
-              className="p-2.5 rounded-xl hover:bg-[#f0f7f0] border border-transparent hover:border-[#e4ede2] transition-all relative text-[#006a39] cursor-pointer flex items-center gap-1.5"
+              className="p-2 sm:p-2.5 rounded-xl hover:bg-[#f0f7f0] border border-transparent hover:border-[#e4ede2] transition-all relative text-[#006a39] cursor-pointer flex items-center gap-1.5"
               title="Shopping Cart"
               aria-label="Shopping Cart"
             >
               <CartIcon />
               {itemCount > 0 && (
-                <span className="bg-[#006a39] text-white text-[11px] font-extrabold rounded-full px-1.5 py-0.5 min-w-[20px] text-center shadow-xs">
+                <span className="bg-[#006a39] text-white text-[10px] sm:text-[11px] font-extrabold rounded-full px-1.5 py-0.5 min-w-[18px] sm:min-w-[20px] text-center shadow-xs">
                   {itemCount}
                 </span>
               )}
@@ -498,7 +498,7 @@ export default function NavBar({
 
             {/* Profile / Auth Section */}
             {user && (
-              <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-[#e2e8df]">
+              <div className="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-3 border-l border-[#e2e8df]">
                 <SignedIn>
                   <div className="flex items-center">
                     <UserButton afterSignOutUrl="/" />
@@ -514,7 +514,7 @@ export default function NavBar({
                   title="View profile"
                 >
                   <div
-                    className="w-8 h-8 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-xs text-white shrink-0 group-hover:ring-2 group-hover:ring-offset-1 transition-all shadow-xs"
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-xs text-white shrink-0 group-hover:ring-2 group-hover:ring-offset-1 transition-all shadow-xs"
                     style={{ backgroundColor: ROLE_COLORS[user.role] ?? "#073b4c" }}
                   >
                     {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
@@ -540,21 +540,96 @@ export default function NavBar({
           </div>
         </div>
 
-        {/* Mobile Location Strip */}
-        <div className="md:hidden px-4 py-2 bg-[#f8fafb] border-t border-[#e4ede2] flex items-center justify-between text-xs">
+        {/* Mobile Dedicated Search Bar (Visible on mobile screens < md) */}
+        <div className="md:hidden px-3 pt-1 pb-2.5 bg-white border-t border-[#f0f4f0] relative">
+          <div className="relative w-full">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#6d7a6f]">
+              <SearchIcon />
+            </div>
+            <input
+              type="text"
+              value={searchValue}
+              onFocus={() => setIsSearchOpen(true)}
+              onChange={(e) => {
+                setSearchValue(e.target.value);
+                setIsSearchOpen(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchValue.trim()) {
+                  setIsSearchOpen(false);
+                  onNavigate("medicines");
+                }
+              }}
+              placeholder="Search medicines, supplements, stock…"
+              className="w-full pl-9 pr-8 py-2 bg-[#f0f4f0] border border-transparent rounded-xl text-xs text-[#073b4c] placeholder:text-[#6d7a6f] focus:outline-none focus:bg-white focus:border-[#006a39] transition-all font-medium"
+            />
+            {searchValue.trim() && (
+              <button
+                type="button"
+                onClick={() => setSearchValue("")}
+                className="absolute inset-y-0 right-2.5 flex items-center text-[#9aa89b]"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Mobile Search Results Dropdown */}
+          {isSearchOpen && searchValue.trim().length > 0 && (
+            <div className="absolute top-full left-3 right-3 mt-1.5 bg-white rounded-xl shadow-2xl border border-[#e4ede2] overflow-hidden z-50 max-h-[280px] overflow-y-auto divide-y divide-[#f0f4f0]">
+              <div className="p-2 bg-[#f8fafb] flex items-center justify-between text-[11px] text-[#6d7a6f] px-3 font-semibold">
+                <span>Results for &quot;{searchValue}&quot;</span>
+                <span className="text-[#006a39]">{searchResults.length} found</span>
+              </div>
+              {searchResults.length === 0 ? (
+                <div className="p-4 text-center text-xs text-[#9aa89b]">No products found</div>
+              ) : (
+                searchResults.map((p) => (
+                  <div
+                    key={p.id}
+                    onClick={() => handleProductSelect(p)}
+                    className="p-2.5 flex items-center justify-between text-xs hover:bg-[#f5fbf2] cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <img src={p.image_url} alt={p.name} className="w-8 h-8 object-contain rounded shrink-0 bg-gray-50 p-0.5" />
+                      <div className="truncate">
+                        <p className="font-bold text-[#073b4c] truncate">{p.name}</p>
+                        <p className="text-[10px] text-[#9aa89b] truncate">{p.brand} · {p.category_name}</p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-extrabold text-[#073b4c]">₹{Math.round(isRetailer ? p.retailer_price : p.customer_price)}</p>
+                      <span className={`text-[8px] font-bold px-1 py-0.2 rounded ${
+                        p.stock <= 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-800"
+                      }`}>
+                        {p.stock <= 0 ? "Out" : `${p.stock} in stock`}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Location & Express Strip */}
+        <div className="md:hidden px-3 py-1.5 bg-[#f8fafb] border-t border-[#e4ede2] flex items-center justify-between text-xs">
           <button
             type="button"
             onClick={() => setIsLocationModalOpen(true)}
-            className="flex items-center gap-1.5 text-[#073b4c] font-bold truncate cursor-pointer"
+            className="flex items-center gap-1.5 text-[#073b4c] font-bold truncate cursor-pointer text-[11px]"
           >
             <span className="text-[#006a39]">📍</span>
             <span className="truncate">
               Deliver to: <strong>{location.area || location.city} ({location.pincode})</strong>
             </span>
-            <span className="text-[#9aa89b]">▼</span>
+            <span className="text-[#9aa89b] text-[9px]">▼</span>
           </button>
-          <span className="text-[10px] font-extrabold text-[#006a39] bg-[#d1fae5] px-2 py-0.5 rounded-full shrink-0">
-            ⚡ 30-min Express
+          <span className="text-[9px] font-extrabold text-[#006a39] bg-[#d1fae5] px-1.5 py-0.5 rounded-full shrink-0">
+            ⚡ 30-min
           </span>
         </div>
 
