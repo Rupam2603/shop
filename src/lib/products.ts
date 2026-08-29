@@ -15,7 +15,7 @@ export interface DbProduct {
   numeric_id: number;
   name: string;
   subtitle: string | null;
-  category_id: string;
+  category_id: string | null;
   category_name: string;
   brand: string;
   sku: string | null;
@@ -29,6 +29,7 @@ export interface DbProduct {
   details: string | null;
   is_flash_sale: boolean;
   is_featured: boolean;
+  badges?: any[];
   created_at: string;
   updated_at: string;
 }
@@ -110,41 +111,106 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<DbPro
 }
 
 /**
- * Admin: Add a new product
+ * Admin: Add a new product to Supabase in real-time
  */
 export async function createProduct(
-  product: Omit<DbProduct, "id" | "numeric_id" | "created_at" | "updated_at">
-): Promise<{ data: DbProduct | null; error: string | null }> {
-  const { data, error } = await supabase
-    .from("products")
-    .insert([product])
-    .select()
-    .single();
-
-  if (error) {
-    return { data: null, error: error.message };
+  product: Omit<DbProduct, "id" | "numeric_id" | "created_at" | "updated_at"> & {
+    numeric_id?: number;
+    badges?: any[];
   }
-  return { data: data as DbProduct, error: null };
+): Promise<{ data: DbProduct | null; error: string | null }> {
+  try {
+    // 1. Resolve category_id safely if needed
+    let catId = product.category_id;
+    if (!catId || catId === "00000000-0000-0000-0000-000000000000") {
+      const { data: cat } = await supabase
+        .from("categories")
+        .select("id")
+        .ilike("name", product.category_name)
+        .maybeSingle();
+      catId = cat?.id || null;
+    }
+
+    // 2. Resolve next numeric_id
+    let numId = product.numeric_id;
+    if (!numId) {
+      const { data: maxProd } = await supabase
+        .from("products")
+        .select("numeric_id")
+        .order("numeric_id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      numId = maxProd && maxProd.numeric_id ? maxProd.numeric_id + 1 : Math.floor(1000 + Math.random() * 9000);
+    }
+
+    const payload: any = {
+      name: product.name,
+      subtitle: product.subtitle || product.details || null,
+      category_id: catId,
+      category_name: product.category_name,
+      brand: product.brand,
+      sku: product.sku || `SKU-${numId}`,
+      hsn: product.hsn || "3004",
+      mrp: product.mrp,
+      customer_price: product.customer_price,
+      retailer_price: product.retailer_price,
+      discount_percent: product.discount_percent,
+      stock: product.stock,
+      image_url: product.image_url,
+      details: product.details,
+      is_flash_sale: product.is_flash_sale,
+      is_featured: product.is_featured,
+      badges: product.badges || [],
+      numeric_id: numId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from("products")
+      .insert([payload])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating product in Supabase:", error);
+      return { data: null, error: error.message };
+    }
+    return { data: data as DbProduct, error: null };
+  } catch (err: any) {
+    console.error("Exception in createProduct:", err);
+    return { data: null, error: err?.message || "Failed to create product" };
+  }
 }
 
 /**
- * Admin: Update existing product details
+ * Admin: Update existing product details in Supabase in real-time
  */
 export async function updateProduct(
   id: string,
-  updates: Partial<DbProduct>
+  updates: Partial<DbProduct> & { badges?: any[] }
 ): Promise<{ data: DbProduct | null; error: string | null }> {
-  const { data, error } = await supabase
-    .from("products")
-    .update(updates)
-    .eq("id", id)
-    .select()
-    .single();
+  try {
+    const payload: any = { ...updates, updated_at: new Date().toISOString() };
+    if (payload.category_id === "00000000-0000-0000-0000-000000000000") {
+      delete payload.category_id;
+    }
+    const { data, error } = await supabase
+      .from("products")
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
 
-  if (error) {
-    return { data: null, error: error.message };
+    if (error) {
+      console.error("Error updating product in Supabase:", error);
+      return { data: null, error: error.message };
+    }
+    return { data: data as DbProduct, error: null };
+  } catch (err: any) {
+    console.error("Exception in updateProduct:", err);
+    return { data: null, error: err?.message || "Failed to update product" };
   }
-  return { data: data as DbProduct, error: null };
 }
 
 /**

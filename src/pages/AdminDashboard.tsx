@@ -709,6 +709,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             stock: p.stock,
             image: p.image_url,
             details: p.details || "",
+            badges: Array.isArray(p.badges) && p.badges.length > 0 ? p.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
           }))
         );
       }
@@ -744,12 +745,15 @@ export default function AdminDashboard({ user, onLogout }: Props) {
                   name: payload.new.name,
                   category: payload.new.category_name,
                   brand: payload.new.brand,
+                  sku: payload.new.sku || p.sku,
+                  hsn: payload.new.hsn || p.hsn,
                   mrp: Number(payload.new.mrp),
                   customerPrice: Number(payload.new.customer_price),
                   retailerPrice: Number(payload.new.retailer_price),
                   stock: payload.new.stock,
                   image: payload.new.image_url,
                   details: payload.new.details || "",
+                  badges: Array.isArray(payload.new.badges) && payload.new.badges.length > 0 ? payload.new.badges : p.badges,
                 }
               : p
           )
@@ -771,8 +775,9 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             stock: newP.stock,
             image: newP.image_url,
             details: newP.details || "",
+            badges: Array.isArray(newP.badges) && newP.badges.length > 0 ? newP.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
           },
-          ...prev,
+          ...prev.filter((p) => p.dbId !== newP.id && p.id !== newP.numeric_id),
         ]);
       } else if (payload.eventType === "DELETE" && payload.old) {
         setProducts((prev) => prev.filter((p) => p.dbId !== payload.old.id));
@@ -999,11 +1004,11 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       setProducts((prev) => [newProd, ...prev]);
       closeModal();
 
-      // Persist to Supabase
-      const { data } = await dbCreateProduct({
+      // Persist to Supabase in real-time
+      const { data, error } = await dbCreateProduct({
         name: form.name,
         subtitle: form.details || null,
-        category_id: "00000000-0000-0000-0000-000000000000", // placeholder UUID
+        category_id: null,
         category_name: form.category,
         brand: form.brand,
         sku: form.sku || `SKU-${tempId}`,
@@ -1017,7 +1022,12 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         details: form.details || null,
         is_flash_sale: isFlashSale,
         is_featured: isFeatured,
+        badges: form.badges || [],
       });
+
+      if (error) {
+        console.warn("Notice saving product to DB:", error);
+      }
 
       if (data) {
         setProducts((prev) => prev.map((p) => p.id === tempId ? { ...p, id: data.numeric_id, dbId: data.id } : p));
@@ -1027,7 +1037,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       setProducts((prev) => prev.map((p) => (p.id === form.id ? ({ ...form, dbId: target?.dbId } as Product) : p)));
       closeModal();
 
-      // Persist edit to Supabase
+      // Persist edit to Supabase in real-time
       let dbId = target?.dbId;
       if (!dbId) {
         const { data: found } = await supabase
@@ -1039,7 +1049,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       }
 
       if (dbId) {
-        const { data: updated } = await dbUpdateProduct(dbId, {
+        await dbUpdateProduct(dbId, {
           name: form.name,
           category_name: form.category,
           brand: form.brand,
@@ -1052,10 +1062,10 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           stock: form.stock,
           image_url: form.image,
           details: form.details,
+          is_flash_sale: isFlashSale,
+          is_featured: isFeatured,
+          badges: form.badges || [],
         });
-        if (updated) {
-          setProducts((prev) => prev.map((p) => (p.id === form.id ? ({ ...form, dbId: updated.id } as Product) : p)));
-        }
       }
     }
   };
