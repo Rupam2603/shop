@@ -1384,6 +1384,33 @@ function OrdersTab({
     });
   }, [orders, roleSegment, filter, searchQuery]);
 
+  // Group displayed orders chronologically by date/day
+  const groupedOrdersByDate = useMemo(() => {
+    const map = new Map<string, typeof displayedOrders>();
+    for (const ord of displayedOrders) {
+      const dKey = ord.date || "Recent";
+      if (!map.has(dKey)) {
+        map.set(dKey, []);
+      }
+      map.get(dKey)!.push(ord);
+    }
+
+    return Array.from(map.entries()).map(([date, items]) => {
+      const totalAmount = items
+        .filter((o) => o.status !== "Cancelled")
+        .reduce((sum, o) => sum + o.amount, 0);
+      const pendingCount = items.filter((o) => o.status === "Processing" || o.status === "Shipped").length;
+      const deliveredCount = items.filter((o) => o.status === "Delivered").length;
+      return {
+        date,
+        items,
+        totalAmount,
+        pendingCount,
+        deliveredCount,
+      };
+    });
+  }, [displayedOrders]);
+
   // Handle single invoice print/pdf dialog
   const handlePrintInvoice = (o: InvoiceOrderData) => {
     printOrDownloadInvoice(o, settings);
@@ -1651,112 +1678,125 @@ function OrdersTab({
         ))}
       </div>
 
-      {/* ── Orders Table ── */}
-      <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" style={{ minWidth: "960px" }}>
-            <thead>
-              <tr className="border-b border-[#e4ede2] bg-[#f8fafb]">
-                {["Order ID", "Account Type", "Customer / Shop", "Phone", "Items", "Amount", "Payment", "Status", "Date", "Invoice Bill & Actions"].map((h) => (
-                  <th key={h} className="text-left px-4 py-3.5 text-[10px] font-bold text-[#9aa89b] uppercase tracking-[0.8px] whitespace-nowrap">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {displayedOrders.map((o) => {
-                const st = orderStatus(o.status);
-                const isRetailerOrder = o.role === "retailer";
-                const isDownloadingThis = downloadingId === o.id;
+      {/* ── Day-wise Separated Orders Section (Zero Horizontal Scrollbar, Compact Layout) ── */}
+      <div className="flex flex-col gap-6">
+        {groupedOrdersByDate.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-[#e4ede2] py-16 text-center text-[#9aa89b] text-sm flex flex-col items-center gap-2 shadow-xs">
+            <span className="text-4xl">📦</span>
+            <p className="font-bold text-[#073b4c]">No orders found</p>
+            <p className="text-xs text-[#6d7a6f]">No orders match the selected filters or search query.</p>
+          </div>
+        ) : (
+          groupedOrdersByDate.map((group) => (
+            <div
+              key={group.date}
+              className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden shadow-xs"
+            >
+              {/* Day Header Banner */}
+              <div className="bg-[#f0f7f0] border-b border-[#d8ead8] px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#006a39] text-white flex items-center justify-center text-sm shadow-xs shrink-0">
+                    📅
+                  </div>
+                  <div>
+                    <h4 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base">
+                      {group.date}
+                    </h4>
+                    <p className="text-[11px] text-[#6d7a6f] font-medium">
+                      {group.items.length} {group.items.length === 1 ? "Order" : "Orders"} placed on this day
+                    </p>
+                  </div>
+                </div>
 
-                return (
-                  <tr key={o.id} className="border-b border-[#f0f4f0] last:border-0 hover:bg-[#fafcfa] transition-colors">
-                    {/* Order ID */}
-                    <td className="px-4 py-3.5 font-mono text-xs text-[#006a39] font-bold">
-                      {o.id}
-                    </td>
+                {/* Day Summary Badges */}
+                <div className="flex items-center flex-wrap gap-2 text-xs">
+                  <span className="bg-white border border-[#c3dec0] text-[#006a39] font-black px-2.5 py-1 rounded-xl shadow-2xs">
+                    Day Total: ₹{group.totalAmount.toLocaleString()}
+                  </span>
+                  {group.pendingCount > 0 && (
+                    <span className="bg-[#fef3c7] border border-[#fde68a] text-[#b45309] font-black px-2.5 py-1 rounded-xl">
+                      {group.pendingCount} Pending
+                    </span>
+                  )}
+                  {group.deliveredCount > 0 && (
+                    <span className="bg-[#d1fae5] border border-[#a7f3d0] text-[#047857] font-black px-2.5 py-1 rounded-xl">
+                      {group.deliveredCount} Delivered
+                    </span>
+                  )}
+                </div>
+              </div>
 
-                    {/* Account Type / Role Badge */}
-                    <td className="px-4 py-3.5">
-                      {isRetailerOrder ? (
-                        <span className="inline-flex items-center gap-1 bg-[#e0f2fe] text-[#0369a1] text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider border border-[#bae6fd]">
-                          <span>🏪</span> Retailer
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 bg-[#d1fae5] text-[#047857] text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider border border-[#a7f3d0]">
-                          <span>👤</span> Customer
-                        </span>
-                      )}
-                    </td>
+              {/* Day Orders Compact List (No Horizontal Scrollbar) */}
+              <div className="divide-y divide-[#f0f4f0]">
+                {group.items.map((o) => {
+                  const st = orderStatus(o.status);
+                  const isRetailerOrder = o.role === "retailer";
+                  const isDownloadingThis = downloadingId === o.id;
 
-                    {/* Customer / Shop Name */}
-                    <td className="px-4 py-3.5">
-                      <p className="font-semibold text-[#073b4c] text-xs sm:text-sm">{o.customer}</p>
-                      {isRetailerOrder && o.shopName && (
-                        <p className="text-[10px] text-[#0369a1] font-semibold mt-0.5">🏪 {o.shopName}</p>
-                      )}
-                    </td>
+                  return (
+                    <div
+                      key={o.id}
+                      className="p-3.5 sm:p-4 hover:bg-[#fafcfa] transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4"
+                    >
+                      {/* Left: Order ID, Role Badge, Customer / Shop Info */}
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <div className="w-9 h-9 rounded-xl bg-[#f0fdf4] border border-[#bbf7d0] text-[#006a39] flex items-center justify-center font-mono font-bold text-xs shrink-0 mt-0.5">
+                          {isRetailerOrder ? "🏪" : "👤"}
+                        </div>
 
-                    {/* Phone */}
-                    <td className="px-4 py-3.5 text-[#6d7a6f] text-xs font-mono">{o.phone}</td>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-mono text-xs font-bold text-[#006a39]">
+                              {o.id}
+                            </span>
+                            {isRetailerOrder ? (
+                              <span className="inline-flex items-center gap-1 bg-[#e0f2fe] text-[#0369a1] text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase border border-[#bae6fd]">
+                                Retailer
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 bg-[#d1fae5] text-[#047857] text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase border border-[#a7f3d0]">
+                                Customer
+                              </span>
+                            )}
+                            <span className="text-[10px] text-[#9aa89b] font-medium">
+                              {o.date}
+                            </span>
+                          </div>
 
-                    {/* Items */}
-                    <td className="px-4 py-3.5 text-[#073b4c] font-medium text-xs">
-                      {o.items} {o.items === 1 ? "item" : "items"}
-                    </td>
+                          <p className="font-bold text-[#073b4c] text-xs sm:text-sm mt-0.5 truncate">
+                            {o.customer}
+                            {isRetailerOrder && o.shopName && (
+                              <span className="text-[#0369a1] font-semibold text-xs ml-1.5">
+                                · {o.shopName}
+                              </span>
+                            )}
+                          </p>
 
-                    {/* Amount */}
-                    <td className="px-4 py-3.5 font-['Manrope',sans-serif] font-bold text-[#073b4c]">
-                      ₹{o.amount.toLocaleString()}
-                    </td>
+                          <div className="flex items-center gap-2 text-[11px] text-[#6d7a6f] mt-0.5 flex-wrap">
+                            <span className="font-mono">📞 {o.phone}</span>
+                            <span>•</span>
+                            <span>{o.items} {o.items === 1 ? "item" : "items"}</span>
+                            <span>•</span>
+                            <span className="bg-[#f0f4f0] text-[#475569] font-bold px-1.5 py-0.2 rounded text-[10px]">
+                              {o.payment}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-                    {/* Payment */}
-                    <td className="px-4 py-3.5">
-                      <span className="text-xs bg-[#f0f4f0] text-[#6d7a6f] px-2 py-0.5 rounded font-medium">
-                        {o.payment}
-                      </span>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-4 py-3.5">
-                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ color: st.color, backgroundColor: st.bg }}>
-                        {o.status}
-                      </span>
-                    </td>
-
-                    {/* Date */}
-                    <td className="px-4 py-3.5 text-[#9aa89b] text-xs whitespace-nowrap">{o.date}</td>
-
-                    {/* Action & Invoice Buttons */}
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {/* Print / Save PDF button */}
-                        <button
-                          onClick={() => handlePrintInvoice(o)}
-                          title="Print or Save SubhOne Invoice PDF"
-                          className="flex items-center gap-1 bg-[#006a39] hover:bg-[#00542d] text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all shadow-2xs whitespace-nowrap cursor-pointer active:scale-95"
-                        >
-                          <span>🖨️ PDF Bill</span>
-                        </button>
-
-                        {/* Save HTML File button */}
-                        <button
-                          onClick={() => handleDownloadInvoice(o)}
-                          title="Download standalone Invoice HTML file"
-                          className="flex items-center gap-1 bg-[#f0f7ee] hover:bg-[#c3dec0] text-[#006a39] text-[11px] font-bold px-2 py-1 rounded-lg transition-all border border-[#c3dec0] whitespace-nowrap cursor-pointer"
-                        >
-                          <span>📥 {isDownloadingThis ? "..." : "Save"}</span>
-                        </button>
-
-                        {/* View Modal button */}
-                        <button
-                          onClick={() => setPreviewInvoice(o)}
-                          title="View and inspect Invoice Bill"
-                          className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[11px] font-bold px-2 py-1 rounded-lg transition-all whitespace-nowrap cursor-pointer"
-                        >
-                          <span>👁️ View</span>
-                        </button>
+                      {/* Middle: Amount & Status */}
+                      <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 border-t md:border-t-0 pt-2 md:pt-0 border-[#f0f4f0]">
+                        <div className="text-left md:text-right">
+                          <p className="font-['Manrope',sans-serif] font-black text-sm sm:text-base text-[#073b4c]">
+                            ₹{o.amount.toLocaleString()}
+                          </p>
+                          <span
+                            className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5"
+                            style={{ color: st.color, backgroundColor: st.bg }}
+                          >
+                            {o.status}
+                          </span>
+                        </div>
 
                         {/* Status dropdown */}
                         <select
@@ -1767,7 +1807,7 @@ function OrdersTab({
                               e.target.value as "Processing" | "Shipped" | "Delivered" | "Cancelled"
                             )
                           }
-                          className="text-xs font-semibold bg-[#f8fafb] border border-[#e4ede2] rounded-lg px-2 py-1 text-[#073b4c] focus:outline-none focus:border-[#006a39] cursor-pointer"
+                          className="text-xs font-bold bg-[#f8fafb] border border-[#d2e0cf] rounded-xl px-2.5 py-1.5 text-[#073b4c] focus:outline-none focus:border-[#006a39] cursor-pointer shadow-2xs"
                         >
                           <option value="Processing">Processing</option>
                           <option value="Shipped">Shipped</option>
@@ -1775,60 +1815,146 @@ function OrdersTab({
                           <option value="Cancelled">Cancelled</option>
                         </select>
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        {displayedOrders.length === 0 && (
-          <div className="py-16 text-center text-[#9aa89b] text-sm flex flex-col items-center gap-2">
-            <span className="text-3xl">📦</span>
-            <p>No orders found matching the selected segment and filters.</p>
-          </div>
+
+                      {/* Right: Compact Action Buttons */}
+                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handlePrintInvoice(o)}
+                          title="Print or Save PDF Invoice"
+                          className="flex items-center gap-1 bg-[#006a39] hover:bg-[#00542d] text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95"
+                        >
+                          <span>🖨️</span>
+                          <span className="hidden sm:inline">PDF Bill</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadInvoice(o)}
+                          title="Download Invoice HTML"
+                          className="flex items-center gap-1 bg-[#f0f7ee] hover:bg-[#dcf0db] text-[#006a39] text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all border border-[#c3dec0] cursor-pointer"
+                        >
+                          <span>📥</span>
+                          <span className="hidden sm:inline">{isDownloadingThis ? "..." : "Save"}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setPreviewInvoice(o)}
+                          title="Inspect full order details"
+                          className="flex items-center gap-1 bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#334155] text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all cursor-pointer"
+                        >
+                          <span>👁️</span>
+                          <span>Details</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))
         )}
       </div>
 
-      {/* ── Invoice Preview Modal ── */}
+      {/* ── Compact Order Details & Invoice Preview Modal (Zero Horizontal Scrollbar) ── */}
       {previewInvoice && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in">
             {/* Modal Header */}
-            <div className="p-4 bg-[#073b4c] text-white flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="p-3.5 sm:p-4 bg-[#073b4c] text-white flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 truncate">
                 <span className="text-xl">🧾</span>
-                <span className="font-bold text-sm sm:text-base">SubhOne Official Invoice Bill — {previewInvoice.id}</span>
+                <div className="truncate">
+                  <span className="font-extrabold text-sm sm:text-base">Order Details & Invoice</span>
+                  <span className="text-xs text-white/70 font-mono block sm:inline sm:ml-2">#{previewInvoice.id}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
+                  type="button"
                   onClick={() => printOrDownloadInvoice(previewInvoice, settings)}
-                  className="bg-[#00a86b] hover:bg-[#00925c] text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="bg-[#00a86b] hover:bg-[#00925c] text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <span>🖨️</span>
-                  <span>Print / Save PDF</span>
+                  <span className="hidden sm:inline">Print / Save PDF</span>
                 </button>
                 <button
-                  onClick={() => downloadInvoiceFile(previewInvoice, settings)}
-                  className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
-                >
-                  <span>📥</span>
-                  <span>Download File</span>
-                </button>
-                <button
+                  type="button"
                   onClick={() => setPreviewInvoice(null)}
-                  className="text-white/80 hover:text-white text-lg font-bold px-2 cursor-pointer"
+                  className="w-8 h-8 rounded-xl bg-white/20 hover:bg-white/30 text-white flex items-center justify-center text-sm font-bold cursor-pointer transition-colors"
                 >
                   ✕
                 </button>
               </div>
             </div>
 
-            {/* Modal Content / Visual Preview */}
-            <div
-              className="p-6 overflow-y-auto bg-[#fafafa]"
-              dangerouslySetInnerHTML={{ __html: generateInvoiceHtml(previewInvoice, settings) }}
-            />
+            {/* Compact Order Details Body */}
+            <div className="p-4 sm:p-5 overflow-y-auto overflow-x-hidden bg-[#f8fafb] flex flex-col gap-4 text-xs">
+              {/* Order Info Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3.5 bg-white rounded-xl border border-[#e4ede2]">
+                  <p className="text-[10px] font-bold text-[#9aa89b] uppercase tracking-wider">Customer Details</p>
+                  <p className="font-bold text-[#073b4c] text-sm mt-1">{previewInvoice.customer}</p>
+                  {previewInvoice.role === "retailer" && previewInvoice.shopName && (
+                    <p className="text-[#0369a1] font-semibold text-xs mt-0.5">🏪 {previewInvoice.shopName}</p>
+                  )}
+                  <p className="text-[#6d7a6f] mt-1 font-mono">📞 {previewInvoice.phone}</p>
+                  <p className="text-[11px] text-[#6d7a6f] mt-1">{previewInvoice.address || "Standard Express Delivery"}</p>
+                </div>
+
+                <div className="p-3.5 bg-white rounded-xl border border-[#e4ede2]">
+                  <p className="text-[10px] font-bold text-[#9aa89b] uppercase tracking-wider">Order & Payment Info</p>
+                  <p className="font-mono font-bold text-[#006a39] text-sm mt-1">ID: {previewInvoice.id}</p>
+                  <p className="text-[#6d7a6f] mt-0.5">Date: <strong>{previewInvoice.date}</strong></p>
+                  <p className="text-[#6d7a6f] mt-0.5">Payment: <strong>{previewInvoice.payment}</strong></p>
+                  <p className="text-[#6d7a6f] mt-0.5">Status: <strong className="text-[#006a39]">{previewInvoice.status}</strong></p>
+                </div>
+              </div>
+
+              {/* Items List */}
+              <div className="bg-white rounded-xl border border-[#e4ede2] overflow-hidden">
+                <div className="p-3 bg-[#f0f7f0] border-b border-[#e4ede2] flex items-center justify-between font-bold text-[#073b4c]">
+                  <span>Ordered Items ({previewInvoice.items})</span>
+                  <span>Amount</span>
+                </div>
+                <div className="divide-y divide-[#f0f4f0] p-3 flex flex-col gap-2">
+                  {(previewInvoice.orderItems && previewInvoice.orderItems.length > 0) ? (
+                    previewInvoice.orderItems.map((it, idx) => (
+                      <div key={idx} className="flex items-center justify-between py-1 text-xs">
+                        <div>
+                          <p className="font-bold text-[#073b4c]">{it.name}</p>
+                          <p className="text-[10px] text-[#9aa89b]">Qty: {it.quantity} × ₹{it.price}</p>
+                        </div>
+                        <span className="font-bold text-[#073b4c]">₹{(it.quantity * it.price).toLocaleString()}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex items-center justify-between py-1 text-xs">
+                      <div>
+                        <p className="font-bold text-[#073b4c]">
+                          {previewInvoice.role === "retailer" ? "Wholesale Medical Supplies Package" : "Pharmacy Health Package"}
+                        </p>
+                        <p className="text-[10px] text-[#9aa89b]">Qty: {previewInvoice.items} items</p>
+                      </div>
+                      <span className="font-bold text-[#073b4c]">₹{previewInvoice.amount.toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Total Summary */}
+                <div className="p-3 bg-[#f8fafb] border-t border-[#e4ede2] flex items-center justify-between font-extrabold text-sm text-[#073b4c]">
+                  <span>Total Grand Amount</span>
+                  <span className="text-[#006a39] text-base">₹{previewInvoice.amount.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Bill View */}
+              <div
+                className="bg-white p-3 rounded-xl border border-[#e4ede2] overflow-x-hidden"
+                dangerouslySetInnerHTML={{ __html: generateInvoiceHtml(previewInvoice, settings) }}
+              />
+            </div>
           </div>
         </div>
       )}
