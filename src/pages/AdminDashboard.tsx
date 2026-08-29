@@ -21,6 +21,7 @@ import { fetchAllLabBookings, updateLabBookingStatus as dbUpdateLabBookingStatus
 import {
   fetchAllRetailers,
   updateRetailerApprovalStatus,
+  subscribeToRetailersRealtime,
   RetailerAccount,
 } from "../lib/retailers";
 import {
@@ -775,9 +776,19 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       }
     });
 
+    // Real-time Supabase retailer approvals listener
+    const unsubscribeRetailers = subscribeToRetailersRealtime(() => {
+      fetchAllRetailers().then((fresh) => {
+        if (mounted && fresh) {
+          setRetailers(fresh);
+        }
+      });
+    });
+
     return () => {
       mounted = false;
       unsubscribeProducts();
+      unsubscribeRetailers();
     };
   }, []);
 

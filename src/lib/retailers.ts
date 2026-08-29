@@ -112,7 +112,35 @@ export async function fetchAllRetailers(): Promise<RetailerAccount[]> {
   }
 
   try {
-    // 1. Fetch from Supabase profiles
+    // 1. Fetch from Supabase retailer_approvals table
+    const { data: dbApprovals, error: appErr } = await supabase
+      .from("retailer_approvals")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!appErr && dbApprovals && dbApprovals.length > 0) {
+      for (const row of dbApprovals) {
+        const status = (row.approval_status as "pending" | "approved" | "rejected") || "pending";
+        const emailKey = (row.email || "").toLowerCase();
+        const rec: RetailerAccount = {
+          id: row.id || row.user_id || emailKey,
+          fullName: row.full_name || "Retailer Partner",
+          email: row.email,
+          phone: row.phone || null,
+          shopName: row.shop_name || "Medical Store",
+          role: "retailer",
+          approvalStatus: status,
+          createdAt: row.created_at || new Date().toISOString(),
+          updatedAt: row.updated_at || new Date().toISOString(),
+          approvedAt: row.approved_at || (status === "approved" ? row.created_at : null),
+          clerkId: row.clerk_id || null,
+        };
+        map.set(rec.id, rec);
+        if (emailKey) map.set(emailKey, rec);
+      }
+    }
+
+    // 2. Fetch from Supabase profiles (if any)
     const { data: dbProfiles, error } = await supabase
       .from("profiles")
       .select("*")
@@ -177,20 +205,20 @@ export async function registerOrUpdateRetailer(data: {
   clerkId?: string | null;
 }): Promise<RetailerAccount> {
   const localList = getLocalRetailers();
-  const emailKey = data.email.toLowerCase();
+  const emailKey = data.email.toLowerCase().trim();
   const existing = localList.find(
     (r) => r.id === data.id || r.email.toLowerCase() === emailKey
   );
 
-  const finalId = data.id || existing?.id || `ret_${Date.now()}`;
+  const finalId = data.id || existing?.id || `ret_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   const status = data.approvalStatus || existing?.approvalStatus || "pending";
 
   const updatedRec: RetailerAccount = {
     id: finalId,
-    fullName: data.fullName,
-    email: data.email,
+    fullName: data.fullName.trim(),
+    email: emailKey,
     phone: data.phone || existing?.phone || null,
-    shopName: data.shopName,
+    shopName: data.shopName.trim() || `${data.fullName.trim()}'s Store`,
     role: "retailer",
     approvalStatus: status,
     createdAt: existing?.createdAt || new Date().toISOString(),
@@ -205,19 +233,43 @@ export async function registerOrUpdateRetailer(data: {
   );
   saveLocalRetailers([updatedRec, ...filtered]);
 
-  // 2. Persist to Supabase profiles
+  // 2. Persist to Supabase retailer_approvals table
   try {
-    await supabase.from("profiles").upsert({
+    const { error: appErr } = await supabase.from("retailer_approvals").upsert({
       id: finalId,
-      full_name: data.fullName,
-      role: "retailer",
+      user_id: finalId,
+      email: emailKey,
+      full_name: data.fullName.trim(),
       phone: data.phone || null,
-      shop_name: data.shopName,
+      shop_name: updatedRec.shopName,
       approval_status: status,
+      clerk_id: data.clerkId || null,
       updated_at: new Date().toISOString(),
-    });
+    }, { onConflict: "email" });
+
+    if (appErr) {
+      console.warn("Notice upserting to retailer_approvals:", appErr.message);
+    }
   } catch (err) {
-    console.warn("Could not upsert retailer to profiles table:", err);
+    console.warn("Could not upsert retailer to retailer_approvals table:", err);
+  }
+
+  // 3. Persist to Supabase profiles table if valid UUID
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(finalId);
+  if (isUuid) {
+    try {
+      await supabase.from("profiles").upsert({
+        id: finalId,
+        full_name: data.fullName.trim(),
+        role: "retailer",
+        phone: data.phone || null,
+        shop_name: updatedRec.shopName,
+        approval_status: status,
+        updated_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn("Could not upsert retailer to profiles table:", err);
+    }
   }
 
   return updatedRec;
@@ -231,63 +283,171 @@ export async function updateRetailerApprovalStatus(
   newStatus: "pending" | "approved" | "rejected"
 ): Promise<{ success: boolean; retailer: RetailerAccount | null }> {
   const localList = getLocalRetailers();
-  let target = localList.find((r) => r.id === retailerId || r.email.toLowerCase() === retailerId.toLowerCase());
+  const searchKey = retailerId.toLowerCase();
+  let target = localList.find((r) => r.id === retailerId || r.email.toLowerCase() === searchKey);
 
   if (!target) {
     target = {
       id: retailerId,
       fullName: "Retailer Partner",
       email: retailerId.includes("@") ? retailerId : "retailer@subhone.com",
+      phone: null,
       shopName: "Medical Store",
       role: "retailer",
       approvalStatus: newStatus,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      approvedAt: newStatus === "approved" ? new Date().toISOString() : null,
     };
   }
 
-  const updatedTarget: RetailerAccount = {
+  const updatedRec: RetailerAccount = {
     ...target,
     approvalStatus: newStatus,
     updatedAt: new Date().toISOString(),
     approvedAt: newStatus === "approved" ? new Date().toISOString() : null,
   };
 
-  const updatedList = localList.map((r) => (r.id === target!.id || r.email.toLowerCase() === target!.email.toLowerCase() ? updatedTarget : r));
-  if (!updatedList.some((r) => r.id === target!.id)) {
-    updatedList.unshift(updatedTarget);
+  // 1. Update local cache
+  const nextList = localList.map((r) =>
+    r.id === retailerId || r.email.toLowerCase() === searchKey ? updatedRec : r
+  );
+  if (!nextList.some((r) => r.id === target?.id)) {
+    nextList.unshift(updatedRec);
   }
-  saveLocalRetailers(updatedList);
+  saveLocalRetailers(nextList);
 
-  // Update in Supabase
+  // 2. Persist update to Supabase retailer_approvals
   try {
     await supabase
-      .from("profiles")
+      .from("retailer_approvals")
       .update({
         approval_status: newStatus,
+        approved_at: newStatus === "approved" ? new Date().toISOString() : null,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", target.id);
-  } catch (e) {
-    console.warn("Could not update approval status in database:", e);
+      .or(`id.eq.${retailerId},email.eq.${searchKey}`);
+  } catch (err) {
+    console.warn("Could not update retailer_approvals table:", err);
   }
 
-  return { success: true, retailer: updatedTarget };
+  // 3. Persist update to Supabase profiles (if UUID)
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(retailerId);
+  if (isUuid) {
+    try {
+      await supabase
+        .from("profiles")
+        .update({
+          approval_status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", retailerId);
+    } catch (err) {
+      console.warn("Could not update profiles table:", err);
+    }
+  }
+
+  return { success: true, retailer: updatedRec };
 }
 
 /**
- * Check if a retailer is approved to log in
+ * Check if a retailer email or ID is approved
  */
-export function checkRetailerApprovalStatus(emailOrId: string): "approved" | "pending" | "rejected" {
+export function checkRetailerApprovalStatus(emailOrId: string): "pending" | "approved" | "rejected" | null {
+  if (!emailOrId) return null;
+  const key = emailOrId.toLowerCase().trim();
+
+  // Admin always has access
+  if (key === "admin@subhone.com") return "approved";
+
   const list = getLocalRetailers();
-  const normalized = emailOrId.toLowerCase();
-  const found = list.find(
-    (r) => r.id.toLowerCase() === normalized || r.email.toLowerCase() === normalized
+  const found = list.find((r) => r.id === emailOrId || r.email.toLowerCase() === key);
+  return found ? found.approvalStatus : null;
+}
+
+/**
+ * Live lookup for any retailer to check their approval status by email or phone
+ */
+export async function lookupRetailerApprovalStatus(
+  query: string
+): Promise<{ found: boolean; retailer: RetailerAccount | null }> {
+  const clean = query.trim().toLowerCase();
+  if (!clean) return { found: false, retailer: null };
+
+  // 1. Try Supabase retailer_approvals table
+  try {
+    const isEmail = clean.includes("@");
+    let req = supabase.from("retailer_approvals").select("*");
+    if (isEmail) {
+      req = req.ilike("email", clean);
+    } else {
+      req = req.or(`phone.ilike.%${clean}%,email.ilike.%${clean}%`);
+    }
+
+    const { data, error } = await req.limit(1).maybeSingle();
+    if (!error && data) {
+      const status = (data.approval_status as "pending" | "approved" | "rejected") || "pending";
+      const rec: RetailerAccount = {
+        id: data.id || data.user_id || data.email,
+        fullName: data.full_name || "Retailer Partner",
+        email: data.email,
+        phone: data.phone || null,
+        shopName: data.shop_name || "Medical Store",
+        role: "retailer",
+        approvalStatus: status,
+        createdAt: data.created_at || new Date().toISOString(),
+        updatedAt: data.updated_at || new Date().toISOString(),
+        approvedAt: data.approved_at || null,
+        clerkId: data.clerk_id || null,
+      };
+      return { found: true, retailer: rec };
+    }
+  } catch (err) {
+    console.warn("DB lookup error:", err);
+  }
+
+  // 2. Check local registry
+  const list = getLocalRetailers();
+  const match = list.find(
+    (r) =>
+      r.email.toLowerCase() === clean ||
+      (r.phone && r.phone.replace(/\D/g, "").includes(clean.replace(/\D/g, "")))
   );
 
-  if (!found) {
-    // By default for new retailer signup without approval, it is pending
-    return "pending";
+  if (match) {
+    return { found: true, retailer: match };
   }
-  return found.approvalStatus;
+
+  return { found: false, retailer: null };
+}
+
+/**
+ * Real-time Supabase subscription for retailer approvals
+ */
+export function subscribeToRetailersRealtime(
+  callback: (payload: { eventType: string; new?: any; old?: any }) => void
+) {
+  try {
+    const channel = supabase
+      .channel("realtime:retailer_approvals")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "retailer_approvals" },
+        (payload) => {
+          callback({
+            eventType: payload.eventType,
+            new: payload.new,
+            old: payload.old,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  } catch (err) {
+    console.warn("Could not subscribe to retailer approvals realtime:", err);
+    return () => {};
+  }
 }

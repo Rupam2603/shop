@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { UserRole } from "../App";
 import { useAuth } from "../contexts/AuthContext";
 import { SignInButton, SignUpButton } from "@clerk/clerk-react";
+import { lookupRetailerApprovalStatus, RetailerAccount } from "../lib/retailers";
 
 // ─── Role UI configuration ────────────────────────────────────────────────────
 
@@ -146,6 +147,33 @@ export default function LoginPage() {
   const [signupPhone, setSignupPhone] = useState("");
   const [signupShop, setSignupShop] = useState("");
   const [signupConfirm, setSignupConfirm] = useState("");
+
+  // Check Retailer Approval Status modal state
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [statusQuery, setStatusQuery] = useState("");
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [statusResult, setStatusResult] = useState<{
+    searched: boolean;
+    found: boolean;
+    retailer: RetailerAccount | null;
+  }>({
+    searched: false,
+    found: false,
+    retailer: null,
+  });
+
+  const handleCheckStatus = async (e?: React.FormEvent, customQuery?: string) => {
+    if (e) e.preventDefault();
+    const queryToUse = (customQuery || statusQuery).trim();
+    if (!queryToUse) return;
+    setStatusLoading(true);
+    try {
+      const res = await lookupRetailerApprovalStatus(queryToUse);
+      setStatusResult({ searched: true, found: res.found, retailer: res.retailer });
+    } finally {
+      setStatusLoading(false);
+    }
+  };
 
   const cfg = ROLES[selectedRole];
 
@@ -409,11 +437,15 @@ export default function LoginPage() {
                   <div className="flex flex-wrap items-center gap-2 mt-3 pt-2.5 border-t border-[#fde68a]">
                     <button
                       type="button"
-                      onClick={() => window.location.reload()}
+                      onClick={() => {
+                        setStatusQuery(pendingApprovalInfo.email);
+                        setShowStatusModal(true);
+                        handleCheckStatus(undefined, pendingApprovalInfo.email);
+                      }}
                       className="px-3.5 py-1.5 rounded-xl bg-[#d97706] hover:bg-[#b45309] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
                     >
-                      <span>🔄</span>
-                      <span>Check Approval Status</span>
+                      <span>🔍</span>
+                      <span>View Live Status Details</span>
                     </button>
                     <button
                       type="button"
@@ -425,6 +457,29 @@ export default function LoginPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Quick Check Retailer Approval Status Banner */}
+          {selectedRole === "retailer" && !pendingApprovalInfo && (
+            <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-3 mb-3.5 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-base shrink-0">🏪</span>
+                <p className="text-xs text-[#166534] font-medium truncate">
+                  Already registered as a Retailer? Check your approval progress.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusQuery(email || "");
+                  setShowStatusModal(true);
+                  if (email) handleCheckStatus(undefined, email);
+                }}
+                className="text-xs font-bold text-[#006a39] hover:underline whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                Check Status →
+              </button>
             </div>
           )}
 
@@ -653,6 +708,195 @@ export default function LoginPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Check Retailer Approval Status Modal ── */}
+      {showStatusModal && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+          onClick={() => setShowStatusModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative border border-[#e4ede2] animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowStatusModal(false)}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-[#f0f4f0] flex items-center justify-center text-[#073b4c] hover:bg-[#e4ede2] transition-colors cursor-pointer"
+            >
+              ✕
+            </button>
+
+            <div className="flex items-center gap-3.5 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#e8f5ee] text-[#006a39] flex items-center justify-center text-2xl shrink-0">
+                🏪
+              </div>
+              <div>
+                <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg sm:text-xl">
+                  Retailer Approval Status Checker
+                </h3>
+                <p className="text-xs text-[#6d7a6f]">
+                  Real-time lookup for SubhOne wholesale partner applications
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleCheckStatus} className="flex flex-col gap-3">
+              <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px]">
+                Enter Registered Email or Phone Number
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={statusQuery}
+                  onChange={(e) => setStatusQuery(e.target.value)}
+                  placeholder="e.g. your-shop@gmail.com or 9836000000"
+                  required
+                  className="flex-1 bg-[#f8fafb] border border-[#e4ede2] rounded-xl px-4 py-2.5 text-sm text-[#073b4c] placeholder:text-[#c0ccc0] focus:outline-none focus:border-[#006a39]"
+                />
+                <button
+                  type="submit"
+                  disabled={statusLoading}
+                  className="px-5 py-2.5 rounded-xl bg-[#006a39] hover:bg-[#005a30] text-white text-xs sm:text-sm font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-60 active:scale-95 shrink-0"
+                >
+                  {statusLoading && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                  <span>{statusLoading ? "Checking…" : "Check Live Status"}</span>
+                </button>
+              </div>
+            </form>
+
+            {/* Results Display */}
+            {statusResult.searched && (
+              <div className="mt-5 pt-4 border-t border-[#e4ede2] animate-in fade-in duration-200">
+                {statusResult.found && statusResult.retailer ? (
+                  <div className="flex flex-col gap-3">
+                    {/* Status Banner */}
+                    <div
+                      className={`p-4 rounded-xl border flex items-start gap-3 ${
+                        statusResult.retailer.approvalStatus === "approved"
+                          ? "bg-[#ecfdf5] border-[#a7f3d0]"
+                          : statusResult.retailer.approvalStatus === "pending"
+                          ? "bg-[#fffbeb] border-[#fde68a]"
+                          : "bg-[#fef2f2] border-[#fecaca]"
+                      }`}
+                    >
+                      <div className="text-2xl shrink-0">
+                        {statusResult.retailer.approvalStatus === "approved"
+                          ? "🎉"
+                          : statusResult.retailer.approvalStatus === "pending"
+                          ? "⏳"
+                          : "❌"}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4
+                            className={`font-['Manrope',sans-serif] font-bold text-sm ${
+                              statusResult.retailer.approvalStatus === "approved"
+                                ? "text-[#065f46]"
+                                : statusResult.retailer.approvalStatus === "pending"
+                                ? "text-[#92400e]"
+                                : "text-[#991b1b]"
+                            }`}
+                          >
+                            {statusResult.retailer.approvalStatus === "approved"
+                              ? "Account Approved & Active!"
+                              : statusResult.retailer.approvalStatus === "pending"
+                              ? "Application Under Admin Review"
+                              : "Application Declined"}
+                          </h4>
+                          <span
+                            className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                              statusResult.retailer.approvalStatus === "approved"
+                                ? "bg-[#d1fae5] text-[#047857]"
+                                : statusResult.retailer.approvalStatus === "pending"
+                                ? "bg-[#fef3c7] text-[#d97706] animate-pulse"
+                                : "bg-[#fee2e2] text-[#b91c1c]"
+                            }`}
+                          >
+                            {statusResult.retailer.approvalStatus}
+                          </span>
+                        </div>
+
+                        <p
+                          className={`text-xs mt-1 leading-relaxed ${
+                            statusResult.retailer.approvalStatus === "approved"
+                              ? "text-[#047857]"
+                              : statusResult.retailer.approvalStatus === "pending"
+                              ? "text-[#b45309]"
+                              : "text-[#b91c1c]"
+                          }`}
+                        >
+                          {statusResult.retailer.approvalStatus === "approved"
+                            ? "Your retailer wholesale account has been verified by the SubhOne Admin. You can sign in now to access retailer wholesale prices."
+                            : statusResult.retailer.approvalStatus === "pending"
+                            ? "Your wholesale partner request is in the review queue. The administrator will activate your account shortly."
+                            : "Your retailer application was declined or is suspended. Please reach out to admin@subhone.com for assistance."}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Details Box */}
+                    <div className="bg-[#f8fafb] border border-[#e4ede2] rounded-xl p-3.5 text-xs text-[#073b4c] flex flex-col gap-1.5">
+                      <div className="flex justify-between">
+                        <span className="text-[#9aa89b]">Shop Name:</span>
+                        <span className="font-bold">{statusResult.retailer.shopName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#9aa89b]">Contact Person:</span>
+                        <span className="font-semibold">{statusResult.retailer.fullName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#9aa89b]">Registered Email:</span>
+                        <span className="font-mono">{statusResult.retailer.email}</span>
+                      </div>
+                      {statusResult.retailer.phone && (
+                        <div className="flex justify-between">
+                          <span className="text-[#9aa89b]">Phone:</span>
+                          <span>{statusResult.retailer.phone}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action button if approved */}
+                    {statusResult.retailer.approvalStatus === "approved" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEmail(statusResult.retailer!.email);
+                          setSelectedRole("retailer");
+                          setMode("login");
+                          setShowStatusModal(false);
+                        }}
+                        className="w-full py-3 rounded-xl bg-[#006a39] hover:bg-[#005a30] text-white text-xs sm:text-sm font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                      >
+                        <span>Sign In as Retailer Now →</span>
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 bg-[#f8fafb] rounded-xl border border-[#e4ede2]">
+                    <p className="text-xs font-bold text-[#073b4c]">No Retailer Application Found</p>
+                    <p className="text-[11px] text-[#9aa89b] mt-0.5">
+                      No retailer account matched <strong>&ldquo;{statusQuery}&rdquo;</strong>.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedRole("retailer");
+                        setMode("signup");
+                        setEmail(statusQuery.includes("@") ? statusQuery : "");
+                        setShowStatusModal(false);
+                      }}
+                      className="mt-2.5 px-4 py-1.5 rounded-lg bg-[#006a39] text-white text-xs font-bold hover:bg-[#005a30] transition-colors cursor-pointer"
+                    >
+                      Sign Up as Retailer
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
