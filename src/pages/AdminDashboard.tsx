@@ -623,6 +623,14 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           o.customer_name?.toLowerCase().includes("medical") ||
           o.customer_name?.toLowerCase().includes("pharma");
 
+        const dateObj = new Date(o.created_at);
+        const dateStr = !isNaN(dateObj.getTime())
+          ? dateObj.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+          : "Today";
+        const rawDateStr = !isNaN(dateObj.getTime())
+          ? dateObj.toISOString().split("T")[0]
+          : undefined;
+
         return {
           id: o.order_number,
           dbId: o.id,
@@ -631,14 +639,15 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           items: o.order_items?.length || 1,
           amount: Number(o.total_amount),
           status: o.status,
-          date: new Date(o.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+          date: dateStr,
+          rawDate: rawDateStr,
           payment: o.payment_method,
           role: (o.user_role || (isRetailerInferred ? "retailer" : "customer")) as "retailer" | "customer",
           shopName: o.shop_name || (isRetailerInferred ? o.customer_name : undefined),
         };
       });
     }
-    return MOCK_ORDERS.map((o) => ({ ...o, dbId: "" }));
+    return MOCK_ORDERS.map((o) => ({ ...o, dbId: "", rawDate: undefined }));
   }, [dbOrders]);
 
   const filteredOrders = useMemo(() => {
@@ -1423,41 +1432,77 @@ function OrdersTab({
     setTimeout(() => setDownloadingId(null), 800);
   };
 
+  // Extract available distinct order dates for easy dropdown picking
+  const availableDatesList = useMemo(() => {
+    const map = new Map<string, { dateStr: string; rawDate?: string; count: number }>();
+    for (const ord of orders) {
+      const d = ord.date || "Recent";
+      if (!map.has(d)) {
+        map.set(d, { dateStr: d, rawDate: (ord as any).rawDate, count: 1 });
+      } else {
+        map.get(d)!.count += 1;
+      }
+    }
+    return Array.from(map.values());
+  }, [orders]);
+
   // Format date string for report
-  const getFormattedReportDate = () => {
-    const dObj = new Date(reportDate);
+  const getFormattedReportDate = (targetDate = reportDate) => {
+    const dObj = new Date(targetDate);
     return isNaN(dObj.getTime())
-      ? reportDate
+      ? targetDate
       : dObj.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
   };
 
-  // Get orders array for daily report
-  const getDailyOrdersList = () => {
-    const dStr = getFormattedReportDate();
-    return orders.map((o) => ({ ...o, date: dStr }));
+  // Get orders array strictly filtered for the selected daily report date
+  const getDailyOrdersList = (targetDate = reportDate) => {
+    const targetFormatted = getFormattedReportDate(targetDate);
+    const targetIso = targetDate.includes("T") ? targetDate.split("T")[0] : targetDate;
+
+    return orders.filter((o) => {
+      const ordDate = o.date;
+      const ordRaw = (o as any).rawDate;
+
+      if (ordDate === targetFormatted || ordDate === targetDate) return true;
+      if (ordRaw && ordRaw === targetIso) return true;
+
+      // Date parsing fallback comparison
+      const oDateObj = new Date(ordRaw || ordDate);
+      const tDateObj = new Date(targetDate);
+      if (!isNaN(oDateObj.getTime()) && !isNaN(tDateObj.getTime())) {
+        return (
+          oDateObj.getFullYear() === tDateObj.getFullYear() &&
+          oDateObj.getMonth() === tDateObj.getMonth() &&
+          oDateObj.getDate() === tDateObj.getDate()
+        );
+      }
+      return false;
+    });
   };
 
-  // Handle Daily PDF print/save
-  const handlePrintDailyPdf = () => {
-    const dateFormatted = getFormattedReportDate();
-    const ordersForDay = getDailyOrdersList();
+  const selectedDateOrders = useMemo(() => getDailyOrdersList(reportDate), [orders, reportDate]);
+
+  // Handle Daily PDF print/save for selected date
+  const handlePrintDailyPdf = (targetDate = reportDate) => {
+    const dateFormatted = getFormattedReportDate(targetDate);
+    const ordersForDay = getDailyOrdersList(targetDate);
     printOrDownloadDailyReport(dateFormatted, ordersForDay, settings);
   };
 
-  // Handle Daily PDF direct file download
-  const handleDownloadDailyFile = () => {
+  // Handle Daily PDF direct file download for selected date
+  const handleDownloadDailyFile = (targetDate = reportDate) => {
     setDownloadingDaily(true);
-    const dateFormatted = getFormattedReportDate();
-    const ordersForDay = getDailyOrdersList();
+    const dateFormatted = getFormattedReportDate(targetDate);
+    const ordersForDay = getDailyOrdersList(targetDate);
     downloadDailyReportFile(dateFormatted, ordersForDay, settings);
     setTimeout(() => setDownloadingDaily(false), 800);
   };
 
   return (
     <div className="flex flex-col gap-6">
-      {/* ── Daily Orders PDF Export Banner ── */}
+      {/* ── Daily Orders PDF Export Banner with Custom Date Picker ── */}
       <div className="bg-gradient-to-r from-[#073b4c] via-[#045d5a] to-[#006a39] text-white p-5 sm:p-6 rounded-2xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 shadow-lg border border-white/10">
-        <div>
+        <div className="flex-1">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl bg-white/20 p-2 rounded-xl">📄</span>
             <div>
@@ -1465,43 +1510,90 @@ function OrdersTab({
                 Daily Orders Management & Invoice Center
               </h3>
               <p className="text-white/80 text-xs sm:text-sm mt-0.5">
-                Generate and download official PDF reports for Retailers & Customers orders or individual invoice bills.
+                Download verified daily sales & orders reports strictly for your selected date.
               </p>
             </div>
           </div>
+
+          {/* Selected Date Orders Indicator */}
+          <div className="mt-3 flex items-center gap-2 text-xs">
+            <span className="bg-white/15 px-2.5 py-1 rounded-lg border border-white/20 font-bold text-white">
+              Selected: <strong>{getFormattedReportDate()}</strong>
+            </span>
+            <span className={`px-2.5 py-1 rounded-lg font-extrabold ${
+              selectedDateOrders.length > 0
+                ? "bg-[#00a86b] text-white"
+                : "bg-amber-500/80 text-white"
+            }`}>
+              {selectedDateOrders.length} {selectedDateOrders.length === 1 ? "order" : "orders"} on this date
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center flex-wrap gap-3 w-full lg:w-auto">
-          <div className="flex items-center gap-1.5 bg-white/15 px-3 py-1.5 rounded-xl border border-white/25">
-            <span className="text-xs font-bold text-white/90">Date:</span>
+        {/* Date Selector & Action Controls */}
+        <div className="flex items-center flex-wrap gap-2.5 w-full lg:w-auto">
+          {/* Option 1: Calendar Date Picker */}
+          <div className="flex items-center gap-1.5 bg-white/15 px-3 py-2 rounded-xl border border-white/25">
+            <span className="text-xs font-bold text-white/90">Pick Date:</span>
             <input
               type="date"
               value={reportDate}
               onChange={(e) => setReportDate(e.target.value)}
-              className="bg-transparent text-white font-bold text-xs focus:outline-none cursor-pointer"
+              className="bg-transparent text-white font-extrabold text-xs focus:outline-none cursor-pointer"
+              title="Select specific date for daily report"
             />
           </div>
 
+          {/* Option 2: Quick Dropdown of Available Order Dates */}
+          {availableDatesList.length > 0 && (
+            <select
+              value={reportDate}
+              onChange={(e) => setReportDate(e.target.value)}
+              className="bg-white/15 hover:bg-white/25 text-white font-bold text-xs px-3 py-2 rounded-xl border border-white/25 focus:outline-none cursor-pointer"
+              title="Quick select date with orders"
+            >
+              <option value={reportDate} className="text-[#073b4c] font-bold">
+                📅 Jump to Date...
+              </option>
+              {availableDatesList.map((d) => (
+                <option
+                  key={d.dateStr}
+                  value={d.rawDate || d.dateStr}
+                  className="text-[#073b4c] font-semibold"
+                >
+                  {d.dateStr} ({d.count} {d.count === 1 ? "order" : "orders"})
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* Action: Preview */}
           <button
+            type="button"
             onClick={() => setShowDailyModal(true)}
-            className="bg-white/20 hover:bg-white/30 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all border border-white/30 flex items-center gap-1.5 cursor-pointer"
+            className="bg-white/20 hover:bg-white/30 text-white font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl transition-all border border-white/30 flex items-center gap-1.5 cursor-pointer shadow-2xs"
           >
             <span>👁️</span>
-            <span>Preview Report</span>
+            <span>Preview ({selectedDateOrders.length})</span>
           </button>
 
+          {/* Action: Print / Save PDF */}
           <button
-            onClick={handlePrintDailyPdf}
-            className="bg-[#00a86b] hover:bg-[#00925c] text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-[0.98]"
+            type="button"
+            onClick={() => handlePrintDailyPdf()}
+            className="bg-[#00a86b] hover:bg-[#00925c] text-white font-bold text-xs sm:text-sm px-4 py-2 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95"
+            title={`Download PDF Report for ${getFormattedReportDate()}`}
           >
             <span>🖨️</span>
-            <span>Print / Save Daily PDF</span>
+            <span>Print / PDF Report</span>
           </button>
 
+          {/* Action: Save HTML File */}
           <button
-            onClick={handleDownloadDailyFile}
-            className="bg-white hover:bg-white/90 text-[#073b4c] font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
-            title="Download Daily Orders HTML File"
+            type="button"
+            onClick={() => handleDownloadDailyFile()}
+            className="bg-white hover:bg-white/90 text-[#073b4c] font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95"
+            title="Download Daily Report File"
           >
             <span>📥</span>
             <span>{downloadingDaily ? "Saving..." : "Save File"}</span>
@@ -1708,7 +1800,7 @@ function OrdersTab({
                   </div>
                 </div>
 
-                {/* Day Summary Badges */}
+                {/* Day Summary Badges & 1-Click Day Report Button */}
                 <div className="flex items-center flex-wrap gap-2 text-xs">
                   <span className="bg-white border border-[#c3dec0] text-[#006a39] font-black px-2.5 py-1 rounded-xl shadow-2xs">
                     Day Total: ₹{group.totalAmount.toLocaleString()}
@@ -1723,6 +1815,16 @@ function OrdersTab({
                       {group.deliveredCount} Delivered
                     </span>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => handlePrintDailyPdf(group.date)}
+                    className="bg-[#006a39] hover:bg-[#00542d] text-white font-bold px-3 py-1 rounded-xl transition-all shadow-2xs flex items-center gap-1 cursor-pointer active:scale-95 ml-1"
+                    title={`Print or Download Daily Report for ${group.date}`}
+                  >
+                    <span>📄</span>
+                    <span>Day PDF Report</span>
+                  </button>
                 </div>
               </div>
 
