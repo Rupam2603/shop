@@ -239,8 +239,11 @@ export async function fetchUserOrders(explicitUserId?: string): Promise<DbOrder[
     const dbOrders = data as DbOrder[];
     const dbOrderNumbers = new Set(dbOrders.map((o) => o.order_number));
     const extraLocals = localOrders.filter((l) => !dbOrderNumbers.has(l.order_number));
+    const deletedIds = getDeletedOrderIds();
 
-    return [...dbOrders, ...extraLocals];
+    return [...dbOrders, ...extraLocals].filter(
+      (o) => !deletedIds.includes(o.id) && !deletedIds.includes(o.order_number)
+    );
   } catch (err) {
     console.warn("fetchUserOrders error, returning local:", err);
     return localOrders;

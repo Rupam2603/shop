@@ -768,6 +768,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   }, []);
 
   const [dbLabBookings, setDbLabBookings] = useState<DbLabBooking[]>([]);
+  const [deletedOrderIds, setDeletedOrderIds] = useState<string[]>(() => getDeletedOrderIds());
 
   const handleUpdateLabBookingStatus = async (
     bookingId: string,
@@ -780,7 +781,6 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   };
 
   const liveOrders = useMemo(() => {
-    const deletedOrderIds = getDeletedOrderIds();
     if (dbOrders.length > 0) {
       return dbOrders
         .filter((o) => !deletedOrderIds.includes(o.id) && !deletedOrderIds.includes(o.order_number))
@@ -819,7 +819,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     return MOCK_ORDERS
       .filter((o) => !deletedOrderIds.includes(o.id))
       .map((o) => ({ ...o, dbId: "", rawDate: undefined }));
-  }, [dbOrders]);
+  }, [dbOrders, deletedOrderIds]);
 
   const filteredOrders = useMemo(() => {
     if (orderFilter === "All") return liveOrders;
@@ -845,8 +845,10 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     if (target) {
       markOrderAsDeletedLocally(target.id, target.order_number);
     }
+    const allDeleted = getDeletedOrderIds();
+    setDeletedOrderIds([...allDeleted]);
     setDbOrders((prev) =>
-      prev.filter((o) => o.id !== orderId && o.order_number !== orderId)
+      prev.filter((o) => o.id !== orderId && o.order_number !== orderId && (target ? o.id !== target.id : true))
     );
     await dbDeleteOrder(target?.id || orderId);
   };
@@ -1607,6 +1609,7 @@ function OrdersTab({
 
   // Selected orders state
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+  const [deletedIdsInTab, setDeletedIdsInTab] = useState<string[]>([]);
 
   // Delete confirmation modal states (asks second time for Yes / No)
   const [confirmDeleteOrder, setConfirmDeleteOrder] = useState<{
@@ -1616,6 +1619,38 @@ function OrdersTab({
     amount: number;
   } | null>(null);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+
+  const handleConfirmSingleDelete = () => {
+    if (!confirmDeleteOrder) return;
+    const targetId = confirmDeleteOrder.dbId || confirmDeleteOrder.id;
+    const targetOrderNumber = confirmDeleteOrder.id;
+
+    // 1. Immediately remove from tab view & selection in 0ms
+    setDeletedIdsInTab((prev) => Array.from(new Set([...prev, targetId, targetOrderNumber])));
+    setSelectedOrderIds((prev) => prev.filter((id) => id !== targetOrderNumber && id !== targetId));
+    setConfirmDeleteOrder(null);
+
+    // 2. Execute deletion
+    onDeleteOrder?.(targetId);
+    if (targetOrderNumber && targetOrderNumber !== targetId) {
+      onDeleteOrder?.(targetOrderNumber);
+    }
+  };
+
+  const handleConfirmBulkDelete = () => {
+    const idsToDelete = [...selectedOrderIds];
+    setDeletedIdsInTab((prev) => Array.from(new Set([...prev, ...idsToDelete])));
+    setSelectedOrderIds([]);
+    setConfirmBulkDelete(false);
+
+    for (const ordId of idsToDelete) {
+      const target = orders.find((o) => o.id === ordId);
+      onDeleteOrder?.(target?.dbId || ordId);
+      if (target?.id && target.id !== target.dbId) {
+        onDeleteOrder?.(target.id);
+      }
+    }
+  };
 
   // Modal & download states
   const [previewInvoice, setPreviewInvoice] = useState<InvoiceOrderData | null>(null);
@@ -1706,6 +1741,9 @@ function OrdersTab({
   // Filtered orders list
   const displayedOrders = useMemo(() => {
     return orders.filter((o) => {
+      // Exclude locally deleted orders in this tab
+      if (deletedIdsInTab.includes(o.id) || (o.dbId && deletedIdsInTab.includes(o.dbId))) return false;
+
       // Role filter
       if (roleSegment === "retailer" && o.role !== "retailer") return false;
       if (roleSegment === "customer" && o.role === "retailer") return false;
@@ -1725,7 +1763,7 @@ function OrdersTab({
 
       return true;
     });
-  }, [orders, roleSegment, filter, searchQuery]);
+  }, [orders, roleSegment, filter, searchQuery, deletedIdsInTab]);
 
   // Group displayed orders chronologically by date/day
   const groupedOrdersByDate = useMemo(() => {
@@ -2668,11 +2706,7 @@ function OrdersTab({
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  onDeleteOrder?.(confirmDeleteOrder.dbId || confirmDeleteOrder.id);
-                  setSelectedOrderIds((prev) => prev.filter((id) => id !== confirmDeleteOrder.id));
-                  setConfirmDeleteOrder(null);
-                }}
+                onClick={handleConfirmSingleDelete}
                 className="px-5 py-2.5 rounded-xl bg-[#b91c1c] hover:bg-[#991b1b] text-white text-xs font-extrabold transition-all shadow-md cursor-pointer active:scale-95 flex items-center gap-1.5"
               >
                 <span>🗑️</span>
@@ -2720,16 +2754,7 @@ function OrdersTab({
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  for (const ordId of selectedOrderIds) {
-                    const target = orders.find((o) => o.id === ordId);
-                    if (target) {
-                      onDeleteOrder?.(target.dbId || target.id);
-                    }
-                  }
-                  setSelectedOrderIds([]);
-                  setConfirmBulkDelete(false);
-                }}
+                onClick={handleConfirmBulkDelete}
                 className="px-5 py-2.5 rounded-xl bg-[#b91c1c] hover:bg-[#991b1b] text-white text-xs font-extrabold transition-all shadow-md cursor-pointer active:scale-95 flex items-center gap-1.5"
               >
                 <span>🗑️</span>
