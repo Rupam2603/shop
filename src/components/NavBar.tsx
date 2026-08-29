@@ -496,47 +496,51 @@ export default function NavBar({
               )}
             </button>
 
-            {/* Profile / Auth Section */}
-            {user && (
-              <div className="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-3 border-l border-[#e2e8df]">
-                <SignedIn>
-                  <div className="flex items-center">
-                    <UserButton afterSignOutUrl="/" />
-                  </div>
-                </SignedIn>
+            {/* Profile & Logout Section */}
+            {user ? (
+              <div className="flex items-center gap-1.5 sm:gap-2.5 pl-1 sm:pl-2 border-l border-[#e2e8df]">
+                {/* Profile Pill Button */}
                 <button
                   type="button"
                   onClick={() => {
                     onProfile?.();
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center gap-2 group cursor-pointer"
-                  title="View profile"
+                  className="flex items-center gap-2 px-2 sm:px-2.5 py-1.5 rounded-xl bg-[#f8fafb] hover:bg-[#e8f5ee] border border-[#e4ede2] hover:border-[#bbf7d0] transition-all cursor-pointer shadow-2xs group"
+                  title="View Profile & Account Details"
                 >
                   <div
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-xs text-white shrink-0 group-hover:ring-2 group-hover:ring-offset-1 transition-all shadow-xs"
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-['Manrope',sans-serif] font-black text-xs text-white shrink-0 shadow-xs"
                     style={{ backgroundColor: ROLE_COLORS[user.role] ?? "#073b4c" }}
                   >
                     {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
                   </div>
-                  <div className="hidden lg:flex flex-col leading-none text-left">
-                    <span className="text-xs font-bold text-[#073b4c] group-hover:underline truncate max-w-[100px]">
+                  <div className="flex flex-col leading-tight text-left max-w-[80px] sm:max-w-[120px] md:max-w-[140px]">
+                    <span className="text-xs font-bold text-[#073b4c] truncate group-hover:text-[#006a39]">
                       {user.name || "My Account"}
                     </span>
-                    <span className="text-[10px] text-[#006a39] font-bold capitalize mt-0.5">
+                    <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#006a39]">
                       {user.role}
                     </span>
                   </div>
                 </button>
+
+                {/* Visible Logout Pill Button */}
                 <button
                   type="button"
                   onClick={onLogout}
-                  className="hidden sm:inline-block ml-1 text-xs font-bold text-[#c0392b] hover:text-[#9a2e1e] transition-colors whitespace-nowrap cursor-pointer"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#fff1f0] hover:bg-[#fee2e2] text-[#c0392b] hover:text-[#9a2e1e] border border-[#ffd5cf] transition-all text-xs font-bold whitespace-nowrap cursor-pointer shadow-2xs active:scale-95"
+                  title="Sign Out"
                 >
-                  Logout
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  <span className="hidden sm:inline">Logout</span>
                 </button>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
 
