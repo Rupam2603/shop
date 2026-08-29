@@ -6,10 +6,8 @@ import LocationModal from "./LocationModal";
 import {
   UserLocation,
   getSavedLocation,
-  saveLocation,
   detectBrowserLocation,
 } from "../lib/location";
-import { UserButton, SignedIn } from "@clerk/clerk-react";
 
 type Page = "home" | "medicines" | "lab-tests" | "consult" | "offers" | "profile" | "checkout";
 
@@ -27,8 +25,8 @@ function SearchIcon() {
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
       <path
         d="M16.5 16.5L12.875 12.875M14.8333 8.16667C14.8333 11.8486 11.8486 14.8333 8.16667 14.8333C4.48477 14.8333 1.5 11.8486 1.5 8.16667C1.5 4.48477 4.48477 1.5 8.16667 1.5C11.8486 1.5 14.8333 4.48477 14.8333 8.16667Z"
-        stroke="#073B4C"
-        strokeWidth="1.75"
+        stroke="#006A39"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -38,11 +36,11 @@ function SearchIcon() {
 
 function CartIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <path
-        d="M1 1H3L3.4 3M5 11H17L19 3H3.4M5 11L3.4 3M5 11L2.7 14.3C2.31 14.87 2.72 15.67 3.4 15.67H17M17 15.67C16.07 15.67 15.33 16.41 15.33 17.33C15.33 18.26 16.07 19 17 19C17.93 19 18.67 18.26 18.67 17.33C18.67 16.41 17.93 15.67 17 15.67ZM7.67 17.33C7.67 18.26 6.93 19 6 19C5.07 19 4.33 18.26 4.33 17.33C4.33 16.41 5.07 15.67 6 15.67C6.93 15.67 7.67 16.41 7.67 17.33Z"
+        d="M2 3h2l2.5 12.5a2 2 0 002 1.5h10a2 2 0 002-1.5L22 6H5.5M9 21a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm9 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"
         stroke="#006A39"
-        strokeWidth="1.5"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -50,12 +48,12 @@ function CartIcon() {
   );
 }
 
-const navLinks: { label: string; page: Page; isTrack?: boolean }[] = [
-  { label: "Home", page: "home" },
-  { label: "OTC & Medicines", page: "medicines" },
-  { label: "Lab Tests", page: "lab-tests" },
-  { label: "Consult", page: "consult" },
-  { label: "Offers", page: "offers" },
+const navCategories: { label: string; page: Page; isTrack?: boolean }[] = [
+  { label: "🏠 Home", page: "home" },
+  { label: "💊 Medicines & OTC", page: "medicines" },
+  { label: "🧪 Lab Tests", page: "lab-tests" },
+  { label: "🩺 Doctor Consult", page: "consult" },
+  { label: "🏷️ Special Offers", page: "offers" },
   { label: "🚚 Track Order", page: "home", isTrack: true },
 ];
 
@@ -87,21 +85,18 @@ export default function NavBar({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isRetailer = user?.role === "retailer";
 
-  // 1. Automatically detect current location when user logs in or on first visit
+  // Auto-detect GPS location on login
   useEffect(() => {
     let active = true;
 
     const handleAutoLocation = async () => {
-      // If user is logged in, try to auto-detect live location if not already detected
       if (user && !location.isAutoDetected) {
         setIsLocating(true);
         try {
           const loc = await detectBrowserLocation();
-          if (active) {
-            setLocation(loc);
-          }
+          if (active) setLocation(loc);
         } catch (e) {
-          // If denied, fallback to saved or default location
+          // fallback gracefully
         } finally {
           if (active) setIsLocating(false);
         }
@@ -110,7 +105,6 @@ export default function NavBar({
 
     handleAutoLocation();
 
-    // Listen to location change events across components
     const onLocationUpdate = (e: Event) => {
       const detail = (e as CustomEvent<UserLocation>).detail;
       if (detail && active) setLocation(detail);
@@ -124,7 +118,7 @@ export default function NavBar({
     };
   }, [user]);
 
-  // 2. Global keyboard shortcut (Cmd+K / Ctrl+K) to focus search
+  // Global hotkey Ctrl+K to search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -137,7 +131,7 @@ export default function NavBar({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // 3. Load DB products for live search
+  // Fetch products for live search
   useEffect(() => {
     let mounted = true;
     fetchProducts().then((data) => {
@@ -220,11 +214,11 @@ export default function NavBar({
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#e4ede2]/80 shadow-xs transition-all">
-        {/* Main Nav Container */}
-        <div className="max-w-[1440px] mx-auto px-3 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
-          {/* Left section: Hamburger, Logo & Location */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+      <header className="sticky top-0 z-40 bg-white shadow-xs border-b border-[#e4ede2]/90">
+        {/* Tier 1: Main Header Row (Logo, Location, Wide Search, Cart, Profile, Logout) */}
+        <div className="max-w-[1480px] mx-auto px-3 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
+          {/* Left section: Hamburger, Brand Logo & Location Pill */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Mobile Hamburger Button */}
             <button
               type="button"
@@ -233,30 +227,12 @@ export default function NavBar({
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? (
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               ) : (
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="3" y1="12" x2="21" y2="12" />
                   <line x1="3" y1="6" x2="21" y2="6" />
                   <line x1="3" y1="18" x2="21" y2="18" />
@@ -264,70 +240,70 @@ export default function NavBar({
               )}
             </button>
 
-            {/* Logo */}
+            {/* SubhOne Logo */}
             <button
               type="button"
               onClick={() => handleNavClick("home")}
-              className="flex items-center gap-1.5 sm:gap-2 cursor-pointer focus:outline-none"
+              className="flex items-center gap-2 cursor-pointer focus:outline-none"
             >
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-linear-to-br from-[#006a39] to-[#047857] flex items-center justify-center shadow-sm shrink-0">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-linear-to-br from-[#006a39] to-[#047857] flex items-center justify-center shadow-md shrink-0">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" fill="white" />
                 </svg>
               </div>
               <div className="flex flex-col text-left leading-none">
-                <span className="font-['Manrope',sans-serif] font-black text-[#006a39] text-lg sm:text-2xl tracking-tight">
+                <span className="font-['Manrope',sans-serif] font-black text-[#006a39] text-xl sm:text-2xl tracking-tight">
                   SubhOne
                 </span>
-                <span className="text-[9px] font-bold text-[#6d7a6f] tracking-wider uppercase hidden sm:inline">
-                  Pharmacy & Health
+                <span className="text-[9px] font-extrabold text-[#047857] tracking-wider uppercase hidden sm:inline">
+                  Pharmacy & Wellness
                 </span>
               </div>
             </button>
 
-            {/* Location Selector Widget (Desktop & Tablet) */}
+            {/* Location Selector Widget (Desktop/Tablet) */}
             <button
               type="button"
               onClick={() => setIsLocationModalOpen(true)}
-              className="hidden sm:flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#e4ede2] bg-[#f8fafb] hover:bg-[#f0f7f0] hover:border-[#bbf7d0] transition-all text-left cursor-pointer group shadow-2xs shrink-0"
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#d2e4d0] bg-[#f0f9f1] hover:bg-[#e2f4e3] hover:border-[#006a39] transition-all text-left cursor-pointer group shadow-2xs shrink-0"
               title="Change Delivery Location"
             >
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-[#e8f5ee] text-[#006a39] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <div className="w-7 h-7 rounded-lg bg-[#006a39] text-white flex items-center justify-center shrink-0 shadow-2xs">
                 {isLocating ? (
-                  <span className="w-3 h-3 border-2 border-[#006a39] border-t-transparent rounded-full animate-spin" />
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z"
-                      fill="#006a39"
+                      fill="currentColor"
                     />
                   </svg>
                 )}
               </div>
-              <div className="flex flex-col leading-tight max-w-[90px] md:max-w-[130px] lg:max-w-[160px]">
+              <div className="flex flex-col leading-tight max-w-[110px] md:max-w-[140px] lg:max-w-[160px]">
                 <div className="flex items-center gap-1">
-                  <span className="text-[9px] sm:text-[10px] font-extrabold text-[#6d7a6f] uppercase tracking-wider">
+                  <span className="text-[10px] font-black text-[#006a39] uppercase tracking-wider">
                     Express to
                   </span>
                   <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
                 </div>
-                <span className="text-[11px] sm:text-xs font-bold text-[#073b4c] truncate group-hover:text-[#006a39] flex items-center gap-0.5">
+                <span className="text-xs font-extrabold text-[#073b4c] truncate group-hover:text-[#006a39] flex items-center gap-0.5">
                   <span className="truncate">{location.city} {location.pincode ? `(${location.pincode})` : ""}</span>
-                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="shrink-0 text-[#9aa89b]">
-                    <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="shrink-0 text-[#006a39]">
+                    <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </span>
               </div>
             </button>
           </div>
 
-          {/* Center: Flexible Responsive Search Bar (Tablet & Desktop) */}
+          {/* Center: WIDE Flexible Search Bar (Desktop & Tablet) */}
           <div
             ref={searchRef}
-            className="hidden md:flex flex-1 min-w-[200px] max-w-full lg:max-w-2xl xl:max-w-3xl mx-2 lg:mx-4 relative"
+            className="hidden md:flex flex-1 min-w-[220px] max-w-2xl xl:max-w-3xl mx-2 lg:mx-4 relative"
           >
             <div className="relative w-full group">
-              <div className="absolute inset-y-0 left-3.5 sm:left-4 flex items-center pointer-events-none text-[#6d7a6f] group-focus-within:text-[#006a39] transition-colors">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-[#006a39] group-focus-within:scale-110 transition-transform">
                 <SearchIcon />
               </div>
               <input
@@ -346,11 +322,11 @@ export default function NavBar({
                   }
                 }}
                 placeholder="Search medicines, supplements, brands, active stock…"
-                className="w-full pl-10 sm:pl-11 pr-16 sm:pr-20 py-2 sm:py-2.5 bg-[#f0f4f0] hover:bg-[#ebf2eb] border border-transparent rounded-2xl text-xs sm:text-sm text-[#073b4c] placeholder:text-[#6d7a6f] focus:outline-none focus:bg-white focus:border-[#006a39] focus:ring-3 focus:ring-[#006a39]/10 transition-all shadow-2xs font-medium"
+                className="w-full pl-11 pr-20 py-2.5 sm:py-3 bg-[#f3f7f2] hover:bg-[#ebf4ea] border border-[#d6e5d4] rounded-2xl text-xs sm:text-sm text-[#073b4c] placeholder:text-[#6d7a6f] focus:outline-none focus:bg-white focus:border-[#006a39] focus:ring-4 focus:ring-[#006a39]/15 transition-all shadow-inner font-semibold"
               />
 
               {/* Clear button or Keyboard Shortcut Hint */}
-              <div className="absolute inset-y-0 right-2.5 sm:right-3 flex items-center gap-1.5">
+              <div className="absolute inset-y-0 right-3 flex items-center gap-1.5">
                 {searchValue.trim() ? (
                   <button
                     type="button"
@@ -360,20 +336,20 @@ export default function NavBar({
                     }}
                     className="p-1 rounded-full text-[#9aa89b] hover:text-[#073b4c] hover:bg-gray-200 transition-colors"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <line x1="18" y1="6" x2="6" y2="18" />
                       <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                   </button>
                 ) : (
-                  <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[9px] font-semibold text-[#8b998a] bg-white border border-[#d5ded4] rounded-md shadow-2xs">
+                  <kbd className="hidden lg:inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-[#006a39] bg-white border border-[#bbf7d0] rounded-md shadow-2xs">
                     Ctrl K
                   </kbd>
                 )}
               </div>
             </div>
 
-            {/* Live Search Results Dropdown (Desktop/Tablet) */}
+            {/* Live Search Results Dropdown */}
             {isSearchOpen && searchValue.trim().length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-[#e4ede2] overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                 <div className="p-3 border-b border-[#f0f4f0] bg-[#f8fafb] flex items-center justify-between text-xs text-[#6d7a6f] px-4">
@@ -416,7 +392,7 @@ export default function NavBar({
                               {p.name}
                             </p>
                             <p className="text-[11px] text-[#6d7a6f] truncate">
-                              {p.brand} · <span className="text-[#006a39]">{p.category_name}</span>
+                              {p.brand} · <span className="text-[#006a39] font-semibold">{p.category_name}</span>
                             </p>
                           </div>
 
@@ -460,19 +436,84 @@ export default function NavBar({
             )}
           </div>
 
-          {/* Right section: Desktop Nav Links & User Icons */}
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            {/* Desktop Navigation links */}
-            <nav className="hidden xl:flex items-center gap-1">
-              {navLinks.map(({ label, page, isTrack }) => (
+          {/* Right section: Cart, Highly Visible Profile, Highly Visible Logout */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Shopping Cart Button */}
+            <button
+              type="button"
+              onClick={openCart}
+              className="p-2 sm:p-2.5 rounded-2xl bg-[#f0fdf4] hover:bg-[#dcfce7] border border-[#bbf7d0] transition-all relative text-[#006a39] cursor-pointer flex items-center gap-1.5 shadow-xs group"
+              title="Shopping Cart"
+              aria-label="Shopping Cart"
+            >
+              <CartIcon />
+              {itemCount > 0 && (
+                <span className="bg-[#006a39] text-white text-[11px] font-black rounded-full px-1.5 py-0.5 min-w-[20px] text-center shadow-xs">
+                  {itemCount}
+                </span>
+              )}
+            </button>
+
+            {/* Highly Visible User Profile Button */}
+            {user && (
+              <button
+                type="button"
+                onClick={() => {
+                  onProfile?.();
+                  setMobileMenuOpen(false);
+                }}
+                className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-2xl bg-[#e8f5ee] hover:bg-[#d1fae5] border border-[#a7f3d0] transition-all cursor-pointer shadow-xs group"
+                title="View Profile & Account Details"
+              >
+                <div
+                  className="w-8 h-8 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-black text-xs text-white shrink-0 shadow-sm ring-2 ring-white"
+                  style={{ backgroundColor: ROLE_COLORS[user.role] ?? "#006a39" }}
+                >
+                  {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
+                </div>
+                <div className="flex flex-col leading-tight text-left max-w-[85px] sm:max-w-[130px] md:max-w-[160px]">
+                  <span className="text-xs font-black text-[#073b4c] truncate group-hover:text-[#006a39]">
+                    {user.name || "My Account"}
+                  </span>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-[#006a39]">
+                    {user.role}
+                  </span>
+                </div>
+              </button>
+            )}
+
+            {/* Highly Visible Red Logout Button */}
+            {user && (
+              <button
+                type="button"
+                onClick={onLogout}
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-2xl bg-[#dc2626] hover:bg-[#b91c1c] text-white border border-[#b91c1c] transition-all text-xs sm:text-sm font-black whitespace-nowrap cursor-pointer shadow-md hover:shadow-lg active:scale-95 shrink-0"
+                title="Sign Out of Your Account"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                <span>Logout</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Tier 2: Category Quick Bar (Desktop/Tablet) */}
+        <div className="hidden md:block bg-[#f8fafb] border-t border-[#e4ede2] px-4 sm:px-6">
+          <div className="max-w-[1480px] mx-auto flex items-center justify-between h-10">
+            <nav className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+              {navCategories.map(({ label, page, isTrack }) => (
                 <button
                   key={label}
                   type="button"
                   onClick={() => handleNavClick(page, isTrack)}
-                  className={`px-3 py-2 text-xs font-bold transition-colors rounded-xl cursor-pointer ${
+                  className={`px-3 py-1 text-xs font-bold transition-all rounded-lg cursor-pointer whitespace-nowrap ${
                     !isTrack && activePage === page
-                      ? "bg-[#e8f5ee] text-[#006a39]"
-                      : "text-[#3e4a3f] hover:text-[#006a39] hover:bg-[#f0f7f0]"
+                      ? "bg-[#006a39] text-white shadow-xs"
+                      : "text-[#3e4a3f] hover:text-[#006a39] hover:bg-[#e8f5ee]"
                   }`}
                 >
                   {label}
@@ -480,74 +521,30 @@ export default function NavBar({
               ))}
             </nav>
 
-            {/* Shopping Cart Button */}
-            <button
-              type="button"
-              onClick={openCart}
-              className="p-2 sm:p-2.5 rounded-xl hover:bg-[#f0f7f0] border border-transparent hover:border-[#e4ede2] transition-all relative text-[#006a39] cursor-pointer flex items-center gap-1.5"
-              title="Shopping Cart"
-              aria-label="Shopping Cart"
-            >
-              <CartIcon />
-              {itemCount > 0 && (
-                <span className="bg-[#006a39] text-white text-[10px] sm:text-[11px] font-extrabold rounded-full px-1.5 py-0.5 min-w-[18px] sm:min-w-[20px] text-center shadow-xs">
-                  {itemCount}
-                </span>
-              )}
-            </button>
-
-            {/* Profile & Logout Section */}
-            {user ? (
-              <div className="flex items-center gap-1.5 sm:gap-2.5 pl-1 sm:pl-2 border-l border-[#e2e8df]">
-                {/* Profile Pill Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    onProfile?.();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-2 px-2 sm:px-2.5 py-1.5 rounded-xl bg-[#f8fafb] hover:bg-[#e8f5ee] border border-[#e4ede2] hover:border-[#bbf7d0] transition-all cursor-pointer shadow-2xs group"
-                  title="View Profile & Account Details"
-                >
-                  <div
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-['Manrope',sans-serif] font-black text-xs text-white shrink-0 shadow-xs"
-                    style={{ backgroundColor: ROLE_COLORS[user.role] ?? "#073b4c" }}
-                  >
-                    {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
-                  </div>
-                  <div className="flex flex-col leading-tight text-left max-w-[80px] sm:max-w-[120px] md:max-w-[140px]">
-                    <span className="text-xs font-bold text-[#073b4c] truncate group-hover:text-[#006a39]">
-                      {user.name || "My Account"}
-                    </span>
-                    <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#006a39]">
-                      {user.role}
-                    </span>
-                  </div>
-                </button>
-
-                {/* Visible Logout Pill Button */}
-                <button
-                  type="button"
-                  onClick={onLogout}
-                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#fff1f0] hover:bg-[#fee2e2] text-[#c0392b] hover:text-[#9a2e1e] border border-[#ffd5cf] transition-all text-xs font-bold whitespace-nowrap cursor-pointer shadow-2xs active:scale-95"
-                  title="Sign Out"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                    <polyline points="16 17 21 12 16 7" />
-                    <line x1="21" y1="12" x2="9" y2="12" />
-                  </svg>
-                  <span className="hidden sm:inline">Logout</span>
-                </button>
-              </div>
-            ) : null}
+            {/* 24/7 Quality & Pharmacist Guarantee Pill */}
+            <div className="hidden lg:flex items-center gap-3 text-xs font-bold text-[#006a39]">
+              <span className="flex items-center gap-1">
+                <span>⚡</span>
+                <span>30-min Delivery</span>
+              </span>
+              <span className="text-[#d5dcd3]">|</span>
+              <span className="flex items-center gap-1">
+                <span>🛡️</span>
+                <span>100% Genuine Pharmacy</span>
+              </span>
+              <span className="text-[#d5dcd3]">|</span>
+              <span className="flex items-center gap-1">
+                <span>📞</span>
+                <span>24/7 Pharmacist Support</span>
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Mobile Dedicated Search Bar (Visible on mobile screens < md) */}
         <div className="md:hidden px-3 pt-1 pb-2.5 bg-white border-t border-[#f0f4f0] relative">
           <div className="relative w-full">
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#6d7a6f]">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#006a39]">
               <SearchIcon />
             </div>
             <input
@@ -565,7 +562,7 @@ export default function NavBar({
                 }
               }}
               placeholder="Search medicines, supplements, stock…"
-              className="w-full pl-9 pr-8 py-2 bg-[#f0f4f0] border border-transparent rounded-xl text-xs text-[#073b4c] placeholder:text-[#6d7a6f] focus:outline-none focus:bg-white focus:border-[#006a39] transition-all font-medium"
+              className="w-full pl-9 pr-8 py-2 bg-[#f3f7f2] border border-[#d6e5d4] rounded-xl text-xs text-[#073b4c] placeholder:text-[#6d7a6f] focus:outline-none focus:bg-white focus:border-[#006a39] transition-all font-semibold"
             />
             {searchValue.trim() && (
               <button
@@ -573,7 +570,7 @@ export default function NavBar({
                 onClick={() => setSearchValue("")}
                 className="absolute inset-y-0 right-2.5 flex items-center text-[#9aa89b]"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -584,7 +581,7 @@ export default function NavBar({
           {/* Mobile Search Results Dropdown */}
           {isSearchOpen && searchValue.trim().length > 0 && (
             <div className="absolute top-full left-3 right-3 mt-1.5 bg-white rounded-xl shadow-2xl border border-[#e4ede2] overflow-hidden z-50 max-h-[280px] overflow-y-auto divide-y divide-[#f0f4f0]">
-              <div className="p-2 bg-[#f8fafb] flex items-center justify-between text-[11px] text-[#6d7a6f] px-3 font-semibold">
+              <div className="p-2 bg-[#f8fafb] flex items-center justify-between text-[11px] text-[#6d7a6f] px-3 font-bold">
                 <span>Results for &quot;{searchValue}&quot;</span>
                 <span className="text-[#006a39]">{searchResults.length} found</span>
               </div>
@@ -630,10 +627,10 @@ export default function NavBar({
             <span className="truncate">
               Deliver to: <strong>{location.area || location.city} ({location.pincode})</strong>
             </span>
-            <span className="text-[#9aa89b] text-[9px]">▼</span>
+            <span className="text-[#006a39] text-[10px]">▼</span>
           </button>
-          <span className="text-[9px] font-extrabold text-[#006a39] bg-[#d1fae5] px-1.5 py-0.5 rounded-full shrink-0">
-            ⚡ 30-min
+          <span className="text-[9px] font-extrabold text-[#006a39] bg-[#d1fae5] px-2 py-0.5 rounded-full shrink-0">
+            ⚡ 30-min Delivery
           </span>
         </div>
 
@@ -641,57 +638,63 @@ export default function NavBar({
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-[#e4ede2] bg-white px-4 py-4 shadow-xl animate-in slide-in-from-top-2 duration-200">
             <nav className="flex flex-col gap-1.5">
-              {navLinks.map(({ label, page, isTrack }) => (
+              {navCategories.map(({ label, page, isTrack }) => (
                 <button
                   key={label}
                   type="button"
                   onClick={() => handleNavClick(page, isTrack)}
                   className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-bold transition-colors cursor-pointer ${
                     !isTrack && activePage === page
-                      ? "bg-[#e8f5ee] text-[#006a39]"
+                      ? "bg-[#006a39] text-white shadow-xs"
                       : "text-[#3e4a3f] hover:bg-[#f8fafb]"
                   }`}
                 >
                   <span>{label}</span>
                   {!isTrack && activePage === page && (
-                    <span className="w-2 h-2 rounded-full bg-[#006a39]" />
+                    <span className="w-2 h-2 rounded-full bg-white" />
                   )}
                 </button>
               ))}
             </nav>
 
             {user && (
-              <div className="mt-4 pt-4 border-t border-[#f0f4f0] flex flex-col gap-2">
+              <div className="mt-4 pt-4 border-t border-[#f0f4f0] flex flex-col gap-2.5">
                 <button
                   type="button"
                   onClick={() => {
                     onProfile?.();
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#f8fafb] transition-colors text-left"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#f0fdf4] border border-[#bbf7d0] hover:bg-[#dcfce7] transition-colors text-left"
                 >
                   <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-bold text-sm text-white shrink-0"
-                    style={{ backgroundColor: ROLE_COLORS[user.role] ?? "#073b4c" }}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-black text-sm text-white shrink-0 shadow-xs"
+                    style={{ backgroundColor: ROLE_COLORS[user.role] ?? "#006a39" }}
                   >
                     {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[#073b4c] truncate">{user.name}</p>
-                    <p className="text-xs text-[#006a39] font-semibold capitalize">
-                      {user.role} · View Profile
+                    <p className="text-sm font-black text-[#073b4c] truncate">{user.name}</p>
+                    <p className="text-xs text-[#006a39] font-extrabold capitalize">
+                      {user.role} Account · View Profile
                     </p>
                   </div>
                 </button>
+
                 <button
                   type="button"
                   onClick={() => {
                     onLogout?.();
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-bold text-[#c0392b] hover:bg-[#fee2e2] transition-colors cursor-pointer"
+                  className="w-full text-center px-4 py-3 rounded-xl text-sm font-black text-white bg-[#dc2626] hover:bg-[#b91c1c] transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
                 >
-                  Logout
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  <span>Sign Out / Logout</span>
                 </button>
               </div>
             )}
