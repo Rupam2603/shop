@@ -217,9 +217,9 @@ export default function KeyCategoriesBar({
 }: KeyCategoriesBarProps) {
   return (
     <div className={`w-full bg-white ${className}`}>
-      <div className="w-full px-2 sm:px-4">
+      <div className="w-full px-2 sm:px-3">
         <div
-          className="flex items-end justify-between sm:justify-start gap-1 sm:gap-3 lg:gap-4 overflow-x-auto py-2.5 sm:py-3.5 scroll-smooth select-none no-scrollbar"
+          className="flex items-end justify-between sm:justify-start gap-1 sm:gap-2.5 lg:gap-3.5 overflow-x-auto py-1 sm:py-1.5 scroll-smooth select-none no-scrollbar"
           style={{
             scrollbarWidth: "none",
             msOverflowStyle: "none",
@@ -234,12 +234,12 @@ export default function KeyCategoriesBar({
                 key={cat.id}
                 type="button"
                 onClick={() => onSelectCategory(cat)}
-                className="relative flex flex-col items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1 group shrink-0 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#006a39] rounded-xl"
+                className="relative flex flex-col items-center gap-0.5 sm:gap-1 px-2 sm:px-3 py-0.5 group shrink-0 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#006a39] rounded-lg"
               >
                 {/* Badge (e.g. GET CIRCLE) */}
                 {cat.badge && (
                   <span
-                    className="absolute -top-1.5 z-10 text-[8px] sm:text-[9px] font-black tracking-wide px-1.5 py-0.2 rounded shadow-2xs whitespace-nowrap animate-pulse"
+                    className="absolute -top-1 z-10 text-[7px] sm:text-[8px] font-black tracking-wide px-1 py-0.2 rounded shadow-2xs whitespace-nowrap animate-pulse"
                     style={{
                       backgroundColor: cat.badgeBg || "#f59e0b",
                       color: cat.badgeColor || "#ffffff",
@@ -251,18 +251,20 @@ export default function KeyCategoriesBar({
 
                 {/* Category Icon */}
                 <div
-                  className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-transform duration-150 group-hover:scale-110 ${
+                  className={`w-7 h-7 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center transition-transform duration-150 group-hover:scale-105 ${
                     isSelected
                       ? "text-[#073b4c] bg-[#eef5ee]"
                       : "text-[#3e4a3f] group-hover:text-[#006a39] bg-transparent"
                   }`}
                 >
-                  {cat.icon}
+                  <div className="scale-85 sm:scale-90 flex items-center justify-center">
+                    {cat.icon}
+                  </div>
                 </div>
 
                 {/* Category Name Label */}
                 <span
-                  className={`text-[11px] sm:text-xs tracking-tight whitespace-nowrap transition-colors duration-150 ${
+                  className={`text-[10px] sm:text-[11px] tracking-tight whitespace-nowrap transition-colors duration-150 ${
                     isSelected
                       ? "font-extrabold text-[#073b4c]"
                       : "font-semibold text-[#4a5568] group-hover:text-[#073b4c]"
@@ -273,7 +275,7 @@ export default function KeyCategoriesBar({
 
                 {/* Active Indicator Underline */}
                 <div
-                  className={`h-0.5 w-full rounded-full transition-all duration-200 mt-1 ${
+                  className={`h-0.5 w-full rounded-full transition-all duration-200 mt-0.5 ${
                     isSelected ? "bg-[#073b4c] opacity-100" : "bg-transparent opacity-0 group-hover:bg-[#006a39]/30 group-hover:opacity-100"
                   }`}
                 />

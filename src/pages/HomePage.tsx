@@ -435,10 +435,10 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
 
   return (
     <div className="bg-[#f5fbf2] min-h-screen">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col gap-5 sm:gap-8">
+      <div className="max-w-[1280px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 flex flex-col gap-3.5 sm:gap-6">
 
-        {/* ── Key Categories Bar (ABOVE BANNER IMAGE) ── */}
-        <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#e4ede2] shadow-sm overflow-hidden">
+        {/* ── Key Categories Bar (ABOVE BANNER IMAGE - SLEEK COMPACT PROFILE) ── */}
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#e4ede2] shadow-xs overflow-hidden">
           <KeyCategoriesBar
             selectedId={activeKeyCat}
             onSelectCategory={handleSelectKeyCategory}
