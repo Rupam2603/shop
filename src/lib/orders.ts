@@ -320,6 +320,39 @@ export async function updateOrderStatus(
 }
 
 /**
+ * Delete order by ID or order number (Admin only)
+ */
+export async function deleteOrder(orderId: string): Promise<{ error: string | null }> {
+  try {
+    // Delete from Supabase
+    const { error } = await supabase
+      .from("orders")
+      .delete()
+      .or(`id.eq.${orderId},order_number.eq.${orderId}`);
+
+    // Clean up local storage cache if any
+    try {
+      const locals = getLocalOrders();
+      const updated = locals.filter(
+        (o) => o.id !== orderId && o.order_number !== orderId
+      );
+      localStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+
+    if (error) {
+      console.warn("Supabase deleteOrder warning:", error);
+      return { error: error.message };
+    }
+    return { error: null };
+  } catch (e: any) {
+    console.error("Error deleting order:", e);
+    return { error: e.message || "Failed to delete order" };
+  }
+}
+
+/**
  * Fetch a single order by order number or ID
  */
 export async function fetchOrderByNumber(orderNumberOrId: string): Promise<DbOrder | null> {

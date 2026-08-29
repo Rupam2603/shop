@@ -9,7 +9,12 @@ import {
   updateProductStock as dbUpdateStock,
   subscribeToProductsRealtime,
 } from "../lib/products";
-import { fetchAllOrders, updateOrderStatus as dbUpdateOrderStatus, DbOrder } from "../lib/orders";
+import {
+  fetchAllOrders,
+  updateOrderStatus as dbUpdateOrderStatus,
+  deleteOrder as dbDeleteOrder,
+  DbOrder,
+} from "../lib/orders";
 import { fetchAllLabBookings, updateLabBookingStatus as dbUpdateLabBookingStatus, DbLabBooking } from "../lib/labTests";
 import {
   printOrDownloadInvoice,
@@ -827,6 +832,18 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     }
   };
 
+  const handleDeleteOrder = async (orderId: string) => {
+    setDbOrders((prev) =>
+      prev.filter((o) => o.id !== orderId && o.order_number !== orderId)
+    );
+    const target = dbOrders.find((o) => o.id === orderId || o.order_number === orderId);
+    if (target?.id) {
+      await dbDeleteOrder(target.id);
+    } else {
+      await dbDeleteOrder(orderId);
+    }
+  };
+
   const openAdd = () => { setForm(emptyForm(categories[0])); setModal({ open: true, mode: "add" }); };
   const openEdit = (p: Product) => {
     setForm({
@@ -1081,6 +1098,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               filter={orderFilter}
               setFilter={setOrderFilter}
               onUpdateStatus={handleUpdateOrderStatus}
+              onDeleteOrder={handleDeleteOrder}
               settings={settings}
             />
           )}
@@ -1568,8 +1586,9 @@ function OrdersTab({
   setFilter: (v: string) => void;
   onUpdateStatus?: (
     orderId: string,
-    newStatus: "Processing" | "Shipped" | "Delivered" | "Cancelled"
+    newStatus: "Processing" | "Dispatched" | "Shipped" | "Out for Delivery" | "Delivered" | "Cancelled"
   ) => void;
+  onDeleteOrder?: (orderId: string) => void;
   settings?: Settings;
 }) {
   const [roleSegment, setRoleSegment] = useState<"all" | "retailer" | "customer">("all");
@@ -1582,13 +1601,22 @@ function OrdersTab({
   // Selected orders state
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
 
+  // Delete confirmation modal states (asks second time for Yes / No)
+  const [confirmDeleteOrder, setConfirmDeleteOrder] = useState<{
+    id: string;
+    dbId?: string;
+    customer: string;
+    amount: number;
+  } | null>(null);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+
   // Modal & download states
   const [previewInvoice, setPreviewInvoice] = useState<InvoiceOrderData | null>(null);
   const [showDailyModal, setShowDailyModal] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadingDaily, setDownloadingDaily] = useState(false);
 
-  const STATUS_FILTERS = ["All", "Processing", "Shipped", "Delivered", "Cancelled"];
+  const STATUS_FILTERS = ["All", "Processing", "Dispatched", "Shipped", "Out for Delivery", "Delivered", "Cancelled"];
 
   // Toggle single order selection
   const toggleSelectOrder = (orderId: string) => {
@@ -1618,7 +1646,7 @@ function OrdersTab({
   };
 
   // Bulk update status for all selected orders
-  const handleBulkStatusUpdate = (newStatus: "Processing" | "Shipped" | "Delivered" | "Cancelled") => {
+  const handleBulkStatusUpdate = (newStatus: "Processing" | "Dispatched" | "Shipped" | "Out for Delivery" | "Delivered" | "Cancelled") => {
     if (selectedOrderIds.length === 0) return;
     for (const ordId of selectedOrderIds) {
       const target = orders.find((o) => o.id === ordId);
@@ -2162,8 +2190,18 @@ function OrdersTab({
 
             <button
               type="button"
+              onClick={() => setConfirmBulkDelete(true)}
+              className="bg-[#fee2e2] hover:bg-[#fecaca] text-[#b91c1c] text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+              title="Delete all selected orders"
+            >
+              <span>🗑️</span>
+              <span>Delete ({selectedOrderIds.length})</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setSelectedOrderIds([])}
-              className="bg-[#fee2e2] hover:bg-[#fecaca] text-[#b91c1c] text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all cursor-pointer"
+              className="bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#475569] text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all cursor-pointer"
               title="Clear selection"
             >
               Clear (✕)
@@ -2409,6 +2447,23 @@ function OrdersTab({
                             <span>👁️</span>
                             <span>Details</span>
                           </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setConfirmDeleteOrder({
+                                id: o.id,
+                                dbId: o.dbId,
+                                customer: o.customer,
+                                amount: o.amount,
+                              })
+                            }
+                            title="Delete this order"
+                            className="flex items-center gap-1 bg-[#fee2e2] hover:bg-[#fecaca] text-[#b91c1c] text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all cursor-pointer shadow-2xs active:scale-95"
+                          >
+                            <span>🗑️</span>
+                            <span className="hidden sm:inline">Delete</span>
+                          </button>
                         </div>
                       </div>
                     );
@@ -2565,6 +2620,115 @@ function OrdersTab({
                 __html: generateDailyReportHtml(getFormattedReportDate(), getDailyOrdersList(), settings),
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* ── Single Order Delete Confirmation Modal (Yes / No) ── */}
+      {confirmDeleteOrder && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+          onClick={() => setConfirmDeleteOrder(null)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#fee2e2] flex flex-col gap-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#fee2e2] text-[#b91c1c] flex items-center justify-center text-2xl shrink-0">
+                ⚠️
+              </div>
+              <div>
+                <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg">
+                  Delete Order #{confirmDeleteOrder.id}?
+                </h3>
+                <p className="text-xs text-[#9aa89b]">Please confirm if you want to permanently delete this order.</p>
+              </div>
+            </div>
+
+            <div className="bg-[#fef2f2] border border-[#fecaca] p-3.5 rounded-xl text-xs text-[#7f1d1d] leading-relaxed">
+              Are you sure you want to delete order <strong>#{confirmDeleteOrder.id}</strong> for <strong>{confirmDeleteOrder.customer}</strong> (₹{confirmDeleteOrder.amount.toLocaleString()})?
+              <p className="mt-1 font-bold text-[#b91c1c]">This action cannot be undone.</p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteOrder(null)}
+                className="px-4 py-2.5 rounded-xl border border-[#e4ede2] text-xs font-bold text-[#073b4c] hover:bg-[#f0f4f0] transition-colors cursor-pointer"
+              >
+                No, Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onDeleteOrder?.(confirmDeleteOrder.dbId || confirmDeleteOrder.id);
+                  setSelectedOrderIds((prev) => prev.filter((id) => id !== confirmDeleteOrder.id));
+                  setConfirmDeleteOrder(null);
+                }}
+                className="px-5 py-2.5 rounded-xl bg-[#b91c1c] hover:bg-[#991b1b] text-white text-xs font-extrabold transition-all shadow-md cursor-pointer active:scale-95 flex items-center gap-1.5"
+              >
+                <span>🗑️</span>
+                <span>Yes, Delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Bulk Orders Delete Confirmation Modal (Yes / No) ── */}
+      {confirmBulkDelete && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+          onClick={() => setConfirmBulkDelete(false)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#fee2e2] flex flex-col gap-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#fee2e2] text-[#b91c1c] flex items-center justify-center text-2xl shrink-0">
+                ⚠️
+              </div>
+              <div>
+                <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg">
+                  Delete {selectedOrderIds.length} Orders?
+                </h3>
+                <p className="text-xs text-[#9aa89b]">Please confirm if you want to permanently delete these orders.</p>
+              </div>
+            </div>
+
+            <div className="bg-[#fef2f2] border border-[#fecaca] p-3.5 rounded-xl text-xs text-[#7f1d1d] leading-relaxed">
+              Are you sure you want to permanently delete all <strong>{selectedOrderIds.length} selected orders</strong>?
+              <p className="mt-1 font-bold text-[#b91c1c]">This action cannot be undone.</p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmBulkDelete(false)}
+                className="px-4 py-2.5 rounded-xl border border-[#e4ede2] text-xs font-bold text-[#073b4c] hover:bg-[#f0f4f0] transition-colors cursor-pointer"
+              >
+                No, Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  for (const ordId of selectedOrderIds) {
+                    const target = orders.find((o) => o.id === ordId);
+                    if (target) {
+                      onDeleteOrder?.(target.dbId || target.id);
+                    }
+                  }
+                  setSelectedOrderIds([]);
+                  setConfirmBulkDelete(false);
+                }}
+                className="px-5 py-2.5 rounded-xl bg-[#b91c1c] hover:bg-[#991b1b] text-white text-xs font-extrabold transition-all shadow-md cursor-pointer active:scale-95 flex items-center gap-1.5"
+              >
+                <span>🗑️</span>
+                <span>Yes, Delete All ({selectedOrderIds.length})</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
