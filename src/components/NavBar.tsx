@@ -501,6 +501,26 @@ export default function NavBar({
                 <span className="hidden sm:inline">Logout</span>
               </button>
             )}
+
+            {/* Sign In Button for Guests / Not Logged In */}
+            {!user && (
+              <button
+                type="button"
+                onClick={() => {
+                  onProfile?.();
+                  setMobileMenuOpen(false);
+                }}
+                className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] hover:opacity-95 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-emerald-950/15 transition-all cursor-pointer shrink-0 active:scale-95"
+                title="Sign In or Register Account"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                  <polyline points="10 17 15 12 10 7" />
+                  <line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+                <span>Sign In</span>
+              </button>
+            )}
           </div>
         </div>
 

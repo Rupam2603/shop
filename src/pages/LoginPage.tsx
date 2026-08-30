@@ -186,7 +186,7 @@ function SuccessBox({ msg }: { msg: string }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function LoginPage() {
+export default function LoginPage({ onBackToStore }: { onBackToStore?: () => void }) {
   const { signIn, signUp, resetPassword, pendingApprovalInfo, clearPendingApproval } = useAuth();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -551,6 +551,18 @@ export default function LoginPage() {
           <div className="flex-1 p-6 sm:p-10 lg:p-12 flex flex-col justify-between bg-white/85 backdrop-blur-2xl">
             
             <div className="max-w-xl mx-auto w-full flex flex-col gap-6">
+
+              {/* Back to Store Action for Guests */}
+              {onBackToStore && (
+                <button
+                  type="button"
+                  onClick={onBackToStore}
+                  className="self-start inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#f0f7f2] hover:bg-[#e4efe6] text-[#006a39] text-xs font-extrabold border border-[#cfe1d2] transition-all cursor-pointer shadow-2xs group"
+                >
+                  <span className="transition-transform group-hover:-translate-x-0.5">←</span>
+                  <span>Explore Pharmacy Store as Guest</span>
+                </button>
+              )}
 
               {/* Mode Switcher Tabs (Segmented Glass Pill) */}
               <div className="flex p-1.5 rounded-2xl bg-[#f0f5f2] border border-[#d6e4d8] shadow-inner relative">
