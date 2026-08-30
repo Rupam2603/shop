@@ -19,7 +19,7 @@ export interface DbAddress {
 export type AddressInput = Omit<DbAddress, "id" | "user_id" | "created_at" | "updated_at">;
 
 /**
- * Get effective user ID across Supabase auth, Clerk auth, or persistent local storage
+ * Get effective user ID across Supabase auth or persistent local storage
  */
 export async function getEffectiveUserId(explicitUserId?: string): Promise<string> {
   if (explicitUserId && explicitUserId.trim()) return explicitUserId.trim();
