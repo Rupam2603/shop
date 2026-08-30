@@ -233,11 +233,11 @@ export default function App() {
           }
         }}
         user={{
-          name: currentUser.name,
-          email: currentUser.email,
-          phone: currentUser.phone,
-          role: currentUser.role,
-          shopName: currentUser.shopName,
+          name: currentUser?.name || "",
+          email: currentUser?.email || "",
+          phone: currentUser?.phone,
+          role: currentUser?.role || "customer",
+          shopName: currentUser?.shopName,
         }}
       />
 
@@ -246,9 +246,9 @@ export default function App() {
         isOpen={trackingModal.open}
         onClose={() => setTrackingModal({ open: false, orderNumber: null })}
         initialOrderNumber={trackingModal.orderNumber}
-        userRole={currentUser.role}
-        userPhone={currentUser.phone}
-        userName={currentUser.name}
+        userRole={currentUser?.role || "customer"}
+        userPhone={currentUser?.phone}
+        userName={currentUser?.name}
       />
     </div>
   );
