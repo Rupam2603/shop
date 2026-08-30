@@ -344,7 +344,7 @@ export const neonClient = {
 
         if (!rows || rows.length === 0) {
           // Allow default admin sign in if credentials match
-          if (cleanEmail === "admin@subhone.com" && password === "admin123") {
+          if (cleanEmail === "admin@subhone.com" && (password === "Subhone@2026" || password === "admin123")) {
             const adminUser = {
               id: "admin_fixed_id",
               email: "admin@subhone.com",
