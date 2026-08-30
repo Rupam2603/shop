@@ -81,4 +81,10 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 - **Supabase Integration:** Clean, lightweight REST/fetch helpers in `src/lib/supabase.ts` for product CRUD, retailer onboarding, user profile saves, and order processing.
 - **Vercel Lockfile Sync:** `pnpm-lock.yaml` synchronized with `package.json` to guarantee zero-fail deployments on Vercel.
 - **Production URL:** `https://shop-phi-plum.vercel.app` (Live and verified).
-
+- **Full Responsiveness (Latest):** Comprehensive mobile-first improvements applied across all pages:
+  - `src/index.css`: iOS safe-area support (`env(safe-area-inset-*)`), `min-h-[100dvh]`, `text-size-adjust: 100%`, iOS input zoom prevention (`font-size: max(16px,1em)`), `text-wrap: balance` for headings.
+  - `NavBar.tsx`: Center search bar hidden on mobile (`hidden md:flex`); dedicated mobile search below handles phones.
+  - `HomePage.tsx`: Category browser changed from horizontal scroll to responsive CSS grid (`grid-cols-4 sm:grid-cols-6 md:grid-cols-8`).
+  - `CartDrawer.tsx`: Full-width on phones, uses `h-[100dvh]`, removed `pl-10` offset.
+  - `CheckoutModal.tsx`: Bottom-sheet pattern on mobile (`items-end sm:items-center`), `rounded-t-2xl sm:rounded-2xl`, `max-h-[80dvh]`.
+  - `LoginPage.tsx`: Uses `min-h-[100dvh]` for dynamic viewport height.
