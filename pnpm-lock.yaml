@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@neondatabase/serverless':
+        specifier: ^1.1.0
+        version: 1.1.0
       '@supabase/server':
         specifier: ^1.4.1
         version: 1.4.1(@supabase/supabase-js@2.112.4)
@@ -81,6 +84,10 @@ packages:
 
   '@napi-rs/wasm-runtime@1.1.1':
     resolution: {integrity: sha512-p64ah1M1ld8xjWv3qbvFwHiFVWrq1yFvV4f7w+mzaqiR4IlSgkqhcRdHwsGgomwzBH51sRY4NEowLxnaBjcW/A==}
+
+  '@neondatabase/serverless@1.1.0':
+    resolution: {integrity: sha512-r3ZZhRjEcfEdKIZnoB1RusNgvHuaBRqfCzV4Gi+5A9yUX0S4HTws/ASWqt13wL4y4I+0rqsWGdA2w7EQXHi3+Q==}
+    engines: {node: '>=19.0.0'}
 
   '@oxc-project/types@0.122.0':
     resolution: {integrity: sha512-oLAl5kBpV4w69UtFZ9xqcmTi+GENWOcPF7FCrczTiBbmC0ibXxCwyvZGbO39rCVEuLGAZM84DH0pUIyyv/YJzA==}
@@ -677,6 +684,8 @@ snapshots:
       '@emnapi/runtime': 1.9.1
       '@tybys/wasm-util': 0.10.1
     optional: true
+
+  '@neondatabase/serverless@1.1.0': {}
 
   '@oxc-project/types@0.122.0': {}
 
