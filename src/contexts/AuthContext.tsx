@@ -93,64 +93,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const email = sessionUser.email || "";
-    const isAdmin = email.toLowerCase() === "admin@subhone.com";
+    const email = (sessionUser.email || "").toLowerCase().trim();
+    const isAdmin = email === "admin@subhone.com";
     const profile = await fetchProfile(sessionUser.id);
+    const rawMeta = sessionUser.user_metadata || {};
+    const detectedRole: UserRole = isAdmin
+      ? "admin"
+      : profile?.role || (rawMeta.role as UserRole) || "customer";
 
-    if (profile) {
-      const role = isAdmin ? "admin" : profile.role;
-      if (role === "retailer" && !isAdmin) {
-        const rawStatus = profile.approval_status || checkRetailerApprovalStatus(email || sessionUser.id);
-        const status: "pending" | "approved" | "rejected" = rawStatus === "approved" ? "approved" : rawStatus === "rejected" ? "rejected" : "pending";
-        if (status !== "approved") {
-          setPendingApprovalInfo({
-            email,
-            shopName: profile.shop_name || "Medical Store",
-            status,
-          });
-          setAppUser(null);
-          setLoading(false);
-          return;
+    // Strict Gate: Retailer accounts MUST be approved by Admin
+    if (detectedRole === "retailer" && !isAdmin) {
+      let isApproved = false;
+      let approvalStatus: "pending" | "approved" | "rejected" = "pending";
+
+      // 1. Check profiles table
+      if (profile?.approval_status) {
+        approvalStatus = profile.approval_status as any;
+        if (approvalStatus === "approved") isApproved = true;
+      }
+
+      // 2. Check retailer_approvals table live
+      if (!isApproved) {
+        try {
+          const { data: appRow } = await supabase
+            .from("retailer_approvals")
+            .select("approval_status, shop_name")
+            .or(`id.eq.${sessionUser.id},email.ilike.${email}`)
+            .maybeSingle();
+
+          if (appRow) {
+            approvalStatus = (appRow.approval_status as any) || "pending";
+            if (approvalStatus === "approved") isApproved = true;
+          }
+        } catch (e) {
+          console.warn("Notice checking retailer_approvals:", e);
         }
       }
-      setPendingApprovalInfo(null);
-      setAppUser({
-        authUser: sessionUser,
-        profile: { ...profile, role },
-      });
-    } else {
-      const rawMeta = sessionUser.user_metadata || {};
-      const role: UserRole = isAdmin ? "admin" : (rawMeta.role as UserRole) || "customer";
 
-      if (role === "retailer" && !isAdmin) {
-        const rawStatus = (rawMeta.approval_status as any) || checkRetailerApprovalStatus(email);
-        const status: "pending" | "approved" | "rejected" = rawStatus === "approved" ? "approved" : rawStatus === "rejected" ? "rejected" : "pending";
-        if (status !== "approved") {
-          setPendingApprovalInfo({
-            email,
-            shopName: rawMeta.shop_name || "Medical Store",
-            status,
-          });
-          setAppUser(null);
-          setLoading(false);
-          return;
-        }
+      // 3. Check local cache fallback
+      if (!isApproved && approvalStatus === "pending") {
+        const localStatus = checkRetailerApprovalStatus(email || sessionUser.id);
+        if (localStatus === "approved") isApproved = true;
+        else if (localStatus) approvalStatus = localStatus;
       }
-      setPendingApprovalInfo(null);
 
-      const fallbackProfile: Profile = {
-        id: sessionUser.id,
-        full_name: rawMeta.full_name || sessionUser.email?.split("@")[0] || "User",
-        role,
-        phone: rawMeta.phone || null,
-        shop_name: rawMeta.shop_name || null,
-        avatar_url: rawMeta.avatar_url || null,
-        approval_status: "approved",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setAppUser({ authUser: sessionUser, profile: fallbackProfile });
+      // If not approved, immediately destroy active auth session and block portal access
+      if (!isApproved) {
+        await supabase.auth.signOut();
+        setAppUser(null);
+        setPendingApprovalInfo({
+          email,
+          shopName: profile?.shop_name || rawMeta.shop_name || "Medical Store",
+          status: approvalStatus,
+        });
+        setLoading(false);
+        return;
+      }
     }
+
+    setPendingApprovalInfo(null);
+
+    const finalProfile: Profile = profile || {
+      id: sessionUser.id,
+      full_name: rawMeta.full_name || sessionUser.email?.split("@")[0] || "User",
+      role: detectedRole,
+      phone: rawMeta.phone || null,
+      shop_name: rawMeta.shop_name || null,
+      avatar_url: rawMeta.avatar_url || null,
+      approval_status: detectedRole === "retailer" ? "approved" : "approved",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    setAppUser({ authUser: sessionUser, profile: finalProfile });
     setLoading(false);
   }, [fetchProfile]);
 
@@ -308,11 +323,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (userRole === "retailer") {
-          const rawStatus = profile?.approval_status || checkRetailerApprovalStatus(cleanEmail);
-          const approvalStatus: "pending" | "approved" | "rejected" = rawStatus === "approved" ? "approved" : rawStatus === "rejected" ? "rejected" : "pending";
-          if (approvalStatus !== "approved") {
+          let isApproved = profile?.approval_status === "approved";
+          let approvalStatus: "pending" | "approved" | "rejected" = (profile?.approval_status as any) || "pending";
+
+          if (!isApproved) {
+            try {
+              const { data: appRow } = await supabase
+                .from("retailer_approvals")
+                .select("approval_status")
+                .or(`id.eq.${data.user.id},email.ilike.${cleanEmail}`)
+                .maybeSingle();
+
+              if (appRow) {
+                approvalStatus = (appRow.approval_status as any) || "pending";
+                if (approvalStatus === "approved") isApproved = true;
+              }
+            } catch (e) {
+              console.warn("Notice checking retailer_approvals on sign in:", e);
+            }
+          }
+
+          if (!isApproved && approvalStatus === "pending") {
+            const localStatus = checkRetailerApprovalStatus(cleanEmail || data.user.id);
+            if (localStatus === "approved") isApproved = true;
+            else if (localStatus) approvalStatus = localStatus;
+          }
+
+          if (!isApproved) {
             await supabase.auth.signOut();
             setAppUser(null);
+            setPendingApprovalInfo({
+              email: cleanEmail,
+              shopName: profile?.shop_name || data.user.user_metadata?.shop_name || "Medical Store",
+              status: approvalStatus,
+            });
             setLoading(false);
             return {
               error:
