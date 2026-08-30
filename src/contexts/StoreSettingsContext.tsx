@@ -26,24 +26,44 @@ export function StoreSettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Initial database fetch
-    fetchStoreSettings().then((loaded) => {
-      if (isMounted && loaded) {
-        setSettings(loaded);
-        setLoading(false);
-      }
-    });
+    // Safety: never hang — resolve loading in max 2 seconds regardless
+    const safetyTimer = setTimeout(() => {
+      if (isMounted) setLoading(false);
+    }, 2000);
 
-    // 2. Real-time multi-device sync
-    const unsubscribe = subscribeToStoreSettingsRealtime((updated) => {
-      if (isMounted && updated) {
-        setSettings(updated);
-      }
-    });
+    // 1. Initial database fetch (with catch so it never throws)
+    fetchStoreSettings()
+      .then((loaded) => {
+        if (isMounted && loaded) {
+          setSettings(loaded);
+        }
+      })
+      .catch((err) => {
+        console.warn("StoreSettings fetch failed, using defaults:", err);
+      })
+      .finally(() => {
+        if (isMounted) {
+          clearTimeout(safetyTimer);
+          setLoading(false);
+        }
+      });
+
+    // 2. Real-time multi-device sync (wrapped in try-catch)
+    let unsubscribe: (() => void) | undefined;
+    try {
+      unsubscribe = subscribeToStoreSettingsRealtime((updated) => {
+        if (isMounted && updated) {
+          setSettings(updated);
+        }
+      });
+    } catch (err) {
+      console.warn("Realtime subscription failed:", err);
+    }
 
     return () => {
       isMounted = false;
-      unsubscribe();
+      clearTimeout(safetyTimer);
+      unsubscribe?.();
     };
   }, []);
 
