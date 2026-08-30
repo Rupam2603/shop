@@ -404,7 +404,7 @@ export function checkRetailerApprovalStatus(emailOrId: string): "pending" | "app
   const key = emailOrId.toLowerCase().trim();
 
   // Admin always has access
-  if (key === "admin@subhone.com") return "approved";
+  if (key === "admin@subhone.com" || key === "subhonehealthgroup@gmail.com") return "approved";
 
   const list = getLocalRetailers();
   const found = list.find((r) => r.id === emailOrId || r.email.toLowerCase() === key);

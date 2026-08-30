@@ -3251,7 +3251,10 @@ function UsersTab({
       <div className="glass-admin-card rounded-3xl overflow-hidden shadow-xs">
         <div className="divide-y divide-[#e4ede2]">
           {filteredUsers.map((u) => {
-            const isSelf = u.email.toLowerCase() === "admin@subhone.com";
+            const isSelf =
+              u.email.toLowerCase() === "subhonehealthgroup@gmail.com" ||
+              u.email.toLowerCase() === "admin@subhone.com" ||
+              u.id === user?.id;
             return (
               <div key={u.id} className="p-4 sm:p-5 hover:bg-white/80 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 {/* User Identity Info */}
