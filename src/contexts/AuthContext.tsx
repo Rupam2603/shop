@@ -101,19 +101,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ? "admin"
       : profile?.role || (rawMeta.role as UserRole) || "customer";
 
+    // Strict Gate: Check if user is blocked
+    const currentAccountStatus = profile?.approval_status || (rawMeta.approval_status as string) || "approved";
+    if (currentAccountStatus === "blocked" && !isAdmin) {
+      await supabase.auth.signOut();
+      setAppUser(null);
+      setLoading(false);
+      return;
+    }
+
     // Strict Gate: Retailer accounts MUST be approved by Admin
     if (detectedRole === "retailer" && !isAdmin) {
       let isApproved = false;
-      let approvalStatus: "pending" | "approved" | "rejected" = "pending";
+      let approvalStatus: "pending" | "approved" | "blocked" | "rejected" = (currentAccountStatus as any) || "pending";
 
-      // 1. Check profiles table
-      if (profile?.approval_status) {
-        approvalStatus = profile.approval_status as any;
-        if (approvalStatus === "approved") isApproved = true;
+      if (approvalStatus === "approved") {
+        isApproved = true;
       }
 
       // 2. Check retailer_approvals table live
-      if (!isApproved) {
+      if (!isApproved && approvalStatus !== "blocked") {
         try {
           const { data: appRow } = await supabase
             .from("retailer_approvals")
@@ -141,11 +148,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!isApproved) {
         await supabase.auth.signOut();
         setAppUser(null);
-        setPendingApprovalInfo({
-          email,
-          shopName: profile?.shop_name || rawMeta.shop_name || "Medical Store",
-          status: approvalStatus,
-        });
+        if (approvalStatus !== "blocked") {
+          setPendingApprovalInfo({
+            email,
+            shopName: profile?.shop_name || rawMeta.shop_name || "Medical Store",
+            status: approvalStatus as any,
+          });
+        }
         setLoading(false);
         return;
       }
@@ -322,9 +331,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
         }
 
+        // Blocked Account Check (All roles except admin master)
+        const accountStatus = profile?.approval_status || (data.user.user_metadata?.approval_status as string) || "approved";
+        if (accountStatus === "blocked" && userRole !== "admin") {
+          await supabase.auth.signOut();
+          setAppUser(null);
+          setLoading(false);
+          return { error: "Access Denied: Your account has been blocked by the administrator. Please contact support@subhone.com." };
+        }
+
         if (userRole === "retailer") {
           let isApproved = profile?.approval_status === "approved";
-          let approvalStatus: "pending" | "approved" | "rejected" = (profile?.approval_status as any) || "pending";
+          let approvalStatus: "pending" | "approved" | "blocked" | "rejected" = (profile?.approval_status as any) || "pending";
+
+          if (approvalStatus === "blocked") {
+            await supabase.auth.signOut();
+            setAppUser(null);
+            setLoading(false);
+            return { error: "Access Denied: Your account has been blocked by the administrator. Please contact support@subhone.com." };
+          }
 
           if (!isApproved) {
             try {
@@ -352,10 +377,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!isApproved) {
             await supabase.auth.signOut();
             setAppUser(null);
+            if (approvalStatus === "blocked") {
+              setLoading(false);
+              return { error: "Access Denied: Your retailer account has been blocked by the administrator." };
+            }
             setPendingApprovalInfo({
               email: cleanEmail,
               shopName: profile?.shop_name || data.user.user_metadata?.shop_name || "Medical Store",
-              status: approvalStatus,
+              status: approvalStatus as any,
             });
             setLoading(false);
             return {

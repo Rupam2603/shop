@@ -40,13 +40,20 @@ import {
   subscribeToStoreSettingsRealtime,
   DEFAULT_STORE_SETTINGS,
 } from "../lib/settings";
+import {
+  fetchAllUsers,
+  updateUserAccountStatus,
+  adminChangeUserPassword,
+  adminDeleteUserAccount,
+  ManagedUser,
+} from "../lib/users";
 
 interface Props {
   user: CurrentUser;
   onLogout: () => void;
 }
 
-type AdminTab = "dashboard" | "products" | "inventory" | "orders" | "retailers" | "lab-tests" | "revenue" | "settings";
+type AdminTab = "dashboard" | "products" | "inventory" | "orders" | "retailers" | "users" | "lab-tests" | "revenue" | "settings";
 
 /* ── Modern Glassmorphism Vector Icons ── */
 const Icons = {
@@ -397,6 +404,7 @@ const TAB_ITEMS: { id: AdminTab; label: string; icon: React.ReactElement }[] = [
   { id: "inventory", label: "Inventory", icon: <Icons.Box className="w-4 h-4" /> },
   { id: "orders", label: "Orders", icon: <Icons.Order className="w-4 h-4" /> },
   { id: "retailers", label: "Retailers", icon: <Icons.Store className="w-4 h-4" /> },
+  { id: "users", label: "User Accounts", icon: <Icons.User className="w-4 h-4" /> },
   { id: "lab-tests", label: "Lab Bookings", icon: <Icons.Lab className="w-4 h-4" /> },
   { id: "revenue", label: "Revenue", icon: <Icons.Revenue className="w-4 h-4" /> },
   { id: "settings", label: "Settings", icon: <Icons.Settings className="w-4 h-4" /> },
@@ -857,6 +865,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
   const [orderFilter, setOrderFilter] = useState("All");
   const [dbOrders, setDbOrders] = useState<DbOrder[]>([]);
+  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>([]);
+  const [isRefreshingUsers, setIsRefreshingUsers] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -918,6 +928,10 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
     fetchAllRetailers().then((data) => {
       if (mounted && data) setRetailers(data);
+    });
+
+    fetchAllUsers().then((data) => {
+      if (mounted && data) setManagedUsers(data);
     });
 
     const unsubscribeProducts = subscribeToProductsRealtime((payload) => {
@@ -1154,6 +1168,53 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       console.error("Error refreshing retailers:", e);
     } finally {
       setTimeout(() => setIsRefreshingRetailers(false), 400);
+    }
+  };
+
+  const handleRefreshUsers = async () => {
+    setIsRefreshingUsers(true);
+    try {
+      const fresh = await fetchAllUsers();
+      if (fresh) setManagedUsers(fresh);
+    } catch (e) {
+      console.error("Error refreshing users:", e);
+    } finally {
+      setTimeout(() => setIsRefreshingUsers(false), 400);
+    }
+  };
+
+  const handleUpdateUserStatus = async (
+    userId: string,
+    newStatus: "approved" | "blocked" | "pending" | "rejected"
+  ) => {
+    setManagedUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, approvalStatus: newStatus } : u))
+    );
+    // If user is also in retailers list, keep retailers tab in sync
+    setRetailers((prev) =>
+      prev.map((r) => (r.id === userId ? { ...r, approvalStatus: newStatus as any } : r))
+    );
+    const res = await updateUserAccountStatus(userId, newStatus);
+    if (!res.success) {
+      alert("Error updating user status: " + (res.error || "Please try again."));
+      handleRefreshUsers();
+    }
+  };
+
+  const handleChangeUserPassword = async (userId: string, newPass: string) => {
+    const res = await adminChangeUserPassword(userId, newPass);
+    if (!res.success) {
+      throw new Error(res.error || "Password change failed.");
+    }
+  };
+
+  const handleDeleteUserAccount = async (userId: string) => {
+    setManagedUsers((prev) => prev.filter((u) => u.id !== userId));
+    setRetailers((prev) => prev.filter((r) => r.id !== userId));
+    const res = await adminDeleteUserAccount(userId);
+    if (!res.success) {
+      alert("Error deleting user: " + (res.error || "Please try again."));
+      handleRefreshUsers();
     }
   };
 
@@ -1536,6 +1597,16 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               onBulkUpdateApproval={handleBulkUpdateRetailers}
               onRefresh={handleRefreshRetailers}
               isRefreshing={isRefreshingRetailers}
+            />
+          )}
+          {activeTab === "users" && (
+            <UsersTab
+              users={managedUsers}
+              onUpdateStatus={handleUpdateUserStatus}
+              onChangePassword={handleChangeUserPassword}
+              onDeleteUser={handleDeleteUserAccount}
+              onRefresh={handleRefreshUsers}
+              isRefreshing={isRefreshingUsers}
             />
           )}
           {activeTab === "lab-tests" && (
@@ -2846,6 +2917,646 @@ function RetailersTab({
               <button onClick={() => setDeleteModalRetailer(null)} className="flex-1 py-2.5 rounded-2xl border border-[#dce7db] text-[#657969] font-bold text-xs hover:bg-white cursor-pointer">Cancel</button>
               <button onClick={() => { onDeleteRetailer(deleteModalRetailer.id); setDeleteModalRetailer(null); }} className="flex-1 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-md shadow-rose-950/20">Confirm</button>
             </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── TAB: ALL USERS MANAGEMENT ─── */
+function UsersTab({
+  users,
+  onUpdateStatus,
+  onChangePassword,
+  onDeleteUser,
+  onRefresh,
+  isRefreshing,
+}: {
+  users: ManagedUser[];
+  onUpdateStatus: (userId: string, status: "approved" | "blocked" | "pending" | "rejected") => Promise<void>;
+  onChangePassword: (userId: string, newPass: string) => Promise<void>;
+  onDeleteUser: (userId: string) => Promise<void>;
+  onRefresh: () => void;
+  isRefreshing: boolean;
+}) {
+  const [roleFilter, setRoleFilter] = useState<"all" | "customer" | "retailer" | "admin">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "pending" | "blocked" | "rejected">("all");
+  const [search, setSearch] = useState("");
+
+  // Modals state
+  const [passwordModalUser, setPasswordModalUser] = useState<ManagedUser | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const [statusModal, setStatusModal] = useState<{ user: ManagedUser; targetStatus: "approved" | "blocked" | "pending" | "rejected" } | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
+
+  const [deleteModalUser, setDeleteModalUser] = useState<ManagedUser | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [detailsModalUser, setDetailsModalUser] = useState<ManagedUser | null>(null);
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      if (roleFilter !== "all" && u.role !== roleFilter) return false;
+      if (statusFilter !== "all" && u.approvalStatus !== statusFilter) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const matchName = u.fullName.toLowerCase().includes(q);
+        const matchEmail = u.email.toLowerCase().includes(q);
+        const matchPhone = u.phone?.toLowerCase().includes(q);
+        const matchShop = u.shopName?.toLowerCase().includes(q);
+        if (!matchName && !matchEmail && !matchPhone && !matchShop) return false;
+      }
+      return true;
+    });
+  }, [users, roleFilter, statusFilter, search]);
+
+  const stats = useMemo(() => {
+    const total = users.length;
+    const customers = users.filter((u) => u.role === "customer").length;
+    const retailers = users.filter((u) => u.role === "retailer").length;
+    const blocked = users.filter((u) => u.approvalStatus === "blocked").length;
+    const pending = users.filter((u) => u.approvalStatus === "pending").length;
+    return { total, customers, retailers, blocked, pending };
+  }, [users]);
+
+  const handleExecutePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordModalUser) return;
+    if (newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters long.");
+      return;
+    }
+    setPasswordLoading(true);
+    setPasswordError("");
+    setPasswordSuccess("");
+    try {
+      await onChangePassword(passwordModalUser.id, newPassword);
+      setPasswordSuccess(`Password updated successfully for ${passwordModalUser.fullName}!`);
+      setTimeout(() => {
+        setPasswordModalUser(null);
+        setNewPassword("");
+        setPasswordSuccess("");
+      }, 1200);
+    } catch (err: any) {
+      setPasswordError(err?.message || "Failed to update password.");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const handleExecuteStatusChange = async () => {
+    if (!statusModal) return;
+    setStatusLoading(true);
+    try {
+      await onUpdateStatus(statusModal.user.id, statusModal.targetStatus);
+      setStatusModal(null);
+    } catch (err: any) {
+      alert("Failed to update status: " + err?.message);
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  const handleExecuteDeleteUser = async () => {
+    if (!deleteModalUser) return;
+    setDeleteLoading(true);
+    try {
+      await onDeleteUser(deleteModalUser.id);
+      setDeleteModalUser(null);
+    } catch (err: any) {
+      alert("Failed to delete user: " + err?.message);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Top Header Card */}
+      <div className="glass-admin-card rounded-3xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#006a39]">
+              Live Supabase Authentication & Profile Management
+            </span>
+          </div>
+          <h2 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xl sm:text-2xl">
+            User Accounts & Security Directory
+          </h2>
+          <p className="text-xs text-[#657969] mt-0.5">
+            Full admin control over registered customers, wholesale retailers, and security credentials.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          className="px-4 py-2.5 rounded-2xl bg-white/80 border border-[#dce7db] hover:bg-white text-[#073b4c] text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer self-start md:self-auto active:scale-95"
+        >
+          <Icons.Refresh className={`w-4 h-4 text-[#006a39] ${isRefreshing ? "animate-spin" : ""}`} />
+          <span>{isRefreshing ? "Syncing DB…" : "Refresh Directory"}</span>
+        </button>
+      </div>
+
+      {/* KPI Stats Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5 sm:gap-4">
+        <div onClick={() => { setRoleFilter("all"); setStatusFilter("all"); }} className="glass-admin-card glass-admin-card-hover rounded-3xl p-4 cursor-pointer border-2 transition-all">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#657969]">Total Registered</span>
+          <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-2xl sm:text-3xl mt-1">{stats.total}</p>
+          <p className="text-[11px] text-[#728575] mt-0.5">All platform accounts</p>
+        </div>
+
+        <div onClick={() => { setRoleFilter("customer"); setStatusFilter("all"); }} className="glass-admin-card glass-admin-card-hover rounded-3xl p-4 cursor-pointer border-2 transition-all">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-800">Customers</span>
+          <p className="font-['Manrope',sans-serif] font-extrabold text-[#0369a1] text-2xl sm:text-3xl mt-1">{stats.customers}</p>
+          <p className="text-[11px] text-[#728575] mt-0.5">Direct retail buyers</p>
+        </div>
+
+        <div onClick={() => { setRoleFilter("retailer"); setStatusFilter("all"); }} className="glass-admin-card glass-admin-card-hover rounded-3xl p-4 cursor-pointer border-2 transition-all">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800">Retailers</span>
+          <p className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-2xl sm:text-3xl mt-1">{stats.retailers}</p>
+          <p className="text-[11px] text-[#728575] mt-0.5">Pharmacy partners</p>
+        </div>
+
+        <div onClick={() => { setStatusFilter("pending"); setRoleFilter("all"); }} className="glass-admin-card glass-admin-card-hover rounded-3xl p-4 cursor-pointer border-2 transition-all">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800">Pending Review</span>
+          <p className="font-['Manrope',sans-serif] font-extrabold text-[#b45309] text-2xl sm:text-3xl mt-1">{stats.pending}</p>
+          <p className="text-[11px] text-[#728575] mt-0.5">Awaiting verification</p>
+        </div>
+
+        <div onClick={() => { setStatusFilter("blocked"); setRoleFilter("all"); }} className="glass-admin-card glass-admin-card-hover rounded-3xl p-4 cursor-pointer border-2 transition-all">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-800">Blocked / Suspended</span>
+          <p className="font-['Manrope',sans-serif] font-extrabold text-rose-600 text-2xl sm:text-3xl mt-1">{stats.blocked}</p>
+          <p className="text-[11px] text-[#728575] mt-0.5">Access revoked</p>
+        </div>
+      </div>
+
+      {/* Filter & Search Bar */}
+      <div className="glass-admin-card rounded-3xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center bg-[#f0f5f2] rounded-2xl p-1 border border-[#d6e4d8]">
+            {(["all", "customer", "retailer", "admin"] as const).map((r) => (
+              <button
+                key={r}
+                onClick={() => setRoleFilter(r)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
+                  roleFilter === r
+                    ? "bg-white text-[#073b4c] shadow-xs"
+                    : "text-[#657969] hover:text-[#073b4c]"
+                }`}
+              >
+                {r === "all" ? "All Roles" : r}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center bg-[#f0f5f2] rounded-2xl p-1 border border-[#d6e4d8]">
+            {(["all", "approved", "pending", "blocked"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
+                  statusFilter === s
+                    ? "bg-white text-[#073b4c] shadow-xs"
+                    : "text-[#657969] hover:text-[#073b4c]"
+                }`}
+              >
+                {s === "all" ? "All Statuses" : s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 flex-1 max-w-md">
+          <input
+            type="text"
+            placeholder="Search by name, email, shop, or phone…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-white/80 border border-[#dce7db] rounded-2xl px-4 py-2.5 text-xs sm:text-sm text-[#073b4c] placeholder:text-[#a8b8aa] focus:outline-none focus:bg-white focus:border-[#006a39] shadow-xs"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="text-xs text-[#728575] hover:text-[#073b4c] font-bold shrink-0 cursor-pointer"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Users Table / Directory Cards */}
+      <div className="glass-admin-card rounded-3xl overflow-hidden shadow-xs">
+        <div className="divide-y divide-[#e4ede2]">
+          {filteredUsers.map((u) => {
+            const isSelf = u.email.toLowerCase() === "admin@subhone.com";
+            return (
+              <div key={u.id} className="p-4 sm:p-5 hover:bg-white/80 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                {/* User Identity Info */}
+                <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                  {u.avatarUrl ? (
+                    <img
+                      src={u.avatarUrl}
+                      alt={u.fullName}
+                      className="w-12 h-12 rounded-2xl object-cover shrink-0 shadow-xs border border-[#dce7db]"
+                    />
+                  ) : (
+                    <div
+                      className={`w-12 h-12 rounded-2xl flex items-center justify-center font-extrabold text-lg shrink-0 shadow-xs ${
+                        u.role === "admin"
+                          ? "bg-purple-100 text-purple-800"
+                          : u.role === "retailer"
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-sky-100 text-sky-800"
+                      }`}
+                    >
+                      {(u.fullName?.[0] || u.email[0] || "U").toUpperCase()}
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base truncate">
+                        {u.fullName}
+                      </p>
+                      {/* Role Pill */}
+                      <span
+                        className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                          u.role === "admin"
+                            ? "bg-purple-100 text-purple-900 border border-purple-200"
+                            : u.role === "retailer"
+                            ? "bg-emerald-100 text-emerald-900 border border-emerald-200"
+                            : "bg-sky-100 text-sky-900 border border-sky-200"
+                        }`}
+                      >
+                        {u.role}
+                      </span>
+
+                      {/* Status Pill */}
+                      <span
+                        className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                          u.approvalStatus === "approved"
+                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                            : u.approvalStatus === "pending"
+                            ? "bg-amber-50 text-amber-800 border border-amber-200 animate-pulse"
+                            : u.approvalStatus === "blocked"
+                            ? "bg-rose-100 text-rose-900 border border-rose-200"
+                            : "bg-gray-100 text-gray-800 border border-gray-200"
+                        }`}
+                      >
+                        {u.approvalStatus}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-[#596b5e] font-mono mt-1 truncate">
+                      ✉️ {u.email}
+                      {u.phone ? ` · 📞 ${u.phone}` : ""}
+                    </p>
+                    {u.shopName && (
+                      <p className="text-xs text-[#006a39] font-semibold mt-0.5">
+                        🏬 {u.shopName}
+                      </p>
+                    )}
+                    <p className="text-[11px] text-[#8aa08e] mt-1">
+                      Joined: {new Date(u.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                      {u.lastSignInAt ? ` · Last Active: ${new Date(u.lastSignInAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : ""}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Actions Toolbar */}
+                <div className="flex items-center gap-2 flex-wrap shrink-0">
+                  {/* View Details Button */}
+                  <button
+                    type="button"
+                    onClick={() => setDetailsModalUser(u)}
+                    className="px-3 py-1.5 rounded-xl bg-white border border-[#dce7db] hover:bg-[#f0f5f2] text-[#073b4c] text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Icons.Eye className="w-3.5 h-3.5 text-[#006a39]" />
+                    <span>Details</span>
+                  </button>
+
+                  {/* Change Password */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPasswordModalUser(u);
+                      setNewPassword("");
+                      setPasswordError("");
+                      setPasswordSuccess("");
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-white border border-[#dce7db] hover:bg-[#f0f5f2] text-[#073b4c] text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>🔑</span>
+                    <span>Set Password</span>
+                  </button>
+
+                  {/* Approve button (if pending) */}
+                  {u.approvalStatus === "pending" && !isSelf && (
+                    <button
+                      type="button"
+                      onClick={() => setStatusModal({ user: u, targetStatus: "approved" })}
+                      className="px-3 py-1.5 rounded-xl bg-[#006a39] hover:bg-[#008749] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
+                    >
+                      <Icons.Check className="w-3.5 h-3.5" />
+                      <span>Approve</span>
+                    </button>
+                  )}
+
+                  {/* Reject button (if pending) */}
+                  {u.approvalStatus === "pending" && !isSelf && (
+                    <button
+                      type="button"
+                      onClick={() => setStatusModal({ user: u, targetStatus: "rejected" })}
+                      className="px-3 py-1.5 rounded-xl border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-bold transition-all cursor-pointer"
+                    >
+                      Reject
+                    </button>
+                  )}
+
+                  {/* Block / Unblock buttons */}
+                  {u.approvalStatus !== "blocked" && !isSelf && (
+                    <button
+                      type="button"
+                      onClick={() => setStatusModal({ user: u, targetStatus: "blocked" })}
+                      className="px-3 py-1.5 rounded-xl border border-amber-300 text-amber-900 hover:bg-amber-50 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Icons.Ban className="w-3.5 h-3.5 text-amber-700" />
+                      <span>Block</span>
+                    </button>
+                  )}
+
+                  {u.approvalStatus === "blocked" && !isSelf && (
+                    <button
+                      type="button"
+                      onClick={() => setStatusModal({ user: u, targetStatus: "approved" })}
+                      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
+                    >
+                      <Icons.Check className="w-3.5 h-3.5" />
+                      <span>Unblock User</span>
+                    </button>
+                  )}
+
+                  {/* Delete Button */}
+                  {!isSelf && (
+                    <button
+                      type="button"
+                      onClick={() => setDeleteModalUser(u)}
+                      className="p-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors border border-rose-200 text-xs font-bold cursor-pointer"
+                      title="Permanently Delete User"
+                    >
+                      <Icons.Trash className="w-4 h-4 text-rose-700" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {filteredUsers.length === 0 && (
+          <div className="py-16 text-center text-[#728575] text-sm flex flex-col items-center gap-2">
+            <Icons.User className="w-10 h-10 text-[#728575] stroke-1" />
+            <p className="font-bold text-[#073b4c]">No users matched your criteria</p>
+            <p className="text-xs">Adjust your search query, role filter, or approval status filter.</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── CHANGE PASSWORD MODAL ── */}
+      {passwordModalUser && (
+        <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl animate-in zoom-in-95">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-xl shadow-xs">
+                  🔑
+                </div>
+                <div>
+                  <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg">Change User Password</h3>
+                  <p className="text-xs text-[#657969]">{passwordModalUser.fullName} ({passwordModalUser.email})</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPasswordModalUser(null)}
+                className="text-[#657969] hover:text-[#073b4c] text-xl font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleExecutePasswordChange} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-[11px] font-extrabold text-[#073b4c] uppercase tracking-wider mb-1.5">
+                  New Secure Password
+                </label>
+                <input
+                  type="text"
+                  required
+                  minLength={6}
+                  placeholder="Enter new 6+ char password…"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39] shadow-xs"
+                />
+                <p className="text-[11px] text-[#728575] mt-1">
+                  The user can immediately log in with this newly assigned password.
+                </p>
+              </div>
+
+              {passwordError && (
+                <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold">
+                  {passwordError}
+                </div>
+              )}
+
+              {passwordSuccess && (
+                <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
+                  {passwordSuccess}
+                </div>
+              )}
+
+              <div className="flex gap-3 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setPasswordModalUser(null)}
+                  className="flex-1 py-2.5 rounded-2xl border border-[#dce7db] text-[#657969] font-bold text-xs hover:bg-white cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={passwordLoading}
+                  className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] text-white font-bold text-xs shadow-md shadow-emerald-950/20 hover:opacity-95 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {passwordLoading ? "Updating…" : "Update Password"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── STATUS CONFIRMATION MODAL (Block / Unblock / Reject) ── */}
+      {statusModal && (
+        <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-sm w-full p-7 text-center shadow-2xl animate-in zoom-in-95">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-xs ${
+              statusModal.targetStatus === "blocked"
+                ? "bg-amber-100 text-amber-800"
+                : statusModal.targetStatus === "approved"
+                ? "bg-emerald-100 text-emerald-800"
+                : "bg-rose-100 text-rose-800"
+            }`}>
+              {statusModal.targetStatus === "blocked" ? "⚠️" : statusModal.targetStatus === "approved" ? "✓" : "✕"}
+            </div>
+            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg mb-1 capitalize">
+              {statusModal.targetStatus} User Account
+            </h3>
+            <p className="text-[#657969] text-xs mb-6 leading-relaxed">
+              Are you sure you want to change the status of <strong>{statusModal.user.fullName}</strong> ({statusModal.user.email}) to <strong className="uppercase">{statusModal.targetStatus}</strong>?
+              {statusModal.targetStatus === "blocked" && " This will immediately terminate and deny their portal access."}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setStatusModal(null)}
+                className="flex-1 py-2.5 rounded-2xl border border-[#dce7db] text-[#657969] font-bold text-xs hover:bg-white cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={statusLoading}
+                onClick={handleExecuteStatusChange}
+                className={`flex-1 py-2.5 rounded-2xl text-white font-bold text-xs transition-colors cursor-pointer shadow-md ${
+                  statusModal.targetStatus === "blocked"
+                    ? "bg-amber-600 hover:bg-amber-700"
+                    : statusModal.targetStatus === "approved"
+                    ? "bg-emerald-600 hover:bg-emerald-700"
+                    : "bg-rose-600 hover:bg-rose-700"
+                }`}
+              >
+                {statusLoading ? "Updating…" : "Confirm Change"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── DELETE USER CONFIRMATION MODAL ── */}
+      {deleteModalUser && (
+        <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-sm w-full p-7 text-center shadow-2xl animate-in zoom-in-95">
+            <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4 text-2xl shadow-xs">
+              <Icons.Trash className="w-7 h-7 text-rose-600" />
+            </div>
+            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg mb-1">
+              Delete User Account
+            </h3>
+            <p className="text-[#657969] text-xs mb-6 leading-relaxed">
+              Are you sure you want to permanently delete <strong>{deleteModalUser.fullName}</strong> ({deleteModalUser.email})? This action cannot be undone and will erase their login credentials and profile records.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteModalUser(null)}
+                className="flex-1 py-2.5 rounded-2xl border border-[#dce7db] text-[#657969] font-bold text-xs hover:bg-white cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={handleExecuteDeleteUser}
+                className="flex-1 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-md shadow-rose-950/20 disabled:opacity-50"
+              >
+                {deleteLoading ? "Deleting…" : "Confirm Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── VIEW DETAILS MODAL ── */}
+      {detailsModalUser && (
+        <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl animate-in zoom-in-95">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#e4ede2]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                  <Icons.User className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base">User Account Details</h3>
+                  <p className="text-[11px] text-[#657969]">ID: {detailsModalUser.id}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDetailsModalUser(null)}
+                className="text-[#657969] hover:text-[#073b4c] text-lg font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3 text-xs text-[#073b4c]">
+              <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+                <span className="text-[#657969]">Full Name:</span>
+                <span className="font-bold">{detailsModalUser.fullName}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+                <span className="text-[#657969]">Email:</span>
+                <span className="font-mono font-bold text-emerald-800">{detailsModalUser.email}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+                <span className="text-[#657969]">Phone:</span>
+                <span className="font-mono">{detailsModalUser.phone || "Not provided"}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+                <span className="text-[#657969]">User Role:</span>
+                <span className="font-extrabold uppercase text-[#006a39]">{detailsModalUser.role}</span>
+              </div>
+              {detailsModalUser.shopName && (
+                <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+                  <span className="text-[#657969]">Business / Shop Name:</span>
+                  <span className="font-bold">{detailsModalUser.shopName}</span>
+                </div>
+              )}
+              <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+                <span className="text-[#657969]">Account Status:</span>
+                <span className="font-extrabold uppercase">{detailsModalUser.approvalStatus}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+                <span className="text-[#657969]">Created At:</span>
+                <span>{new Date(detailsModalUser.createdAt).toLocaleString("en-IN")}</span>
+              </div>
+              {detailsModalUser.lastSignInAt && (
+                <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+                  <span className="text-[#657969]">Last Sign In:</span>
+                  <span>{new Date(detailsModalUser.lastSignInAt).toLocaleString("en-IN")}</span>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setDetailsModalUser(null)}
+              className="w-full mt-5 py-2.5 rounded-2xl bg-[#006a39] text-white text-xs font-bold hover:bg-[#008749] transition-all cursor-pointer shadow-xs"
+            >
+              Close Details
+            </button>
           </div>
         </div>
       )}
