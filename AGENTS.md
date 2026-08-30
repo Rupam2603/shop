@@ -14,6 +14,7 @@ A Vite development server is **already running** on `$PORT` (default 8443). You 
 **MANDATORY FOR ALL AGENTS / MODELS:**
 1. **Read [`brain.md`](file:///d:/Subhasis/Store/brain.md) FIRST** before starting any task to get full project context, architecture, database setup, and guidelines with minimal token usage.
 2. **Keep [`brain.md`](file:///d:/Subhasis/Store/brain.md) UPDATED** whenever making architectural changes, adding features, or altering database schemas.
+3. **Commit, Push to GitHub & Deploy to Vercel**: At the end of every task/feature implementation, always verify the build (`npm run build`), commit and push changes to GitHub (`git add . ; git commit -m "<msg>" ; git push origin main`), and deploy to Vercel (`npx --yes vercel --prod --yes`).
 
 ## Project Structure
 
