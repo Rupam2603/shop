@@ -120,6 +120,16 @@ export async function createProduct(
   }
 ): Promise<{ data: DbProduct | null; error: string | null }> {
   try {
+    // 0. If image is a base64 data URL, upload to Supabase storage-assets bucket
+    let finalImageUrl = product.image_url;
+    if (finalImageUrl && finalImageUrl.startsWith("data:")) {
+      const { uploadImageToSupabase } = await import("./storage");
+      const { url: uploadedUrl } = await uploadImageToSupabase(finalImageUrl, "products");
+      if (uploadedUrl) {
+        finalImageUrl = uploadedUrl;
+      }
+    }
+
     // 1. Resolve category_id safely if needed
     let catId = product.category_id;
     if (!catId || catId === "00000000-0000-0000-0000-000000000000") {
@@ -151,15 +161,15 @@ export async function createProduct(
       brand: product.brand,
       sku: product.sku || `SKU-${numId}`,
       hsn: product.hsn || "3004",
-      mrp: product.mrp,
-      customer_price: product.customer_price,
-      retailer_price: product.retailer_price,
-      discount_percent: product.discount_percent,
-      stock: product.stock,
-      image_url: product.image_url,
+      mrp: Number(product.mrp) || 0,
+      customer_price: Number(product.customer_price) || 0,
+      retailer_price: Number(product.retailer_price) || 0,
+      discount_percent: Number(product.discount_percent) || 0,
+      stock: Number(product.stock) || 0,
+      image_url: finalImageUrl || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80",
       details: product.details,
-      is_flash_sale: product.is_flash_sale,
-      is_featured: product.is_featured,
+      is_flash_sale: Boolean(product.is_flash_sale),
+      is_featured: Boolean(product.is_featured),
       badges: product.badges || [],
       numeric_id: numId,
       created_at: new Date().toISOString(),
@@ -195,6 +205,19 @@ export async function updateProduct(
     if (payload.category_id === "00000000-0000-0000-0000-000000000000") {
       delete payload.category_id;
     }
+    if (payload.image_url && payload.image_url.startsWith("data:")) {
+      const { uploadImageToSupabase } = await import("./storage");
+      const { url: uploadedUrl } = await uploadImageToSupabase(payload.image_url, "products");
+      if (uploadedUrl) {
+        payload.image_url = uploadedUrl;
+      }
+    }
+    if (payload.mrp !== undefined) payload.mrp = Number(payload.mrp);
+    if (payload.customer_price !== undefined) payload.customer_price = Number(payload.customer_price);
+    if (payload.retailer_price !== undefined) payload.retailer_price = Number(payload.retailer_price);
+    if (payload.stock !== undefined) payload.stock = Number(payload.stock);
+    if (payload.discount_percent !== undefined) payload.discount_percent = Number(payload.discount_percent);
+
     const { data, error } = await supabase
       .from("products")
       .update(payload)

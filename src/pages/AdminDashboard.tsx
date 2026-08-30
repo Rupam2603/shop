@@ -869,20 +869,21 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     });
 
     // 2. Fetch admin profile details and avatar from Supabase
-    if (user?.id || user?.email) {
-      supabase
-        .from("profiles")
-        .select("*")
-        .or(`id.eq.${user.id || '00000000-0000-0000-0000-000000000000'},role.eq.admin`)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (mounted && data) {
-            if (data.avatar_url) setAdminAvatar(data.avatar_url);
-            if (data.full_name) setAdminName(data.full_name);
-            if (data.phone) setAdminPhone(data.phone);
-          }
-        });
-    }
+    const loadAdminProfile = async () => {
+      let query = supabase.from("profiles").select("*");
+      if (user?.id && user.id.length > 20 && !user.id.includes("00000000")) {
+        query = query.eq("id", user.id);
+      } else {
+        query = query.eq("role", "admin").limit(1);
+      }
+      const { data } = await query.maybeSingle();
+      if (mounted && data) {
+        if (data.avatar_url) setAdminAvatar(data.avatar_url);
+        if (data.full_name) setAdminName(data.full_name);
+        if (data.phone) setAdminPhone(data.phone);
+      }
+    };
+    loadAdminProfile();
 
     fetchProducts().then((data) => {
       if (mounted && data && data.length > 0) {

@@ -111,38 +111,60 @@ export async function updateAdminProfileInDb(
   updates: { fullName?: string; phone?: string; avatarUrl?: string }
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    let finalAvatarUrl = updates.avatarUrl;
+    if (finalAvatarUrl && finalAvatarUrl.startsWith("data:")) {
+      const { uploadImageToSupabase } = await import("./storage");
+      const { url: uploadedUrl } = await uploadImageToSupabase(finalAvatarUrl, "avatars");
+      if (uploadedUrl) {
+        finalAvatarUrl = uploadedUrl;
+      }
+    }
+
     const payload: Record<string, any> = {
       updated_at: new Date().toISOString(),
     };
     if (updates.fullName !== undefined) payload.full_name = updates.fullName;
     if (updates.phone !== undefined) payload.phone = updates.phone;
-    if (updates.avatarUrl !== undefined) payload.avatar_url = updates.avatarUrl;
+    if (finalAvatarUrl !== undefined) payload.avatar_url = finalAvatarUrl;
 
-    // 1. Update profiles table if userId exists
-    if (userId) {
-      const { error: profileError } = await supabase
+    // 1. Resolve actual Admin user ID if userId is missing or placeholder
+    let targetUserId = userId;
+    if (!targetUserId || targetUserId.includes("00000000")) {
+      const { data: adminRow } = await supabase
         .from("profiles")
-        .update(payload)
-        .eq("id", userId);
-
-      if (profileError) {
-        console.warn("Could not update profile by ID, trying by email or insert:", profileError.message);
+        .select("id")
+        .eq("role", "admin")
+        .limit(1)
+        .maybeSingle();
+      if (adminRow?.id) {
+        targetUserId = adminRow.id;
       }
     }
 
-    // 2. Also try updating or inserting by email or role = 'admin'
-    if (email) {
-      await supabase
+    // 2. Update profiles table
+    if (targetUserId && !targetUserId.includes("00000000")) {
+      const { error: profileError } = await supabase
         .from("profiles")
-        .upsert({
-          id: userId || "00000000-0000-0000-0000-000000000001",
-          full_name: updates.fullName || "SubhOne Administrator",
-          phone: updates.phone || "+91 98765 43210",
-          avatar_url: updates.avatarUrl || null,
-          role: "admin",
-          approval_status: "approved",
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "id" });
+        .update(payload)
+        .eq("id", targetUserId);
+
+      if (profileError) {
+        console.warn("Could not update profile by ID:", profileError.message);
+      }
+    } else {
+      // Upsert by admin role
+      const { data: adminProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (adminProfile?.id) {
+        await supabase
+          .from("profiles")
+          .update(payload)
+          .eq("id", adminProfile.id);
+      }
     }
 
     // 3. Update auth user_metadata if active session
@@ -151,7 +173,7 @@ export async function updateAdminProfileInDb(
         data: {
           full_name: updates.fullName,
           phone: updates.phone,
-          avatar_url: updates.avatarUrl,
+          avatar_url: finalAvatarUrl,
         },
       });
     } catch {}
