@@ -44,6 +44,7 @@ class NeonQueryBuilder {
   private tableName: string;
   private selectedFields: string = "*";
   private whereClauses: { field: string; op: string; val: any }[] = [];
+  private orClauses: string[] = [];
   private orderField?: string;
   private orderAsc: boolean = true;
   private limitCount?: number;
@@ -85,7 +86,9 @@ class NeonQueryBuilder {
   }
 
   or(conditionStr: string) {
-    // Custom handling or ignore
+    if (conditionStr && typeof conditionStr === "string") {
+      this.orClauses.push(conditionStr);
+    }
     return this;
   }
 
@@ -210,21 +213,53 @@ class NeonQueryBuilder {
     try {
       let query = `SELECT ${this.selectedFields} FROM public."${this.tableName}"`;
       const values: any[] = [];
+      const whereParts: string[] = [];
 
       if (this.whereClauses.length > 0) {
-        const conditions = this.whereClauses.map((c) => {
+        for (const c of this.whereClauses) {
           if (c.op === "IN") {
-            const inPlaceholders = c.val.map((v: any) => {
-              values.push(v);
-              return `$${values.length}`;
-            }).join(", ");
-            return `"${c.field}" IN (${inPlaceholders})`;
+            const inPlaceholders = c.val
+              .map((v: any) => {
+                values.push(v);
+                return `$${values.length}`;
+              })
+              .join(", ");
+            whereParts.push(`"${c.field}" IN (${inPlaceholders})`);
           } else {
             values.push(c.val);
-            return `"${c.field}" ${c.op} $${values.length}`;
+            whereParts.push(`"${c.field}" ${c.op} $${values.length}`);
           }
-        });
-        query += ` WHERE ${conditions.join(" AND ")}`;
+        }
+      }
+
+      // Parse OR clauses like `id.eq.xxx,email.ilike.yyy` or `name.ilike.%term%`
+      if (this.orClauses.length > 0) {
+        for (const orStr of this.orClauses) {
+          const conditions = orStr.split(",");
+          const subConditions: string[] = [];
+          for (const cond of conditions) {
+            const parts = cond.split(".");
+            if (parts.length >= 3) {
+              const field = parts[0];
+              const op = parts[1].toLowerCase();
+              const val = parts.slice(2).join(".");
+              if (op === "eq") {
+                values.push(val);
+                subConditions.push(`"${field}" = $${values.length}`);
+              } else if (op === "ilike") {
+                values.push(val);
+                subConditions.push(`"${field}" ILIKE $${values.length}`);
+              }
+            }
+          }
+          if (subConditions.length > 0) {
+            whereParts.push(`(${subConditions.join(" OR ")})`);
+          }
+        }
+      }
+
+      if (whereParts.length > 0) {
+        query += ` WHERE ${whereParts.join(" AND ")}`;
       }
 
       if (this.orderField) {
@@ -432,7 +467,7 @@ export const neonClient = {
         await sql.query(
           `INSERT INTO public.auth_users (id, email, password_hash, full_name, role, phone, shop_name, approval_status)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-           ON CONFLICT (email) DO UPDATE SET password_hash = $3, full_name = $4, updated_at = NOW()`,
+           ON CONFLICT (email) DO UPDATE SET password_hash = $3, full_name = $4, role = $5, phone = $6, shop_name = $7, approval_status = $8, updated_at = NOW()`,
           [userId, cleanEmail, password, fullName, role, phone, shopName, approvalStatus]
         );
 
@@ -440,7 +475,7 @@ export const neonClient = {
         await sql.query(
           `INSERT INTO public.profiles (id, email, full_name, role, phone, shop_name, approval_status)
            VALUES ($1, $2, $3, $4, $5, $6, $7)
-           ON CONFLICT (id) DO UPDATE SET full_name = $3, phone = $5, shop_name = $6, approval_status = $7, updated_at = NOW()`,
+           ON CONFLICT (id) DO UPDATE SET full_name = $3, role = $4, phone = $5, shop_name = $6, approval_status = $7, updated_at = NOW()`,
           [userId, cleanEmail, fullName, role, phone, shopName, approvalStatus]
         );
 
@@ -512,6 +547,15 @@ export const neonClient = {
         };
       },
     };
+  },
+
+  removeChannel(channel: any) {
+    // Graceful no-op for Neon backend
+    return Promise.resolve("ok");
+  },
+
+  removeAllChannels() {
+    return Promise.resolve("ok");
   },
 };
 
