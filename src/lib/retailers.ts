@@ -468,33 +468,12 @@ export async function lookupRetailerApprovalStatus(
 }
 
 /**
- * Real-time Supabase subscription for retailer approvals
+ * Realtime subscriptions are not offered by the Neon Data API — kept as a
+ * no-op (the old Supabase-shim "realtime" never actually fired either); use
+ * `fetchAllRetailers()` / `handleRefreshRetailers` to get fresh data.
  */
 export function subscribeToRetailersRealtime(
-  callback: (payload: { eventType: string; new?: any; old?: any }) => void
+  _callback: (payload: { eventType: string; new?: any; old?: any }) => void
 ) {
-  try {
-    const channelName = `retailer_approvals_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "retailer_approvals" },
-        (payload) => {
-          callback({
-            eventType: payload.eventType,
-            new: payload.new,
-            old: payload.old,
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  } catch (err) {
-    console.warn("Could not subscribe to retailer approvals realtime:", err);
-    return () => {};
-  }
+  return () => {};
 }

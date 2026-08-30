@@ -128,34 +128,14 @@ export async function markReviewHelpful(reviewId: string): Promise<boolean> {
 }
 
 /**
- * Real-time subscription to review updates
+ * Realtime subscriptions are not offered by the Neon Data API — kept as a
+ * no-op (the old Supabase-shim "realtime" never actually fired either); use
+ * `fetchProductReviews()` to get fresh data.
  */
 export function subscribeToReviewsRealtime(
-  productNumericId: number | undefined,
-  productUuid: string | undefined,
-  onPayload: (payload: { eventType: string; new?: DbReview; old?: { id: string } }) => void
+  _productNumericId: number | undefined,
+  _productUuid: string | undefined,
+  _onPayload: (payload: { eventType: string; new?: DbReview; old?: { id: string } }) => void
 ) {
-  const channelName = `realtime-reviews-${productNumericId || productUuid || "all"}-${Date.now()}`;
-  const channel = supabase
-    .channel(channelName)
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "reviews",
-      },
-      (payload) => {
-        onPayload({
-          eventType: payload.eventType,
-          new: payload.new as DbReview,
-          old: payload.old as { id: string },
-        });
-      }
-    )
-    .subscribe();
-
-  return () => {
-    supabase.removeChannel(channel);
-  };
+  return () => {};
 }

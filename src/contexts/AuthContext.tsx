@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import type { ReactNode } from "react";
-import type { AuthError } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import type { Profile, UserRole } from "../lib/supabase";
 import { checkRetailerApprovalStatus, registerOrUpdateRetailer } from "../lib/retailers";
@@ -94,12 +93,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const email = (sessionUser.email || "").toLowerCase().trim();
-    const isAdmin = email === "admin@subhone.com";
     const profile = await fetchProfile(sessionUser.id);
     const rawMeta = sessionUser.user_metadata || {};
-    const detectedRole: UserRole = isAdmin
-      ? "admin"
-      : profile?.role || (rawMeta.role as UserRole) || "customer";
+    // The admin role is only ever granted by an existing admin updating
+    // `profiles.role` (RLS-protected) — never derived from a magic email.
+    const detectedRole: UserRole = profile?.role || (rawMeta.role as UserRole) || "customer";
+    const isAdmin = detectedRole === "admin";
 
     // Strict Gate: Check if user is blocked
     const currentAccountStatus = profile?.approval_status || (rawMeta.approval_status as string) || "approved";
@@ -263,18 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string, expectedRole?: UserRole): Promise<{ error: string | null }> => {
       setLoading(true);
       const cleanEmail = email.trim();
-      let { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
-
-      if (error && cleanEmail.toLowerCase() === "admin@subhone.com") {
-        const altPass = password === "Subhone@2026" ? "SubhOne@2026" : password === "SubhOne@2026" ? "Subhone@2026" : null;
-        if (altPass) {
-          const retry = await supabase.auth.signInWithPassword({ email: cleanEmail, password: altPass });
-          if (!retry.error && retry.data?.user) {
-            data = retry.data;
-            error = null;
-          }
-        }
-      }
+      const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
 
       if (error) {
         setLoading(false);
@@ -331,9 +319,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
         }
 
-        // Blocked Account Check (All roles except admin master)
+        // Blocked Account Check (admin already handled and returned above)
         const accountStatus = profile?.approval_status || (data.user.user_metadata?.approval_status as string) || "approved";
-        if (accountStatus === "blocked" && userRole !== "admin") {
+        if (accountStatus === "blocked") {
           await supabase.auth.signOut();
           setAppUser(null);
           setLoading(false);
@@ -576,7 +564,7 @@ export function useAuth(): AuthContextValue {
   return ctx;
 }
 
-function friendlyAuthError(error: AuthError): string {
+function friendlyAuthError(error: { message: string }): string {
   const msg = error.message.toLowerCase();
   if (msg.includes("invalid login credentials") || msg.includes("invalid credentials"))
     return "Incorrect email or password. Please try again.";

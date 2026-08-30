@@ -14,6 +14,7 @@ import { fetchUserReviews, submitReview, type DbReview } from "../lib/reviews";
 import { useModalBackHandler } from "../lib/navigation";
 import { StarRow } from "../components/ProductModal";
 import { printOrDownloadInvoice, InvoiceOrderData } from "../lib/invoiceGenerator";
+import { supabase } from "../lib/supabase";
 
 type ProfileSection = "profile" | "addresses" | "orders" | "lab-tests" | "reviews" | "security";
 
@@ -241,10 +242,33 @@ export default function ProfilePage({
   const [passMsg, setPassMsg]   = useState("");
   const [notifs, setNotifs]     = useState({ orders: true, promos: false, reminders: true });
 
-  const handleChangePassword = (e: React.FormEvent) => {
+  const [passSaving, setPassSaving] = useState(false);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPass.length < 6)        { setPassMsg("New password must be at least 6 characters."); return; }
+    if (!curPass)                   { setPassMsg("Enter your current password."); return; }
+    if (newPass.length < 6)         { setPassMsg("New password must be at least 6 characters."); return; }
     if (newPass !== confPass)       { setPassMsg("Passwords don't match."); return; }
+
+    setPassSaving(true);
+    // Re-verify the current password before changing it, since Supabase's
+    // updateUser() doesn't require the current password on its own.
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: curPass,
+    });
+    if (verifyError) {
+      setPassSaving(false);
+      setPassMsg("Current password is incorrect.");
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: newPass });
+    setPassSaving(false);
+    if (error) {
+      setPassMsg(error.message || "Failed to update password.");
+      return;
+    }
     setPassMsg("✓ Password updated successfully!");
     setCurPass(""); setNewPass(""); setConfPass("");
     setTimeout(() => setPassMsg(""), 3000);

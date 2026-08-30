@@ -266,29 +266,15 @@ export async function updateProductStock(
 }
 
 /**
- * Subscribe to real-time changes on the products table with auto-reconnection & fallback
+ * Keep products fresh via polling. The Neon Data API doesn't offer realtime
+ * subscriptions, so this relies entirely on the visibility/online/interval
+ * fallback below (which already did the real work even before this change —
+ * the old Supabase-shim "realtime" channel never actually fired).
  */
 export function subscribeToProductsRealtime(
   callback: (payload: { eventType: string; new: DbProduct; old: Partial<DbProduct> }) => void
 ) {
-  let isSubscribed = false;
-
-  const channel = supabase
-    .channel(`realtime-products-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`)
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "products" },
-      (payload) => {
-        callback(payload as unknown as { eventType: string; new: DbProduct; old: Partial<DbProduct> });
-      }
-    )
-    .subscribe((status) => {
-      if (status === "SUBSCRIBED") {
-        isSubscribed = true;
-      }
-    });
-
-  // Fallback: When app tab regains focus or comes back online, fetch latest products
+  // When app tab regains focus or comes back online, fetch latest products
   const handleVisibilityOrOnline = () => {
     if (document.visibilityState === "visible" || navigator.onLine) {
       fetchProducts().then((latest) => {
@@ -321,6 +307,5 @@ export function subscribeToProductsRealtime(
     window.removeEventListener("online", handleVisibilityOrOnline);
     document.removeEventListener("visibilitychange", handleVisibilityOrOnline);
     clearInterval(pollInterval);
-    supabase.removeChannel(channel);
   };
 }

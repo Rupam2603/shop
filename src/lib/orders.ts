@@ -144,8 +144,10 @@ export async function placeOrder(params: {
       console.warn("Supabase order insert error:", e);
     }
 
-    // 2. Insert order items (no `id` — let Supabase auto-generate the UUID primary key)
-    const orderItemsPayload = params.items.map((item) => ({
+    // 2. Insert order items (the DB auto-generates its own id on insert below;
+    // this client-side id is only used for the optimistic local cache copy)
+    const orderItemsPayload: DbOrderItem[] = params.items.map((item) => ({
+      id: crypto.randomUUID(),
       order_id: orderId,
       product_id: item.productId || null,
       product_name: item.name,
@@ -490,50 +492,15 @@ export async function fetchOrderByNumber(orderNumberOrId: string): Promise<DbOrd
 }
 
 /**
- * Subscribe to realtime updates for a specific user's orders
+ * Realtime subscriptions are not offered by the Neon Data API. These are kept
+ * as no-ops (matching prior behavior, since the old Supabase-shim "realtime"
+ * never actually fired either) so call sites that expect an unsubscribe
+ * function keep working; use the explicit refresh handlers instead.
  */
-export function subscribeToUserOrdersRealtime(userId: string, onUpdate: () => void) {
-  const channel = supabase
-    .channel(`user-orders-${userId}-${Date.now()}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "orders",
-        filter: `user_id=eq.${userId}`,
-      },
-      () => {
-        onUpdate();
-      }
-    )
-    .subscribe();
-
-  return () => {
-    supabase.removeChannel(channel);
-  };
+export function subscribeToUserOrdersRealtime(_userId: string, _onUpdate: () => void) {
+  return () => {};
 }
 
-/**
- * Subscribe to realtime updates for all orders
- */
-export function subscribeToOrdersRealtime(onUpdate: (payload: any) => void) {
-  const channel = supabase
-    .channel(`public-orders-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "orders",
-      },
-      (payload) => {
-        onUpdate(payload);
-      }
-    )
-    .subscribe();
-
-  return () => {
-    supabase.removeChannel(channel);
-  };
+export function subscribeToOrdersRealtime(_onUpdate: (payload: any) => void) {
+  return () => {};
 }

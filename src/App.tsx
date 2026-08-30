@@ -16,6 +16,7 @@ import CheckoutModal from "./components/CheckoutModal";
 import OrderTrackingModal from "./components/OrderTrackingModal";
 import { useAuth, toLegacyUser } from "./contexts/AuthContext";
 import { parseHashToState, pushPageState, replacePageState } from "./lib/navigation";
+import { supabase } from "./lib/supabase";
 
 export type Page = "home" | "medicines" | "category" | "insurance" | "vaccines" | "lab-tests" | "consult" | "offers" | "profile" | "checkout";
 export type UserRole = "admin" | "retailer" | "customer";
@@ -80,7 +81,86 @@ function LoadingScreen() {
   );
 }
 
+/**
+ * Landing page for the "reset your password" email link
+ * (`?token=...`, from `resetPassword()` in AuthContext). Better Auth's
+ * password-reset confirmation isn't part of the Supabase-compatible API
+ * surface, so it's called via the adapter's `getBetterAuthInstance()`
+ * escape hatch.
+ */
+function ResetPasswordScreen({ token }: { token: string }) {
+  const [newPass, setNewPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
+  const [status, setStatus] = useState<"idle" | "saving" | "done" | "error">("idle");
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPass.length < 6) return setError("Password must be at least 6 characters.");
+    if (newPass !== confirmPass) return setError("Passwords don't match.");
+
+    setStatus("saving");
+    setError("");
+    try {
+      const betterAuth = (supabase.auth as any).getBetterAuthInstance?.();
+      if (!betterAuth) throw new Error("Password reset isn't available right now.");
+      const { error: resetError } = await betterAuth.resetPassword({ newPassword: newPass, token });
+      if (resetError) throw new Error(resetError.message || "Failed to reset password.");
+      setStatus("done");
+    } catch (err: any) {
+      setStatus("error");
+      setError(err?.message || "Failed to reset password. The link may have expired — request a new one.");
+    }
+  };
+
+  if (status === "done") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f5fbf2] px-4">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
+          <p className="text-[#073b4c] font-bold text-lg mb-2">Password updated</p>
+          <p className="text-sm text-gray-600 mb-4">You can now sign in with your new password.</p>
+          <a href="/" className="inline-block bg-[#006a39] text-white font-bold text-sm px-6 py-3 rounded-lg">
+            Go to Sign In
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#f5fbf2] px-4">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full">
+        <p className="text-[#073b4c] font-bold text-lg mb-1">Set a new password</p>
+        <p className="text-sm text-gray-600 mb-4">Enter a new password for your account.</p>
+        {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+        <input
+          type="password"
+          placeholder="New password"
+          value={newPass}
+          onChange={(e) => setNewPass(e.target.value)}
+          className="w-full border rounded-lg px-3 py-2 mb-3 text-sm"
+        />
+        <input
+          type="password"
+          placeholder="Confirm new password"
+          value={confirmPass}
+          onChange={(e) => setConfirmPass(e.target.value)}
+          className="w-full border rounded-lg px-3 py-2 mb-4 text-sm"
+        />
+        <button
+          type="submit"
+          disabled={status === "saving"}
+          className="w-full bg-[#006a39] text-white font-bold text-sm px-6 py-3 rounded-lg disabled:opacity-60"
+        >
+          {status === "saving" ? "Saving…" : "Set New Password"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export default function App() {
+  const resetToken = new URLSearchParams(window.location.search).get("token");
   const { appUser, loading, signOut, updateProfile } = useAuth();
   const [activePage, setActivePage] = useState<Page>(() => parseHashToState().page);
   const [initialCategory, setInitialCategory] = useState<string>(() => parseHashToState().category);
@@ -129,6 +209,9 @@ export default function App() {
   const openTracking = (orderNumber?: string) => {
     setTrackingModal({ open: true, orderNumber: orderNumber || null });
   };
+
+  // ── Password reset link landing page (works regardless of auth state) ────
+  if (resetToken) return <ResetPasswordScreen token={resetToken} />;
 
   // ── Show spinner while resolving the session (max 1s due to timeout in AuthContext) ──
   if (loading) return <LoadingScreen />;

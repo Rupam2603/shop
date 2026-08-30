@@ -6,14 +6,12 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
+    "start": "vite start",
     "preview": "vite preview",
     "format": "oxfmt"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.1.0",
-    "@supabase/server": "^1.4.1",
-    "@supabase/ssr": "^0.12.5",
-    "@supabase/supabase-js": "^2.112.4",
+    "@neondatabase/neon-js": "^0.7.0-beta",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
