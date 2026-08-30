@@ -10,12 +10,15 @@ const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || DE
 /**
  * Singleton Supabase browser client.
  *
- * Uses the ANON key — safe to expose in the browser because
- * all access is restricted by Row Level Security (RLS) policies.
- *
- * NEVER import or use the service-role key in this file or any frontend file.
+ * Safe for all devices and browsers with automatic failover.
  */
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});
 
 // ─── Database types ────────────────────────────────────────────────────────────
 

@@ -160,21 +160,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Safety timeout: Never let the app hang on loading for more than 1 second
+    const timeoutTimer = setTimeout(() => {
       if (mounted) {
-        if (session?.user) {
-          hydrateSession(session.user);
-        } else {
+        setLoading(false);
+      }
+    }, 1000);
+
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (mounted) {
+          clearTimeout(timeoutTimer);
+          if (data?.session?.user) {
+            hydrateSession(data.session.user);
+          } else {
+            setAppUser(null);
+            setLoading(false);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn("getSession error:", err);
+        if (mounted) {
+          clearTimeout(timeoutTimer);
           setAppUser(null);
           setLoading(false);
         }
-      }
-    });
+      });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (mounted) {
+        clearTimeout(timeoutTimer);
         if (session?.user) {
           hydrateSession(session.user);
         } else {
@@ -186,6 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
+      clearTimeout(timeoutTimer);
       subscription.unsubscribe();
     };
   }, [hydrateSession]);

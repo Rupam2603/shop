@@ -130,10 +130,7 @@ export default function App() {
     setTrackingModal({ open: true, orderNumber: orderNumber || null });
   };
 
-  // ── Show spinner while resolving the session ───────────────────────────────
-  if (loading && appUser === undefined) return <LoadingScreen />;
-
-  // ── Convert profile to the shape existing components expect ───────────────
+  // ── Instant non-blocking rendering (fallback to customer/guest while session hydrates) ──
   const currentUser: CurrentUser | null = appUser ? toLegacyUser(appUser) : null;
 
   // ── Admin → redirect to admin dashboard ──────────────────────────────────
