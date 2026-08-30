@@ -162,3 +162,44 @@ export async function updateAdminProfileInDb(
     return { success: false, error: err?.message || "Failed to update profile." };
   }
 }
+
+/**
+ * Real-time listener for store_settings table updates
+ */
+export function subscribeToStoreSettingsRealtime(
+  callback: (settings: StoreSettings) => void
+) {
+  const channel = supabase
+    .channel("store_settings_changes")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "store_settings",
+      },
+      (payload) => {
+        if (payload.new && typeof payload.new === "object") {
+          const raw = payload.new as any;
+          const s: StoreSettings = {
+            storeName: raw.store_name || DEFAULT_STORE_SETTINGS.storeName,
+            phone: raw.phone || DEFAULT_STORE_SETTINGS.phone,
+            email: raw.email || DEFAULT_STORE_SETTINGS.email,
+            address: raw.address || DEFAULT_STORE_SETTINGS.address,
+            lowThreshold: raw.low_threshold || DEFAULT_STORE_SETTINGS.lowThreshold,
+            defaultDisc: raw.default_disc || DEFAULT_STORE_SETTINGS.defaultDisc,
+            emailAlerts: raw.email_alerts ?? DEFAULT_STORE_SETTINGS.emailAlerts,
+            smsAlerts: raw.sms_alerts ?? DEFAULT_STORE_SETTINGS.smsAlerts,
+            autoReorder: raw.auto_reorder ?? DEFAULT_STORE_SETTINGS.autoReorder,
+          };
+          localStorage.setItem("subhone_admin_settings", JSON.stringify(s));
+          callback(s);
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}

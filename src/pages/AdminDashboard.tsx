@@ -37,6 +37,7 @@ import {
   fetchStoreSettings,
   saveStoreSettingsToDb,
   updateAdminProfileInDb,
+  subscribeToStoreSettingsRealtime,
   DEFAULT_STORE_SETTINGS,
 } from "../lib/settings";
 
@@ -974,10 +975,15 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       });
     });
 
+    const unsubscribeSettings = subscribeToStoreSettingsRealtime((freshSettings) => {
+      if (mounted && freshSettings) setSettings(freshSettings);
+    });
+
     return () => {
       mounted = false;
       unsubscribeProducts();
       unsubscribeRetailers();
+      unsubscribeSettings();
     };
   }, []);
 
@@ -3261,18 +3267,38 @@ function SettingsTab({
 
       {/* ── 2. Pharmacy & Store Identity ── */}
       <div className="glass-admin-card rounded-3xl p-6 sm:p-8">
-        <div className="flex items-center gap-3 mb-5 border-b border-[#e4ede2]/80 pb-4">
-          <div className="w-9 h-9 rounded-2xl bg-teal-100/80 text-teal-800 flex items-center justify-center shadow-xs">
-            <Icons.Store className="w-4 h-4 text-[#006a39]" />
+        <div className="flex items-center justify-between gap-4 mb-5 border-b border-[#e4ede2]/80 pb-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-2xl bg-teal-100/80 text-teal-800 flex items-center justify-center shadow-xs">
+              <Icons.Store className="w-4 h-4 text-[#006a39]" />
+            </div>
+            <div>
+              <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base">
+                Pharmacy & Store Identity
+              </h3>
+              <p className="text-xs text-[#657969]">
+                Official public details stored in Supabase & displayed on invoices
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base">
-              Pharmacy & Store Identity
-            </h3>
-            <p className="text-xs text-[#657969]">
-              Official public details displayed on customer and retailer invoices
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={handleSaveSettings}
+            disabled={saveStatus === "saving"}
+            className="px-4 py-2 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] text-white text-xs font-extrabold hover:opacity-95 transition-all shadow-md shadow-emerald-950/15 cursor-pointer flex items-center gap-2 disabled:opacity-50"
+          >
+            {saveStatus === "saving" ? (
+              <>
+                <Icons.Refresh className="w-3.5 h-3.5 text-white animate-spin" />
+                <span>Saving to Database...</span>
+              </>
+            ) : (
+              <>
+                <Icons.Save className="w-3.5 h-3.5 text-white" />
+                <span>Save Pharmacy Details</span>
+              </>
+            )}
+          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -3284,6 +3310,7 @@ function SettingsTab({
               type="text"
               value={settings.storeName}
               onChange={(e) => setSettings((p) => ({ ...p, storeName: e.target.value }))}
+              placeholder="e.g. SubhOne Health Group"
               className={INPUT_CLS}
             />
           </div>
@@ -3295,6 +3322,7 @@ function SettingsTab({
               type="text"
               value={settings.phone}
               onChange={(e) => setSettings((p) => ({ ...p, phone: e.target.value }))}
+              placeholder="e.g. +91 98765 43210"
               className={INPUT_CLS}
             />
           </div>
@@ -3306,6 +3334,7 @@ function SettingsTab({
               type="email"
               value={settings.email}
               onChange={(e) => setSettings((p) => ({ ...p, email: e.target.value }))}
+              placeholder="e.g. support@subhone.com"
               className={INPUT_CLS}
             />
           </div>
@@ -3317,6 +3346,7 @@ function SettingsTab({
               type="text"
               value={settings.address}
               onChange={(e) => setSettings((p) => ({ ...p, address: e.target.value }))}
+              placeholder="e.g. Serampore, Hooghly, West Bengal, 712203"
               className={INPUT_CLS}
             />
           </div>
