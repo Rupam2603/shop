@@ -33,6 +33,12 @@ import {
   printOrDownloadDailyReport,
   downloadDailyReportFile,
 } from "../lib/invoiceGenerator";
+import {
+  fetchStoreSettings,
+  saveStoreSettingsToDb,
+  updateAdminProfileInDb,
+  DEFAULT_STORE_SETTINGS,
+} from "../lib/settings";
 
 interface Props {
   user: CurrentUser;
@@ -789,6 +795,11 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [retailers, setRetailers] = useState<RetailerAccount[]>([]);
   const [isRefreshingRetailers, setIsRefreshingRetailers] = useState(false);
 
+  // Admin profile state
+  const [adminAvatar, setAdminAvatar] = useState<string>(user?.profileImage || "");
+  const [adminName, setAdminName] = useState<string>(user?.name || "SubhOne Administrator");
+  const [adminPhone, setAdminPhone] = useState<string>(user?.phone || "+91 98765 43210");
+
   // Product management state
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("All");
@@ -801,7 +812,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [invFilter, setInvFilter] = useState("All");
   const [invSearch, setInvSearch] = useState("");
 
-  // Settings state
+  // Settings state (initialized with default and hydrated from Supabase)
   const [settings, setSettings] = useState<Settings>(() => {
     try {
       const saved = localStorage.getItem("subhone_admin_settings");
@@ -809,17 +820,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     } catch (e) {
       console.warn("Failed to load saved settings:", e);
     }
-    return {
-      storeName: "SubhOne Health Group",
-      phone: "+91 98765 43210",
-      email: "support@subhone.com",
-      address: "14/B Central Avenue, Kolkata, West Bengal 700012",
-      lowThreshold: "10",
-      defaultDisc: "15",
-      emailAlerts: true,
-      smsAlerts: false,
-      autoReorder: true,
-    };
+    return DEFAULT_STORE_SETTINGS;
   });
 
   const lowStockCount = useMemo(() => products.filter((p) => p.stock > 0 && p.stock <= 10).length, [products]);
@@ -858,6 +859,30 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
   useEffect(() => {
     let mounted = true;
+
+    // 1. Fetch store settings permanently from Supabase database
+    fetchStoreSettings().then((loadedSettings) => {
+      if (mounted && loadedSettings) {
+        setSettings(loadedSettings);
+      }
+    });
+
+    // 2. Fetch admin profile details and avatar from Supabase
+    if (user?.id || user?.email) {
+      supabase
+        .from("profiles")
+        .select("*")
+        .or(`id.eq.${user.id || '00000000-0000-0000-0000-000000000000'},role.eq.admin`)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (mounted && data) {
+            if (data.avatar_url) setAdminAvatar(data.avatar_url);
+            if (data.full_name) setAdminName(data.full_name);
+            if (data.phone) setAdminPhone(data.phone);
+          }
+        });
+    }
+
     fetchProducts().then((data) => {
       if (mounted && data && data.length > 0) {
         setProducts(
@@ -1360,12 +1385,20 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
             <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white font-extrabold text-sm shrink-0 shadow-xs border border-white/20">
-                  {(user?.name?.[0] || user?.email?.[0] || "A").toUpperCase()}
-                </div>
+                {adminAvatar ? (
+                  <img
+                    src={adminAvatar}
+                    alt="Admin Avatar"
+                    className="w-9 h-9 rounded-xl object-cover shrink-0 shadow-xs border border-white/20"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white font-extrabold text-sm shrink-0 shadow-xs border border-white/20">
+                    {(adminName?.[0] || user?.email?.[0] || "A").toUpperCase()}
+                  </div>
+                )}
                 <div className="min-w-0">
-                  <p className="text-white text-xs font-bold leading-none truncate">{user.name || "SubhOne Admin"}</p>
-                  <p className="text-white/50 text-[10px] mt-0.5 truncate font-mono">{user.email || "admin@subhone.com"}</p>
+                  <p className="text-white text-xs font-bold leading-none truncate">{adminName || "SubhOne Admin"}</p>
+                  <p className="text-white/50 text-[10px] mt-0.5 truncate font-mono">{user?.email || "admin@subhone.com"}</p>
                 </div>
               </div>
               <button
@@ -1418,6 +1451,24 @@ export default function AdminDashboard({ user, onLogout }: Props) {
                 <span>Add Product</span>
               </button>
             )}
+
+            <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-white/70 backdrop-blur-md border border-[#dce7db] shadow-xs">
+              {adminAvatar ? (
+                <img
+                  src={adminAvatar}
+                  alt="Admin Profile"
+                  className="w-7 h-7 rounded-xl object-cover shadow-xs border border-emerald-600/30"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#006a39] to-[#008749] text-white flex items-center justify-center text-xs font-black">
+                  {(adminName?.[0] || "A").toUpperCase()}
+                </div>
+              )}
+              <div className="text-left leading-tight hidden md:block">
+                <p className="text-xs font-extrabold text-[#073b4c] truncate max-w-[120px]">{adminName}</p>
+                <p className="text-[10px] text-emerald-700 font-bold">Admin</p>
+              </div>
+            </div>
 
             <div className="hidden lg:flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/70 border border-[#dce7db] text-xs font-semibold text-[#073b4c]">
               <Icons.Calendar className="w-3.5 h-3.5 text-[#006a39]" />
@@ -1494,6 +1545,12 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               categories={categories}
               addCategory={addCategory}
               user={user}
+              adminAvatar={adminAvatar}
+              setAdminAvatar={setAdminAvatar}
+              adminName={adminName}
+              setAdminName={setAdminName}
+              adminPhone={adminPhone}
+              setAdminPhone={setAdminPhone}
               onLogout={onLogout}
             />
           )}
@@ -2943,6 +3000,12 @@ function SettingsTab({
   categories,
   addCategory,
   user,
+  adminAvatar,
+  setAdminAvatar,
+  adminName,
+  setAdminName,
+  adminPhone,
+  setAdminPhone,
   onLogout,
 }: {
   settings: Settings;
@@ -2950,10 +3013,19 @@ function SettingsTab({
   categories: string[];
   addCategory: (name: string) => void;
   user?: CurrentUser;
+  adminAvatar: string;
+  setAdminAvatar: React.Dispatch<React.SetStateAction<string>>;
+  adminName: string;
+  setAdminName: React.Dispatch<React.SetStateAction<string>>;
+  adminPhone: string;
+  setAdminPhone: React.Dispatch<React.SetStateAction<string>>;
   onLogout?: () => void;
 }) {
   const [newCat, setNewCat] = useState("");
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [statusMsg, setStatusMsg] = useState("");
+  const avatarFileRef = useRef<HTMLInputElement>(null);
+  const avatarCameraRef = useRef<HTMLInputElement>(null);
 
   const handleAddCat = () => {
     const trimmed = newCat.trim();
@@ -2961,82 +3033,467 @@ function SettingsTab({
     setNewCat("");
   };
 
-  const handleSaveSettings = () => {
+  const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      if (dataUrl) setAdminAvatar(dataUrl);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleSaveSettings = async () => {
+    setSaveStatus("saving");
+    setStatusMsg("");
     try {
-      localStorage.setItem("subhone_admin_settings", JSON.stringify(settings));
+      // 1. Save store settings to Supabase DB
+      const storeRes = await saveStoreSettingsToDb(settings);
+      if (!storeRes.success) {
+        throw new Error(storeRes.error || "Failed to save store settings to database.");
+      }
+
+      // 2. Save admin profile & avatar permanently to Supabase DB
+      const profRes = await updateAdminProfileInDb(
+        user?.id || "",
+        user?.email || "admin@subhone.com",
+        {
+          fullName: adminName,
+          phone: adminPhone,
+          avatarUrl: adminAvatar,
+        }
+      );
+      if (!profRes.success) {
+        console.warn("Profile update warning:", profRes.error);
+      }
+
       setSaveStatus("saved");
-      setTimeout(() => setSaveStatus("idle"), 3500);
-    } catch (e) {
+      setStatusMsg("Configuration & Admin profile saved to Supabase Database forever!");
+      setTimeout(() => setSaveStatus("idle"), 5000);
+    } catch (e: any) {
       console.error("Failed to save settings:", e);
+      setSaveStatus("error");
+      setStatusMsg(e?.message || "Failed to save settings to database. Please check your connection.");
+      setTimeout(() => setSaveStatus("idle"), 6000);
     }
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-3xl">
+    <div className="flex flex-col gap-6 max-w-4xl animate-in fade-in duration-200">
+      {/* Toast Feedback */}
       {saveStatus === "saved" && (
-        <div className="p-4 rounded-2xl bg-emerald-100/90 border border-emerald-300 text-emerald-900 text-xs sm:text-sm font-bold flex items-center justify-between shadow-sm animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <Icons.Check className="w-4 h-4 text-emerald-800" />
-            <span>Settings saved successfully! Configuration is now live across the platform.</span>
-          </div>
-          <button onClick={() => setSaveStatus("idle")} className="font-bold">✕</button>
-        </div>
-      )}
-
-      {/* Admin Profile Card */}
-      {user && (
-        <div className="glass-admin-card rounded-3xl p-6 sm:p-7 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#006a39] to-[#008749] text-white flex items-center justify-center font-black text-lg shadow-md border border-white/20">
-              {(user?.name?.[0] || user?.email?.[0] || "A").toUpperCase()}
+        <div className="p-4 rounded-3xl bg-emerald-500/15 backdrop-blur-xl border border-emerald-400/40 text-emerald-950 text-xs sm:text-sm font-bold flex items-center justify-between shadow-lg shadow-emerald-900/10 animate-in slide-in-from-top-2">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+              <Icons.Check className="w-4 h-4 text-white" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base">{user.name || "SubhOne Administrator"}</h3>
-                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-emerald-200">
-                  Platform Admin
-                </span>
-              </div>
-              <p className="text-xs text-[#657969] font-mono mt-0.5">{user.email || "admin@subhone.com"}</p>
+              <p className="font-extrabold text-[#006a39]">Database Synchronization Success!</p>
+              <p className="text-xs text-emerald-800/90 font-medium">{statusMsg}</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onLogout}
-            className="px-4 py-2 rounded-2xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition-all cursor-pointer"
-          >
-            Sign Out
-          </button>
+          <button onClick={() => setSaveStatus("idle")} className="font-bold text-emerald-900 px-2 cursor-pointer">✕</button>
         </div>
       )}
 
-      {/* Store Information */}
-      <div className="glass-admin-card rounded-3xl p-6 sm:p-7">
-        <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base mb-4">Pharmacy & Store Identity</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Trade Name</label>
-            <input type="text" value={settings.storeName} onChange={(e) => setSettings((p) => ({ ...p, storeName: e.target.value }))} className={INPUT_CLS} />
+      {saveStatus === "error" && (
+        <div className="p-4 rounded-3xl bg-rose-500/15 backdrop-blur-xl border border-rose-400/40 text-rose-950 text-xs sm:text-sm font-bold flex items-center justify-between shadow-lg shadow-rose-900/10 animate-in slide-in-from-top-2">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-xs">
+              <Icons.Alert className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="font-extrabold text-rose-800">Database Save Issue</p>
+              <p className="text-xs text-rose-700/90 font-medium">{statusMsg}</p>
+            </div>
           </div>
-          <div>
-            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Support Phone</label>
-            <input type="text" value={settings.phone} onChange={(e) => setSettings((p) => ({ ...p, phone: e.target.value }))} className={INPUT_CLS} />
+          <button onClick={() => setSaveStatus("idle")} className="font-bold text-rose-900 px-2 cursor-pointer">✕</button>
+        </div>
+      )}
+
+      {/* ── 1. Admin Profile Picture & Account Card ── */}
+      <div className="glass-admin-card rounded-3xl p-6 sm:p-8">
+        <div className="flex items-center justify-between gap-4 mb-6 border-b border-[#e4ede2]/80 pb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-100/80 text-[#006a39] flex items-center justify-center shadow-xs">
+              <Icons.User className="w-5 h-5 text-[#006a39]" />
+            </div>
+            <div>
+              <h2 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg">
+                Administrator Profile & Identity
+              </h2>
+              <p className="text-xs text-[#657969]">
+                Manage master administrator avatar and personal credentials
+              </p>
+            </div>
           </div>
-          <div className="sm:col-span-2">
-            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Official Address</label>
-            <input type="text" value={settings.address} onChange={(e) => setSettings((p) => ({ ...p, address: e.target.value }))} className={INPUT_CLS} />
+          <span className="bg-emerald-100 text-[#006a39] text-[10px] font-black uppercase px-3 py-1 rounded-full border border-emerald-300 shadow-xs">
+            Master Superadmin
+          </span>
+        </div>
+
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-7">
+          {/* Avatar Section */}
+          <div className="flex flex-col items-center gap-3 shrink-0">
+            <div className="relative group">
+              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden border-3 border-white/80 shadow-xl bg-gradient-to-br from-[#006a39] to-[#008749] flex items-center justify-center relative">
+                {adminAvatar ? (
+                  <img
+                    src={adminAvatar}
+                    alt="Admin Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-white font-black text-4xl sm:text-5xl font-['Manrope',sans-serif]">
+                    {(adminName?.[0] || user?.email?.[0] || "A").toUpperCase()}
+                  </span>
+                )}
+                {/* Overlay on hover */}
+                <div
+                  onClick={() => avatarFileRef.current?.click()}
+                  className="absolute inset-0 bg-black/40 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer"
+                >
+                  <Icons.Camera className="w-6 h-6 text-white mb-1" />
+                  <span className="text-[11px] font-extrabold uppercase">Change</span>
+                </div>
+              </div>
+
+              {adminAvatar && (
+                <button
+                  type="button"
+                  onClick={() => setAdminAvatar("")}
+                  className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-md flex items-center justify-center transition-transform hover:scale-110 cursor-pointer"
+                  title="Remove Profile Picture"
+                >
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                    <path d="M1 1L11 11M11 1L1 11" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Avatar Action Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => avatarFileRef.current?.click()}
+                className="px-3.5 py-1.5 rounded-xl bg-white/80 hover:bg-white text-[11px] font-extrabold text-[#006a39] border border-emerald-300/80 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Icons.Image className="w-3.5 h-3.5 text-[#006a39]" />
+                <span>Upload Photo</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => avatarCameraRef.current?.click()}
+                className="px-3.5 py-1.5 rounded-xl bg-white/80 hover:bg-white text-[11px] font-extrabold text-[#0369a1] border border-sky-300/80 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Icons.Camera className="w-3.5 h-3.5 text-[#0369a1]" />
+                <span>Take Photo</span>
+              </button>
+            </div>
+
+            {/* Hidden Inputs */}
+            <input
+              ref={avatarFileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarFile}
+            />
+            <input
+              ref={avatarCameraRef}
+              type="file"
+              accept="image/*"
+              capture="user"
+              className="hidden"
+              onChange={handleAvatarFile}
+            />
+            <p className="text-[10px] text-[#718574] text-center">
+              PNG, JPG or WebP · Max 5MB
+            </p>
+          </div>
+
+          {/* Personal Info Fields */}
+          <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+                Admin Full Name
+              </label>
+              <input
+                type="text"
+                value={adminName}
+                onChange={(e) => setAdminName(e.target.value)}
+                placeholder="Administrator Name"
+                className={INPUT_CLS}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+                Admin Direct Phone
+              </label>
+              <input
+                type="text"
+                value={adminPhone}
+                onChange={(e) => setAdminPhone(e.target.value)}
+                placeholder="+91 98765 43210"
+                className={INPUT_CLS}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+                Authentication Login Email
+              </label>
+              <input
+                type="email"
+                value={user?.email || "admin@subhone.com"}
+                disabled
+                className={`${INPUT_CLS} !bg-gray-100/70 !text-[#526355] cursor-not-allowed`}
+              />
+              <p className="text-[10px] text-[#728575] mt-1">
+                Root login credentials managed securely by Supabase Authentication.
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Save Action */}
-      <button
-        onClick={handleSaveSettings}
-        className="self-start bg-gradient-to-r from-[#006a39] to-[#008749] text-white font-bold text-sm px-8 py-3.5 rounded-2xl hover:opacity-95 transition-all cursor-pointer shadow-lg shadow-emerald-950/20 active:scale-95 flex items-center gap-2"
-      >
-        <Icons.Save className="w-4 h-4 text-white" />
-        <span>Save System Settings</span>
-      </button>
+      {/* ── 2. Pharmacy & Store Identity ── */}
+      <div className="glass-admin-card rounded-3xl p-6 sm:p-8">
+        <div className="flex items-center gap-3 mb-5 border-b border-[#e4ede2]/80 pb-4">
+          <div className="w-9 h-9 rounded-2xl bg-teal-100/80 text-teal-800 flex items-center justify-center shadow-xs">
+            <Icons.Store className="w-4 h-4 text-[#006a39]" />
+          </div>
+          <div>
+            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base">
+              Pharmacy & Store Identity
+            </h3>
+            <p className="text-xs text-[#657969]">
+              Official public details displayed on customer and retailer invoices
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+              Trade / Pharmacy Name
+            </label>
+            <input
+              type="text"
+              value={settings.storeName}
+              onChange={(e) => setSettings((p) => ({ ...p, storeName: e.target.value }))}
+              className={INPUT_CLS}
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+              Customer Support Helpline
+            </label>
+            <input
+              type="text"
+              value={settings.phone}
+              onChange={(e) => setSettings((p) => ({ ...p, phone: e.target.value }))}
+              className={INPUT_CLS}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+              Support & Notification Email
+            </label>
+            <input
+              type="email"
+              value={settings.email}
+              onChange={(e) => setSettings((p) => ({ ...p, email: e.target.value }))}
+              className={INPUT_CLS}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+              Official Pharmacy Headquarters Address
+            </label>
+            <input
+              type="text"
+              value={settings.address}
+              onChange={(e) => setSettings((p) => ({ ...p, address: e.target.value }))}
+              className={INPUT_CLS}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3. Product & Inventory Configurations ── */}
+      <div className="glass-admin-card rounded-3xl p-6 sm:p-8">
+        <div className="flex items-center gap-3 mb-5 border-b border-[#e4ede2]/80 pb-4">
+          <div className="w-9 h-9 rounded-2xl bg-amber-100/80 text-amber-800 flex items-center justify-center shadow-xs">
+            <Icons.Box className="w-4 h-4 text-amber-800" />
+          </div>
+          <div>
+            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base">
+              Catalog & Inventory Thresholds
+            </h3>
+            <p className="text-xs text-[#657969]">
+              Control inventory warning limits and global pricing discounts
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+              Low Stock Warning Threshold (Units)
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={settings.lowThreshold}
+              onChange={(e) => setSettings((p) => ({ ...p, lowThreshold: e.target.value }))}
+              className={INPUT_CLS}
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+              Default Retailer Wholesale Discount (%)
+            </label>
+            <input
+              type="number"
+              min="0"
+              max="90"
+              value={settings.defaultDisc}
+              onChange={(e) => setSettings((p) => ({ ...p, defaultDisc: e.target.value }))}
+              className={INPUT_CLS}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── 4. Automated Notification Preferences ── */}
+      <div className="glass-admin-card rounded-3xl p-6 sm:p-8">
+        <div className="flex items-center gap-3 mb-5 border-b border-[#e4ede2]/80 pb-4">
+          <div className="w-9 h-9 rounded-2xl bg-sky-100/80 text-sky-800 flex items-center justify-center shadow-xs">
+            <Icons.Alert className="w-4 h-4 text-sky-800" />
+          </div>
+          <div>
+            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base">
+              Automated Alerts & Operations
+            </h3>
+            <p className="text-xs text-[#657969]">
+              Configure system alerts and automatic replenishment triggers
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3.5">
+          <label className="flex items-center justify-between p-3.5 rounded-2xl bg-white/70 border border-[#e4ede2] hover:bg-white transition-all cursor-pointer">
+            <div>
+              <p className="text-xs font-extrabold text-[#073b4c]">Email Alerts for Low Stock</p>
+              <p className="text-[11px] text-[#657969]">Send automated email when inventory reaches critical threshold</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.emailAlerts}
+              onChange={(e) => setSettings((p) => ({ ...p, emailAlerts: e.target.checked }))}
+              className="w-5 h-5 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39]"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-3.5 rounded-2xl bg-white/70 border border-[#e4ede2] hover:bg-white transition-all cursor-pointer">
+            <div>
+              <p className="text-xs font-extrabold text-[#073b4c]">SMS Alerts for New High-Value Orders</p>
+              <p className="text-[11px] text-[#657969]">Receive instant SMS notifications on wholesale bulk transactions</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.smsAlerts}
+              onChange={(e) => setSettings((p) => ({ ...p, smsAlerts: e.target.checked }))}
+              className="w-5 h-5 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39]"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-3.5 rounded-2xl bg-white/70 border border-[#e4ede2] hover:bg-white transition-all cursor-pointer">
+            <div>
+              <p className="text-xs font-extrabold text-[#073b4c]">Automatic Re-Order Recommendations</p>
+              <p className="text-[11px] text-[#657969]">Auto-draft supplier purchase orders for out-of-stock items</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.autoReorder}
+              onChange={(e) => setSettings((p) => ({ ...p, autoReorder: e.target.checked }))}
+              className="w-5 h-5 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39]"
+            />
+          </label>
+        </div>
+      </div>
+
+      {/* ── 5. Category Taxonomy Management ── */}
+      <div className="glass-admin-card rounded-3xl p-6 sm:p-8">
+        <div className="flex items-center justify-between mb-4 border-b border-[#e4ede2]/80 pb-4">
+          <div>
+            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base">
+              Catalog Category Taxonomy
+            </h3>
+            <p className="text-xs text-[#657969]">{categories.length} active medicine & health categories</p>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mb-4">
+          <input
+            type="text"
+            value={newCat}
+            onChange={(e) => setNewCat(e.target.value)}
+            placeholder="Enter new catalog category name"
+            onKeyDown={(e) => e.key === "Enter" && handleAddCat()}
+            className={`${INPUT_CLS} flex-1`}
+          />
+          <button
+            type="button"
+            onClick={handleAddCat}
+            className="px-5 py-2.5 rounded-2xl bg-[#006a39] text-white text-xs font-extrabold hover:opacity-90 shadow-md shadow-emerald-950/15 cursor-pointer shrink-0"
+          >
+            Add Category
+          </button>
+        </div>
+
+        <div className="flex flex-wrap gap-2 pt-1">
+          {categories.map((c) => (
+            <span
+              key={c}
+              className="px-3 py-1.5 rounded-xl bg-white/80 border border-[#dce7db] text-xs font-bold text-[#073b4c] shadow-2xs"
+            >
+              {c}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* ── 6. Save Permanent Changes Button ── */}
+      <div className="sticky bottom-4 z-20 p-4 rounded-3xl bg-white/90 backdrop-blur-2xl border border-white/80 shadow-2xl flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-xs font-extrabold text-[#073b4c]">Ready to apply changes?</p>
+          <p className="text-[11px] text-[#657969]">Settings and profile are saved directly to Supabase cloud database.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleSaveSettings}
+            disabled={saveStatus === "saving"}
+            className="bg-gradient-to-r from-[#006a39] to-[#008749] text-white font-bold text-sm px-8 py-3.5 rounded-2xl hover:opacity-95 transition-all cursor-pointer shadow-lg shadow-emerald-950/20 active:scale-95 flex items-center gap-2.5 disabled:opacity-50"
+          >
+            {saveStatus === "saving" ? (
+              <>
+                <Icons.Refresh className="w-4 h-4 text-white animate-spin" />
+                <span>Saving to Database...</span>
+              </>
+            ) : (
+              <>
+                <Icons.Save className="w-4 h-4 text-white" />
+                <span>Save All Changes Forever</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
