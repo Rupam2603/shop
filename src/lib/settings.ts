@@ -73,26 +73,37 @@ export async function saveStoreSettingsToDb(settings: StoreSettings): Promise<{ 
     // 1. Save locally first for instant offline responsiveness
     localStorage.setItem("subhone_admin_settings", JSON.stringify(settings));
 
-    // 2. Persist to Supabase store_settings table
-    const { error } = await supabase
-      .from("store_settings")
-      .upsert({
-        id: "default_settings",
-        store_name: settings.storeName,
-        phone: settings.phone,
-        email: settings.email,
-        address: settings.address,
-        low_threshold: settings.lowThreshold,
-        default_disc: settings.defaultDisc,
-        email_alerts: settings.emailAlerts,
-        sms_alerts: settings.smsAlerts,
-        auto_reorder: settings.autoReorder,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "id" });
+    const payload = {
+      id: "default_settings",
+      store_name: settings.storeName || DEFAULT_STORE_SETTINGS.storeName,
+      phone: settings.phone || DEFAULT_STORE_SETTINGS.phone,
+      email: settings.email || DEFAULT_STORE_SETTINGS.email,
+      address: settings.address || DEFAULT_STORE_SETTINGS.address,
+      low_threshold: String(settings.lowThreshold || DEFAULT_STORE_SETTINGS.lowThreshold),
+      default_disc: String(settings.defaultDisc || DEFAULT_STORE_SETTINGS.defaultDisc),
+      email_alerts: Boolean(settings.emailAlerts),
+      sms_alerts: Boolean(settings.smsAlerts),
+      auto_reorder: Boolean(settings.autoReorder),
+      updated_at: new Date().toISOString(),
+    };
 
-    if (error) {
-      console.error("Failed to persist settings to Supabase DB:", error);
-      return { success: false, error: error.message };
+    // 2. Try upsert first
+    const { error: upsertError } = await supabase
+      .from("store_settings")
+      .upsert(payload, { onConflict: "id" });
+
+    if (upsertError) {
+      console.warn("Notice during upsert store_settings, trying update:", upsertError.message);
+      // Fallback: try update directly
+      const { error: updateError } = await supabase
+        .from("store_settings")
+        .update(payload)
+        .eq("id", "default_settings");
+
+      if (updateError) {
+        console.error("Failed to update store_settings in Supabase:", updateError);
+        return { success: false, error: updateError.message };
+      }
     }
 
     return { success: true };
