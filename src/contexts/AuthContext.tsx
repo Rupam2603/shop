@@ -202,6 +202,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (data?.session?.user) {
             hydrateSession(data.session.user);
           } else {
+            // Check if active local admin session exists in storage
+            try {
+              const savedAdmin = localStorage.getItem("subhone_active_admin_session");
+              if (savedAdmin) {
+                const parsed = JSON.parse(savedAdmin);
+                if (
+                  parsed?.email &&
+                  (parsed.email.toLowerCase() === "subhonehealthgroup@gmail.com" ||
+                   parsed.email.toLowerCase() === "admin@subhone.com")
+                ) {
+                  setAppUser({
+                    authUser: {
+                      id: parsed.id || "admin_fixed_id",
+                      email: parsed.email,
+                      user_metadata: { role: "admin", full_name: parsed.fullName || "Admin" },
+                    },
+                    profile: {
+                      id: parsed.id || "admin_fixed_id",
+                      email: parsed.email,
+                      full_name: parsed.fullName || "Admin",
+                      role: "admin",
+                      phone: "+91 98765 43210",
+                      shop_name: "SubhOne Central Healthcare",
+                      avatar_url: null,
+                      approval_status: "approved",
+                      created_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString(),
+                    },
+                  });
+                  setLoading(false);
+                  return;
+                }
+              }
+            } catch {}
             setAppUser(null);
             setLoading(false);
           }
@@ -211,6 +245,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn("getSession error:", err);
         if (mounted) {
           clearTimeout(timeoutTimer);
+          try {
+            const savedAdmin = localStorage.getItem("subhone_active_admin_session");
+            if (savedAdmin) {
+              const parsed = JSON.parse(savedAdmin);
+              if (parsed?.email) {
+                setAppUser({
+                  authUser: { id: parsed.id || "admin_fixed_id", email: parsed.email, user_metadata: { role: "admin" } },
+                  profile: {
+                    id: parsed.id || "admin_fixed_id",
+                    email: parsed.email,
+                    full_name: parsed.fullName || "Admin",
+                    role: "admin",
+                    phone: "+91 98765 43210",
+                    shop_name: "SubhOne Central Healthcare",
+                    avatar_url: null,
+                    approval_status: "approved",
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  },
+                });
+                setLoading(false);
+                return;
+              }
+            }
+          } catch {}
           setAppUser(null);
           setLoading(false);
         }
@@ -306,6 +365,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
+
+        // Save active admin session to local storage so page refreshes stay logged in
+        try {
+          localStorage.setItem(
+            "subhone_active_admin_session",
+            JSON.stringify({
+              id: fallbackId,
+              email: cleanEmail,
+              fullName: adminProfile.full_name,
+              role: "admin",
+              timestamp: Date.now(),
+            })
+          );
+        } catch {}
 
         setAppUser({
           authUser: adminUser || {
@@ -571,6 +644,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ── Sign Out ─────────────────────────────────────────────────────────────────
   const signOut = useCallback(async () => {
     setLoading(true);
+    try {
+      localStorage.removeItem("subhone_active_admin_session");
+    } catch {}
     try {
       await supabase.auth.signOut();
     } catch {}

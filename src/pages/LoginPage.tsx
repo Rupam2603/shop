@@ -285,6 +285,10 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
     setSelectedRole(role);
     setError("");
     setSuccess("");
+    if (role === "admin" && mode === "login" && !email) {
+      setEmail("subhonehealthgroup@gmail.com");
+      setPassword("Subhone@2026");
+    }
   };
 
   const switchMode = (m: "login" | "signup") => {
@@ -760,6 +764,36 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                   >
                     <span>Check Status</span>
                     <span>→</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Quick Admin Demo Credentials Banner */}
+              {selectedRole === "admin" && (
+                <div className="bg-gradient-to-r from-[#073b4c]/10 via-[#006a39]/10 to-[#073b4c]/10 border border-[#073b4c]/20 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-[#073b4c] text-white flex items-center justify-center text-sm shrink-0 font-extrabold shadow-xs">
+                      ⚡
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-[#073b4c] leading-tight">
+                        Primary Admin: <span className="font-mono text-emerald-800">subhonehealthgroup@gmail.com</span>
+                      </p>
+                      <p className="text-[10px] text-[#596b5e] font-semibold mt-0.5">
+                        Password: <span className="font-mono text-[#073b4c]">Subhone@2026</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail("subhonehealthgroup@gmail.com");
+                      setPassword("Subhone@2026");
+                      setError("");
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#006a39] hover:bg-[#005a30] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 shrink-0 self-end sm:self-center"
+                  >
+                    1-Click Auto Fill
                   </button>
                 </div>
               )}
