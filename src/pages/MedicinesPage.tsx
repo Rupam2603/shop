@@ -499,73 +499,94 @@ export default function MedicinesPage({
                     <div
                       key={p.id}
                       onClick={() => setSelectedProduct(p)}
-                      className={`bg-white rounded-2xl border ${isOutOfStock ? "border-red-200 opacity-80" : "border-[#e4ede2]"} hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer`}
+                      className={`bg-white/85 backdrop-blur-xl rounded-3xl border ${
+                        isOutOfStock ? "border-rose-200/80 opacity-75" : "border-white/90 hover:border-emerald-300/80"
+                      } hover:shadow-xl hover:shadow-emerald-950/8 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer`}
                     >
-                      <div className="relative bg-[#f8fafb] h-32 sm:h-36 overflow-hidden">
+                      <div className="relative bg-gradient-to-b from-white/90 to-slate-50/50 h-32 sm:h-38 overflow-hidden flex items-center justify-center p-3">
                         {p.disc && (
-                          <span className="absolute top-2 left-2 z-10 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase" style={{ backgroundColor: accentColor }}>
+                          <span
+                            className="absolute top-2.5 left-2.5 z-10 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase shadow-xs border border-white/30 backdrop-blur-md"
+                            style={{ backgroundColor: accentColor }}
+                          >
                             {p.disc} OFF
                           </span>
                         )}
                         {isOutOfStock ? (
-                          <span className="absolute top-2 right-2 z-10 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] text-[9px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider">
+                          <span className="absolute top-2.5 right-2.5 z-10 bg-rose-50/90 text-rose-700 border border-rose-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs backdrop-blur-md">
                             Out of Stock
                           </span>
                         ) : isLowStock ? (
-                          <span className="absolute top-2 right-2 z-10 bg-[#fef3c7] text-[#b45309] border border-[#fde68a] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase animate-pulse">
+                          <span className="absolute top-2.5 right-2.5 z-10 bg-amber-50/90 text-amber-800 border border-amber-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase animate-pulse shadow-2xs backdrop-blur-md">
                             Only {p.stock} Left
                           </span>
                         ) : (
-                          <span className="absolute top-2 right-2 z-10 bg-[#d1fae5]/90 text-[#047857] text-[8px] font-bold px-1.5 py-0.5 rounded">
+                          <span className="absolute top-2.5 right-2.5 z-10 bg-emerald-50/90 text-emerald-800 border border-emerald-200 text-[8px] font-bold px-2 py-0.5 rounded-full shadow-2xs backdrop-blur-md">
                             {p.stock} in stock
                           </span>
                         )}
                         <img
                           src={p.img}
                           alt={p.name}
-                          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="h-full w-full object-contain mix-blend-multiply group-hover:scale-108 transition-transform duration-300"
                           onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.15"; }}
                         />
                       </div>
-                      <div className="p-3 flex flex-col gap-0.5 flex-1">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.5px]" style={{ color: accentColor }}>{p.brand}</p>
-                        <p className="font-bold text-[#073b4c] text-[11px] leading-[14px] line-clamp-2">{p.name}</p>
+                      <div className="p-3.5 flex flex-col gap-1 flex-1 bg-white/70 backdrop-blur-md">
+                        <p className="text-[9px] font-black uppercase tracking-[0.6px]" style={{ color: accentColor }}>
+                          {p.brand}
+                        </p>
+                        <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[34px] group-hover:text-[#006a39] transition-colors">
+                          {p.name}
+                        </p>
                         {p.sub && (
-                          <span className="inline-block text-[9px] font-bold bg-[#f0fdf4] text-[#047857] border border-[#bbf7d0] px-1.5 py-0.5 rounded-full leading-none mt-0.5">{p.sub}</span>
+                          <span className="inline-block text-[9px] font-bold bg-emerald-50/80 text-[#006a39] border border-emerald-200/80 px-2 py-0.5 rounded-full leading-none mt-0.5 w-fit">
+                            {p.sub}
+                          </span>
                         )}
-                        <div className="mt-auto pt-2">
+                        <div className="mt-auto pt-2.5 border-t border-[#f0f5f1]">
                           {isRetailer ? (
                             <div className="flex flex-col gap-0.5">
                               <div className="flex items-center gap-1.5">
-                                <span className="font-['Manrope',sans-serif] font-bold text-[#0369a1] text-sm">{retailerPrice(p.price)}</span>
-                                <span className="text-[9px] bg-[#dbeafe] text-[#1d4ed8] px-1.5 py-0.5 rounded font-bold uppercase">Retailer</span>
+                                <span className="font-['Manrope',sans-serif] font-black text-[#0369a1] text-sm sm:text-base">
+                                  {retailerPrice(p.price)}
+                                </span>
+                                <span className="text-[9px] bg-sky-100/90 text-sky-800 border border-sky-200 px-1.5 py-0.2 rounded-full font-black uppercase">
+                                  Retailer B2B
+                                </span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <span className="text-[#9aa89b] text-[9px]">Customer: </span>
-                                <span className="text-[#9aa89b] text-[10px] line-through">{p.price}</span>
+                                <span className="text-[#8aa08e] text-[9px] font-semibold">Customer: </span>
+                                <span className="text-[#8aa08e] text-[10px] line-through font-semibold">{p.price}</span>
                               </div>
                             </div>
                           ) : (
                             <div className="flex items-baseline gap-1.5">
-                              <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm">{p.price}</span>
-                              {p.orig && <span className="text-[#9aa89b] text-[10px] line-through">MRP {p.orig}</span>}
+                              <span className="font-['Manrope',sans-serif] font-black text-[#073b4c] text-sm sm:text-base">
+                                {p.price}
+                              </span>
+                              {p.orig && (
+                                <span className="text-[#8aa08e] text-[10px] line-through font-semibold">
+                                  MRP {p.orig}
+                                </span>
+                              )}
                             </div>
                           )}
-                          <div className="flex items-center justify-between text-[9px] mt-1">
-                            <span className="text-[#c0ccc0]">HSN: {HSN_BY_CAT[p.cat] ?? "—"}</span>
+                          <div className="flex items-center justify-between text-[9px] mt-1.5">
+                            <span className="text-[#8aa08e] font-mono">HSN: {HSN_BY_CAT[p.cat] ?? "—"}</span>
                             {isOutOfStock ? (
-                              <span className="text-[#dc2626] font-bold">Out of stock</span>
+                              <span className="text-rose-600 font-bold">Out of stock</span>
                             ) : isLowStock ? (
-                              <span className="text-[#d97706] font-semibold">{p.stock} units left</span>
+                              <span className="text-amber-700 font-semibold">{p.stock} left</span>
                             ) : (
-                              <span className="text-[#059669] font-medium">{p.stock} units available</span>
+                              <span className="text-emerald-700 font-medium">{p.stock} available</span>
                             )}
                           </div>
                         </div>
                         {isOutOfStock ? (
                           <button
                             disabled
-                            className="w-full mt-1.5 py-1.5 rounded-xl bg-[#f3f4f6] text-[#9ca3af] text-[10px] font-bold tracking-[0.4px] cursor-not-allowed flex items-center justify-center gap-1"
+                            className="w-full mt-2 py-2 rounded-2xl bg-[#f3f4f6] text-[#9ca3af] text-[11px] font-bold tracking-[0.4px] cursor-not-allowed flex items-center justify-center gap-1 border border-slate-200"
                           >
                             Out of Stock
                           </button>
@@ -575,7 +596,7 @@ export default function MedicinesPage({
                               e.stopPropagation();
                               addToCart(p);
                             }}
-                            className="w-full mt-1.5 py-1.5 rounded-xl text-white text-[10px] font-bold tracking-[0.4px] hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-1"
+                            className="w-full mt-2 py-2 rounded-2xl text-white text-[11px] font-black tracking-[0.4px] hover:opacity-95 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-950/15 cursor-pointer border border-white/30"
                             style={{ backgroundColor: accentColor }}
                           >
                             <PlusIcon /> Add to Cart

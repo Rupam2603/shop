@@ -213,10 +213,10 @@ export default function KeyCategoriesBar({
   className = "",
 }: KeyCategoriesBarProps) {
   return (
-    <div className={`w-full bg-white ${className}`}>
-      <div className="w-full px-2 sm:px-3">
+    <div className={`w-full bg-white/75 backdrop-blur-xl border-b border-white/60 shadow-2xs ${className}`}>
+      <div className="w-full px-2 sm:px-4">
         <div
-          className="flex items-end justify-between sm:justify-start gap-1 sm:gap-2.5 lg:gap-3.5 overflow-x-auto py-1 sm:py-1.5 scroll-smooth select-none no-scrollbar"
+          className="flex items-center justify-between sm:justify-start gap-1 sm:gap-2.5 lg:gap-3.5 overflow-x-auto py-2 sm:py-2.5 scroll-smooth select-none no-scrollbar"
           style={{
             scrollbarWidth: "none",
             msOverflowStyle: "none",
@@ -231,12 +231,16 @@ export default function KeyCategoriesBar({
                 key={cat.id}
                 type="button"
                 onClick={() => onSelectCategory(cat)}
-                className="relative flex flex-col items-center gap-0.5 sm:gap-1 px-2 sm:px-3 py-0.5 group shrink-0 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#006a39] rounded-lg"
+                className={`relative flex flex-col items-center gap-1 px-2.5 sm:px-3.5 py-1.5 rounded-2xl group shrink-0 transition-all duration-200 cursor-pointer outline-none ${
+                  isSelected
+                    ? "bg-white/95 border border-emerald-300/80 shadow-xs shadow-emerald-950/5 scale-102"
+                    : "bg-white/40 hover:bg-white/80 border border-white/40 hover:border-emerald-200/50"
+                }`}
               >
                 {/* Badge (e.g. GET CIRCLE) */}
                 {cat.badge && (
                   <span
-                    className="absolute -top-1 z-10 text-[7px] sm:text-[8px] font-black tracking-wide px-1 py-0.2 rounded shadow-2xs whitespace-nowrap animate-pulse"
+                    className="absolute -top-1.5 z-10 text-[7px] sm:text-[8px] font-black tracking-wide px-1.5 py-0.2 rounded-full shadow-2xs whitespace-nowrap animate-pulse border border-white/40"
                     style={{
                       backgroundColor: cat.badgeBg || "#f59e0b",
                       color: cat.badgeColor || "#ffffff",
@@ -248,10 +252,10 @@ export default function KeyCategoriesBar({
 
                 {/* Category Icon */}
                 <div
-                  className={`w-7 h-7 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center transition-transform duration-150 group-hover:scale-105 ${
+                  className={`w-7 h-7 sm:w-8.5 sm:h-8.5 rounded-xl flex items-center justify-center transition-all duration-200 group-hover:scale-105 ${
                     isSelected
-                      ? "text-[#073b4c] bg-[#eef5ee]"
-                      : "text-[#3e4a3f] group-hover:text-[#006a39] bg-transparent"
+                      ? "text-[#006a39] bg-emerald-50"
+                      : "text-[#4a5e4d] group-hover:text-[#006a39] bg-white/60 group-hover:bg-emerald-50/50 shadow-2xs"
                   }`}
                 >
                   <div className="scale-85 sm:scale-90 flex items-center justify-center">
@@ -263,17 +267,17 @@ export default function KeyCategoriesBar({
                 <span
                   className={`text-[10px] sm:text-[11px] tracking-tight whitespace-nowrap transition-colors duration-150 ${
                     isSelected
-                      ? "font-extrabold text-[#073b4c]"
-                      : "font-semibold text-[#4a5568] group-hover:text-[#073b4c]"
+                      ? "font-extrabold text-[#006a39]"
+                      : "font-bold text-[#5a6f5d] group-hover:text-[#073b4c]"
                   }`}
                 >
                   {cat.name}
                 </span>
 
-                {/* Active Indicator Underline */}
+                {/* Active Indicator Underline / Glow */}
                 <div
-                  className={`h-0.5 w-full rounded-full transition-all duration-200 mt-0.5 ${
-                    isSelected ? "bg-[#073b4c] opacity-100" : "bg-transparent opacity-0 group-hover:bg-[#006a39]/30 group-hover:opacity-100"
+                  className={`h-0.5 w-4/5 rounded-full transition-all duration-200 mt-0.5 ${
+                    isSelected ? "bg-[#006a39] opacity-100 shadow-xs" : "bg-transparent opacity-0"
                   }`}
                 />
               </button>

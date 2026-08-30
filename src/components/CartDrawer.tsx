@@ -95,34 +95,34 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
         onClick={closeCart}
         aria-hidden="true"
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10 z-10">
-        <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="w-screen max-w-md bg-white/95 backdrop-blur-2xl border-l border-white/80 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
           {/* Header */}
-          <div className="px-5 py-4 border-b border-[#e4ede2] flex items-center justify-between bg-[#f8fafb]">
-            <div className="flex items-center gap-2">
-              <h2 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg">
+          <div className="px-6 py-4.5 border-b border-[#e4ede2]/80 flex items-center justify-between bg-white/80 backdrop-blur-md">
+            <div className="flex items-center gap-2.5">
+              <h2 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg sm:text-xl">
                 Your Shopping Cart
               </h2>
-              <span className="bg-[#e8f5ee] text-[#006a39] text-xs font-bold px-2 py-0.5 rounded-full">
+              <span className="bg-emerald-100/90 text-[#006a39] text-xs font-black px-2.5 py-0.5 rounded-full border border-emerald-200">
                 {itemCount} {itemCount === 1 ? "item" : "items"}
               </span>
             </div>
             <button
               type="button"
               onClick={closeCart}
-              className="w-8 h-8 rounded-full bg-white border border-[#e4ede2] flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] transition-colors cursor-pointer"
+              className="w-9 h-9 rounded-2xl bg-white/80 border border-[#dce7db] flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] transition-colors cursor-pointer shadow-xs"
               aria-label="Close cart"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path
                   d="M1 1L11 11M11 1L1 11"
                   stroke="currentColor"
-                  strokeWidth="1.5"
+                  strokeWidth="2"
                   strokeLinecap="round"
                 />
               </svg>
@@ -331,27 +331,27 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
               <div className="flex flex-col gap-1.5 text-xs text-[#6d7a6f]">
                 <div className="flex justify-between">
                   <span>Item Total</span>
-                  <span className="font-semibold text-[#073b4c]">₹{subtotal}</span>
+                  <span className="font-extrabold text-[#073b4c]">₹{subtotal}</span>
                 </div>
                 {savings > 0 && (
-                  <div className="flex justify-between text-[#047857]">
+                  <div className="flex justify-between text-[#006a39] font-bold">
                     <span>Total Savings</span>
-                    <span className="font-semibold">- ₹{savings}</span>
+                    <span>- ₹{savings}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span>Delivery Fee</span>
                   <span>
                     {isFreeDelivery ? (
-                      <strong className="text-[#047857] uppercase">Free</strong>
+                      <strong className="text-[#006a39] uppercase font-black">Free</strong>
                     ) : (
                       `₹${deliveryFee}`
                     )}
                   </span>
                 </div>
-                <div className="border-t border-[#e4ede2] pt-2 mt-1 flex justify-between text-sm font-['Manrope',sans-serif] font-bold text-[#073b4c]">
+                <div className="border-t border-[#e4ede2] pt-2.5 mt-1 flex justify-between text-sm font-['Manrope',sans-serif] font-black text-[#073b4c]">
                   <span>To Pay</span>
-                  <span className="text-base text-[#006a39]">₹{totalAmount}</span>
+                  <span className="text-lg text-[#006a39]">₹{totalAmount}</span>
                 </div>
               </div>
 
@@ -359,10 +359,10 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
                 type="button"
                 disabled={hasOutOfStockItems || hasExceededStockItems}
                 onClick={handleProceedToCheckout}
-                className={`w-full py-3.5 font-['Manrope',sans-serif] font-bold text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer ${
+                className={`w-full py-4 font-['Manrope',sans-serif] font-black text-sm rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer border ${
                   hasOutOfStockItems || hasExceededStockItems
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
-                    : "bg-[#006a39] text-white hover:bg-[#005a30] active:scale-[0.98]"
+                    ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed shadow-none"
+                    : "bg-gradient-to-r from-[#006a39] to-[#008749] text-white border-white/30 hover:opacity-95 shadow-emerald-950/20 active:scale-[0.98]"
                 }`}
               >
                 <span>{hasOutOfStockItems ? "Remove Out of Stock Items" : "Proceed to Checkout"}</span>
@@ -370,7 +370,7 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
                   <path
                     d="M2.5 7H11.5M7.5 3L11.5 7L7.5 11"
                     stroke="currentColor"
-                    strokeWidth="1.5"
+                    strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />

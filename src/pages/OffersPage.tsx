@@ -336,97 +336,65 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
               return (
                 <div
                   key={p.name}
-                  onClick={() => setSelectedProduct({
-                    id: (p as any).id || nameToId(p.name),
-                    dbId: (p as any).dbId,
-                    name: p.name,
-                    sub: (p as any).sub || p.brand,
-                    price: p.price,
-                    orig: p.orig || "",
-                    disc: p.disc || "",
-                    cat: p.cat || "Energy, Hydration & Supplements",
-                    brand: p.brand,
-                    img: p.img,
-                    stock: p.stock ?? 50,
-                  })}
-                  className={`bg-white rounded-xl border ${isOutOfStock ? "border-red-200 opacity-80" : "border-[#d5dcd3]"} overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col cursor-pointer group`}
+                  onClick={() => handleProductClick(p)}
+                  className={`bg-white/85 backdrop-blur-xl rounded-3xl border ${
+                    isOutOfStock ? "border-rose-200/80 opacity-75" : "border-white/90 hover:border-emerald-300/80"
+                  } hover:shadow-xl hover:shadow-emerald-950/8 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer`}
                 >
-                  <div className="relative bg-[#f8fafb] h-44 sm:h-48 flex items-center justify-center p-4">
+                  <div className="bg-gradient-to-b from-white/90 to-slate-50/50 h-36 sm:h-44 relative flex items-center justify-center p-3">
                     {p.badge && (
-                      <span className="absolute top-2 left-2 z-10 bg-[#ffb703] text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">
+                      <span className="absolute top-2.5 left-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider uppercase shadow-xs border border-white/30">
                         {p.badge}
                       </span>
                     )}
-
-                    {/* Stock Status Badge */}
                     {isOutOfStock ? (
-                      <span className="absolute top-2 right-2 z-10 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] text-[9px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider shadow-sm">
-                        {isRetailer ? "Stock Out (0)" : "Out of Stock"}
+                      <span className="absolute top-2.5 right-2.5 z-10 bg-rose-50/90 text-rose-700 border border-rose-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs backdrop-blur-md">
+                        Out of Stock
                       </span>
                     ) : isLowStock ? (
-                      <span className="absolute top-2 right-2 z-10 bg-[#fef3c7] text-[#b45309] border border-[#fde68a] text-[9px] font-extrabold px-2 py-0.5 rounded uppercase animate-pulse shadow-sm">
-                        {isRetailer ? `Low Stock (${p.stock})` : `Only ${p.stock} Left`}
+                      <span className="absolute top-2.5 right-2.5 z-10 bg-amber-50/90 text-amber-800 border border-amber-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase animate-pulse shadow-2xs backdrop-blur-md">
+                        Only {pStock} Left
                       </span>
                     ) : (
-                      <span className="absolute top-2 right-2 z-10 bg-[#d1fae5]/90 text-[#047857] text-[8px] font-bold px-2 py-0.5 rounded shadow-sm">
-                        {isRetailer ? `📦 ${p.stock} units` : `${p.stock} in stock`}
+                      <span className="absolute top-2.5 right-2.5 z-10 bg-emerald-50/90 text-emerald-800 border border-emerald-200 text-[8px] font-bold px-2 py-0.5 rounded-full shadow-2xs backdrop-blur-md">
+                        {pStock} in stock
                       </span>
                     )}
-
-                    <img
-                      src={p.img}
-                      alt={p.name}
-                      className="h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
-                    />
+                    <img src={p.img} alt={p.name} className="h-full w-full object-contain mix-blend-multiply group-hover:scale-108 transition-transform duration-300" />
                   </div>
-                  <div className="p-3.5 sm:p-4 flex flex-col gap-1.5 flex-1">
-                    <p
-                      className="text-[10px] sm:text-xs font-bold tracking-[0.6px] uppercase"
-                      style={{ color: p.brandColor }}
-                    >
+
+                  <div className="p-3.5 sm:p-4 flex flex-col gap-1.5 flex-1 bg-white/70 backdrop-blur-md">
+                    <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.6px] text-[#006a39]">
                       {p.brand}
+                    </span>
+                    <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xs sm:text-sm line-clamp-2 leading-snug min-h-[36px] group-hover:text-[#006a39] transition-colors">
+                      {p.name}
                     </p>
-                    <h4 className="font-bold text-[#073b4c] text-xs sm:text-sm leading-snug line-clamp-2">{p.name}</h4>
-                    <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="flex items-center gap-1.5 text-xs text-[#6d7a6f]">
                       <StarIcon />
-                      <span className="font-bold text-[#073b4c] text-xs sm:text-sm">{p.rating}</span>
-                      <span className="text-[#6d7a6f] text-[10px] sm:text-xs">{p.reviews}</span>
+                      <span className="font-extrabold text-[#073b4c] text-xs">{p.rating}</span>
+                      <span className="text-[#8aa08e] text-[11px] font-medium">{p.reviews}</span>
                     </div>
 
-                    <div className="mt-auto pt-2">
-                      <div className="flex items-baseline justify-between mb-1.5">
-                        <div className="flex items-baseline gap-1.5">
-                          <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg leading-6">
-                            {p.price}
+                    <div className="mt-auto pt-2.5 border-t border-[#f0f5f1] flex items-center justify-between">
+                      <div>
+                        <span className="font-['Manrope',sans-serif] font-black text-[#073b4c] text-sm sm:text-base">
+                          {p.price}
+                        </span>
+                        {p.orig && (
+                          <span className="text-[#8aa08e] text-[10px] sm:text-xs line-through ml-1.5 font-semibold">
+                            MRP {p.orig}
                           </span>
-                          {p.orig && <span className="text-[#9aa89b] text-[10px] sm:text-xs line-through">{p.orig}</span>}
-                        </div>
-                        {isRetailer && (
-                          <span className="text-[9px] bg-[#dbeafe] text-[#1d4ed8] px-1.5 py-0.5 rounded font-bold uppercase">
-                            Wholesale
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between text-[10px] mb-2">
-                        {isOutOfStock ? (
-                          <span className="text-[#dc2626] font-bold">🔴 Out of Stock</span>
-                        ) : isLowStock ? (
-                          <span className="text-[#d97706] font-semibold">⚠️ {p.stock} units remaining</span>
-                        ) : (
-                          <span className="text-[#059669] font-medium">🟢 {p.stock} units available</span>
                         )}
                       </div>
 
                       {isOutOfStock ? (
-                        <button
-                          disabled
-                          className="w-full py-2 bg-[#f3f4f6] text-[#9ca3af] font-bold text-xs rounded-lg cursor-not-allowed flex items-center justify-center gap-1"
-                        >
-                          Out of Stock
-                        </button>
+                        <span className="text-[9px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                          Out
+                        </span>
                       ) : (
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             addToCart({
@@ -440,12 +408,10 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
                               img: p.img,
                             });
                           }}
-                          className="w-full py-2 bg-[#006a39] text-white font-bold text-xs rounded-lg hover:bg-[#005a30] active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-sm"
-                          aria-label="Add to cart"
+                          className="w-8 h-8 rounded-2xl flex items-center justify-center bg-gradient-to-r from-[#006a39] to-[#008749] text-white shadow-md shadow-emerald-950/15 hover:scale-110 active:scale-95 transition-all cursor-pointer border border-white/30"
                           title="Add to Cart"
                         >
-                          <CartIcon />
-                          <span>Add to Cart</span>
+                          +
                         </button>
                       )}
                     </div>

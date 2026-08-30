@@ -325,7 +325,7 @@ export default function CategoryPage({
           </div>
 
           {filteredProducts.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-[#e4ede2] p-12 text-center flex flex-col items-center gap-3">
+            <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/80 p-12 text-center flex flex-col items-center gap-3 shadow-sm">
               <span className="text-4xl">🔍</span>
               <h3 className="font-bold text-[#073b4c] text-base">No products found</h3>
               <p className="text-xs text-[#6d7a6f] max-w-sm">
@@ -333,15 +333,16 @@ export default function CategoryPage({
               </p>
               <button
                 onClick={() => setSearchQuery("")}
-                className="mt-2 px-5 py-2 rounded-xl bg-[#006a39] text-white font-bold text-xs"
+                className="mt-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] text-white font-bold text-xs shadow-md shadow-emerald-950/15 cursor-pointer active:scale-95"
               >
                 Clear Search
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-4.5">
               {filteredProducts.map((p) => {
                 const isOutOfStock = p.stock !== undefined && p.stock <= 0;
+                const isLowStock = p.stock !== undefined && p.stock > 0 && p.stock <= (isRetailer ? 20 : 10);
 
                 return (
                   <div
@@ -358,55 +359,71 @@ export default function CategoryPage({
                       img: p.img,
                       stock: p.stock ?? 50,
                     })}
-                    className="bg-white rounded-2xl border border-[#e4ede2] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer"
+                    className={`bg-white/85 backdrop-blur-xl rounded-3xl border ${
+                      isOutOfStock ? "border-rose-200/80 opacity-75" : "border-white/90 hover:border-emerald-300/80"
+                    } hover:shadow-xl hover:shadow-emerald-950/8 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer`}
                   >
                     {/* Image & Badge */}
-                    <div className="relative bg-[#f8fafb] h-32 sm:h-36 overflow-hidden flex items-center justify-center p-2">
+                    <div className="relative bg-gradient-to-b from-white/90 to-slate-50/50 h-32 sm:h-38 overflow-hidden flex items-center justify-center p-3">
                       {p.disc && (
                         <span
-                          className="absolute top-2 left-2 z-10 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase shadow-xs"
+                          className="absolute top-2.5 left-2.5 z-10 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase shadow-xs border border-white/30 backdrop-blur-md"
                           style={{ backgroundColor: categoryMeta.accent }}
                         >
                           {p.disc} OFF
                         </span>
                       )}
+                      {isOutOfStock ? (
+                        <span className="absolute top-2.5 right-2.5 z-10 bg-rose-50/90 text-rose-700 border border-rose-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs backdrop-blur-md">
+                          Out of Stock
+                        </span>
+                      ) : isLowStock ? (
+                        <span className="absolute top-2.5 right-2.5 z-10 bg-amber-50/90 text-amber-800 border border-amber-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase animate-pulse shadow-2xs backdrop-blur-md">
+                          Only {p.stock} Left
+                        </span>
+                      ) : (
+                        <span className="absolute top-2.5 right-2.5 z-10 bg-emerald-50/90 text-emerald-800 border border-emerald-200 text-[8px] font-bold px-2 py-0.5 rounded-full shadow-2xs backdrop-blur-md">
+                          {p.stock} in stock
+                        </span>
+                      )}
                       <img
                         src={p.img}
                         alt={p.name}
-                        className="h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
+                        className="h-full w-full object-contain mix-blend-multiply group-hover:scale-108 transition-transform duration-300"
                         onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }}
                       />
                     </div>
 
-                    {/* Info */}
-                    <div className="p-3 flex flex-col gap-1 flex-1">
-                      <p className="text-[9px] font-bold uppercase tracking-wider text-[#9aa89b]">{p.brand}</p>
-                      <p className="font-bold text-[#073b4c] text-xs sm:text-sm line-clamp-2 leading-snug">{p.name}</p>
+                    <div className="p-3.5 flex flex-col gap-1 flex-1 bg-white/70 backdrop-blur-md">
+                      <p className="text-[9px] font-black uppercase tracking-[0.6px]" style={{ color: categoryMeta.accent }}>
+                        {p.brand}
+                      </p>
+                      <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[34px] group-hover:text-[#006a39] transition-colors">
+                        {p.name}
+                      </p>
                       {p.sub && (
-                        <p className="text-[10px] text-[#6d7a6f] truncate">{p.sub}</p>
+                        <span className="inline-block text-[9px] font-bold bg-emerald-50/80 text-[#006a39] border border-emerald-200/80 px-2 py-0.5 rounded-full leading-none mt-0.5 w-fit">
+                          {p.sub}
+                        </span>
                       )}
 
-                      {/* Pricing */}
-                      <div className="mt-auto pt-2 flex items-center justify-between gap-1 border-t border-[#f0f4f0]">
+                      <div className="mt-auto pt-2.5 border-t border-[#f0f5f1] flex items-center justify-between">
                         <div>
-                          <div className="flex items-baseline gap-1">
-                            <span className="font-['Manrope',sans-serif] font-black text-sm text-[#073b4c]">
-                              {isRetailer ? retailerPrice(p.price) : p.price}
-                            </span>
-                            {p.orig && !isRetailer && (
-                              <span className="text-[10px] text-[#9aa89b] line-through">
-                                {p.orig}
-                              </span>
-                            )}
-                          </div>
-                          {isRetailer && (
-                            <span className="text-[8px] bg-[#dbeafe] text-[#1d4ed8] px-1 py-0.2 rounded font-bold uppercase">
-                              Wholesale
+                          <span className="font-['Manrope',sans-serif] font-black text-[#073b4c] text-sm sm:text-base">
+                            {isRetailer ? retailerPrice(p.price) : p.price}
+                          </span>
+                          {p.orig && (
+                            <span className="text-[#8aa08e] text-[10px] line-through ml-1 font-semibold">
+                              MRP {p.orig}
                             </span>
                           )}
                         </div>
 
-                        {!isOutOfStock && (
+                        {isOutOfStock ? (
+                          <span className="text-[9px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                            Out
+                          </span>
+                        ) : (
                           <button
                             type="button"
                             onClick={(e) => {
@@ -422,13 +439,11 @@ export default function CategoryPage({
                                 img: p.img,
                               });
                             }}
-                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shrink-0 hover:opacity-90 active:scale-95 transition-all shadow-xs"
+                            className="w-8 h-8 rounded-2xl flex items-center justify-center text-white shrink-0 hover:scale-110 active:scale-95 transition-all shadow-md shadow-emerald-950/15 cursor-pointer border border-white/30"
                             style={{ backgroundColor: categoryMeta.accent }}
-                            title="Add to Cart"
+                            title="Add to cart"
                           >
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <path d="M6 1V11M1 6H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                            </svg>
+                            +
                           </button>
                         )}
                       </div>

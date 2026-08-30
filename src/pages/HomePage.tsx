@@ -163,76 +163,103 @@ const FLASH = [
   { img: imgProduct4, badge: "35% OFF", color: "#ba1a1a", name: "Hansaplast Washproof Band-Aid", sub: "First Aid",             price: "₹195", orig: "₹300", cat: "First Aid & Antiseptics",         brand: "Hansaplast",  disc: "35%" },
 ];
 
-function MiniCard({
+function ProductCard({
   p,
   accent,
-  category,
-  isRetailer,
-  onClick,
   onAddToCart,
+  onClick,
+  isRetailer,
 }: {
-  p: { name: string; sub: string; price: string; orig: string; disc: string; img: string; stock?: number };
+  p: typeof ALL_CATEGORIES[0]["products"][0] & { stock?: number };
   accent: string;
-  category?: string;
-  isRetailer?: boolean;
-  onClick: () => void;
   onAddToCart?: () => void;
+  onClick?: () => void;
+  isRetailer?: boolean;
 }) {
   const isOutOfStock = p.stock !== undefined && p.stock <= 0;
   const isLowStock = p.stock !== undefined && p.stock > 0 && p.stock <= (isRetailer ? 20 : 10);
 
   return (
-    <div onClick={onClick} className={`w-[155px] sm:w-[185px] lg:w-auto shrink-0 snap-start bg-white rounded-2xl border ${isOutOfStock ? "border-red-200 opacity-80" : "border-[#e4ede2]"} hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer`}>
-      <div className="relative bg-[#f8fafb] h-32 sm:h-36 overflow-hidden">
+    <div
+      onClick={onClick}
+      className={`w-[155px] sm:w-[195px] shrink-0 snap-start bg-white/85 backdrop-blur-xl rounded-3xl border ${
+        isOutOfStock ? "border-rose-200/80 opacity-75" : "border-white/90 hover:border-emerald-300/80"
+      } shadow-xs hover:shadow-xl hover:shadow-emerald-950/8 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer`}
+    >
+      <div className="bg-gradient-to-b from-white/90 to-slate-50/50 h-28 sm:h-36 relative overflow-hidden flex items-center justify-center p-2.5">
         {p.disc && (
-          <span className="absolute top-2 left-2 z-10 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase shadow-sm" style={{ backgroundColor: accent }}>
+          <span
+            className="absolute top-2.5 left-2.5 z-10 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase shadow-xs border border-white/30 backdrop-blur-md"
+            style={{ backgroundColor: accent }}
+          >
             {p.disc} OFF
           </span>
         )}
         {isOutOfStock ? (
-          <span className="absolute top-2 right-2 z-10 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase shadow-sm">
+          <span className="absolute top-2.5 right-2.5 z-10 bg-rose-50/90 text-rose-700 border border-rose-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase shadow-2xs backdrop-blur-md">
             {isRetailer ? "Stock Out" : "Out of Stock"}
           </span>
         ) : isLowStock ? (
-          <span className="absolute top-2 right-2 z-10 bg-[#fef3c7] text-[#b45309] border border-[#fde68a] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase animate-pulse shadow-sm">
+          <span className="absolute top-2.5 right-2.5 z-10 bg-amber-50/90 text-amber-800 border border-amber-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase animate-pulse shadow-2xs backdrop-blur-md">
             {isRetailer ? `Low (${p.stock})` : `Only ${p.stock} Left`}
           </span>
         ) : (
-          <span className="absolute top-2 right-2 z-10 bg-[#d1fae5]/90 text-[#047857] text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+          <span className="absolute top-2.5 right-2.5 z-10 bg-emerald-50/90 text-emerald-800 border border-emerald-200 text-[8px] font-bold px-2 py-0.5 rounded-full shadow-2xs backdrop-blur-md">
             {isRetailer ? `📦 ${p.stock} units` : `${p.stock} in stock`}
           </span>
         )}
-        <img src={p.img} alt={p.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.15"; }} />
+        <img
+          src={p.img}
+          alt={p.name}
+          className="h-full w-full object-contain mix-blend-multiply group-hover:scale-108 transition-transform duration-300"
+          onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.15"; }}
+        />
       </div>
-      <div className="p-2.5 sm:p-3 flex flex-col gap-1 flex-1">
-        <p className="font-bold text-[#073b4c] text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[32px]">{p.name}</p>
-        <p className="text-[#9aa89b] text-[10px] sm:text-[11px] truncate">{p.sub}</p>
+      <div className="p-3 sm:p-3.5 flex flex-col gap-1 flex-1 bg-white/70 backdrop-blur-md">
+        <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[34px] group-hover:text-[#006a39] transition-colors">
+          {p.name}
+        </p>
+        <p className="text-[#8aa08e] text-[10px] sm:text-[11px] truncate font-medium">{p.sub}</p>
 
         {/* Real-time stock status indicator */}
         <div className="text-[9px] mt-0.5">
           {isOutOfStock ? (
-            <span className="text-[#dc2626] font-bold">🔴 Out of stock</span>
+            <span className="text-rose-600 font-bold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Out of stock
+            </span>
           ) : isLowStock ? (
-            <span className="text-[#d97706] font-semibold">⚠️ {p.stock} units left</span>
+            <span className="text-amber-700 font-semibold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" /> {p.stock} units left
+            </span>
           ) : (
-            <span className="text-[#059669] font-medium">🟢 {p.stock} in stock</span>
+            <span className="text-emerald-700 font-medium flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {p.stock} in stock
+            </span>
           )}
         </div>
 
-        <div className="flex items-center justify-between mt-auto pt-2">
+        <div className="flex items-center justify-between mt-auto pt-2.5 border-t border-[#f0f5f1]">
           <div>
-            <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-base">{p.price}</span>
-            {p.orig && <span className="text-[#9aa89b] text-[10px] sm:text-xs line-through ml-1">MRP {p.orig}</span>}
+            <span className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base">
+              {p.price}
+            </span>
+            {p.orig && (
+              <span className="text-[#9aa89b] text-[10px] sm:text-xs line-through ml-1 font-semibold">
+                MRP {p.orig}
+              </span>
+            )}
           </div>
           {isOutOfStock ? (
-            <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">Out</span>
+            <span className="text-[9px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+              Out
+            </span>
           ) : (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onAddToCart?.();
               }}
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shrink-0 hover:opacity-90 active:scale-95 transition-all shadow-sm"
+              className="w-8 h-8 rounded-2xl flex items-center justify-center text-white shrink-0 hover:scale-110 active:scale-95 transition-all shadow-md shadow-emerald-950/15 cursor-pointer border border-white/40"
               style={{ backgroundColor: accent }}
               title="Add to cart"
             >
@@ -260,22 +287,39 @@ function CategorySection({
 }) {
   return (
     <section className="flex flex-col gap-3 sm:gap-4">
-      <div className="flex items-center justify-between gap-3 px-3.5 sm:px-5 py-3 sm:py-4 rounded-2xl" style={{ backgroundColor: item.lightBg }}>
-        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: item.iconBg }}>
+      <div
+        className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3.5 sm:py-4.5 rounded-3xl backdrop-blur-xl border border-white/80 shadow-xs"
+        style={{
+          background: `linear-gradient(135deg, ${item.lightBg}cc 0%, rgba(255, 255, 255, 0.9) 100%)`,
+        }}
+      >
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <div
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-xs border border-white/40 group-hover:scale-105 transition-transform"
+            style={{ backgroundColor: item.iconBg }}
+          >
             {item.icon}
           </div>
           <div className="min-w-0">
-            <h2 className="font-['Manrope',sans-serif] font-bold text-base sm:text-xl truncate" style={{ color: item.accent }}>{item.cat}</h2>
-            <p className="text-[#6d7a6f] text-[11px] sm:text-xs mt-0.5">{item.count} products available · Live Inventory</p>
+            <h2 className="font-['Manrope',sans-serif] font-extrabold text-base sm:text-xl truncate" style={{ color: item.accent }}>
+              {item.cat}
+            </h2>
+            <p className="text-[#657969] text-[11px] sm:text-xs mt-0.5 font-medium">
+              {item.count} certified medicines · Express Dispatch
+            </p>
           </div>
         </div>
-        <button onClick={onViewAll} className="flex items-center gap-1 text-xs sm:text-sm font-bold hover:underline shrink-0 whitespace-nowrap" style={{ color: item.accent }}>
-          View All ({item.count}) <ArrowRight />
+        <button
+          onClick={onViewAll}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white/80 hover:bg-white text-xs sm:text-sm font-extrabold shadow-2xs hover:shadow-xs border border-white transition-all cursor-pointer shrink-0 whitespace-nowrap active:scale-95"
+          style={{ color: item.accent }}
+        >
+          <span>View All</span>
+          <ArrowRight />
         </button>
       </div>
 
-      <div className="flex lg:grid lg:grid-cols-5 gap-3 sm:gap-4 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
+      <div className="flex lg:grid lg:grid-cols-4 gap-3 sm:gap-4 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
         {item.products.map((p) => (
           <MiniCard
             key={p.name}

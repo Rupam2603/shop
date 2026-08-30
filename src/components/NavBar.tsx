@@ -216,7 +216,7 @@ export default function NavBar({
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white shadow-xs border-b border-[#e4ede2]/90">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-2xl border-b border-white/60 shadow-xs transition-all duration-300">
         {/* Tier 1: Main Header Row (Logo, Location, Wide Search, Cart, Profile, Logout) */}
         <div className="max-w-[1480px] mx-auto px-3 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
           {/* Left section: Hamburger, Brand Logo & Location Pill */}
@@ -225,7 +225,7 @@ export default function NavBar({
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl text-[#073b4c] hover:bg-[#f0f7f0] transition-colors cursor-pointer"
+              className="lg:hidden p-2 rounded-2xl text-[#073b4c] bg-white/70 hover:bg-white/95 border border-[#dce7db] shadow-2xs backdrop-blur-md transition-all cursor-pointer"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? (
@@ -246,197 +246,133 @@ export default function NavBar({
             <button
               type="button"
               onClick={() => handleNavClick("home")}
-              className="flex items-center gap-2 cursor-pointer focus:outline-none"
+              className="flex items-center gap-2.5 cursor-pointer focus:outline-none group"
             >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-linear-to-br from-[#006a39] to-[#047857] flex items-center justify-center shadow-md shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#006a39] to-[#047857] flex items-center justify-center shadow-lg shadow-emerald-900/15 group-hover:scale-105 transition-transform shrink-0 border border-white/30">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" fill="white" />
                 </svg>
               </div>
               <div className="flex flex-col text-left leading-none">
-                <span className="font-['Manrope',sans-serif] font-black text-[#006a39] text-xl sm:text-2xl tracking-tight">
+                <span className="font-['Manrope',sans-serif] font-black text-[#006a39] text-xl sm:text-2xl tracking-tight drop-shadow-2xs">
                   {settings.storeName || "SubhOne"}
                 </span>
-                <span className="text-[9px] font-extrabold text-[#047857] tracking-wider uppercase hidden sm:inline">
-                  Pharmacy & Wellness
+                <span className="text-[9px] font-extrabold text-[#047857] tracking-widest uppercase hidden sm:inline">
+                  Pharmacy & Diagnostic
                 </span>
               </div>
             </button>
 
-            {/* Location Selector Widget (Desktop/Tablet) */}
+            {/* Delivery Location Selector Pill */}
             <button
               type="button"
               onClick={() => setIsLocationModalOpen(true)}
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#d2e4d0] bg-[#f0f9f1] hover:bg-[#e2f4e3] hover:border-[#006a39] transition-all text-left cursor-pointer group shadow-2xs shrink-0"
+              className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-white/70 hover:bg-white/95 border border-[#dce7db] shadow-xs backdrop-blur-md transition-all cursor-pointer group text-left"
               title="Change Delivery Location"
             >
-              <div className="w-7 h-7 rounded-lg bg-[#006a39] text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <div className="w-7 h-7 rounded-xl bg-emerald-50 text-[#006a39] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                 {isLocating ? (
-                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-3.5 h-3.5 border-2 border-[#006a39] border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                  <span className="text-xs">📍</span>
                 )}
               </div>
-              <div className="flex flex-col leading-tight max-w-[110px] md:max-w-[140px] lg:max-w-[160px]">
+              <div className="flex flex-col leading-tight max-w-[150px] lg:max-w-[180px]">
                 <div className="flex items-center gap-1">
-                  <span className="text-[10px] font-black text-[#006a39] uppercase tracking-wider">
-                    Express to
+                  <span className="text-[9px] font-extrabold uppercase text-[#728575] tracking-wider">Deliver To</span>
+                  <span className="text-[9px] bg-emerald-100/90 text-emerald-900 font-bold px-1.5 py-0.2 rounded-full">
+                    {location.pincode}
                   </span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
                 </div>
-                <span className="text-xs font-extrabold text-[#073b4c] truncate group-hover:text-[#006a39] flex items-center gap-0.5">
-                  <span className="truncate">{location.city} {location.pincode ? `(${location.pincode})` : ""}</span>
-                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="shrink-0 text-[#006a39]">
-                    <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                <span className="text-xs font-bold text-[#073b4c] truncate">
+                  {location.city || location.area || "Select Location"}
                 </span>
               </div>
+              <span className="text-[#8aa08e] text-xs font-bold group-hover:translate-y-0.5 transition-transform">▾</span>
             </button>
           </div>
 
-          {/* Center: WIDE Flexible Search Bar (Desktop & Tablet) */}
-          <div
-            ref={searchRef}
-            className="hidden md:flex flex-1 min-w-[220px] max-w-2xl xl:max-w-3xl mx-2 lg:mx-4 relative"
-          >
-            <div className="relative w-full group">
-              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-[#006a39] group-focus-within:scale-110 transition-transform">
-                <SearchIcon />
-              </div>
+          {/* Center section: Large Omnisearch Bar */}
+          <div ref={searchRef} className="flex-1 max-w-2xl relative">
+            <div className="relative flex items-center">
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
                 onFocus={() => setIsSearchOpen(true)}
-                onChange={(e) => {
-                  setSearchValue(e.target.value);
-                  setIsSearchOpen(true);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && searchValue.trim()) {
-                    setIsSearchOpen(false);
-                    onNavigate("medicines");
-                  }
-                }}
-                placeholder="Search medicines, supplements, brands, active stock…"
-                className="w-full pl-11 pr-20 py-2.5 sm:py-3 bg-[#f3f7f2] hover:bg-[#ebf4ea] border border-[#d6e5d4] rounded-2xl text-xs sm:text-sm text-[#073b4c] placeholder:text-[#6d7a6f] focus:outline-none focus:bg-white focus:border-[#006a39] focus:ring-4 focus:ring-[#006a39]/15 transition-all shadow-inner font-semibold"
+                placeholder={settings.searchPlaceholder || "Search medicines, salts, lab tests, FMCG..."}
+                className="w-full bg-white/80 backdrop-blur-md border border-[#dce7db] hover:border-[#006a39]/40 focus:border-[#006a39] rounded-2xl py-2 sm:py-2.5 pl-10 sm:pl-11 pr-10 text-xs sm:text-sm text-[#073b4c] placeholder-[#8aa08e] shadow-xs focus:shadow-md focus:bg-white transition-all outline-none"
               />
-
-              {/* Clear button or Keyboard Shortcut Hint */}
-              <div className="absolute inset-y-0 right-3 flex items-center gap-1.5">
-                {searchValue.trim() ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchValue("");
-                      searchInputRef.current?.focus();
-                    }}
-                    className="p-1 rounded-full text-[#9aa89b] hover:text-[#073b4c] hover:bg-gray-200 transition-colors"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                ) : (
-                  <kbd className="hidden lg:inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-[#006a39] bg-white border border-[#bbf7d0] rounded-md shadow-2xs">
-                    Ctrl K
-                  </kbd>
-                )}
+              <div className="absolute left-3 sm:left-3.5 pointer-events-none flex items-center justify-center">
+                <SearchIcon />
               </div>
+              {searchValue && (
+                <button
+                  type="button"
+                  onClick={() => { setSearchValue(""); searchInputRef.current?.focus(); }}
+                  className="absolute right-3 w-5 h-5 rounded-full bg-[#f0f7f0] text-[#728575] hover:text-[#073b4c] text-xs flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
-            {/* Live Search Results Dropdown */}
-            {isSearchOpen && searchValue.trim().length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-[#e4ede2] overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                <div className="p-3 border-b border-[#f0f4f0] bg-[#f8fafb] flex items-center justify-between text-xs text-[#6d7a6f] px-4">
-                  <span className="font-bold text-[#073b4c]">Live Pharmacy Results</span>
-                  <span className="bg-[#e8f5ee] text-[#006a39] font-bold text-[10px] px-2 py-0.5 rounded-full">
-                    {searchResults.length} match{searchResults.length === 1 ? "" : "es"}
+            {/* Omnisearch Dropdown Results */}
+            {isSearchOpen && (searchValue.trim().length > 0 || searchSuggestions.length > 0) && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="p-3 border-b border-[#e4ede2]/80 bg-[#f7faf8]/80 flex items-center justify-between">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#006a39]">
+                    {searchValue.trim() ? `Search Results (${searchSuggestions.length})` : "Popular Search Queries"}
                   </span>
-                </div>
-
-                {searchResults.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-[#9aa89b]">
-                    No medicines found for &quot;{searchValue}&quot;. Try searching generic name or category.
-                  </div>
-                ) : (
-                  <div className="max-h-[360px] overflow-y-auto divide-y divide-[#f0f4f0]">
-                    {searchResults.map((p) => {
-                      const isOutOfStock = p.stock <= 0;
-                      const isLow = p.stock > 0 && p.stock <= (isRetailer ? 20 : 10);
-
-                      return (
-                        <div
-                          key={p.id}
-                          onClick={() => handleProductSelect(p)}
-                          className="p-3 hover:bg-[#f5fbf2] transition-colors flex items-center gap-3.5 cursor-pointer group"
-                        >
-                          <div className="w-12 h-12 bg-[#f8fafb] border border-[#e4ede2] rounded-xl overflow-hidden shrink-0 flex items-center justify-center p-1 group-hover:border-[#006a39] transition-colors">
-                            <img
-                              src={p.image_url}
-                              alt={p.name}
-                              className="h-full max-w-full object-contain"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src =
-                                  "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80";
-                              }}
-                            />
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-[#073b4c] truncate group-hover:text-[#006a39]">
-                              {p.name}
-                            </p>
-                            <p className="text-[11px] text-[#6d7a6f] truncate">
-                              {p.brand} · <span className="text-[#006a39] font-semibold">{p.category_name}</span>
-                            </p>
-                          </div>
-
-                          <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                            <span className="font-['Manrope',sans-serif] font-extrabold text-sm text-[#073b4c]">
-                              ₹{Math.round(isRetailer ? p.retailer_price : p.customer_price)}
-                            </span>
-                            {isOutOfStock ? (
-                              <span className="text-[9px] font-extrabold text-[#b91c1c] bg-[#fee2e2] border border-[#fecaca] px-1.5 py-0.5 rounded uppercase">
-                                Out of Stock
-                              </span>
-                            ) : isLow ? (
-                              <span className="text-[9px] font-bold text-[#b45309] bg-[#fef3c7] border border-[#fde68a] px-1.5 py-0.5 rounded animate-pulse">
-                                Only {p.stock} Left
-                              </span>
-                            ) : (
-                              <span className="text-[9px] font-bold text-[#047857] bg-[#d1fae5] px-1.5 py-0.5 rounded">
-                                {p.stock} in stock
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                <div className="p-3 bg-[#f8fafb] border-t border-[#f0f4f0] text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsSearchOpen(false);
-                      onNavigate("medicines");
-                    }}
-                    className="text-xs font-bold text-[#006a39] hover:underline cursor-pointer"
-                  >
-                    View entire medicine catalog & active stock →
+                  <button onClick={() => setIsSearchOpen(false)} className="text-xs text-[#728575] hover:text-[#073b4c] font-bold">
+                    Close ✕
                   </button>
+                </div>
+                <div className="max-h-80 overflow-y-auto p-2 divide-y divide-[#f0f5f1]">
+                  {searchSuggestions.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-[#728575]">
+                      No products matching &quot;{searchValue}&quot;. Try generic medicine name or brand.
+                    </div>
+                  ) : (
+                    searchSuggestions.map((prod) => (
+                      <div
+                        key={prod.id}
+                        onClick={() => handleProductSelect(prod)}
+                        className="p-2.5 rounded-2xl hover:bg-[#f0f7f1] flex items-center gap-3 cursor-pointer transition-all group"
+                      >
+                        <img
+                          src={prod.image_url}
+                          alt={prod.name}
+                          className="w-11 h-11 rounded-xl object-contain bg-white border border-[#e4ede2] p-1 shrink-0"
+                          onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=100&q=80"; }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-['Manrope',sans-serif] font-bold text-xs text-[#073b4c] group-hover:text-[#006a39] truncate">
+                            {prod.name}
+                          </p>
+                          <p className="text-[10px] text-[#728575] truncate">
+                            {prod.brand} · {prod.category_name}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="font-bold text-xs text-[#073b4c] block">
+                            ₹{isRetailer ? Math.round(prod.retailer_price) : Math.round(prod.customer_price)}
+                          </span>
+                          {prod.mrp > prod.customer_price && (
+                            <span className="text-[9px] text-[#8aa08e] line-through">
+                              ₹{Math.round(prod.mrp)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}
           </div>
+
 
           {/* Right section: Cart, Highly Visible Profile, Highly Visible Logout */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -444,13 +380,13 @@ export default function NavBar({
             <button
               type="button"
               onClick={openCart}
-              className="p-2 sm:p-2.5 rounded-2xl bg-[#f0fdf4] hover:bg-[#dcfce7] border border-[#bbf7d0] transition-all relative text-[#006a39] cursor-pointer flex items-center gap-1.5 shadow-xs group"
+              className="p-2 sm:p-2.5 rounded-2xl bg-white/80 hover:bg-emerald-50/90 border border-emerald-200/80 backdrop-blur-md transition-all relative text-[#006a39] cursor-pointer flex items-center gap-1.5 shadow-xs hover:shadow-md hover:scale-105 active:scale-95 group"
               title="Shopping Cart"
               aria-label="Shopping Cart"
             >
               <CartIcon />
               {itemCount > 0 && (
-                <span className="bg-[#006a39] text-white text-[11px] font-black rounded-full px-1.5 py-0.5 min-w-[20px] text-center shadow-xs">
+                <span className="bg-gradient-to-br from-[#006a39] to-[#047857] text-white text-[11px] font-black rounded-full px-2 py-0.5 min-w-[20px] text-center shadow-xs border border-white/40">
                   {itemCount}
                 </span>
               )}
@@ -464,11 +400,11 @@ export default function NavBar({
                   onProfile?.();
                   setMobileMenuOpen(false);
                 }}
-                className="flex items-center gap-1.5 sm:gap-2 p-1 sm:px-3 sm:py-1.5 rounded-2xl bg-[#e8f5ee] hover:bg-[#d1fae5] border border-[#a7f3d0] transition-all cursor-pointer shadow-2xs group shrink-0"
+                className="flex items-center gap-1.5 sm:gap-2.5 p-1.5 sm:px-3.5 sm:py-1.5 rounded-2xl bg-white/80 hover:bg-white/95 border border-[#dce7db] backdrop-blur-md transition-all cursor-pointer shadow-xs hover:shadow-md hover:-translate-y-0.5 group shrink-0"
                 title="View Profile & Account Details"
               >
                 <div
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-black text-xs text-white shrink-0 shadow-sm ring-1 ring-white"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-black text-xs text-white shrink-0 shadow-xs ring-1 ring-white/60"
                   style={{ backgroundColor: ROLE_COLORS[user.role] ?? "#006a39" }}
                 >
                   {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
@@ -484,12 +420,12 @@ export default function NavBar({
               </button>
             )}
 
-            {/* Red Logout Button */}
+            {/* Glassmorphic Logout Button */}
             {user && (
               <button
                 type="button"
                 onClick={onLogout}
-                className="flex items-center justify-center gap-1.5 p-2 sm:px-3.5 sm:py-2 rounded-2xl bg-[#dc2626] hover:bg-[#b91c1c] text-white border border-[#b91c1c] transition-all text-xs sm:text-sm font-black whitespace-nowrap cursor-pointer shadow-md hover:shadow-lg active:scale-95 shrink-0"
+                className="flex items-center justify-center gap-1.5 p-2 sm:px-3.5 sm:py-2 rounded-2xl bg-rose-500/90 hover:bg-rose-600 text-white border border-rose-400/60 backdrop-blur-md transition-all text-xs sm:text-sm font-black whitespace-nowrap cursor-pointer shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 shrink-0"
                 title="Sign Out of Your Account"
                 aria-label="Logout"
               >

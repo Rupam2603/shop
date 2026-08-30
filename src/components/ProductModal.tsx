@@ -314,21 +314,21 @@ export default function ProductDetailModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl w-full max-w-[920px] shadow-2xl my-auto max-h-[92vh] overflow-y-auto flex flex-col relative animate-in fade-in zoom-in-95 duration-150"
+        className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl w-full max-w-[920px] shadow-2xl my-auto max-h-[92vh] overflow-y-auto flex flex-col relative animate-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Product Details Section */}
-        <div className="flex flex-col md:flex-row shrink-0 border-b border-[#e4ede2]">
+        <div className="flex flex-col md:flex-row shrink-0 border-b border-[#e4ede2]/80">
           {/* Image panel */}
-          <div className="w-full md:w-72 shrink-0 flex flex-col border-b md:border-b-0 md:border-r border-[#e4ede2]" style={{ backgroundColor: accentColor + "08" }}>
-            <div className="relative h-60 sm:h-72 overflow-hidden flex items-center justify-center p-4 bg-white">
+          <div className="w-full md:w-72 shrink-0 flex flex-col border-b md:border-b-0 md:border-r border-[#e4ede2]/80" style={{ backgroundColor: accentColor + "08" }}>
+            <div className="relative h-60 sm:h-72 overflow-hidden flex items-center justify-center p-4 bg-white/60 backdrop-blur-md">
               {product.disc && (
                 <span
-                  className="absolute top-3 left-3 z-10 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase shadow-sm"
+                  className="absolute top-3.5 left-3.5 z-10 text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase shadow-xs border border-white/30 backdrop-blur-md"
                   style={{ backgroundColor: accentColor }}
                 >
                   {product.disc} OFF
@@ -337,37 +337,37 @@ export default function ProductDetailModal({
               <img
                 src={product.img}
                 alt={product.name}
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain mix-blend-multiply"
                 onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.12"; }}
               />
             </div>
-            <div className="flex-1 p-4 sm:p-5 grid grid-cols-2 md:flex md:flex-col gap-3 bg-white/80">
+            <div className="flex-1 p-4 sm:p-5 grid grid-cols-2 md:flex md:flex-col gap-3 bg-white/70 backdrop-blur-md">
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.7px] text-[#9aa89b] mb-1">Category</p>
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.7px] text-[#8aa08e] mb-1">Category</p>
                 <span
-                  className="inline-block text-xs font-semibold px-2.5 py-1 rounded-lg text-white"
+                  className="inline-block text-xs font-bold px-3 py-1 rounded-xl text-white shadow-xs border border-white/20"
                   style={{ backgroundColor: accentColor }}
                 >
                   {product.cat}
                 </span>
               </div>
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.7px] text-[#9aa89b] mb-1">Brand</p>
-                <p className="text-xs font-bold text-[#073b4c]">{product.brand}</p>
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.7px] text-[#8aa08e] mb-1">Brand</p>
+                <p className="text-xs font-extrabold text-[#073b4c]">{product.brand}</p>
               </div>
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.7px] text-[#9aa89b] mb-1">HSN Code</p>
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.7px] text-[#8aa08e] mb-1">HSN Code</p>
                 <p className="text-xs font-mono text-[#6d7a6f]">{hsn}</p>
               </div>
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.7px] text-[#9aa89b] mb-1">Live Stock Availability</p>
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.7px] text-[#8aa08e] mb-1">Live Stock Availability</p>
                 {isOutOfStock ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-[#b91c1c] bg-[#fee2e2] px-2 py-0.5 rounded-md">
-                    <span className="w-2 h-2 rounded-full bg-red-600 animate-ping inline-block" />
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full">
+                    <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping inline-block" />
                     {isRetailer ? "Stock Out (0 units)" : "Out of Stock"}
                   </span>
                 ) : isLowStock ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#b45309] bg-[#fef3c7] px-2 py-0.5 rounded-md animate-pulse">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full animate-pulse">
                     <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
                     {isRetailer ? `Low Stock (${liveStock} units)` : `Only ${liveStock} Left!`}
                   </span>
@@ -474,20 +474,21 @@ export default function ProductDetailModal({
             {/* Quantity Stepper + Add to Cart CTA */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 mt-auto">
               {!isOutOfStock && (
-                <div className="flex items-center border border-[#e4ede2] rounded-xl overflow-hidden bg-white shrink-0">
+                <div className="flex items-center border border-[#dce7db] rounded-2xl overflow-hidden bg-white/80 backdrop-blur-md shrink-0 shadow-2xs">
                   <button
                     onClick={() => setQty((q) => Math.max(1, q - 1))}
-                    className="w-10 h-10 flex items-center justify-center text-[#073b4c] hover:bg-[#f0f4f0] font-bold text-base transition-colors"
+                    className="w-10 h-10 flex items-center justify-center text-[#073b4c] hover:bg-emerald-50 font-bold text-base transition-colors cursor-pointer"
+                    aria-label="Decrease quantity"
                   >
                     −
                   </button>
-                  <span className="w-12 text-center font-bold text-sm text-[#073b4c]">{qty}</span>
+                  <span className="w-10 text-center font-extrabold text-sm text-[#073b4c]">
+                    {qty}
+                  </span>
                   <button
-                    disabled={qty >= liveStock}
                     onClick={() => setQty((q) => Math.min(liveStock, q + 1))}
-                    className={`w-10 h-10 flex items-center justify-center text-[#073b4c] font-bold text-base transition-colors ${
-                      qty >= liveStock ? "opacity-30 cursor-not-allowed bg-gray-100" : "hover:bg-[#f0f4f0]"
-                    }`}
+                    className="w-10 h-10 flex items-center justify-center text-[#073b4c] hover:bg-emerald-50 font-bold text-base transition-colors cursor-pointer"
+                    aria-label="Increase quantity"
                   >
                     +
                   </button>
@@ -497,10 +498,9 @@ export default function ProductDetailModal({
               {isOutOfStock ? (
                 <button
                   disabled
-                  className="flex-1 py-3 px-6 rounded-xl bg-gray-200 text-gray-500 font-['Manrope',sans-serif] font-bold text-sm cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 py-3.5 px-6 rounded-2xl bg-[#f3f4f6] text-[#9ca3af] font-extrabold text-sm cursor-not-allowed border border-slate-200"
                 >
-                  <span className="w-2 h-2 rounded-full bg-red-500" />
-                  Currently Out of Stock
+                  Item Currently Out of Stock
                 </button>
               ) : (
                 <button
@@ -520,7 +520,7 @@ export default function ProductDetailModal({
                     );
                     onClose();
                   }}
-                  className="flex-1 py-3 px-6 rounded-xl text-white font-['Manrope',sans-serif] font-bold text-sm shadow-md hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-3.5 px-6 rounded-2xl text-white font-['Manrope',sans-serif] font-black text-sm shadow-lg shadow-emerald-950/15 hover:opacity-95 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border border-white/30"
                   style={{ backgroundColor: accentColor }}
                 >
                   <span>Add {qty} to Cart</span>

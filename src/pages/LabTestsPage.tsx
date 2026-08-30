@@ -322,18 +322,18 @@ export default function LabTestsPage({
         {/* Health Packages Grid */}
         <div className="flex flex-col gap-4">
           <div className="flex items-end justify-between">
-            <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl sm:text-2xl lg:text-3xl leading-tight">
+            <h2 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xl sm:text-2xl lg:text-3xl leading-tight">
               Diagnostic Health Packages
             </h2>
           </div>
 
           {filteredPackages.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-[#e4ede2] py-16 text-center flex flex-col items-center gap-3">
-              <p className="font-bold text-[#073b4c] text-lg">No packages found</p>
-              <p className="text-[#9aa89b] text-sm">Try searching for a different test parameter or select &apos;All Packages&apos;.</p>
+            <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/80 py-16 text-center flex flex-col items-center gap-3 shadow-xs">
+              <p className="font-extrabold text-[#073b4c] text-lg">No packages found</p>
+              <p className="text-[#8aa08e] text-sm">Try searching for a different test parameter or select &apos;All Packages&apos;.</p>
               <button
                 onClick={() => { setSelectedCat("All Packages"); setSearch(""); }}
-                className="px-5 py-2 rounded-xl bg-[#006a39] text-white text-xs font-bold mt-1"
+                className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] text-white text-xs font-bold mt-1 shadow-md shadow-emerald-950/15 cursor-pointer active:scale-95"
               >
                 Reset Filters
               </button>
@@ -343,44 +343,44 @@ export default function LabTestsPage({
               {filteredPackages.map((pkg) => (
                 <div
                   key={pkg.id}
-                  className="bg-white rounded-3xl border border-[#d5dcd3] shadow-xs hover:shadow-md transition-all overflow-hidden flex flex-col group"
+                  className="bg-white/85 backdrop-blur-xl rounded-3xl border border-white/90 shadow-xs hover:shadow-xl hover:shadow-emerald-950/8 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
                 >
-                  <div className="bg-[#eff6ec] p-5 border-b border-[#e4ede2] relative">
-                    <div className="flex items-center justify-between mb-2">
+                  <div className="bg-gradient-to-br from-emerald-50/70 to-teal-50/40 p-5 sm:p-6 border-b border-[#e4ede2]/80 relative backdrop-blur-md">
+                    <div className="flex items-center justify-between mb-2.5">
                       {pkg.badge ? (
-                        <span className="bg-[#006a39] text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full">
+                        <span className="bg-gradient-to-r from-[#006a39] to-[#047857] text-white text-[10px] font-black uppercase px-3 py-1 rounded-full shadow-xs border border-white/30">
                           {pkg.badge}
                         </span>
                       ) : (
-                        <span className="text-[10px] font-bold uppercase text-[#6d7a6f] bg-[#e4ede2] px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-bold uppercase text-[#6d7a6f] bg-white/80 px-3 py-1 rounded-full border border-slate-200">
                           {pkg.category}
                         </span>
                       )}
-                      <span className="text-[11px] font-bold text-[#006a39] bg-white border border-[#bbf7d0] px-2 py-0.5 rounded-full">
+                      <span className="text-[11px] font-black text-[#006a39] bg-white/90 border border-emerald-200 px-3 py-1 rounded-full shadow-2xs">
                         {pkg.tests_count} Tests
                       </span>
                     </div>
 
-                    <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl leading-snug">
+                    <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xl leading-snug">
                       {pkg.name}
                     </h3>
-                    <p className="text-[#3e4a3f] text-xs leading-relaxed mt-1 line-clamp-2">
+                    <p className="text-[#596b5e] text-xs leading-relaxed mt-1.5 line-clamp-2 font-medium">
                       {pkg.tests_summary}
                     </p>
 
                     {pkg.fasting_required && (
-                      <div className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-[#b45309] bg-[#fef3c7] px-2.5 py-1 rounded-lg">
+                      <div className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-800 bg-amber-50/90 border border-amber-200 px-3 py-1 rounded-xl">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         Fasting: {pkg.fasting_hours || 10}h required
                       </div>
                     )}
                   </div>
 
-                  <div className="p-5 flex flex-col justify-between flex-1 gap-5">
-                    <div className="flex flex-col gap-3">
+                  <div className="p-5 sm:p-6 flex flex-col justify-between flex-1 gap-5 bg-white/70 backdrop-blur-md">
+                    <div className="flex flex-col gap-3.5">
                       <ul className="flex flex-col gap-2">
                         {pkg.features.map((f) => (
-                          <li key={f} className="flex items-start gap-2 text-xs text-[#171d18] leading-tight">
+                          <li key={f} className="flex items-start gap-2 text-xs text-[#171d18] leading-tight font-medium">
                             <CheckCircleIcon />
                             {f}
                           </li>
@@ -389,19 +389,19 @@ export default function LabTestsPage({
 
                       {/* Expandable test list */}
                       {pkg.included_tests && pkg.included_tests.length > 0 && (
-                        <div className="border-t border-[#f0f4f0] pt-2">
+                        <div className="border-t border-[#f0f4f0] pt-2.5">
                           <button
                             type="button"
                             onClick={() => setExpandedPkgId(expandedPkgId === pkg.id ? null : pkg.id)}
-                            className="text-[11px] font-bold text-[#006a39] hover:underline flex items-center justify-between w-full py-1"
+                            className="text-[11px] font-extrabold text-[#006a39] hover:underline flex items-center justify-between w-full py-1 cursor-pointer"
                           >
                             <span>{expandedPkgId === pkg.id ? "Hide Included Tests ▲" : `View ${pkg.included_tests.length} Tests Breakdown ▼`}</span>
                           </button>
                           {expandedPkgId === pkg.id && (
-                            <div className="mt-2 bg-[#f8fafb] p-3 rounded-2xl border border-[#e4ede2] flex flex-col gap-1.5 max-h-48 overflow-y-auto text-xs text-[#3e4a3f]">
+                            <div className="mt-2 p-3 bg-white/80 rounded-2xl border border-[#e4ede2] flex flex-col gap-1.5 max-h-48 overflow-y-auto text-xs text-[#4a5568] animate-in fade-in">
                               {pkg.included_tests.map((t, idx) => (
-                                <div key={idx} className="flex items-start gap-1.5 leading-tight">
-                                  <span className="text-[#006a39] font-bold">•</span>
+                                <div key={idx} className="flex items-center gap-1.5 text-[11px]">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-[#006a39] shrink-0" />
                                   <span>{t}</span>
                                 </div>
                               ))}
@@ -411,29 +411,31 @@ export default function LabTestsPage({
                       )}
                     </div>
 
-                    <div className="flex flex-col gap-3 border-t border-[#f0f4f0] pt-3">
-                      <div className="flex items-baseline justify-between">
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-2xl">
-                            ₹{pkg.price.toLocaleString()}
+                    <div className="pt-3 border-t border-[#f0f4f0] flex items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="font-['Manrope',sans-serif] font-black text-2xl text-[#073b4c]">
+                            ₹{pkg.price}
                           </span>
                           {pkg.mrp > pkg.price && (
-                            <span className="text-[#9aa89b] text-xs line-through">MRP ₹{pkg.mrp.toLocaleString()}</span>
+                            <span className="text-[#8aa08e] text-xs line-through font-semibold">
+                              ₹{pkg.mrp}
+                            </span>
                           )}
                         </div>
                         {pkg.discount_percent > 0 && (
-                          <span className="bg-[#dcfce7] text-[#15803d] text-xs font-bold px-2 py-0.5 rounded-full">
-                            {pkg.discount_percent}% OFF
+                          <span className="text-[10px] font-extrabold text-[#006a39]">
+                            {pkg.discount_percent}% OFF Special
                           </span>
                         )}
                       </div>
 
                       <button
+                        type="button"
                         onClick={() => setSelectedPackage(pkg)}
-                        className="w-full py-3 rounded-xl font-bold text-xs sm:text-sm tracking-[0.4px] transition-all bg-[#006a39] text-white hover:bg-[#005a30] active:scale-[0.98] shadow-sm flex items-center justify-center gap-2"
+                        className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] hover:opacity-95 text-white text-xs font-extrabold shadow-md shadow-emerald-950/15 transition-all cursor-pointer active:scale-95 border border-white/30"
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                        Book Home Sample Collection
+                        Book Test
                       </button>
                     </div>
                   </div>
