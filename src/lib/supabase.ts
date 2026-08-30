@@ -298,9 +298,36 @@ export const neonClient = {
           `UPDATE public.auth_users SET approval_status = $1, updated_at = NOW() WHERE id = $2`,
           [params.new_status, params.target_user_id]
         );
+        await sql.query(
+          `UPDATE public.retailer_approvals SET approval_status = $1, updated_at = NOW() WHERE user_id = $2`,
+          [params.new_status, params.target_user_id]
+        );
         return { data: { success: true }, error: null };
       } catch (err) {
         return { data: null, error: err };
+      }
+    }
+
+    if (funcName === "admin_change_user_password") {
+      try {
+        await sql.query(
+          `UPDATE public.auth_users SET password_hash = $1, updated_at = NOW() WHERE id = $2`,
+          [params.new_password, params.target_user_id]
+        );
+        return { data: { success: true }, error: null };
+      } catch (err: any) {
+        return { data: { success: false, error: err?.message || "Failed to update password" }, error: err };
+      }
+    }
+
+    if (funcName === "admin_delete_user") {
+      try {
+        await sql.query(`DELETE FROM public.auth_users WHERE id = $1`, [params.target_user_id]);
+        await sql.query(`DELETE FROM public.profiles WHERE id = $1`, [params.target_user_id]);
+        await sql.query(`DELETE FROM public.retailer_approvals WHERE user_id = $1`, [params.target_user_id]);
+        return { data: { success: true }, error: null };
+      } catch (err: any) {
+        return { data: { success: false, error: err?.message || "Failed to delete user" }, error: err };
       }
     }
 
@@ -353,16 +380,23 @@ export const neonClient = {
             saveStoredSession(adminUser);
             return { data: { user: adminUser, session: { user: adminUser } }, error: null };
           }
-          return { data: { user: null, session: null }, error: { message: "Invalid login credentials." } };
+          return { data: { user: null, session: null }, error: { message: "Account does not exist. Please register." } };
         }
 
         const userRow = rows[0];
         if (userRow.password_hash !== password) {
-          return { data: { user: null, session: null }, error: { message: "Incorrect password." } };
+          return { data: { user: null, session: null }, error: { message: "Incorrect password. Please try again." } };
         }
 
         if (userRow.approval_status === "blocked") {
-          return { data: { user: null, session: null }, error: { message: "Your account has been blocked." } };
+          return { data: { user: null, session: null }, error: { message: "Your account has been blocked by administrator." } };
+        }
+
+        if (userRow.role === "retailer" && userRow.approval_status !== "approved") {
+          return {
+            data: { user: null, session: null },
+            error: { message: "Your retailer account is pending admin approval. You cannot log in until approved." },
+          };
         }
 
         const authUser = {
