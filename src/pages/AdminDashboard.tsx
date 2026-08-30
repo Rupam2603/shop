@@ -32,9 +32,6 @@ import {
   downloadInvoiceFile,
   printOrDownloadDailyReport,
   downloadDailyReportFile,
-  generateInvoiceHtml,
-  generateDailyReportHtml,
-  InvoiceOrderData,
 } from "../lib/invoiceGenerator";
 
 interface Props {
@@ -43,6 +40,173 @@ interface Props {
 }
 
 type AdminTab = "dashboard" | "products" | "inventory" | "orders" | "retailers" | "lab-tests" | "revenue" | "settings";
+
+/* ── Modern Glassmorphism Vector Icons ── */
+const Icons = {
+  Dashboard: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+    </svg>
+  ),
+  Pill: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
+      <path d="m8.5 8.5 7 7" />
+    </svg>
+  ),
+  Box: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+      <path d="m3.3 7 8.7 5 8.7-5" />
+      <path d="M12 22V12" />
+    </svg>
+  ),
+  Order: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+      <path d="M3 6h18" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </svg>
+  ),
+  Store: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+      <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4" />
+      <path d="M2 7h20" />
+      <path d="M22 7a2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1-2 2 2 2 0 0 1-2-2" />
+    </svg>
+  ),
+  Lab: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 18h12" />
+      <path d="M3 22h18" />
+      <path d="M14 22a7 7 0 1 0-4 0" />
+      <path d="M9 14h6" />
+      <path d="M9 12a3 3 0 0 1 6 0v2H9Z" />
+      <path d="M12 2v4" />
+      <path d="M9 4h6" />
+    </svg>
+  ),
+  Revenue: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3v18h18" />
+      <path d="m19 9-5 5-4-4-3 3" />
+    </svg>
+  ),
+  Settings: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ),
+  Alert: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  ),
+  Hourglass: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 22h14" />
+      <path d="M5 2h14" />
+      <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
+      <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
+    </svg>
+  ),
+  Check: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  ),
+  Printer: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 6 2 18 2 18 9" />
+      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+      <rect x="6" y="14" width="12" height="8" rx="1" />
+    </svg>
+  ),
+  Download: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  ),
+  Trash: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18" />
+      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
+  ),
+  Edit: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  ),
+  Eye: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ),
+  Calendar: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  ),
+  Camera: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+      <circle cx="12" cy="13" r="3" />
+    </svg>
+  ),
+  Image: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <circle cx="9" cy="9" r="2" />
+      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+    </svg>
+  ),
+  User: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  ),
+  Refresh: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+      <path d="M8 16H3v5" />
+    </svg>
+  ),
+  Save: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+      <polyline points="17 21 17 13 7 13 7 21" />
+      <polyline points="7 3 7 8 15 8" />
+    </svg>
+  ),
+  Ban: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="m4.9 4.9 14.2 14.2" />
+    </svg>
+  ),
+};
 
 export type ProductBadge = {
   id: string;
@@ -221,14 +385,14 @@ const MOCK_ORDERS = [
 ];
 
 const TAB_ITEMS: { id: AdminTab; label: string; icon: React.ReactElement }[] = [
-  { id: "dashboard", label: "Dashboard", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 1H8V8H1V1ZM10 1H17V8H10V1ZM1 10H8V17H1V10ZM10 10H17V17H10V10Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg> },
-  { id: "products", label: "Products", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 1L17 5V13L9 17L1 13V5L9 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M9 9L17 5M9 9L1 5M9 9V17" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg> },
-  { id: "inventory", label: "Inventory", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 13L5 15L9 13L13 15L17 13V5L13 3L9 5L5 3L1 5V13Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M9 5V13M5 3V15M13 3V15" stroke="currentColor" strokeWidth="1.5" /></svg> },
-  { id: "orders", label: "Orders", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 1H14C15.1 1 16 1.9 16 3V17L13 15.5L9 17L5 15.5L2 17V3C2 1.9 2.9 1 4 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M5 6H13M5 9H13M5 12H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg> },
-  { id: "retailers", label: "Retailers", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
-  { id: "lab-tests", label: "Lab Bookings", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M9 3H6v6L2 15c-.83 1.39-.83 3.08 0 4.47C2.83 20.86 4.33 22 6 22h12c1.67 0 3.17-1.14 4-2.53.83-1.39.83-3.08 0-4.47L18 9V3h-3M9 3v6l-4 6h14L15 9V3M9 3h6"/></svg> },
-  { id: "revenue", label: "Revenue", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 13L5 9L8 11L12 6L17 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M1 17H17M13 2H17V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg> },
-  { id: "settings", label: "Settings", icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 11.5C10.38 11.5 11.5 10.38 11.5 9C11.5 7.62 10.38 6.5 9 6.5C7.62 6.5 6.5 7.62 6.5 9C6.5 10.38 7.62 11.5 9 11.5Z" stroke="currentColor" strokeWidth="1.5" /><path d="M15.1 9C15.1 8.71 15.07 8.43 15.04 8.15L16.86 6.74L14.86 3.26L12.74 4.22C12.27 3.87 11.77 3.57 11.22 3.34L10.9 1H7.1L6.78 3.34C6.23 3.57 5.73 3.87 5.26 4.22L3.14 3.26L1.14 6.74L2.96 8.15C2.93 8.43 2.9 8.71 2.9 9C2.9 9.29 2.93 9.57 2.96 9.85L1.14 11.26L3.14 14.74L5.26 13.78C5.73 14.13 6.23 14.43 6.78 14.66L7.1 17H10.9L11.22 14.66C11.77 14.43 12.27 14.13 12.74 13.78L14.86 14.74L16.86 11.26L15.04 9.85C15.07 9.57 15.1 9.29 15.1 9Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg> },
+  { id: "dashboard", label: "Dashboard", icon: <Icons.Dashboard className="w-4 h-4" /> },
+  { id: "products", label: "Products", icon: <Icons.Pill className="w-4 h-4" /> },
+  { id: "inventory", label: "Inventory", icon: <Icons.Box className="w-4 h-4" /> },
+  { id: "orders", label: "Orders", icon: <Icons.Order className="w-4 h-4" /> },
+  { id: "retailers", label: "Retailers", icon: <Icons.Store className="w-4 h-4" /> },
+  { id: "lab-tests", label: "Lab Bookings", icon: <Icons.Lab className="w-4 h-4" /> },
+  { id: "revenue", label: "Revenue", icon: <Icons.Revenue className="w-4 h-4" /> },
+  { id: "settings", label: "Settings", icon: <Icons.Settings className="w-4 h-4" /> },
 ];
 
 function stockStatus(s: number): { label: string; color: string; bg: string; border: string } {
@@ -356,8 +520,8 @@ function ProductModal({
         {/* Header */}
         <div className="flex items-center justify-between px-7 py-5 border-b border-[#e4ede2] bg-gradient-to-r from-white/90 via-emerald-50/30 to-white/90">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-100/80 text-emerald-800 flex items-center justify-center text-lg shadow-sm">
-              💊
+            <div className="w-10 h-10 rounded-2xl bg-emerald-100/80 text-emerald-800 flex items-center justify-center shadow-sm">
+              <Icons.Pill className="w-5 h-5 text-[#006a39]" />
             </div>
             <div>
               <h2 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg">
@@ -367,7 +531,7 @@ function ProductModal({
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-[#f0f5f1] flex items-center justify-center text-[#073b4c] hover:bg-[#e2ede4] transition-colors cursor-pointer">
-            ✕
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1L11 11M11 1L1 11" stroke="#073b4c" strokeWidth="2" strokeLinecap="round" /></svg>
           </button>
         </div>
 
@@ -388,13 +552,13 @@ function ProductModal({
                     onClick={(e) => { e.stopPropagation(); setForm((p) => ({ ...p, image: undefined })); }}
                     className="absolute top-3 right-3 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-md hover:bg-white text-red-600 cursor-pointer"
                   >
-                    ✕
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M1 1L11 11M11 1L1 11" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" /></svg>
                   </button>
                 </div>
               ) : (
                 <div className="h-32 flex flex-col items-center justify-center gap-2 text-[#8aa090] group-hover:text-[#006a39] transition-colors">
-                  <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shadow-xs">
-                    📸
+                  <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shadow-xs text-[#006a39]">
+                    <Icons.Camera className="w-5 h-5 text-[#006a39]" />
                   </div>
                   <p className="text-xs font-bold">Click or drag image to upload</p>
                   <p className="text-[10px] text-[#9aa89b]">Supports JPG, PNG, WebP format</p>
@@ -407,7 +571,7 @@ function ProductModal({
                 onClick={() => cameraRef.current?.click()}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#dce7db] bg-white/80 hover:bg-white text-xs font-bold text-[#073b4c] transition-all cursor-pointer shadow-xs"
               >
-                <span>📷</span>
+                <Icons.Camera className="w-4 h-4 text-[#006a39]" />
                 <span>Take Live Photo</span>
               </button>
               <button
@@ -415,7 +579,7 @@ function ProductModal({
                 onClick={() => galleryRef.current?.click()}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#dce7db] bg-white/80 hover:bg-white text-xs font-bold text-[#073b4c] transition-all cursor-pointer shadow-xs"
               >
-                <span>🖼️</span>
+                <Icons.Image className="w-4 h-4 text-[#0369a1]" />
                 <span>Upload from Gallery</span>
               </button>
             </div>
@@ -595,7 +759,7 @@ function ProductModal({
                     onClick={() => handleRemoveBadge(idx)}
                     className="w-5 h-5 rounded flex items-center justify-center text-[#9aa89b] hover:text-red-600 hover:bg-red-50 text-xs font-bold transition-colors cursor-pointer shrink-0"
                   >
-                    ✕
+                    <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><path d="M1 1L11 11M11 1L1 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
                   </button>
                 </div>
               ))}
@@ -1150,7 +1314,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             onClick={() => setSidebarOpen(false)}
             className="md:hidden text-white/70 hover:text-white p-1"
           >
-            ✕
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
         </div>
 
@@ -1210,7 +1374,11 @@ export default function AdminDashboard({ user, onLogout }: Props) {
                 className="w-8 h-8 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-400/30 flex items-center justify-center text-xs transition-colors cursor-pointer shrink-0"
                 title="Sign Out"
               >
-                ⏻
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
               </button>
             </div>
           </div>
@@ -1251,8 +1419,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               </button>
             )}
 
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-white/70 border border-[#dce7db] text-xs font-semibold text-[#073b4c]">
-              <span>📅</span>
+            <div className="hidden lg:flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/70 border border-[#dce7db] text-xs font-semibold text-[#073b4c]">
+              <Icons.Calendar className="w-3.5 h-3.5 text-[#006a39]" />
               <span>{new Date().toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}</span>
             </div>
           </div>
@@ -1345,7 +1513,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-sm w-full p-7 text-center shadow-2xl animate-in zoom-in-95">
             <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4 text-2xl shadow-xs">
-              🗑️
+              <Icons.Trash className="w-7 h-7 text-rose-600" />
             </div>
             <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg mb-1">Delete Product Entry</h3>
             <p className="text-[#657969] text-xs mb-6 leading-relaxed">Are you sure you want to delete this pharmaceutical product from database and inventory? This action is permanent.</p>
@@ -1375,10 +1543,10 @@ function DashboardTab({
   onNavigate: (t: AdminTab) => void;
 }) {
   const stats = [
-    { label: "Active Products", value: products.length, unit: "Certified SKUs", color: "#006a39", bg: "rgba(0, 106, 57, 0.08)", icon: "💊" },
-    { label: "Inventory Alerts", value: lowStockCount + outOfStockCount, unit: "low / out of stock", color: "#c2410c", bg: "rgba(194, 65, 12, 0.08)", icon: "⚠️" },
-    { label: "Wholesale Approvals", value: pendingRetailersCount, unit: pendingRetailersCount > 0 ? "applications pending" : "all partners verified", color: "#d97706", bg: "rgba(217, 119, 6, 0.08)", icon: "🏪" },
-    { label: "Today's Orders", value: 23, unit: "real-time orders", color: "#0369a1", bg: "rgba(3, 105, 161, 0.08)", icon: "📦" },
+    { label: "Active Products", value: products.length, unit: "Certified SKUs", color: "#006a39", bg: "rgba(0, 106, 57, 0.08)", icon: <Icons.Pill className="w-5 h-5 text-[#006a39]" /> },
+    { label: "Inventory Alerts", value: lowStockCount + outOfStockCount, unit: "low / out of stock", color: "#c2410c", bg: "rgba(194, 65, 12, 0.08)", icon: <Icons.Alert className="w-5 h-5 text-[#c2410c]" /> },
+    { label: "Wholesale Approvals", value: pendingRetailersCount, unit: pendingRetailersCount > 0 ? "applications pending" : "all partners verified", color: "#d97706", bg: "rgba(217, 119, 6, 0.08)", icon: <Icons.Store className="w-5 h-5 text-[#d97706]" /> },
+    { label: "Today's Orders", value: 23, unit: "real-time orders", color: "#0369a1", bg: "rgba(3, 105, 161, 0.08)", icon: <Icons.Order className="w-5 h-5 text-[#0369a1]" /> },
   ];
 
   const recentActivity = [
@@ -1396,8 +1564,8 @@ function DashboardTab({
       {pendingRetailersCount > 0 && (
         <div className="bg-amber-50/90 backdrop-blur-xl border border-amber-200/90 rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-amber-950/5 animate-in fade-in duration-200">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-2xl shrink-0 shadow-xs">
-              ⏳
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 shadow-xs">
+              <Icons.Hourglass className="w-6 h-6 text-amber-800" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -1448,7 +1616,8 @@ function DashboardTab({
       >
         <div className="relative z-10 text-white">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs font-semibold mb-2">
-            <span>📈 Live Performance</span>
+            <Icons.Revenue className="w-3.5 h-3.5 text-emerald-300" />
+            <span>Live Performance</span>
           </div>
           <p className="text-white/70 text-xs sm:text-sm font-semibold uppercase tracking-wider">Today&apos;s Gross Volume</p>
           <div className="flex items-baseline gap-3 mt-1">
@@ -1654,7 +1823,7 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
                     className="p-2.5 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 transition-colors cursor-pointer border border-sky-200 shadow-2xs"
                     title="Edit Product"
                   >
-                    ✏️
+                    <Icons.Edit className="w-4 h-4 text-sky-700" />
                   </button>
                   <button
                     type="button"
@@ -1662,7 +1831,7 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
                     className="p-2.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer border border-rose-200 shadow-2xs"
                     title="Delete Product"
                   >
-                    🗑️
+                    <Icons.Trash className="w-4 h-4 text-rose-700" />
                   </button>
                 </div>
               </div>
@@ -1672,7 +1841,7 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
 
         {products.length === 0 && (
           <div className="py-16 text-center text-[#728575] text-sm flex flex-col items-center gap-2">
-            <span className="text-4xl">🔍</span>
+            <Icons.Pill className="w-10 h-10 text-[#728575] stroke-1" />
             <p className="font-bold text-[#073b4c]">No products found</p>
             <p className="text-xs">Try adjusting your category filter or search terms.</p>
           </div>
@@ -1713,9 +1882,9 @@ function InventoryTab({ products, filter, setFilter, search, setSearch, stockEdi
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-5">
         {[
-          { label: "In Stock", count: inStockCount, color: "#047857", bg: "rgba(209, 250, 229, 0.8)", border: "#a7f3d0", icon: "✅" },
-          { label: "Low Stock Alert", count: lowStockCount, color: "#c2410c", bg: "rgba(255, 237, 213, 0.8)", border: "#fed7aa", icon: "⚠️" },
-          { label: "Out of Stock", count: outOfStockCount, color: "#b91c1c", bg: "rgba(254, 226, 226, 0.8)", border: "#fecaca", icon: "🚫" },
+          { label: "In Stock", count: inStockCount, color: "#047857", bg: "rgba(209, 250, 229, 0.8)", border: "#a7f3d0", icon: <Icons.Check className="w-6 h-6 text-[#047857]" /> },
+          { label: "Low Stock Alert", count: lowStockCount, color: "#c2410c", bg: "rgba(255, 237, 213, 0.8)", border: "#fed7aa", icon: <Icons.Alert className="w-6 h-6 text-[#c2410c]" /> },
+          { label: "Out of Stock", count: outOfStockCount, color: "#b91c1c", bg: "rgba(254, 226, 226, 0.8)", border: "#fecaca", icon: <Icons.Ban className="w-6 h-6 text-[#b91c1c]" /> },
         ].map((s) => (
           <button key={s.label} onClick={() => setFilter(s.label.includes("Low") ? "Low Stock" : s.label)} className="glass-admin-card glass-admin-card-hover rounded-3xl p-5 flex items-center gap-4 text-left cursor-pointer">
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-['Manrope',sans-serif] font-black text-xl shrink-0 border" style={{ color: s.color, backgroundColor: s.bg, borderColor: s.border }}>
@@ -1888,7 +2057,7 @@ function OrdersTab({
 }) {
   const [roleSegment, setRoleSegment] = useState<"all" | "retailer" | "customer">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [reportDate, setReportDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [reportDate] = useState(() => new Date().toISOString().split("T")[0]);
 
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [deletedIdsInTab, setDeletedIdsInTab] = useState<string[]>([]);
@@ -1899,7 +2068,6 @@ function OrdersTab({
     customer: string;
     amount: number;
   } | null>(null);
-  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   const handleConfirmSingleDelete = () => {
     if (!confirmDeleteOrder) return;
@@ -1916,24 +2084,7 @@ function OrdersTab({
     }
   };
 
-  const handleConfirmBulkDelete = () => {
-    const idsToDelete = [...selectedOrderIds];
-    setDeletedIdsInTab((prev) => Array.from(new Set([...prev, ...idsToDelete])));
-    setSelectedOrderIds([]);
-    setConfirmBulkDelete(false);
-
-    for (const ordId of idsToDelete) {
-      const target = orders.find((o) => o.id === ordId);
-      const dbId = target?.dbId || ordId;
-      onDeleteOrder?.(dbId);
-      if (target?.id && target.id !== dbId) {
-        onDeleteOrder?.(target.id);
-      }
-    }
-  };
-
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [downloadingDaily, setDownloadingDaily] = useState(false);
   const [previewInvoice, setPreviewInvoice] = useState<{
     id: string;
     dbId?: string;
@@ -1947,8 +2098,6 @@ function OrdersTab({
     role?: "retailer" | "customer";
     shopName?: string;
   } | null>(null);
-
-  const [showDailyModal, setShowDailyModal] = useState(false);
 
   const STATUS_FILTERS = ["All", "Processing", "Dispatched", "Shipped", "Out for Delivery", "Delivered", "Cancelled"];
 
@@ -2026,26 +2175,6 @@ function OrdersTab({
       setSelectedOrderIds((prev) => prev.filter((id) => !dayIds.includes(id)));
     } else {
       setSelectedOrderIds((prev) => Array.from(new Set([...prev, ...dayIds])));
-    }
-  };
-
-  const handleToggleSelectAllVisible = () => {
-    const allVisibleIds = displayedOrders.map((o) => o.id);
-    const isAllSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedOrderIds.includes(id));
-
-    if (isAllSelected) {
-      setSelectedOrderIds([]);
-    } else {
-      setSelectedOrderIds(allVisibleIds);
-    }
-  };
-
-  const handleBulkStatusUpdate = (
-    newStatus: "Processing" | "Dispatched" | "Shipped" | "Out for Delivery" | "Delivered" | "Cancelled"
-  ) => {
-    for (const ordId of selectedOrderIds) {
-      const target = orders.find((o) => o.id === ordId);
-      onUpdateStatus?.(target?.dbId || ordId, newStatus);
     }
   };
 
@@ -2146,19 +2275,21 @@ function OrdersTab({
           </button>
           <button
             onClick={() => setRoleSegment("retailer")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               roleSegment === "retailer" ? "bg-sky-600 text-white shadow-xs" : "text-[#657969] hover:text-sky-700"
             }`}
           >
-            🏪 Wholesale ({retailerOrders.length})
+            <Icons.Store className="w-3.5 h-3.5" />
+            <span>Wholesale ({retailerOrders.length})</span>
           </button>
           <button
             onClick={() => setRoleSegment("customer")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               roleSegment === "customer" ? "bg-[#006a39] text-white shadow-xs" : "text-[#657969] hover:text-emerald-800"
             }`}
           >
-            👤 Customer ({customerOrders.length})
+            <Icons.User className="w-3.5 h-3.5" />
+            <span>Customer ({customerOrders.length})</span>
           </button>
         </div>
 
@@ -2182,9 +2313,10 @@ function OrdersTab({
               type="button"
               onClick={onRefresh}
               disabled={isRefreshing}
-              className="px-3.5 py-2 rounded-2xl bg-white border border-[#dce7db] text-xs font-bold text-[#073b4c] hover:bg-emerald-50 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs"
+              className="px-3.5 py-2 rounded-2xl bg-white border border-[#dce7db] text-xs font-bold text-[#073b4c] hover:bg-emerald-50 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs flex items-center gap-1.5"
             >
-              {isRefreshing ? "Syncing…" : "🔄 Refresh"}
+              <Icons.Refresh className={`w-3.5 h-3.5 text-[#006a39] ${isRefreshing ? "animate-spin" : ""}`} />
+              <span>{isRefreshing ? "Syncing…" : "Refresh"}</span>
             </button>
           )}
         </div>
@@ -2211,7 +2343,7 @@ function OrdersTab({
       <div className="flex flex-col gap-6">
         {groupedOrdersByDate.length === 0 ? (
           <div className="glass-admin-card rounded-3xl py-16 text-center text-[#728575] text-sm flex flex-col items-center gap-2 shadow-xs">
-            <span className="text-4xl">📦</span>
+            <Icons.Order className="w-10 h-10 text-[#728575] stroke-1" />
             <p className="font-bold text-[#073b4c]">No matching orders found</p>
             <p className="text-xs">Adjust your search query or status filter.</p>
           </div>
@@ -2231,7 +2363,7 @@ function OrdersTab({
                       className="w-4 h-4 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39]"
                     />
                     <div className="w-9 h-9 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-base shadow-2xs">
-                      📅
+                      <Icons.Calendar className="w-4 h-4 text-emerald-800" />
                     </div>
                     <div>
                       <h4 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base">{group.date}</h4>
@@ -2248,7 +2380,7 @@ function OrdersTab({
                       onClick={() => handlePrintDailyPdf(group.date)}
                       className="bg-[#006a39] hover:bg-[#008749] text-white font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95"
                     >
-                      <span>🖨️</span>
+                      <Icons.Printer className="w-3.5 h-3.5 text-white" />
                       <span>Daily PDF Report</span>
                     </button>
                   </div>
@@ -2275,8 +2407,8 @@ function OrdersTab({
                             onChange={() => toggleSelectOrder(o.id)}
                             className="w-4 h-4 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39] mt-2.5"
                           />
-                          <div className="w-10 h-10 rounded-2xl bg-white border border-[#dce7db] flex items-center justify-center font-bold text-base shadow-xs shrink-0 mt-0.5">
-                            {isRetailer ? "🏪" : "👤"}
+                          <div className="w-10 h-10 rounded-2xl bg-white border border-[#dce7db] flex items-center justify-center font-bold text-base shadow-xs shrink-0 mt-0.5 text-[#073b4c]">
+                            {isRetailer ? <Icons.Store className="w-4 h-4 text-sky-700" /> : <Icons.User className="w-4 h-4 text-[#006a39]" />}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -2332,30 +2464,32 @@ function OrdersTab({
                             onClick={() => handlePrintInvoice(o)}
                             className="flex items-center gap-1.5 bg-[#006a39] hover:bg-[#008749] text-white text-xs font-bold px-3 py-2 rounded-2xl transition-all shadow-xs cursor-pointer active:scale-95"
                           >
-                            <span>🖨️</span>
+                            <Icons.Printer className="w-3.5 h-3.5 text-white" />
                             <span>Invoice</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDownloadInvoice(o)}
-                            className="flex items-center gap-1 bg-white border border-[#dce7db] hover:bg-emerald-50 text-xs font-bold text-[#006a39] px-2.5 py-2 rounded-2xl transition-all cursor-pointer"
+                            className="flex items-center gap-1 bg-white border border-[#dce7db] hover:bg-emerald-50 text-xs font-bold text-[#006a39] p-2 rounded-2xl transition-all cursor-pointer"
+                            title="Save invoice file"
                           >
-                            <span>📥</span>
+                            <Icons.Download className="w-3.5 h-3.5 text-[#006a39]" />
                           </button>
                           <button
                             type="button"
                             onClick={() => setPreviewInvoice(o)}
                             className="flex items-center gap-1 bg-white border border-[#dce7db] hover:bg-slate-50 text-xs font-bold text-[#475569] px-3 py-2 rounded-2xl transition-all cursor-pointer"
                           >
-                            <span>👁️</span>
+                            <Icons.Eye className="w-3.5 h-3.5 text-[#475569]" />
                             <span>Details</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => setConfirmDeleteOrder({ id: o.id, dbId: o.dbId, customer: o.customer, amount: o.amount })}
-                            className="flex items-center gap-1 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold px-2.5 py-2 rounded-2xl transition-all cursor-pointer"
+                            className="flex items-center gap-1 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold p-2 rounded-2xl transition-all cursor-pointer"
+                            title="Delete order"
                           >
-                            <span>🗑️</span>
+                            <Icons.Trash className="w-3.5 h-3.5 text-rose-700" />
                           </button>
                         </div>
                       </div>
@@ -2374,7 +2508,9 @@ function OrdersTab({
           <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
             <div className="p-5 bg-[#073b4c] text-white flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">🧾</span>
+                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
+                  <Icons.Order className="w-5 h-5 text-emerald-300" />
+                </div>
                 <div>
                   <h3 className="font-['Manrope',sans-serif] font-extrabold text-base sm:text-lg">Order Details & Invoice Inspection</h3>
                   <p className="text-xs text-white/70 font-mono">Invoice Ref: #{previewInvoice.id}</p>
@@ -2384,9 +2520,10 @@ function OrdersTab({
                 <button
                   type="button"
                   onClick={() => printOrDownloadInvoice(previewInvoice, settings)}
-                  className="bg-[#00a86b] hover:bg-[#00925c] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-sm cursor-pointer"
+                  className="bg-[#00a86b] hover:bg-[#00925c] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
                 >
-                  🖨️ Print / Save PDF
+                  <Icons.Printer className="w-3.5 h-3.5" />
+                  <span>Print / Save PDF</span>
                 </button>
                 <button
                   type="button"
@@ -2421,7 +2558,7 @@ function OrdersTab({
         <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-sm w-full p-7 text-center shadow-2xl animate-in zoom-in-95">
             <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4 text-2xl shadow-xs">
-              🗑️
+              <Icons.Trash className="w-7 h-7 text-rose-600" />
             </div>
             <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg mb-1">Delete Order #{confirmDeleteOrder.id}</h3>
             <p className="text-[#657969] text-xs mb-6 leading-relaxed">Are you sure you want to delete this order ({confirmDeleteOrder.customer}, ₹{confirmDeleteOrder.amount.toLocaleString()})? This action cannot be undone.</p>
@@ -2554,7 +2691,7 @@ function RetailersTab({
           />
           {onRefresh && (
             <button onClick={onRefresh} className="px-3.5 py-2 rounded-2xl bg-white border border-[#dce7db] text-xs font-bold text-[#073b4c] hover:bg-emerald-50">
-              {isRefreshing ? "..." : "🔄"}
+              <Icons.Refresh className={`w-3.5 h-3.5 text-[#006a39] ${isRefreshing ? "animate-spin" : ""}`} />
             </button>
           )}
         </div>
@@ -2573,7 +2710,7 @@ function RetailersTab({
                   className="w-4 h-4 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39] mt-2.5"
                 />
                 <div className="w-12 h-12 rounded-2xl bg-sky-100 text-sky-800 flex items-center justify-center font-bold text-xl shrink-0 shadow-xs">
-                  🏪
+                  <Icons.Store className="w-6 h-6 text-sky-800" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base truncate">{r.shopName}</p>
@@ -2596,9 +2733,10 @@ function RetailersTab({
                 {r.approvalStatus === "pending" && (
                   <button
                     onClick={() => onUpdateApproval(r.id, "approved")}
-                    className="px-3.5 py-1.5 rounded-2xl bg-[#006a39] hover:bg-[#008749] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                    className="px-3.5 py-1.5 rounded-2xl bg-[#006a39] hover:bg-[#008749] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
                   >
-                    ✓ Approve Partner
+                    <Icons.Check className="w-3.5 h-3.5" />
+                    <span>Approve</span>
                   </button>
                 )}
 
@@ -2615,7 +2753,7 @@ function RetailersTab({
                   onClick={() => setDeleteModalRetailer(r)}
                   className="p-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors border border-rose-200 text-xs font-bold cursor-pointer"
                 >
-                  🗑️
+                  <Icons.Trash className="w-4 h-4 text-rose-700" />
                 </button>
               </div>
             </div>
@@ -2624,7 +2762,7 @@ function RetailersTab({
 
         {filteredRetailers.length === 0 && (
           <div className="py-16 text-center text-[#728575] text-sm flex flex-col items-center gap-2">
-            <span className="text-4xl">🏪</span>
+            <Icons.Store className="w-10 h-10 text-[#728575] stroke-1" />
             <p className="font-bold text-[#073b4c]">No retailers found</p>
             <p className="text-xs">Adjust your search or approval status filter.</p>
           </div>
@@ -2636,7 +2774,7 @@ function RetailersTab({
         <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-sm w-full p-7 text-center shadow-2xl animate-in zoom-in-95">
             <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4 text-2xl shadow-xs">
-              🗑️
+              <Icons.Trash className="w-7 h-7 text-rose-600" />
             </div>
             <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg mb-1">Delete Retailer Account</h3>
             <p className="text-[#657969] text-xs mb-6 leading-relaxed">Delete {deleteModalRetailer.shopName} ({deleteModalRetailer.email})? This removes wholesale access permanently.</p>
@@ -2677,7 +2815,7 @@ function LabBookingsTab({
             <div key={b.id} className="p-4 sm:p-5 hover:bg-white/80 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-start gap-3.5 min-w-0 flex-1">
                 <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold text-xl shrink-0 shadow-xs">
-                  🔬
+                  <Icons.Lab className="w-6 h-6 text-purple-800" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -2697,11 +2835,11 @@ function LabBookingsTab({
                   onChange={(e) => onUpdateStatus(b.id, e.target.value as any)}
                   className="text-xs font-bold bg-white border border-[#dce7db] rounded-2xl px-3 py-2 text-[#073b4c] focus:outline-none focus:border-[#006a39]"
                 >
-                  <option value="booked">Booked 📅</option>
-                  <option value="sample_collected">Sample Collected 🧪</option>
-                  <option value="in_lab">In Lab Testing 🔬</option>
-                  <option value="report_generated">Report Generated 📄</option>
-                  <option value="cancelled">Cancelled ❌</option>
+                  <option value="booked">Booked</option>
+                  <option value="sample_collected">Sample Collected</option>
+                  <option value="in_lab">In Lab Testing</option>
+                  <option value="report_generated">Report Generated</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
               </div>
             </div>
@@ -2710,7 +2848,7 @@ function LabBookingsTab({
 
         {bookings.length === 0 && (
           <div className="py-16 text-center text-[#728575] text-sm flex flex-col items-center gap-2">
-            <span className="text-4xl">🔬</span>
+            <Icons.Lab className="w-10 h-10 text-[#728575] stroke-1" />
             <p className="font-bold text-[#073b4c]">No lab test bookings found</p>
             <p className="text-xs">Incoming patient diagnostics will appear here in real-time.</p>
           </div>
@@ -2837,7 +2975,10 @@ function SettingsTab({
     <div className="flex flex-col gap-6 max-w-3xl">
       {saveStatus === "saved" && (
         <div className="p-4 rounded-2xl bg-emerald-100/90 border border-emerald-300 text-emerald-900 text-xs sm:text-sm font-bold flex items-center justify-between shadow-sm animate-in fade-in">
-          <span>✓ Settings saved successfully! Configuration is now live across the platform.</span>
+          <div className="flex items-center gap-2">
+            <Icons.Check className="w-4 h-4 text-emerald-800" />
+            <span>Settings saved successfully! Configuration is now live across the platform.</span>
+          </div>
           <button onClick={() => setSaveStatus("idle")} className="font-bold">✕</button>
         </div>
       )}
@@ -2891,9 +3032,10 @@ function SettingsTab({
       {/* Save Action */}
       <button
         onClick={handleSaveSettings}
-        className="self-start bg-gradient-to-r from-[#006a39] to-[#008749] text-white font-bold text-sm px-8 py-3.5 rounded-2xl hover:opacity-95 transition-all cursor-pointer shadow-lg shadow-emerald-950/20 active:scale-95"
+        className="self-start bg-gradient-to-r from-[#006a39] to-[#008749] text-white font-bold text-sm px-8 py-3.5 rounded-2xl hover:opacity-95 transition-all cursor-pointer shadow-lg shadow-emerald-950/20 active:scale-95 flex items-center gap-2"
       >
-        💾 Save System Settings
+        <Icons.Save className="w-4 h-4 text-white" />
+        <span>Save System Settings</span>
       </button>
     </div>
   );
