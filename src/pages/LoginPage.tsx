@@ -851,7 +851,8 @@ export default function LoginPage() {
                         <span>→</span>
                       </>
                     )}
-                  </form>
+                  </button>
+                </form>
               )}
 
               {/* ── FORM: SIGN UP ── */}
