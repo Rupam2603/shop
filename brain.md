@@ -18,7 +18,7 @@
 - **Frontend Framework:** React 19 (`react`, `react-dom`)
 - **Build Tooling:** Vite 8, TypeScript 5.7, `@vitejs/plugin-react`
 - **Styling:** Tailwind CSS v4 (`@tailwindcss/vite`, `@import 'tailwindcss';` in `src/index.css`)
-- **Backend / Database:** Supabase (REST API + Storage via `fetch` client in `src/lib/supabase.ts`)
+- **Backend / Database:** Neon Lakebase Postgres (Data API + Neon Auth via `@neondatabase/neon-js` and `src/lib/neonAuth.ts`)
 - **Package Manager:** `pnpm` (with `pnpm-lock.yaml` synced for Vercel builds) and `npm`
 
 ---
@@ -77,9 +77,12 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 ---
 
 ## 6. Recent Updates & Current State
-- **Admin Authentication**: Added primary admin account `subhonehealthgroup@gmail.com` (`Subhone@2026`) with direct routing into the Admin Dashboard (`src/pages/AdminDashboard.tsx`).
-- **Supabase Integration:** Clean, lightweight REST/fetch helpers in `src/lib/supabase.ts` for product CRUD, retailer onboarding, user profile saves, and order processing.
-- **Vercel Lockfile Sync:** `pnpm-lock.yaml` synchronized with `package.json` to guarantee zero-fail deployments on Vercel.
+- **Neon Auth Integration (Active)**:
+  - Infrastructure declared in `neon.ts` (`auth: true`, `dataApi: true`) and deployed via `npx neon deploy`.
+  - Neon Auth (`neon_auth` schema) active with Better Auth backend endpoints (`/sign-in/email`, `/sign-up/email`).
+  - Trusted domains registered: `localhost`, `https://shop-phi-plum.vercel.app`.
+  - Direct client implemented in `src/lib/neonAuth.ts` and integrated in `src/contexts/AuthContext.tsx`.
+- **Admin Authentication**: Primary admin account `subhonehealthgroup@gmail.com` (`Subhone@2026`) with 1-click autofill and instant routing to Admin Dashboard (`src/pages/AdminDashboard.tsx`).
 - **Production URL:** `https://shop-phi-plum.vercel.app` (Live and verified).
 - **Full Responsiveness (Latest):** Comprehensive mobile-first improvements applied across all pages:
   - `src/index.css`: iOS safe-area support (`env(safe-area-inset-*)`), `min-h-[100dvh]`, `text-size-adjust: 100%`, iOS input zoom prevention (`font-size: max(16px,1em)`), `text-wrap: balance` for headings.
