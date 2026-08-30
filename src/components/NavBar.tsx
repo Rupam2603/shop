@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../contexts/CartContext";
+import { useStoreSettings } from "../contexts/StoreSettingsContext";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
 import ProductDetailModal, { type PopupProduct } from "./ProductModal";
 import LocationModal from "./LocationModal";
@@ -72,6 +73,7 @@ export default function NavBar({
   onTrackOrder,
 }: NavBarProps) {
   const { itemCount, openCart } = useCart();
+  const { settings } = useStoreSettings();
   const [searchValue, setSearchValue] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dbProducts, setDbProducts] = useState<DbProduct[]>([]);
@@ -253,7 +255,7 @@ export default function NavBar({
               </div>
               <div className="flex flex-col text-left leading-none">
                 <span className="font-['Manrope',sans-serif] font-black text-[#006a39] text-xl sm:text-2xl tracking-tight">
-                  SubhOne
+                  {settings.storeName || "SubhOne"}
                 </span>
                 <span className="text-[9px] font-extrabold text-[#047857] tracking-wider uppercase hidden sm:inline">
                   Pharmacy & Wellness
