@@ -450,12 +450,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 /* ─── Product Modal (Glassmorphic Studio) ─── */
 function ProductModal({
   open, mode, form, setForm, categories,
-  onAddCategory, onSave, onClose,
+  onAddCategory, onSave, onClose, isSaving, saveError,
 }: {
   open: boolean; mode: "add" | "edit";
   form: ProductFormState; setForm: React.Dispatch<React.SetStateAction<ProductFormState>>;
   categories: string[]; onAddCategory: (name: string) => void;
   onSave: () => void; onClose: () => void;
+  isSaving?: boolean; saveError?: string;
 }) {
   const galleryRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -530,10 +531,10 @@ function ProductModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200" onClick={onClose}>
-      <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl w-full max-w-[620px] shadow-2xl my-4 overflow-hidden animate-in zoom-in-95 duration-150" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-3 sm:p-5 animate-in fade-in overflow-y-auto">
+      <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-xl w-full my-auto overflow-hidden shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-7 py-5 border-b border-[#e4ede2] bg-gradient-to-r from-white/90 via-emerald-50/30 to-white/90">
+        <div className="flex items-center justify-between px-7 py-5 border-b border-[#e4ede2] bg-gradient-to-r from-white/90 via-emerald-50/30 to-white/90 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-emerald-100/80 text-emerald-800 flex items-center justify-center shadow-sm">
               <Icons.Pill className="w-5 h-5 text-[#006a39]" />
@@ -551,6 +552,12 @@ function ProductModal({
         </div>
 
         <div className="p-7 flex flex-col gap-5 overflow-y-auto max-h-[72vh]">
+          {saveError && (
+            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+              <span>✕</span>
+              <span>{saveError}</span>
+            </div>
+          )}
           {/* Image Upload */}
           <div>
             <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-2">Product Image Showcase</label>
@@ -784,11 +791,12 @@ function ProductModal({
 
         {/* Footer */}
         <div className="flex gap-3 px-7 pb-7 pt-3 border-t border-[#e4ede2] bg-white/70">
-          <button onClick={onClose} className="flex-1 py-3 rounded-2xl border border-[#dce7db] text-[#073b4c] text-xs sm:text-sm font-bold hover:bg-white transition-all cursor-pointer">
+          <button onClick={onClose} disabled={isSaving} className="flex-1 py-3 rounded-2xl border border-[#dce7db] text-[#073b4c] text-xs sm:text-sm font-bold hover:bg-white transition-all cursor-pointer disabled:opacity-50">
             Cancel
           </button>
-          <button onClick={onSave} className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] text-white text-xs sm:text-sm font-bold hover:opacity-95 transition-all shadow-lg shadow-emerald-950/15 cursor-pointer">
-            {mode === "add" ? "Create Product Entry" : "Save Product Updates"}
+          <button onClick={onSave} disabled={isSaving} className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] text-white text-xs sm:text-sm font-bold hover:opacity-95 transition-all shadow-lg shadow-emerald-950/15 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
+            {isSaving && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+            <span>{isSaving ? "Saving to Cloud DB…" : mode === "add" ? "Create Product Entry" : "Save Product Updates"}</span>
           </button>
         </div>
       </div>
@@ -1237,80 +1245,146 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     setCategories((prev) => [...prev, name]);
   };
 
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
+  const [productSaveError, setProductSaveError] = useState("");
+
   const saveProduct = async () => {
+    setProductSaveError("");
+    if (!form.name.trim()) {
+      setProductSaveError("Product name is required.");
+      return;
+    }
+    if (!form.category.trim()) {
+      setProductSaveError("Category is required.");
+      return;
+    }
+    if (form.customerPrice <= 0) {
+      setProductSaveError("Customer price must be greater than 0.");
+      return;
+    }
+
+    setIsSavingProduct(true);
     const isFeatured = form.badges?.some((b) => b.id === "featured" && b.checked) ?? false;
     const isFlashSale = form.badges?.some((b) => b.id === "flash-deal" && b.checked) ?? false;
 
-    if (modal.mode === "add") {
-      const tempId = Date.now();
-      const newProd: Product = { ...form, id: tempId } as Product;
-      setProducts((prev) => [newProd, ...prev]);
-      closeModal();
-
-      const { data } = await dbCreateProduct({
-        name: form.name,
-        subtitle: form.details || null,
-        category_id: null,
-        category_name: form.category,
-        brand: form.brand,
-        sku: form.sku || `SKU-${tempId}`,
-        hsn: form.hsn || "3004",
-        mrp: form.mrp,
-        customer_price: form.customerPrice,
-        retailer_price: form.retailerPrice || Math.round(form.customerPrice * 0.85),
-        discount_percent: form.mrp > form.customerPrice ? Math.round(((form.mrp - form.customerPrice) / form.mrp) * 100) : 0,
-        stock: form.stock || 0,
-        image_url: form.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80",
-        details: form.details || null,
-        is_flash_sale: isFlashSale,
-        is_featured: isFeatured,
-        badges: form.badges || [],
-      });
-
-      if (data) {
-        setProducts((prev) => prev.map((p) => p.id === tempId ? { ...p, id: data.numeric_id, dbId: data.id } : p));
-      }
-    } else {
-      const target = products.find((p) => p.id === form.id);
-      setProducts((prev) => prev.map((p) => (p.id === form.id ? ({ ...form, dbId: target?.dbId } as Product) : p)));
-      closeModal();
-
-      let dbId = target?.dbId;
-      if (!dbId) {
-        const { data: found } = await supabase
-          .from("products")
-          .select("id")
-          .or(`numeric_id.eq.${form.id},name.eq.${form.name}`)
-          .maybeSingle();
-        if (found) dbId = found.id;
-      }
-
-      if (dbId) {
-        await dbUpdateProduct(dbId, {
-          name: form.name,
+    try {
+      if (modal.mode === "add") {
+        const { data, error } = await dbCreateProduct({
+          name: form.name.trim(),
+          subtitle: form.details?.trim() || null,
+          category_id: null,
           category_name: form.category,
-          brand: form.brand,
-          sku: form.sku,
-          hsn: form.hsn,
-          mrp: form.mrp,
-          customer_price: form.customerPrice,
-          retailer_price: form.retailerPrice,
-          discount_percent: form.mrp > form.customerPrice ? Math.round(((form.mrp - form.customerPrice) / form.mrp) * 100) : 0,
-          stock: form.stock,
-          image_url: form.image,
-          details: form.details,
+          brand: form.brand.trim() || "Generic",
+          sku: form.sku.trim() || undefined,
+          hsn: form.hsn.trim() || "3004",
+          mrp: Number(form.mrp) || Number(form.customerPrice),
+          customer_price: Number(form.customerPrice),
+          retailer_price: Number(form.retailerPrice) || Math.round(Number(form.customerPrice) * 0.85),
+          discount_percent: Number(form.mrp) > Number(form.customerPrice) ? Math.round(((Number(form.mrp) - Number(form.customerPrice)) / Number(form.mrp)) * 100) : 0,
+          stock: Number(form.stock) || 0,
+          image_url: form.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80",
+          details: form.details?.trim() || null,
           is_flash_sale: isFlashSale,
           is_featured: isFeatured,
           badges: form.badges || [],
         });
+
+        if (error || !data) {
+          setProductSaveError(error || "Failed to create product in database.");
+          setIsSavingProduct(false);
+          return;
+        }
+
+        const newProd: Product = {
+          id: data.numeric_id,
+          dbId: data.id,
+          name: data.name,
+          category: data.category_name,
+          brand: data.brand,
+          sku: data.sku || `SKU-${data.numeric_id}`,
+          hsn: data.hsn || "3004",
+          mrp: Number(data.mrp),
+          customerPrice: Number(data.customer_price),
+          retailerPrice: Number(data.retailer_price),
+          stock: data.stock,
+          image: data.image_url,
+          details: data.details || "",
+          badges: Array.isArray(data.badges) && data.badges.length > 0 ? data.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
+        };
+
+        setProducts((prev) => [newProd, ...prev.filter((p) => p.dbId !== data.id && p.id !== data.numeric_id)]);
+        closeModal();
+      } else {
+        const target = products.find((p) => p.id === form.id);
+        let dbId = target?.dbId;
+        if (!dbId) {
+          const { data: found } = await supabase
+            .from("products")
+            .select("id")
+            .or(`numeric_id.eq.${form.id},name.eq.${form.name}`)
+            .maybeSingle();
+          if (found) dbId = found.id;
+        }
+
+        if (!dbId) {
+          setProductSaveError("Could not locate product record in database.");
+          setIsSavingProduct(false);
+          return;
+        }
+
+        const { data, error } = await dbUpdateProduct(dbId, {
+          name: form.name.trim(),
+          category_name: form.category,
+          brand: form.brand.trim() || "Generic",
+          sku: form.sku.trim() || undefined,
+          hsn: form.hsn.trim() || "3004",
+          mrp: Number(form.mrp) || Number(form.customerPrice),
+          customer_price: Number(form.customerPrice),
+          retailer_price: Number(form.retailerPrice) || Math.round(Number(form.customerPrice) * 0.85),
+          discount_percent: Number(form.mrp) > Number(form.customerPrice) ? Math.round(((Number(form.mrp) - Number(form.customerPrice)) / Number(form.mrp)) * 100) : 0,
+          stock: Number(form.stock) || 0,
+          image_url: form.image,
+          details: form.details?.trim() || null,
+          is_flash_sale: isFlashSale,
+          is_featured: isFeatured,
+          badges: form.badges || [],
+        });
+
+        if (error || !data) {
+          setProductSaveError(error || "Failed to update product in database.");
+          setIsSavingProduct(false);
+          return;
+        }
+
+        const updatedProd: Product = {
+          id: data.numeric_id,
+          dbId: data.id,
+          name: data.name,
+          category: data.category_name,
+          brand: data.brand,
+          sku: data.sku || `SKU-${data.numeric_id}`,
+          hsn: data.hsn || "3004",
+          mrp: Number(data.mrp),
+          customerPrice: Number(data.customer_price),
+          retailerPrice: Number(data.retailer_price),
+          stock: data.stock,
+          image: data.image_url,
+          details: data.details || "",
+          badges: Array.isArray(data.badges) && data.badges.length > 0 ? data.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
+        };
+
+        setProducts((prev) => prev.map((p) => (p.dbId === dbId || p.id === form.id ? updatedProd : p)));
+        closeModal();
       }
+    } catch (err: any) {
+      setProductSaveError(err?.message || "An unexpected error occurred while saving.");
+    } finally {
+      setIsSavingProduct(false);
     }
   };
 
   const deleteProduct = async (id: number) => {
     const target = products.find((p) => p.id === id);
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-    setDeleteId(null);
     let dbId = target?.dbId;
     if (!dbId) {
       const { data: found } = await supabase
@@ -1320,16 +1394,23 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         .maybeSingle();
       if (found) dbId = found.id;
     }
+
     if (dbId) {
-      await dbDeleteProduct(dbId);
+      const { error } = await dbDeleteProduct(dbId);
+      if (error) {
+        alert("Failed to delete product: " + error);
+        return;
+      }
     }
+
+    setProducts((prev) => prev.filter((p) => p.id !== id && (dbId ? p.dbId !== dbId : true)));
+    setDeleteId(null);
   };
 
   const applyStockUpdate = async (id: number) => {
     const val = parseInt(stockEdits[id] ?? "");
     if (!isNaN(val) && val >= 0) {
       const target = products.find((p) => p.id === id);
-      setProducts((prev) => prev.map((p) => p.id === id ? { ...p, stock: val } : p));
       let dbId = target?.dbId;
       if (!dbId) {
         const { data: found } = await supabase
@@ -1339,11 +1420,22 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           .maybeSingle();
         if (found) dbId = found.id;
       }
+
       if (dbId) {
-        await dbUpdateStock(dbId, val);
+        const { error } = await dbUpdateStock(dbId, val);
+        if (error) {
+          alert("Failed to update stock in database: " + error);
+          return;
+        }
       }
+
+      setProducts((prev) => prev.map((p) => p.id === id ? { ...p, stock: val } : p));
+      setStockEdits((prev: Record<number, string>) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     }
-    setStockEdits((prev) => { const n = { ...prev }; delete n[id]; return n; });
   };
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -1641,6 +1733,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         form={form} setForm={setForm}
         categories={categories} onAddCategory={addCategory}
         onSave={saveProduct} onClose={closeModal}
+        isSaving={isSavingProduct} saveError={productSaveError}
       />
 
       {/* Delete Confirmation Modal */}
