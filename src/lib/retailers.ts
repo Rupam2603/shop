@@ -526,8 +526,9 @@ export function subscribeToRetailersRealtime(
   callback: (payload: { eventType: string; new?: any; old?: any }) => void
 ) {
   try {
+    const channelName = `retailer_approvals_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const channel = supabase
-      .channel("realtime:retailer_approvals")
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "retailer_approvals" },

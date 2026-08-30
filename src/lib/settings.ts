@@ -164,13 +164,16 @@ export async function updateAdminProfileInDb(
 }
 
 /**
- * Real-time listener for store_settings table updates
+ * Real-time listener for store_settings table updates.
+ * Uses a unique channel name per subscription to avoid React StrictMode conflicts.
  */
 export function subscribeToStoreSettingsRealtime(
   callback: (settings: StoreSettings) => void
 ) {
+  const channelName = `store_settings_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
   const channel = supabase
-    .channel("store_settings_changes")
+    .channel(channelName)
     .on(
       "postgres_changes",
       {

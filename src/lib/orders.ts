@@ -494,7 +494,7 @@ export async function fetchOrderByNumber(orderNumberOrId: string): Promise<DbOrd
  */
 export function subscribeToUserOrdersRealtime(userId: string, onUpdate: () => void) {
   const channel = supabase
-    .channel(`user-orders-${userId}`)
+    .channel(`user-orders-${userId}-${Date.now()}`)
     .on(
       "postgres_changes",
       {
@@ -519,7 +519,7 @@ export function subscribeToUserOrdersRealtime(userId: string, onUpdate: () => vo
  */
 export function subscribeToOrdersRealtime(onUpdate: (payload: any) => void) {
   const channel = supabase
-    .channel("public-orders-realtime")
+    .channel(`public-orders-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`)
     .on(
       "postgres_changes",
       {
