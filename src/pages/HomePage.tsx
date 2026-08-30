@@ -321,11 +321,10 @@ function CategorySection({
 
       <div className="flex lg:grid lg:grid-cols-4 gap-3 sm:gap-4 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
         {item.products.map((p) => (
-          <MiniCard
+          <ProductCard
             key={p.name}
             p={p}
             accent={item.accent}
-            category={item.cat}
             isRetailer={isRetailer}
             onClick={() => onProductClick({
               id: nameToId(p.name),
