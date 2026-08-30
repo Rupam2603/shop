@@ -108,7 +108,7 @@ export default function App() {
   const prevUserRef = useRef(appUser);
 
   useEffect(() => {
-    // When transitioning from not logged in (null/undefined) to logged in, always open the Home page
+    // When transitioning from not logged in to logged in, always open the Home page
     if (!prevUserRef.current && appUser) {
       if (appUser.profile?.role !== "admin") {
         setActivePage("home");
@@ -130,22 +130,23 @@ export default function App() {
     setTrackingModal({ open: true, orderNumber: orderNumber || null });
   };
 
-  // ── Instant non-blocking rendering (fallback to customer/guest while session hydrates) ──
-  const currentUser: CurrentUser | null = appUser ? toLegacyUser(appUser) : null;
+  // ── Show spinner while resolving the session (max 1s due to timeout in AuthContext) ──
+  if (loading) return <LoadingScreen />;
+
+  // ── Not logged in → show Login page ──────────────────────────────────────
+  if (!appUser) return <LoginPage />;
+
+  // ── Convert profile to the shape existing components expect ───────────────
+  const currentUser: CurrentUser = toLegacyUser(appUser);
 
   // ── Admin → redirect to admin dashboard ──────────────────────────────────
-  if (currentUser?.role === "admin") {
+  if (currentUser.role === "admin") {
     return (
       <AdminDashboard
         user={currentUser}
         onLogout={signOut}
       />
     );
-  }
-
-  // ── Non-logged in users accessing profile or explicit login ────────────────
-  if (!appUser && activePage === "profile") {
-    return <LoginPage onBackToStore={() => setActivePage("home")} />;
   }
 
   // ── Handle profile updates from ProfilePage ───────────────────────────────
@@ -158,29 +159,25 @@ export default function App() {
     });
   };
 
-  const userRole = currentUser?.role || "customer";
-
   const renderPage = () => {
     switch (activePage) {
-      case "home": return <HomePage onNavigate={navigateTo} userRole={userRole} />;
-      case "insurance": return <InsurancePage userRole={userRole} onNavigate={navigateTo} />;
-      case "vaccines": return <VaccinesPage userRole={userRole} onNavigate={navigateTo} />;
-      case "lab-tests": return <LabTestsPage user={currentUser || { id: "guest", role: "customer", email: "", name: "Guest User" }} onNavigate={navigateTo} />;
-      case "category": return <CategoryPage categoryId={initialCategory || "all"} userRole={userRole} onNavigate={navigateTo} />;
+      case "home": return <HomePage onNavigate={navigateTo} userRole={currentUser.role} />;
+      case "insurance": return <InsurancePage userRole={currentUser.role} onNavigate={navigateTo} />;
+      case "vaccines": return <VaccinesPage userRole={currentUser.role} onNavigate={navigateTo} />;
+      case "lab-tests": return <LabTestsPage user={currentUser} onNavigate={navigateTo} />;
+      case "category": return <CategoryPage categoryId={initialCategory || "all"} userRole={currentUser.role} onNavigate={navigateTo} />;
       case "checkout":
-      case "medicines": return <MedicinesPage initialCategory={initialCategory} userRole={userRole} onNavigate={navigateTo} />;
-      case "offers": return <OffersPage userRole={userRole} onNavigate={navigateTo} />;
+      case "medicines": return <MedicinesPage initialCategory={initialCategory} userRole={currentUser.role} onNavigate={navigateTo} />;
+      case "offers": return <OffersPage userRole={currentUser.role} onNavigate={navigateTo} />;
       case "consult": return <ConsultPage />;
-      case "profile":
-        if (!currentUser) return <LoginPage onBackToStore={() => setActivePage("home")} />;
-        return (
-          <ProfilePage
-            user={currentUser}
-            onUpdateUser={handleUpdateUser}
-            onNavigate={navigateTo}
-            onTrackOrder={openTracking}
-          />
-        );
+      case "profile": return (
+        <ProfilePage
+          user={currentUser}
+          onUpdateUser={handleUpdateUser}
+          onNavigate={navigateTo}
+          onTrackOrder={openTracking}
+        />
+      );
     }
   };
 
@@ -191,13 +188,7 @@ export default function App() {
         onNavigate={(p) => navigateTo(p)}
         user={currentUser}
         onLogout={signOut}
-        onProfile={() => {
-          if (!currentUser) {
-            setActivePage("profile");
-          } else {
-            navigateTo("profile");
-          }
-        }}
+        onProfile={() => navigateTo("profile")}
         onTrackOrder={openTracking}
       />
       <main className="flex-1">{renderPage()}</main>
@@ -205,13 +196,7 @@ export default function App() {
 
       {/* Cart Drawer */}
       <CartDrawer
-        onCheckout={() => {
-          if (!currentUser) {
-            setActivePage("profile");
-          } else {
-            setCheckoutOpen(true);
-          }
-        }}
+        onCheckout={() => setCheckoutOpen(true)}
         onBrowse={() => navigateTo("medicines")}
       />
 
@@ -233,11 +218,11 @@ export default function App() {
           }
         }}
         user={{
-          name: currentUser?.name || "",
-          email: currentUser?.email || "",
-          phone: currentUser?.phone,
-          role: currentUser?.role || "customer",
-          shopName: currentUser?.shopName,
+          name: currentUser.name,
+          email: currentUser.email,
+          phone: currentUser.phone,
+          role: currentUser.role,
+          shopName: currentUser.shopName,
         }}
       />
 
@@ -246,9 +231,9 @@ export default function App() {
         isOpen={trackingModal.open}
         onClose={() => setTrackingModal({ open: false, orderNumber: null })}
         initialOrderNumber={trackingModal.orderNumber}
-        userRole={currentUser?.role || "customer"}
-        userPhone={currentUser?.phone}
-        userName={currentUser?.name}
+        userRole={currentUser.role}
+        userPhone={currentUser.phone}
+        userName={currentUser.name}
       />
     </div>
   );
