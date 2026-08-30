@@ -15,14 +15,15 @@ export interface Profile {
   updated_at: string;
 }
 
-const NEON_AUTH_API = import.meta.env.VITE_NEON_AUTH_API;
-const NEON_DATA_API = import.meta.env.VITE_NEON_DATA_API;
+const NEON_AUTH_API =
+  import.meta.env.VITE_NEON_AUTH_API ||
+  import.meta.env.NEON_AUTH_BASE_URL ||
+  "https://ep-divine-scene-az33au23.neonauth.c-3.ap-southeast-1.aws.neon.tech/neondb/auth";
 
-if (!NEON_AUTH_API || !NEON_DATA_API) {
-  throw new Error(
-    "Missing VITE_NEON_AUTH_API / VITE_NEON_DATA_API environment variables. Set them in .env.local (see .env.example)."
-  );
-}
+const NEON_DATA_API =
+  import.meta.env.VITE_NEON_DATA_API ||
+  import.meta.env.NEON_DATA_API_URL ||
+  "https://ep-divine-scene-az33au23.apirest.c-3.ap-southeast-1.aws.neon.tech/neondb/rest/v1";
 
 /**
  * Real Neon Auth (Managed Better Auth) + Neon Data API client.

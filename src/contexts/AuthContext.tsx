@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { supabase } from "../lib/supabase";
 import type { Profile, UserRole } from "../lib/supabase";
 import { checkRetailerApprovalStatus, registerOrUpdateRetailer } from "../lib/retailers";
+import { neonSignInWithPassword, neonSignUp, neonSignOut } from "../lib/neonAuth";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -342,15 +343,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: "Incorrect admin password. Please enter the valid admin password." };
         }
 
-        // Try Supabase auth in the background, but immediately grant verified Admin access
+        // Attempt Neon Auth native signIn, then supabase auth
         let adminUser: any = null;
         try {
-          const { data } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
-          if (data?.user) {
-            adminUser = data.user;
+          const neonRes = await neonSignInWithPassword(cleanEmail, password);
+          if (neonRes?.data?.user) {
+            adminUser = neonRes.data.user;
+          } else {
+            const { data } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+            if (data?.user) {
+              adminUser = data.user;
+            }
           }
         } catch {
-          // Fallback to local admin session if Neon Auth endpoint fails
+          // Fallback to local admin session if remote endpoint is offline
         }
 
         const fallbackId = cleanEmail === "subhonehealthgroup@gmail.com" ? "admin_subhonehealthgroup_id" : "admin_fixed_id";
@@ -397,12 +403,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: null };
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+      // 1. Try native Neon Auth first
+      let authUser: any = null;
+      try {
+        const neonRes = await neonSignInWithPassword(cleanEmail, password);
+        if (neonRes?.data?.user) {
+          authUser = neonRes.data.user;
+        }
+      } catch {}
 
-      if (error) {
-        setLoading(false);
-        return { error: friendlyAuthError(error) };
+      // 2. Fallback to SupabaseAuthAdapter
+      if (!authUser) {
+        const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+        if (error && !data?.user) {
+          setLoading(false);
+          return { error: friendlyAuthError(error) };
+        }
+        if (data?.user) {
+          authUser = data.user;
+        }
       }
+
+      if (!authUser) {
+        setLoading(false);
+        return { error: "Invalid email or password. Please check your credentials." };
+      }
+
+      const data = { user: authUser };
 
       if (data.user) {
         const profile = await fetchProfile(data.user.id);
@@ -551,24 +578,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const safeRole: "customer" | "retailer" = opts.role === "retailer" ? "retailer" : "customer";
       const approvalStatus: "pending" | "approved" = safeRole === "retailer" ? "pending" : "approved";
 
-      const { data, error } = await supabase.auth.signUp({
-        email: opts.email.trim(),
-        password: opts.password,
-        options: {
-          data: {
-            full_name: opts.fullName.trim(),
-            role: safeRole,
-            phone: opts.phone?.trim() || null,
-            shop_name: opts.shopName?.trim() || null,
-            approval_status: approvalStatus,
-          },
-        },
-      });
+      // 1. Register with Neon Auth natively
+      let authUser: any = null;
+      try {
+        const neonRes = await neonSignUp(opts.email.trim(), opts.password, opts.fullName.trim());
+        if (neonRes?.data?.user) {
+          authUser = neonRes.data.user;
+        }
+      } catch {}
 
-      if (error) {
-        setLoading(false);
-        return { error: friendlyAuthError(error), emailConfirmationRequired: false };
+      // 2. Fallback to supabase.auth.signUp
+      if (!authUser) {
+        const { data, error } = await supabase.auth.signUp({
+          email: opts.email.trim(),
+          password: opts.password,
+          options: {
+            data: {
+              full_name: opts.fullName.trim(),
+              role: safeRole,
+              phone: opts.phone?.trim() || null,
+              shop_name: opts.shopName?.trim() || null,
+              approval_status: approvalStatus,
+            },
+          },
+        });
+
+        if (error && !data?.user) {
+          setLoading(false);
+          return { error: friendlyAuthError(error), emailConfirmationRequired: false };
+        }
+        if (data?.user) {
+          authUser = data.user;
+        }
       }
+
+      const data = { user: authUser };
 
       if (safeRole === "retailer") {
         // Register in retailer registry as pending
@@ -646,6 +690,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       localStorage.removeItem("subhone_active_admin_session");
+      await neonSignOut();
     } catch {}
     try {
       await supabase.auth.signOut();
