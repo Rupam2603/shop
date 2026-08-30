@@ -14,56 +14,9 @@ export interface RetailerAccount {
   clerkId?: string | null;
 }
 
-const RETAILERS_STORAGE_KEY = "subhone_retailers_registry_v2";
+const RETAILERS_STORAGE_KEY = "subhone_retailers_registry_v3";
 
-const DEFAULT_RETAILERS: RetailerAccount[] = [
-  {
-    id: "ret_001",
-    fullName: "Subhasis Chakraborty",
-    email: "chakrabortysubhasis18@gmail.com",
-    phone: "+91 98360 00000",
-    shopName: "Subho Medical & Surgical Store",
-    role: "retailer",
-    approvalStatus: "approved",
-    createdAt: "2026-08-20T10:00:00.000Z",
-    updatedAt: "2026-08-20T10:00:00.000Z",
-    approvedAt: "2026-08-20T10:05:00.000Z",
-  },
-  {
-    id: "ret_002",
-    fullName: "Ramesh Sharma",
-    email: "sharma.medicals@gmail.com",
-    phone: "+91 87654 32109",
-    shopName: "Sharma Medical & Surgical",
-    role: "retailer",
-    approvalStatus: "approved",
-    createdAt: "2026-08-22T08:30:00.000Z",
-    updatedAt: "2026-08-22T08:30:00.000Z",
-    approvedAt: "2026-08-22T09:00:00.000Z",
-  },
-  {
-    id: "ret_003",
-    fullName: "Vikram Mehta",
-    email: "apex.pharma.kol@gmail.com",
-    phone: "+91 65432 10987",
-    shopName: "Apex Pharma Distributors",
-    role: "retailer",
-    approvalStatus: "pending",
-    createdAt: "2026-08-28T14:20:00.000Z",
-    updatedAt: "2026-08-28T14:20:00.000Z",
-  },
-  {
-    id: "ret_004",
-    fullName: "Dr. Arvind Gupta",
-    email: "gupta.health.care@gmail.com",
-    phone: "+91 99887 76655",
-    shopName: "Gupta Health Pharmacy",
-    role: "retailer",
-    approvalStatus: "pending",
-    createdAt: "2026-08-29T09:15:00.000Z",
-    updatedAt: "2026-08-29T09:15:00.000Z",
-  },
-];
+const DEFAULT_RETAILERS: RetailerAccount[] = [];
 
 /**
  * Get local retailers registry cache
@@ -73,18 +26,14 @@ export function getLocalRetailers(): RetailerAccount[] {
     const raw = localStorage.getItem(RETAILERS_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
     }
   } catch (err) {
     console.warn("Could not read local retailers registry:", err);
   }
-  // Initialize default
-  try {
-    localStorage.setItem(RETAILERS_STORAGE_KEY, JSON.stringify(DEFAULT_RETAILERS));
-  } catch {}
-  return DEFAULT_RETAILERS;
+  return [];
 }
 
 /**
@@ -99,17 +48,10 @@ export function saveLocalRetailers(retailers: RetailerAccount[]): void {
 }
 
 /**
- * Fetch all registered retailers across database and local registry
+ * Fetch all registered retailers strictly from Supabase database
  */
 export async function fetchAllRetailers(): Promise<RetailerAccount[]> {
-  const localList = getLocalRetailers();
   const map = new Map<string, RetailerAccount>();
-
-  // Seed with local list
-  for (const r of localList) {
-    map.set(r.email.toLowerCase(), r);
-    map.set(r.id, r);
-  }
 
   try {
     // 1. Fetch from Supabase retailer_approvals table
@@ -140,7 +82,7 @@ export async function fetchAllRetailers(): Promise<RetailerAccount[]> {
       }
     }
 
-    // 2. Fetch from Supabase profiles (if any)
+    // 2. Fetch from Supabase profiles (role = retailer)
     const { data: dbProfiles, error } = await supabase
       .from("profiles")
       .select("*")
@@ -152,7 +94,7 @@ export async function fetchAllRetailers(): Promise<RetailerAccount[]> {
         const emailKey = (p as any).email ? (p as any).email.toLowerCase() : "";
         const existing = map.get(p.id) || (emailKey ? map.get(emailKey) : null);
         const status: "pending" | "approved" | "rejected" =
-          (p as any).approval_status || existing?.approvalStatus || "pending";
+          (p as any).approval_status || existing?.approvalStatus || "approved";
 
         const rec: RetailerAccount = {
           id: p.id,
@@ -181,15 +123,21 @@ export async function fetchAllRetailers(): Promise<RetailerAccount[]> {
     new Map(Array.from(map.values()).map((r) => [r.id, r])).values()
   );
 
-  // Sort: pending first, then by date descending
-  uniqueRetailers.sort((a, b) => {
-    if (a.approvalStatus === "pending" && b.approvalStatus !== "pending") return -1;
-    if (a.approvalStatus !== "pending" && b.approvalStatus === "pending") return 1;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+  // If database was reachable, use only database records
+  if (uniqueRetailers.length > 0) {
+    // Sort: pending first, then by date descending
+    uniqueRetailers.sort((a, b) => {
+      if (a.approvalStatus === "pending" && b.approvalStatus !== "pending") return -1;
+      if (a.approvalStatus !== "pending" && b.approvalStatus === "pending") return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
-  saveLocalRetailers(uniqueRetailers);
-  return uniqueRetailers;
+    saveLocalRetailers(uniqueRetailers);
+    return uniqueRetailers;
+  }
+
+  // Fallback to local cache only if DB had 0 results or failed
+  return getLocalRetailers();
 }
 
 /**
