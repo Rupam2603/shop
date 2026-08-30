@@ -77,6 +77,8 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 ---
 
 ## 6. Recent Updates & Current State
-- **Supabase Integration:** Replaced deprecated client setups with clean, lightweight REST/fetch helpers in `src/lib/supabase.ts` for product CRUD, retailer onboarding, user profile saves, and order processing.
+- **Admin Authentication**: Added primary admin account `subhonehealthgroup@gmail.com` (`Subhone@2026`) with direct routing into the Admin Dashboard (`src/pages/AdminDashboard.tsx`).
+- **Supabase Integration:** Clean, lightweight REST/fetch helpers in `src/lib/supabase.ts` for product CRUD, retailer onboarding, user profile saves, and order processing.
 - **Vercel Lockfile Sync:** `pnpm-lock.yaml` synchronized with `package.json` to guarantee zero-fail deployments on Vercel.
 - **Production URL:** `https://shop-phi-plum.vercel.app` (Live and verified).
+

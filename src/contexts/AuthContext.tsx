@@ -95,9 +95,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const email = (sessionUser.email || "").toLowerCase().trim();
     const profile = await fetchProfile(sessionUser.id);
     const rawMeta = sessionUser.user_metadata || {};
-    // The admin role is only ever granted by an existing admin updating
-    // `profiles.role` (RLS-protected) — never derived from a magic email.
-    const detectedRole: UserRole = profile?.role || (rawMeta.role as UserRole) || "customer";
+    const isKnownAdminEmail =
+      email === "subhonehealthgroup@gmail.com" ||
+      email === "admin@subhone.com";
+    const detectedRole: UserRole =
+      profile?.role ||
+      (rawMeta.role as UserRole) ||
+      (isKnownAdminEmail ? "admin" : "customer");
     const isAdmin = detectedRole === "admin";
 
     // Strict Gate: Check if user is blocked
@@ -271,10 +275,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data.user) {
         const profile = await fetchProfile(data.user.id);
+        const isKnownAdmin =
+          cleanEmail.toLowerCase() === "subhonehealthgroup@gmail.com" ||
+          cleanEmail.toLowerCase() === "admin@subhone.com";
         const userRole: UserRole =
           profile?.role ||
           (data.user.user_metadata?.role as UserRole) ||
-          "customer";
+          (isKnownAdmin ? "admin" : "customer");
 
         if (userRole === "admin") {
           setAppUser({
