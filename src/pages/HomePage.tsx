@@ -554,12 +554,12 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
               View All <ArrowRight />
             </button>
           </div>
-          <div className="flex md:grid md:grid-cols-8 gap-2 sm:gap-2.5 overflow-x-auto md:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 sm:gap-2.5">
             {categoriesData.map((c) => (
               <button
                 key={c.cat}
                 onClick={() => onNavigate("medicines", c.cat)}
-                className="w-[84px] sm:w-[94px] md:w-auto shrink-0 snap-start group flex flex-col items-center gap-1.5 p-2 sm:p-3 rounded-2xl border border-[#e4ede2] bg-white hover:shadow-md hover:-translate-y-0.5 transition-all"
+                className="group flex flex-col items-center gap-1.5 p-2 sm:p-3 rounded-2xl border border-[#e4ede2] bg-white hover:shadow-md hover:-translate-y-0.5 transition-all w-full"
               >
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform" style={{ backgroundColor: c.lightBg }}>
                   <div style={{ transform: "scale(0.8)" }}>{c.icon}</div>

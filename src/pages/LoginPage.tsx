@@ -386,7 +386,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
   const signupRoles: UserRole[] = ["retailer", "customer"];
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden flex items-center justify-center p-3 sm:p-6 lg:p-10 bg-[#07242e]">
+    <div className="min-h-screen min-h-[100dvh] relative overflow-x-hidden flex items-center justify-center p-3 sm:p-6 lg:p-10 bg-[#07242e]">
       {/* ── AMBIENT GLASS BACKGROUND CANVAS ── */}
       {/* Deep gradient background layers */}
       <div 

@@ -292,8 +292,8 @@ export default function NavBar({
             </button>
           </div>
 
-          {/* Center section: Large Omnisearch Bar */}
-          <div ref={searchRef} className="flex-1 max-w-2xl relative">
+          {/* Center section: Large Omnisearch Bar (desktop/tablet only — mobile has its own below) */}
+          <div ref={searchRef} className="hidden md:flex flex-1 max-w-2xl relative">
             <div className="relative flex items-center">
               <input
                 ref={searchInputRef}

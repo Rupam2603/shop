@@ -178,8 +178,8 @@ export default function CheckoutModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center sm:p-4 overflow-y-auto min-h-[100dvh]">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden sm:my-6">
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-[#e4ede2] flex items-center justify-between bg-[#f8fafb]">
           <h2 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg">
@@ -231,7 +231,7 @@ export default function CheckoutModal({
             </div>
           </div>
         ) : (
-          <div className="p-6 flex flex-col gap-6 max-h-[75vh] overflow-y-auto">
+          <div className="p-4 sm:p-6 flex flex-col gap-6 max-h-[80dvh] overflow-y-auto">
 
             {/* Cart empty warning */}
             {items.length === 0 && (

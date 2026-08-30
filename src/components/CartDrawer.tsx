@@ -100,8 +100,8 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
         aria-hidden="true"
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10 z-10">
-        <div className="w-screen max-w-md bg-white/95 backdrop-blur-2xl border-l border-white/80 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="fixed inset-y-0 right-0 max-w-full flex z-10">
+        <div className="w-screen max-w-md sm:max-w-[420px] bg-white/95 backdrop-blur-2xl border-l border-white/80 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 h-full h-[100dvh]">
           {/* Header */}
           <div className="px-6 py-4.5 border-b border-[#e4ede2]/80 flex items-center justify-between bg-white/80 backdrop-blur-md">
             <div className="flex items-center gap-2.5">
