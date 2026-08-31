@@ -45,7 +45,9 @@ import {
   updateUserAccountStatus,
   adminChangeUserPassword,
   adminDeleteUserAccount,
+  fetchLoginLogs,
   ManagedUser,
+  LoginLog,
 } from "../lib/users";
 
 interface Props {
@@ -3039,6 +3041,7 @@ function UsersTab({
   const [roleFilter, setRoleFilter] = useState<"all" | "customer" | "retailer" | "admin">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "pending" | "blocked" | "rejected">("all");
   const [search, setSearch] = useState("");
+  const [usersSubTab, setUsersSubTab] = useState<"users" | "login-logs">("users");
 
   // Modals state
   const [passwordModalUser, setPasswordModalUser] = useState<ManagedUser | null>(null);
@@ -3161,7 +3164,29 @@ function UsersTab({
         </button>
       </div>
 
-      {/* KPI Stats Cards */}
+      {/* Sub-Tab Switcher: Users | Login Logs */}
+      <div className="flex items-center gap-2 bg-[#f0f5f2] rounded-2xl p-1 border border-[#d6e4d8] self-start">
+        <button
+          onClick={() => setUsersSubTab("users")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            usersSubTab === "users" ? "bg-white text-[#073b4c] shadow-xs" : "text-[#657969] hover:text-[#073b4c]"
+          }`}
+        >
+          User Directory
+        </button>
+        <button
+          onClick={() => setUsersSubTab("login-logs")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            usersSubTab === "login-logs" ? "bg-[#073b4c] text-white shadow-xs" : "text-[#657969] hover:text-[#073b4c]"
+          }`}
+        >
+          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Login Logs
+        </button>
+      </div>
+
+
+      {usersSubTab === "users" && (
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5 sm:gap-4">
         <div onClick={() => { setRoleFilter("all"); setStatusFilter("all"); }} className="glass-admin-card glass-admin-card-hover rounded-3xl p-4 cursor-pointer border-2 transition-all">
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#657969]">Total Registered</span>
@@ -3193,8 +3218,10 @@ function UsersTab({
           <p className="text-[11px] text-[#728575] mt-0.5">Access revoked</p>
         </div>
       </div>
+      )}
 
       {/* Filter & Search Bar */}
+
       <div className="glass-admin-card rounded-3xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center bg-[#f0f5f2] rounded-2xl p-1 border border-[#d6e4d8]">
@@ -3660,11 +3687,152 @@ function UsersTab({
           </div>
         </div>
       )}
+      {/* Login Logs Sub-Tab */}
+      {usersSubTab === "login-logs" && <LoginLogsPanel />}
     </div>
   );
 }
 
-/* ─── TAB: DIAGNOSTIC LAB BOOKINGS ─── */
+/* ─── Login Logs Panel (Admin Viewer) ─── */
+function LoginLogsPanel() {
+  const [logs, setLogs] = React.useState<LoginLog[]>([]);
+  const [total, setTotal] = React.useState(0);
+  const [loading, setLoading] = React.useState(false);
+  const [roleFilter, setRoleFilter] = React.useState("all");
+  const [statusFilter, setStatusFilter] = React.useState("all");
+  const [fromDate, setFromDate] = React.useState("");
+  const [toDate, setToDate] = React.useState("");
+  const [page, setPage] = React.useState(0);
+  const PAGE_SIZE = 50;
+
+  const loadLogs = React.useCallback(async (pg: number = 0) => {
+    setLoading(true);
+    try {
+      const result = await fetchLoginLogs({
+        role: roleFilter !== "all" ? roleFilter : undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        from: fromDate || undefined,
+        to: toDate || undefined,
+        limit: PAGE_SIZE,
+        offset: pg * PAGE_SIZE,
+      });
+      setLogs(result.logs);
+      setTotal(result.total);
+      setPage(pg);
+    } catch (e) {
+      console.error("Error loading login logs:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [roleFilter, statusFilter, fromDate, toDate]);
+
+  React.useEffect(() => { loadLogs(0); }, [loadLogs]);
+
+  const statusColor = (s: string) => {
+    if (s === "success") return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    if (s === "blocked_attempt") return "bg-rose-100 text-rose-800 border-rose-200";
+    return "bg-amber-100 text-amber-800 border-amber-200";
+  };
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Filters */}
+      <div className="glass-admin-card rounded-3xl p-4 sm:p-5 flex flex-wrap gap-3 items-center">
+        <div className="flex items-center bg-[#f0f5f2] rounded-2xl p-1 border border-[#d6e4d8]">
+          {(["all", "customer", "retailer", "admin"] as const).map((r) => (
+            <button key={r} onClick={() => setRoleFilter(r)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
+                roleFilter === r ? "bg-white text-[#073b4c] shadow-xs" : "text-[#657969] hover:text-[#073b4c]"
+              }`}>{r === "all" ? "All Roles" : r}</button>
+          ))}
+        </div>
+        <div className="flex items-center bg-[#f0f5f2] rounded-2xl p-1 border border-[#d6e4d8]">
+          {(["all", "success", "failed", "blocked_attempt"] as const).map((s) => (
+            <button key={s} onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
+                statusFilter === s ? "bg-white text-[#073b4c] shadow-xs" : "text-[#657969] hover:text-[#073b4c]"
+              }`}>{s === "all" ? "All" : s === "blocked_attempt" ? "Blocked" : s}</button>
+          ))}
+        </div>
+        <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
+          className="border border-[#dce7db] rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-[#006a39]" placeholder="From" />
+        <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
+          className="border border-[#dce7db] rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-[#006a39]" placeholder="To" />
+        <button onClick={() => loadLogs(0)} disabled={loading}
+          className="px-4 py-2 rounded-2xl bg-[#006a39] text-white text-xs font-bold hover:bg-[#008749] transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95">
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          {loading ? "Loading…" : "Apply Filters"}
+        </button>
+        <span className="text-xs text-[#728575] ml-auto">{total.toLocaleString()} total records</span>
+      </div>
+
+      {/* Log Table */}
+      <div className="glass-admin-card rounded-3xl overflow-hidden shadow-xs">
+        {loading ? (
+          <div className="py-16 text-center text-[#728575] text-sm">Loading login logs…</div>
+        ) : logs.length === 0 ? (
+          <div className="py-16 text-center text-[#728575] text-sm">
+            <p className="font-bold text-[#073b4c]">No login logs found</p>
+            <p className="text-xs mt-1">Adjust your filters or wait for login events.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-gradient-to-r from-emerald-50/90 to-white border-b border-[#dce8dc]">
+                  <th className="text-left px-4 py-3 font-extrabold text-[#073b4c] uppercase tracking-wider">Time</th>
+                  <th className="text-left px-4 py-3 font-extrabold text-[#073b4c] uppercase tracking-wider">Email</th>
+                  <th className="text-left px-4 py-3 font-extrabold text-[#073b4c] uppercase tracking-wider">Role</th>
+                  <th className="text-left px-4 py-3 font-extrabold text-[#073b4c] uppercase tracking-wider">Result</th>
+                  <th className="text-left px-4 py-3 font-extrabold text-[#073b4c] uppercase tracking-wider hidden md:table-cell">IP Address</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#e4ede2]">
+                {logs.map((log) => (
+                  <tr key={log.id} className="hover:bg-white/80 transition-colors">
+                    <td className="px-4 py-3 text-[#657969] font-mono whitespace-nowrap">
+                      {new Date(log.loggedInAt).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "medium" })}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-[#073b4c] max-w-[200px] truncate">{log.email}</td>
+                    <td className="px-4 py-3">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold capitalize bg-slate-100 text-slate-700 border border-slate-200">
+                        {log.role || "—"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${statusColor(log.status)}`}>
+                        {log.status === "blocked_attempt" ? "Blocked" : log.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-[#728575] font-mono hidden md:table-cell">{log.ipAddress || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3">
+          <button onClick={() => loadLogs(page - 1)} disabled={page === 0 || loading}
+            className="px-4 py-2 rounded-2xl bg-white border border-[#dce7db] text-xs font-bold text-[#073b4c] hover:bg-emerald-50 transition-all disabled:opacity-40 cursor-pointer">
+            ← Previous
+          </button>
+          <span className="text-xs text-[#657969] font-bold">Page {page + 1} of {totalPages}</span>
+          <button onClick={() => loadLogs(page + 1)} disabled={page >= totalPages - 1 || loading}
+            className="px-4 py-2 rounded-2xl bg-white border border-[#dce7db] text-xs font-bold text-[#073b4c] hover:bg-emerald-50 transition-all disabled:opacity-40 cursor-pointer">
+            Next →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function LabBookingsTab({
   bookings,
   onUpdateStatus,

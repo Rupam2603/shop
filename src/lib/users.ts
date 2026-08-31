@@ -16,6 +16,18 @@ export interface ManagedUser {
   approvedAt: string | null;
   approvedBy: string | null;
   blockedAt: string | null;
+  tokenVersion?: number;
+}
+
+export interface LoginLog {
+  id: string;
+  userId: string | null;
+  email: string;
+  role: string | null;
+  status: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  loggedInAt: string;
 }
 
 // ─── Cryptographic Password Hashing (SHA-256 + Salt) ─────────────────────────
@@ -50,14 +62,15 @@ export async function verifyPasswordHash(password: string, storedHash: string, s
     return true;
   }
 
+  // Only attempt hash verification if we have a salt
   if (salt) {
     const { hash } = await hashPasswordWithSalt(password, salt);
     if (hash === storedHash) return true;
   }
 
-  // Check with standard salt
-  const { hash: fallbackHash } = await hashPasswordWithSalt(password, salt || "");
-  return fallbackHash === storedHash;
+  // If no salt provided, this password cannot be verified securely
+  // Return false instead of creating a fallback hash
+  return false;
 }
 
 // ─── User Queries & Mutations (Neon PostgreSQL as Single Source of Truth) ─────
@@ -83,8 +96,10 @@ export async function fetchAllUsers(): Promise<ManagedUser[]> {
         approved_at, 
         approved_by, 
         blocked_at, 
-        created_at
+        created_at,
+        token_version
       FROM public.auth_users
+      WHERE deleted_at IS NULL
       ORDER BY created_at DESC
     `);
 
@@ -138,6 +153,7 @@ export async function fetchAllUsers(): Promise<ManagedUser[]> {
         approvedAt: u.approved_at || null,
         approvedBy: u.approved_by || null,
         blockedAt: u.blocked_at || null,
+        tokenVersion: u.token_version ?? 0,
       });
     }
 
@@ -161,6 +177,7 @@ export async function fetchAllUsers(): Promise<ManagedUser[]> {
           approvedAt: null,
           approvedBy: null,
           blockedAt: null,
+          tokenVersion: 0,
         });
       }
     }
@@ -198,26 +215,35 @@ export async function createNeonUser(opts: {
     const initialStatus: "active" | "pending_approval" = isRetailer ? "pending_approval" : "active";
     const initialApproval: "pending" | "approved" = isRetailer ? "pending" : "approved";
 
-    // 1. Check if email already exists
+    // 1. Check if email already exists (exclude soft-deleted)
     const existing = await sql.query(
-      `SELECT id, email FROM public.auth_users WHERE LOWER(email) = $1 LIMIT 1`,
+      `SELECT id, email FROM public.auth_users WHERE LOWER(email) = $1 AND deleted_at IS NULL LIMIT 1`,
       [cleanEmail]
     );
 
     if (existing && existing.length > 0) {
+      console.warn(`Signup attempt: email ${cleanEmail} already exists`);
       return { success: false, error: "An account with this email address already exists. Please sign in." };
     }
 
     // 2. Hash password securely
     const rawPass = opts.password || "SubhOne@2026";
     const { hash, salt } = await hashPasswordWithSalt(rawPass);
+
+    // Validate hash and salt were created
+    if (!hash || !salt) {
+      console.error("Password hashing failed - hash or salt is empty");
+      return { success: false, error: "Registration failed during password setup. Please try again." };
+    }
+
     const userId = `user_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
 
     // 3. Insert into public.auth_users
-    await sql.query(
+    const insertResult = await sql.query(
       `INSERT INTO public.auth_users (
         id, email, phone, password_hash, salt, full_name, role, status, approval_status, shop_name, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+      RETURNING id, email, password_hash, salt`,
       [
         userId,
         cleanEmail,
@@ -232,6 +258,14 @@ export async function createNeonUser(opts: {
       ]
     );
 
+    if (!insertResult || insertResult.length === 0) {
+      console.error("Failed to insert user into auth_users table");
+      return { success: false, error: "Failed to create user account. Please try again." };
+    }
+
+    const created = insertResult[0];
+    console.log(`User created successfully: ${cleanEmail} with hash length: ${created.password_hash?.length || 0}, salt length: ${created.salt?.length || 0}`);
+
     // 4. Upsert into public.profiles
     await sql.query(
       `INSERT INTO public.profiles (
@@ -240,16 +274,20 @@ export async function createNeonUser(opts: {
       ON CONFLICT (id) DO UPDATE
       SET email = $2, full_name = $3, role = $4, phone = $5, shop_name = $6, approval_status = $7, updated_at = NOW()`,
       [userId, cleanEmail, cleanName, opts.role, cleanPhone, cleanShop, initialApproval]
-    ).catch(() => {});
+    ).catch((err) => {
+      console.warn("Notice upserting profile:", err?.message);
+    });
 
-    // 5. If retailer, register in public.retailer_approvals
+    // 5. If retailer, register in approval tables
     if (isRetailer) {
       await sql.query(
         `INSERT INTO public.retailer_approvals (
           user_id, email, full_name, phone, shop_name, approval_status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, 'pending', NOW(), NOW())`,
         [userId, cleanEmail, cleanName, cleanPhone, cleanShop || `${cleanName}'s Store`]
-      ).catch(() => {});
+      ).catch((err) => {
+        console.warn("Notice creating retailer approval:", err?.message);
+      });
     }
 
     const newUser: ManagedUser = {
@@ -267,6 +305,7 @@ export async function createNeonUser(opts: {
       approvedAt: null,
       approvedBy: null,
       blockedAt: null,
+      tokenVersion: 0,
     };
 
     return {
@@ -294,29 +333,46 @@ export async function authenticateNeonUser(
   isPendingApproval?: boolean;
   isBlocked?: boolean;
 }> {
+  const cleanEmail = email.trim().toLowerCase();
   try {
-    const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Fetch user from public.auth_users
+    // 1. Fetch user from public.auth_users (exclude soft-deleted)
     const rows: any[] = await sql.query(
-      `SELECT 
-        id, email, phone, password_hash, salt, full_name, role, status, approval_status, 
-        shop_name, avatar_url, last_login, approved_at, approved_by, blocked_at, created_at
-       FROM public.auth_users 
-       WHERE LOWER(email) = $1 
+      `SELECT
+        id, email, phone, password_hash, salt, full_name, role, status, approval_status,
+        shop_name, avatar_url, last_login, approved_at, approved_by, blocked_at, created_at,
+        token_version, deleted_at
+       FROM public.auth_users
+       WHERE LOWER(email) = $1
        LIMIT 1`,
       [cleanEmail]
     );
 
     if (!rows || rows.length === 0) {
+      console.warn(`Login attempt: user not found for email ${cleanEmail}`);
+      await writeLoginLog({ email: cleanEmail, status: "failed" });
       return { success: false, error: "Incorrect email or password. Please try again." };
     }
 
     const u = rows[0];
 
+    // Block soft-deleted accounts
+    if (u.deleted_at) {
+      await writeLoginLog({ userId: u.id, email: cleanEmail, role: u.role, status: "failed" });
+      return { success: false, error: "Incorrect email or password. Please try again." };
+    }
+
+    if (!u.password_hash) {
+      console.error(`User ${cleanEmail} has no password_hash stored. Account may be corrupted.`);
+      await writeLoginLog({ userId: u.id, email: cleanEmail, role: u.role, status: "failed" });
+      return { success: false, error: "Account authentication data is missing. Please contact support." };
+    }
+
     // 2. Verify password hash
     const isValidPassword = await verifyPasswordHash(password, u.password_hash, u.salt);
     if (!isValidPassword) {
+      console.warn(`Login attempt failed: invalid password for ${cleanEmail}. Salt present: ${!!u.salt}`);
+      await writeLoginLog({ userId: u.id, email: cleanEmail, role: u.role, status: "failed" });
       return { success: false, error: "Incorrect email or password. Please try again." };
     }
 
@@ -325,6 +381,7 @@ export async function authenticateNeonUser(
 
     // 3. Gate 1: Check if account is blocked
     if ((u.status === "blocked" || u.approval_status === "blocked") && !isAdmin) {
+      await writeLoginLog({ userId: u.id, email: cleanEmail, role: u.role, status: "blocked_attempt" });
       return {
         success: false,
         isBlocked: true,
@@ -337,11 +394,13 @@ export async function authenticateNeonUser(
       const isApproved = u.status === "active" && u.approval_status === "approved";
       if (!isApproved) {
         if (u.status === "rejected" || u.approval_status === "rejected") {
+          await writeLoginLog({ userId: u.id, email: cleanEmail, role: u.role, status: "failed" });
           return {
             success: false,
             error: "Your retailer account application was not approved. Please contact support.",
           };
         }
+        await writeLoginLog({ userId: u.id, email: cleanEmail, role: u.role, status: "failed" });
         return {
           success: false,
           isPendingApproval: true,
@@ -355,6 +414,9 @@ export async function authenticateNeonUser(
       `UPDATE public.auth_users SET last_login = NOW(), updated_at = NOW() WHERE id = $1`,
       [u.id]
     ).catch(() => {});
+
+    // 6. Write success audit log
+    await writeLoginLog({ userId: u.id, email: cleanEmail, role: u.role, status: "success" });
 
     const managedUser: ManagedUser = {
       id: u.id,
@@ -371,6 +433,7 @@ export async function authenticateNeonUser(
       approvedAt: u.approved_at || null,
       approvedBy: u.approved_by || null,
       blockedAt: u.blocked_at || null,
+      tokenVersion: u.token_version ?? 0,
     };
 
     return {
@@ -379,6 +442,7 @@ export async function authenticateNeonUser(
     };
   } catch (err: any) {
     console.error("Neon authentication error:", err);
+    await writeLoginLog({ email: cleanEmail, status: "failed" }).catch(() => {});
     return { success: false, error: err?.message || "Authentication failed. Please try again." };
   }
 }
@@ -425,7 +489,12 @@ export async function updateUserAccountStatus(
       [authStatus, approvalStatus, approvedAt, blockedAt, userId]
     );
 
-    // 2. Update public.profiles
+    // 2. Session invalidation: bump token_version on block or reject
+    if (newStatus === "blocked" || newStatus === "rejected") {
+      await bumpTokenVersion(userId);
+    }
+
+    // 3. Update public.profiles
     await sql.query(
       `UPDATE public.profiles 
        SET approval_status = $1, updated_at = NOW() 
@@ -481,19 +550,164 @@ export async function adminChangeUserPassword(
 }
 
 /**
- * Admin permanently delete a user account from Neon PostgreSQL
+ * Soft-delete a user account (sets deleted_at, bumps token_version).
+ * Login history and references remain intact for audit/integrity.
+ * This replaces the previous hard DELETE approach.
  */
 export async function adminDeleteUserAccount(
   userId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await sql.query(`DELETE FROM public.auth_users WHERE id = $1 OR LOWER(email) = LOWER($1)`, [userId]);
-    await sql.query(`DELETE FROM public.profiles WHERE id = $1 OR LOWER(email) = LOWER($1)`, [userId]).catch(() => {});
-    await sql.query(`DELETE FROM public.retailer_approvals WHERE user_id = $1 OR LOWER(email) = LOWER($1) OR id = $1`, [userId]).catch(() => {});
+    // Soft delete: stamp deleted_at so the row persists for audit trail
+    await sql.query(
+      `UPDATE public.auth_users SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 OR LOWER(email) = LOWER($1)`,
+      [userId]
+    );
+
+    // Bump token version to immediately invalidate any active sessions
+    await bumpTokenVersion(userId);
+
+    // Update profile record timestamp
+    await sql.query(
+      `UPDATE public.profiles SET updated_at = NOW() WHERE id = $1 OR LOWER(email) = LOWER($1)`,
+      [userId]
+    ).catch(() => {});
 
     return { success: true };
   } catch (err: any) {
-    console.error("Failed to delete user account in Neon:", err);
+    console.error("Failed to soft-delete user account in Neon:", err);
     return { success: false, error: err?.message || "Account deletion failed." };
+  }
+}
+
+// ─── Login Audit Log ──────────────────────────────────────────────────────────
+
+/**
+ * Write a login event to public.auth_login_logs.
+ * status: 'success' | 'failed' | 'blocked_attempt'
+ * This must never throw — wrapped in try/catch to protect the auth flow.
+ */
+export async function writeLoginLog(opts: {
+  userId?: string | null;
+  email: string;
+  role?: string | null;
+  status: "success" | "failed" | "blocked_attempt";
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}): Promise<void> {
+  try {
+    await sql.query(
+      `INSERT INTO public.auth_login_logs (user_id, email, role, status, ip_address, user_agent, logged_in_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+      [
+        opts.userId || null,
+        opts.email.trim().toLowerCase(),
+        opts.role || null,
+        opts.status,
+        opts.ipAddress || null,
+        opts.userAgent || null,
+      ]
+    );
+  } catch (err) {
+    // Log writes must never break the main auth flow
+    console.warn("Failed to write login log:", err);
+  }
+}
+
+// ─── Token Version (Session Invalidation) ────────────────────────────────────
+
+/**
+ * Increment token_version — call this whenever a user is blocked or deleted.
+ * Any outstanding JWTs/sessions with an older version are considered invalid.
+ */
+export async function bumpTokenVersion(userId: string): Promise<void> {
+  try {
+    await sql.query(
+      `UPDATE public.auth_users
+       SET token_version = COALESCE(token_version, 0) + 1, updated_at = NOW()
+       WHERE id = $1 OR LOWER(email) = LOWER($1)`,
+      [userId]
+    );
+  } catch (err) {
+    console.warn("Failed to bump token_version:", err);
+  }
+}
+
+// ─── Login Logs Viewer (Admin) ────────────────────────────────────────────────
+
+/**
+ * Fetch paginated login logs from public.auth_login_logs
+ * Supports filtering by userId, role, status, and date range.
+ */
+export async function fetchLoginLogs(opts?: {
+  userId?: string;
+  role?: string;
+  status?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ logs: LoginLog[]; total: number }> {
+  try {
+    const limit = opts?.limit ?? 50;
+    const offset = opts?.offset ?? 0;
+
+    const conditions: string[] = [];
+    const params: any[] = [];
+    let pIdx = 1;
+
+    if (opts?.userId) {
+      conditions.push(`user_id = $${pIdx++}`);
+      params.push(opts.userId);
+    }
+    if (opts?.role && opts.role !== "all") {
+      conditions.push(`role = $${pIdx++}`);
+      params.push(opts.role);
+    }
+    if (opts?.status && opts.status !== "all") {
+      conditions.push(`status = $${pIdx++}`);
+      params.push(opts.status);
+    }
+    if (opts?.from) {
+      conditions.push(`logged_in_at >= $${pIdx++}`);
+      params.push(opts.from);
+    }
+    if (opts?.to) {
+      conditions.push(`logged_in_at <= $${pIdx++}`);
+      params.push(opts.to);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const countResult = await sql.query(
+      `SELECT COUNT(*) as total FROM public.auth_login_logs ${whereClause}`,
+      params
+    );
+    const total = parseInt(String(countResult[0]?.total || "0"), 10);
+
+    const rows: any[] = await sql.query(
+      `SELECT id, user_id, email, role, status, ip_address, user_agent, logged_in_at
+       FROM public.auth_login_logs
+       ${whereClause}
+       ORDER BY logged_in_at DESC
+       LIMIT $${pIdx++} OFFSET $${pIdx++}`,
+      [...params, limit, offset]
+    );
+
+    const logs: LoginLog[] = rows.map((r) => ({
+      id: r.id,
+      userId: r.user_id,
+      email: r.email,
+      role: r.role,
+      status: r.status,
+      ipAddress: r.ip_address,
+      userAgent: r.user_agent,
+      loggedInAt: r.logged_in_at,
+    }));
+
+    return { logs, total };
+  } catch (err) {
+    console.error("Error fetching login logs:", err);
+    return { logs: [], total: 0 };
   }
 }
