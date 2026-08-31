@@ -1133,10 +1133,23 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     retailerId: string,
     newStatus: "pending" | "approved" | "rejected"
   ) => {
+    // 1. Call API first (using the robust Neon atomic update)
+    const res = await updateUserAccountStatus(retailerId, newStatus);
+    
+    // 2. Stop if it failed
+    if (!res.success) {
+      alert("Error updating retailer status. " + (res.error || "Please try again."));
+      return;
+    }
+
+    // 3. Update UI if it succeeded
     setRetailers((prev) =>
       prev.map((r) => (r.id === retailerId || r.email.toLowerCase() === retailerId.toLowerCase() ? { ...r, approvalStatus: newStatus } : r))
     );
-    await updateRetailerApprovalStatus(retailerId, newStatus);
+    // Sync managed users if active
+    setManagedUsers((prev) =>
+      prev.map((u) => (u.id === retailerId || u.email.toLowerCase() === retailerId.toLowerCase() ? { ...u, approvalStatus: newStatus as any } : u))
+    );
   };
 
   const handleDeleteRetailer = async (retailerId: string) => {
@@ -1158,15 +1171,25 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     retailerIds: string[],
     newStatus: "pending" | "approved" | "rejected"
   ) => {
-    const idSet = new Set(retailerIds.map((i) => i.toLowerCase()));
-    setRetailers((prev) =>
-      prev.map((r) =>
-        idSet.has(r.id.toLowerCase()) || idSet.has(r.email.toLowerCase())
-          ? { ...r, approvalStatus: newStatus }
-          : r
-      )
-    );
-    await bulkUpdateRetailerApprovalStatus(retailerIds, newStatus);
+    let successCount = 0;
+    
+    // 1. Await updates via atomic Neon function for each retailer
+    for (const id of retailerIds) {
+      const res = await updateUserAccountStatus(id, newStatus);
+      if (res.success) {
+        successCount++;
+      } else {
+        console.warn(`Failed to update status for ${id}:`, res.error);
+      }
+    }
+    
+    if (successCount < retailerIds.length) {
+      alert(`Updated ${successCount}/${retailerIds.length} retailers successfully. Some may have failed.`);
+    }
+
+    // 2. Refresh the lists from backend to reflect true state
+    handleRefreshRetailers();
+    handleRefreshUsers();
   };
 
   const handleRefreshRetailers = async () => {
@@ -1197,6 +1220,17 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     userId: string,
     newStatus: "approved" | "blocked" | "pending" | "rejected"
   ) => {
+    // 1. Call API first (do NOT update UI optimistically)
+    const res = await updateUserAccountStatus(userId, newStatus);
+    
+    // 2. If it failed, show error and stop
+    if (!res.success) {
+      alert("Error updating user status: " + (res.error || "Please try again."));
+      // We don't need to refresh users because we never changed the UI
+      return;
+    }
+
+    // 3. If success, update UI to reflect the new truth
     setManagedUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, approvalStatus: newStatus } : u))
     );
@@ -1204,11 +1238,6 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     setRetailers((prev) =>
       prev.map((r) => (r.id === userId ? { ...r, approvalStatus: newStatus as any } : r))
     );
-    const res = await updateUserAccountStatus(userId, newStatus);
-    if (!res.success) {
-      alert("Error updating user status: " + (res.error || "Please try again."));
-      handleRefreshUsers();
-    }
   };
 
   const handleChangeUserPassword = async (userId: string, newPass: string) => {

@@ -476,14 +476,15 @@ export async function updateUserAccountStatus(
     }
 
     // 1. Database Updates inside an atomic transaction to avoid desync
-    await sql.transaction([
+    const results = await sql.transaction([
       sql`UPDATE public.auth_users 
           SET status = ${authStatus}, 
               approval_status = ${approvalStatus}, 
               approved_at = CASE WHEN ${approvedAt}::TIMESTAMPTZ IS NOT NULL THEN ${approvedAt}::TIMESTAMPTZ ELSE approved_at END,
               blocked_at = ${blockedAt}::TIMESTAMPTZ,
               updated_at = NOW()
-          WHERE id = ${userId} OR LOWER(email) = LOWER(${userId})`,
+          WHERE id = ${userId} OR LOWER(email) = LOWER(${userId})
+          RETURNING id`,
 
       sql`UPDATE public.profiles 
           SET approval_status = ${approvalStatus}, updated_at = NOW() 
@@ -495,6 +496,10 @@ export async function updateUserAccountStatus(
               updated_at = NOW() 
           WHERE user_id = ${userId} OR LOWER(email) = LOWER(${userId}) OR id = ${userId}`
     ]);
+
+    if (!results || !results[0] || results[0].length === 0) {
+      throw new Error(`Account not found or ID mismatch for ${userId}. No rows were updated.`);
+    }
 
     // 2. Session invalidation: bump token_version on block or reject
     if (newStatus === "blocked" || newStatus === "rejected") {
