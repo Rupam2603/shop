@@ -389,24 +389,22 @@ export async function authenticateNeonUser(
       };
     }
 
-    // 4. Gate 2: Check if Retailer is awaiting admin approval
-    if (role === "retailer" && !isAdmin) {
-      const isApproved = u.status === "active" && u.approval_status === "approved";
-      if (!isApproved) {
-        if (u.status === "rejected" || u.approval_status === "rejected") {
-          await writeLoginLog({ userId: u.id, email: cleanEmail, role: u.role, status: "failed" });
-          return {
-            success: false,
-            error: "Your retailer account application was not approved. Please contact support.",
-          };
-        }
-        await writeLoginLog({ userId: u.id, email: cleanEmail, role: u.role, status: "failed" });
-        return {
-          success: false,
-          isPendingApproval: true,
-          error: "Your retailer account is awaiting admin approval. You will be able to sign in once an administrator approves your account.",
-        };
+    // 4. Gate 2: Check if account is active
+    if (!isAdmin && u.status !== "active") {
+      console.log(`[AUTH-DEBUG] Login blocked for ${cleanEmail}: DB users.status is '${u.status}'`);
+      await writeLoginLog({ userId: u.id, email: cleanEmail, role: u.role, status: "failed" });
+      
+      let errorMsg = "Your account is not active. Please contact support.";
+      if (u.status === "pending" || u.status === "pending_approval") {
+        errorMsg = "Your account is awaiting admin approval. You will be able to sign in once an administrator approves your account.";
+      } else if (u.status === "rejected") {
+        errorMsg = "Your account application was not approved. Please contact support.";
       }
+      
+      return {
+        success: false,
+        error: errorMsg,
+      };
     }
 
     // 5. Update last_login timestamp in Neon
@@ -477,40 +475,31 @@ export async function updateUserAccountStatus(
       approvalStatus = "rejected";
     }
 
-    // 1. Update public.auth_users
-    await sql.query(
-      `UPDATE public.auth_users 
-       SET status = $1, 
-           approval_status = $2, 
-           approved_at = CASE WHEN $3::TIMESTAMPTZ IS NOT NULL THEN $3::TIMESTAMPTZ ELSE approved_at END,
-           blocked_at = $4::TIMESTAMPTZ,
-           updated_at = NOW()
-       WHERE id = $5 OR LOWER(email) = LOWER($5)`,
-      [authStatus, approvalStatus, approvedAt, blockedAt, userId]
-    );
+    // 1. Database Updates inside an atomic transaction to avoid desync
+    await sql.transaction([
+      sql`UPDATE public.auth_users 
+          SET status = ${authStatus}, 
+              approval_status = ${approvalStatus}, 
+              approved_at = CASE WHEN ${approvedAt}::TIMESTAMPTZ IS NOT NULL THEN ${approvedAt}::TIMESTAMPTZ ELSE approved_at END,
+              blocked_at = ${blockedAt}::TIMESTAMPTZ,
+              updated_at = NOW()
+          WHERE id = ${userId} OR LOWER(email) = LOWER(${userId})`,
+
+      sql`UPDATE public.profiles 
+          SET approval_status = ${approvalStatus}, updated_at = NOW() 
+          WHERE id = ${userId} OR LOWER(email) = LOWER(${userId})`,
+
+      sql`UPDATE public.retailer_approvals 
+          SET approval_status = ${approvalStatus}, 
+              approved_at = CASE WHEN ${approvedAt}::TIMESTAMPTZ IS NOT NULL THEN ${approvedAt}::TIMESTAMPTZ ELSE approved_at END,
+              updated_at = NOW() 
+          WHERE user_id = ${userId} OR LOWER(email) = LOWER(${userId}) OR id = ${userId}`
+    ]);
 
     // 2. Session invalidation: bump token_version on block or reject
     if (newStatus === "blocked" || newStatus === "rejected") {
       await bumpTokenVersion(userId);
     }
-
-    // 3. Update public.profiles
-    await sql.query(
-      `UPDATE public.profiles 
-       SET approval_status = $1, updated_at = NOW() 
-       WHERE id = $2 OR LOWER(email) = LOWER($2)`,
-      [approvalStatus, userId]
-    ).catch(() => {});
-
-    // 3. Update public.retailer_approvals
-    await sql.query(
-      `UPDATE public.retailer_approvals 
-       SET approval_status = $1, 
-           approved_at = CASE WHEN $2::TIMESTAMPTZ IS NOT NULL THEN $2::TIMESTAMPTZ ELSE approved_at END,
-           updated_at = NOW() 
-       WHERE user_id = $3 OR LOWER(email) = LOWER($3) OR id = $3`,
-      [approvalStatus, approvedAt, userId]
-    ).catch(() => {});
 
     return { success: true };
   } catch (err: any) {
