@@ -91,6 +91,15 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Complete client service layer implemented in `src/lib/phoneAuth.ts` with `normalizePhone`, `sendPhoneOTP`, and `verifyPhoneOTP`.
   - Integrated into `src/contexts/AuthContext.tsx` (`sendPhoneOtp`, `verifyPhoneOtp`, session persistence).
   - Modern UI in `src/pages/LoginPage.tsx` supporting 1-click Mobile OTP login & signup for Customers and Retailers, 6-digit auto-advancing code boxes, 30s resend timer, and instant test autofill.
+- **User Account Management & Admin Approval System (Neon Postgres)**:
+  - Table `public.auth_users` created in Neon Lakebase Postgres storing user accounts (`id`, `email`, `phone`, `password_hash`, `salt`, `full_name`, `role`, `status`, `approval_status`, `shop_name`, `avatar_url`, `last_login`, `approved_at`, `approved_by`, `blocked_at`, `created_at`, `updated_at`).
+  - Table `public.profiles` synchronized with Neon database.
+  - **Cryptographic Security**: Passwords hashed with SHA-256 and unique random salts (`src/lib/users.ts`). Plaintext passwords and hashes are never exposed.
+  - **Customer Registration**: Role `customer`, status `active`, approval_status `approved`. Instant login upon registration.
+  - **Retailer Registration & Approval Gate**: Role `retailer`, status `pending_approval`, approval_status `pending`. Login restricted with clear notice: *"Your retailer account is awaiting admin approval. You will be able to sign in once an administrator approves your account."*
+  - **Admin Approval Controls**: One-click **Approve** (`pending_approval` → `active`), **Reject**, **Block**, and **Unblock** actions in **Admin Dashboard → User Accounts**.
+  - **Account Blocking**: Blocked users cannot sign in (*"Your account has been blocked by an administrator. Please contact support."*). Unblocking immediately restores access.
+  - **Admin Password Management**: Direct password reset/change tool in Admin Dashboard with salted SHA-256 re-hashing and instant activation.
 - **Production URL:** `https://shop-phi-plum.vercel.app` (Live and verified).
 - **Full Responsiveness (Latest):** Comprehensive mobile-first improvements applied across all pages:
   - `src/index.css`: iOS safe-area support (`env(safe-area-inset-*)`), `min-h-[100dvh]`, `text-size-adjust: 100%`, iOS input zoom prevention (`font-size: max(16px,1em)`), `text-wrap: balance` for headings.
@@ -99,3 +108,4 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - `CartDrawer.tsx`: Full-width on phones, uses `h-[100dvh]`, removed `pl-10` offset.
   - `CheckoutModal.tsx`: Bottom-sheet pattern on mobile (`items-end sm:items-center`), `rounded-t-2xl sm:rounded-2xl`, `max-h-[80dvh]`.
   - `LoginPage.tsx`: Uses `min-h-[100dvh]` for dynamic viewport height.
+

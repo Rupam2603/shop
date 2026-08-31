@@ -6,6 +6,7 @@ import { checkRetailerApprovalStatus, registerOrUpdateRetailer } from "../lib/re
 import { neonSignInWithPassword, neonSignUp, neonSignOut } from "../lib/neonAuth";
 import { sendPhoneOTP, verifyPhoneOTP } from "../lib/phoneAuth";
 import type { PhoneOtpSendResult, PhoneOtpVerifyResult } from "../lib/phoneAuth";
+import { authenticateNeonUser, createNeonUser, fetchAllUsers } from "../lib/users";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -243,6 +244,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             } catch {}
 
+            // Check if active user session exists in storage
+            try {
+              const savedUser = localStorage.getItem("subhone_active_user_session");
+              if (savedUser) {
+                const parsed = JSON.parse(savedUser);
+                if (parsed?.id && parsed?.email) {
+                  setAppUser({
+                    authUser: {
+                      id: parsed.id,
+                      email: parsed.email,
+                      phone: parsed.phone || undefined,
+                      user_metadata: {
+                        role: parsed.role || "customer",
+                        full_name: parsed.fullName || "User",
+                        phone: parsed.phone,
+                        shop_name: parsed.shopName,
+                        approval_status: parsed.approvalStatus || "approved",
+                      },
+                    },
+                    profile: {
+                      id: parsed.id,
+                      email: parsed.email,
+                      full_name: parsed.fullName || "User",
+                      role: parsed.role || "customer",
+                      phone: parsed.phone || null,
+                      shop_name: parsed.shopName || null,
+                      avatar_url: null,
+                      approval_status: parsed.approvalStatus || "approved",
+                      created_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString(),
+                    },
+                  });
+                  setLoading(false);
+                  return;
+                }
+              }
+            } catch {}
+
             // Check if active phone session exists in storage
             try {
               const savedPhone = localStorage.getItem("subhone_active_phone_session");
@@ -299,6 +338,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     shop_name: "SubhOne Central Healthcare",
                     avatar_url: null,
                     approval_status: "approved",
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  },
+                });
+                setLoading(false);
+                return;
+              }
+            }
+          } catch {}
+
+          try {
+            const savedUser = localStorage.getItem("subhone_active_user_session");
+            if (savedUser) {
+              const parsed = JSON.parse(savedUser);
+              if (parsed?.id && parsed?.email) {
+                setAppUser({
+                  authUser: { id: parsed.id, email: parsed.email, phone: parsed.phone || undefined, user_metadata: { role: parsed.role || "customer" } },
+                  profile: {
+                    id: parsed.id,
+                    email: parsed.email,
+                    full_name: parsed.fullName || "User",
+                    role: parsed.role || "customer",
+                    phone: parsed.phone || null,
+                    shop_name: parsed.shopName || null,
+                    avatar_url: null,
+                    approval_status: parsed.approvalStatus || "approved",
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
                   },
@@ -372,6 +437,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     shop_name: "SubhOne Central Healthcare",
                     avatar_url: null,
                     approval_status: "approved",
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  },
+                });
+                setLoading(false);
+                return;
+              }
+            }
+          } catch {}
+
+          // Check if active user session exists in storage
+          try {
+            const savedUser = localStorage.getItem("subhone_active_user_session");
+            if (savedUser) {
+              const parsed = JSON.parse(savedUser);
+              if (parsed?.id && parsed?.email) {
+                setAppUser({
+                  authUser: {
+                    id: parsed.id,
+                    email: parsed.email,
+                    phone: parsed.phone || undefined,
+                    user_metadata: { role: parsed.role || "customer", full_name: parsed.fullName || "User" },
+                  },
+                  profile: {
+                    id: parsed.id,
+                    email: parsed.email,
+                    full_name: parsed.fullName || "User",
+                    role: parsed.role || "customer",
+                    phone: parsed.phone || null,
+                    shop_name: parsed.shopName || null,
+                    avatar_url: null,
+                    approval_status: parsed.approvalStatus || "approved",
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
                   },
@@ -474,27 +571,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: "Incorrect admin password. Please enter the valid admin password." };
         }
 
-        // Attempt Neon Auth native signIn, then supabase auth
-        let adminUser: any = null;
-        try {
-          const neonRes = await neonSignInWithPassword(cleanEmail, cleanPass);
-          if (neonRes?.data?.user) {
-            adminUser = neonRes.data.user;
-          } else {
-            const { data } = await supabase.auth.signInWithPassword({ email: cleanEmail, password: cleanPass });
-            if (data?.user) {
-              adminUser = data.user;
-            }
-          }
-        } catch {
-          // Fallback to local admin session if remote endpoint is offline
-        }
-
         const fallbackId = cleanEmail === "subhonehealthgroup@gmail.com" ? "admin_subhonehealthgroup_id" : "admin_fixed_id";
-        const adminProfile: Profile = (adminUser?.id ? await fetchProfile(adminUser.id) : null) || {
-          id: adminUser?.id || fallbackId,
+        const adminProfile: Profile = {
+          id: fallbackId,
           full_name: cleanEmail === "subhonehealthgroup@gmail.com" ? "SubhOne Executive Admin" : "Store Administrator",
           role: "admin",
+          email: cleanEmail,
           phone: "+91 98765 43210",
           shop_name: "SubhOne Central Healthcare",
           avatar_url: null,
@@ -503,7 +585,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           updated_at: new Date().toISOString(),
         };
 
-        // Save active admin session to local storage so page refreshes stay logged in
+        // Save active admin session to local storage
         try {
           localStorage.setItem(
             "subhone_active_admin_session",
@@ -518,7 +600,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch {}
 
         setAppUser({
-          authUser: adminUser || {
+          authUser: {
             id: fallbackId,
             email: cleanEmail,
             user_metadata: {
@@ -534,18 +616,118 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: null };
       }
 
-      // 1. Try native Neon Auth first
+      // ── 1. Primary Authentication: Neon PostgreSQL Database ──
+      try {
+        const neonAuthRes = await authenticateNeonUser(cleanEmail, cleanPass, expectedRole);
+
+        if (neonAuthRes.success && neonAuthRes.user) {
+          const u = neonAuthRes.user;
+
+          // Check role restrictions
+          if (expectedRole === "admin" && u.role !== "admin") {
+            setLoading(false);
+            return { error: "Access denied. This account does not have Admin privileges." };
+          }
+
+          if (expectedRole === "customer" && u.role === "retailer") {
+            setLoading(false);
+            return { error: "Access denied. This account is registered as a Retailer. Please switch to the Retailer tab." };
+          }
+
+          if (expectedRole === "retailer" && u.role === "customer") {
+            setLoading(false);
+            return { error: "Access denied. This account is registered as a Customer. Please switch to the Customer tab." };
+          }
+
+          const userProfile: Profile = {
+            id: u.id,
+            email: u.email,
+            full_name: u.fullName,
+            role: u.role,
+            phone: u.phone,
+            shop_name: u.shopName,
+            avatar_url: u.avatarUrl,
+            approval_status: u.approvalStatus,
+            created_at: u.createdAt,
+            updated_at: new Date().toISOString(),
+          };
+
+          // Save active user session
+          try {
+            localStorage.setItem(
+              "subhone_active_user_session",
+              JSON.stringify({
+                id: u.id,
+                email: u.email,
+                fullName: u.fullName,
+                role: u.role,
+                phone: u.phone,
+                shopName: u.shopName,
+                status: u.status,
+                approvalStatus: u.approvalStatus,
+                timestamp: Date.now(),
+              })
+            );
+          } catch {}
+
+          setAppUser({
+            authUser: {
+              id: u.id,
+              email: u.email,
+              phone: u.phone || undefined,
+              user_metadata: {
+                full_name: u.fullName,
+                role: u.role,
+                phone: u.phone,
+                shop_name: u.shopName,
+                approval_status: u.approvalStatus,
+              },
+            },
+            profile: userProfile,
+          });
+
+          setPendingApprovalInfo(null);
+          setLoading(false);
+          return { error: null };
+        }
+
+        // Check if specifically blocked or pending from Neon
+        if (neonAuthRes.isBlocked) {
+          setLoading(false);
+          return { error: "Your account has been blocked by an administrator. Please contact support." };
+        }
+
+        if (neonAuthRes.isPendingApproval) {
+          setPendingApprovalInfo({
+            email: cleanEmail,
+            shopName: "Medical Store",
+            status: "pending",
+          });
+          setLoading(false);
+          return {
+            error: "Your retailer account is awaiting admin approval. You will be able to sign in once an administrator approves your account.",
+          };
+        }
+
+        if (neonAuthRes.error && !neonAuthRes.error.includes("Incorrect email")) {
+          setLoading(false);
+          return { error: neonAuthRes.error };
+        }
+      } catch (neonErr) {
+        console.warn("Notice during Neon auth attempt:", neonErr);
+      }
+
+      // ── 2. Fallback: Supabase / Native Neon Auth ──
       let authUser: any = null;
       try {
-        const neonRes = await neonSignInWithPassword(cleanEmail, password);
+        const neonRes = await neonSignInWithPassword(cleanEmail, cleanPass);
         if (neonRes?.data?.user) {
           authUser = neonRes.data.user;
         }
       } catch {}
 
-      // 2. Fallback to SupabaseAuthAdapter
       if (!authUser) {
-        const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password: cleanPass });
         if (error && !data?.user) {
           setLoading(false);
           return { error: friendlyAuthError(error) };
@@ -564,118 +746,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data.user) {
         const profile = await fetchProfile(data.user.id);
-        const isKnownAdmin =
-          cleanEmail.toLowerCase() === "subhonehealthgroup@gmail.com" ||
-          cleanEmail.toLowerCase() === "admin@subhone.com";
         const userRole: UserRole =
           profile?.role ||
           (data.user.user_metadata?.role as UserRole) ||
-          (isKnownAdmin ? "admin" : "customer");
+          "customer";
 
-        if (userRole === "admin") {
-          setAppUser({
-            authUser: data.user,
-            profile: profile || {
-              id: data.user.id,
-              full_name: "Admin",
-              role: "admin",
-              phone: null,
-              shop_name: null,
-              avatar_url: null,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            },
-          });
-          setLoading(false);
-          return { error: null };
-        }
-
-        if (expectedRole === "admin") {
+        if (expectedRole === "admin" && userRole !== "admin") {
           await supabase.auth.signOut();
           setAppUser(null);
           setLoading(false);
           return { error: "Access denied. This account does not have Admin privileges." };
         }
 
-        if (expectedRole === "customer" && userRole === "retailer") {
-          await supabase.auth.signOut();
-          setAppUser(null);
-          setLoading(false);
-          return {
-            error: "Access denied. This account is registered as a Retailer. Please switch to the Retailer tab.",
-          };
-        }
-
-        if (expectedRole === "retailer" && userRole === "customer") {
-          await supabase.auth.signOut();
-          setAppUser(null);
-          setLoading(false);
-          return {
-            error: "Access denied. This account is registered as a Customer. Please switch to the Customer tab.",
-          };
-        }
-
-        // Blocked Account Check (admin already handled and returned above)
+        // Blocked Account Check
         const accountStatus = profile?.approval_status || (data.user.user_metadata?.approval_status as string) || "approved";
         if (accountStatus === "blocked") {
           await supabase.auth.signOut();
           setAppUser(null);
           setLoading(false);
-          return { error: "Access Denied: Your account has been blocked by the administrator. Please contact support@subhone.com." };
+          return { error: "Your account has been blocked by an administrator. Please contact support." };
         }
 
         if (userRole === "retailer") {
-          let isApproved = profile?.approval_status === "approved";
-          let approvalStatus: "pending" | "approved" | "blocked" | "rejected" = (profile?.approval_status as any) || "pending";
-
-          if (approvalStatus === "blocked") {
-            await supabase.auth.signOut();
-            setAppUser(null);
-            setLoading(false);
-            return { error: "Access Denied: Your account has been blocked by the administrator. Please contact support@subhone.com." };
-          }
-
-          if (!isApproved) {
-            try {
-              const { data: appRow } = await supabase
-                .from("retailer_approvals")
-                .select("approval_status")
-                .or(`id.eq.${data.user.id},email.ilike.${cleanEmail}`)
-                .maybeSingle();
-
-              if (appRow) {
-                approvalStatus = (appRow.approval_status as any) || "pending";
-                if (approvalStatus === "approved") isApproved = true;
-              }
-            } catch (e) {
-              console.warn("Notice checking retailer_approvals on sign in:", e);
-            }
-          }
-
-          if (!isApproved && approvalStatus === "pending") {
-            const localStatus = checkRetailerApprovalStatus(cleanEmail || data.user.id);
-            if (localStatus === "approved") isApproved = true;
-            else if (localStatus) approvalStatus = localStatus;
-          }
-
+          const isApproved = profile?.approval_status === "approved";
           if (!isApproved) {
             await supabase.auth.signOut();
             setAppUser(null);
-            if (approvalStatus === "blocked") {
-              setLoading(false);
-              return { error: "Access Denied: Your retailer account has been blocked by the administrator." };
-            }
             setPendingApprovalInfo({
               email: cleanEmail,
               shopName: profile?.shop_name || data.user.user_metadata?.shop_name || "Medical Store",
-              status: approvalStatus as any,
+              status: "pending",
             });
             setLoading(false);
             return {
-              error:
-                approvalStatus === "rejected"
-                  ? "Access denied: Your retailer account application was rejected. Please contact support@subhone.com."
-                  : "Access restricted: Your retailer account is currently pending admin approval. You will receive access once approved by the administrator.",
+              error: "Your retailer account is awaiting admin approval. You will be able to sign in once an administrator approves your account.",
             };
           }
         }
@@ -701,26 +805,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [fetchProfile]
   );
 
-  // ── Sign Up ──────────────────────────────────────────────────────────────────
+  // ── Sign Up (Neon PostgreSQL as Primary Source of Truth) ─────────────────────
   const signUp = useCallback(
     async (opts: SignUpOptions): Promise<{ error: string | null; emailConfirmationRequired: boolean; isPendingApproval?: boolean }> => {
       setLoading(true);
 
       const safeRole: "customer" | "retailer" = opts.role === "retailer" ? "retailer" : "customer";
-      const approvalStatus: "pending" | "approved" = safeRole === "retailer" ? "pending" : "approved";
 
-      // 1. Register with Neon Auth natively
-      let authUser: any = null;
+      // 1. Create User in Neon PostgreSQL
+      const neonRes = await createNeonUser({
+        email: opts.email.trim(),
+        password: opts.password,
+        fullName: opts.fullName.trim(),
+        phone: opts.phone?.trim(),
+        shopName: opts.shopName?.trim(),
+        role: safeRole,
+      });
+
+      if (!neonRes.success) {
+        setLoading(false);
+        return { error: neonRes.error || "Registration failed. Please try again.", emailConfirmationRequired: false };
+      }
+
+      const createdUser = neonRes.user!;
+
+      // Also register in background with Supabase/NeonAuth for dual resilience
       try {
-        const neonRes = await neonSignUp(opts.email.trim(), opts.password, opts.fullName.trim());
-        if (neonRes?.data?.user) {
-          authUser = neonRes.data.user;
-        }
-      } catch {}
-
-      // 2. Fallback to supabase.auth.signUp
-      if (!authUser) {
-        const { data, error } = await supabase.auth.signUp({
+        await supabase.auth.signUp({
           email: opts.email.trim(),
           password: opts.password,
           options: {
@@ -729,76 +840,72 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               role: safeRole,
               phone: opts.phone?.trim() || null,
               shop_name: opts.shopName?.trim() || null,
-              approval_status: approvalStatus,
+              approval_status: safeRole === "retailer" ? "pending" : "approved",
             },
           },
-        });
-
-        if (error && !data?.user) {
-          setLoading(false);
-          return { error: friendlyAuthError(error), emailConfirmationRequired: false };
-        }
-        if (data?.user) {
-          authUser = data.user;
-        }
-      }
-
-      const data = { user: authUser };
+        }).catch(() => {});
+      } catch {}
 
       if (safeRole === "retailer") {
-        // Register in retailer registry as pending
-        await registerOrUpdateRetailer({
-          id: data.user?.id,
-          fullName: opts.fullName.trim(),
+        // Retailer is awaiting admin approval
+        setAppUser(null);
+        setPendingApprovalInfo({
           email: opts.email.trim(),
-          phone: opts.phone?.trim() || null,
           shopName: opts.shopName?.trim() || `${opts.fullName.trim()}'s Medical Store`,
-          approvalStatus: "pending",
+          status: "pending",
         });
+        setLoading(false);
+        return { error: null, emailConfirmationRequired: false, isPendingApproval: true };
       }
 
-      if (data.user) {
-        const newProfile: Profile = {
-          id: data.user.id,
-          full_name: opts.fullName.trim(),
-          role: safeRole,
-          phone: opts.phone?.trim() || null,
-          shop_name: opts.shopName?.trim() || null,
-          avatar_url: null,
-          approval_status: approvalStatus,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
+      // Customer account is active immediately
+      const newProfile: Profile = {
+        id: createdUser.id,
+        email: createdUser.email,
+        full_name: createdUser.fullName,
+        role: "customer",
+        phone: createdUser.phone,
+        shop_name: null,
+        avatar_url: null,
+        approval_status: "approved",
+        created_at: createdUser.createdAt,
+        updated_at: createdUser.createdAt,
+      };
 
-        // Persist profile to public.profiles table in Supabase
-        try {
-          await supabase.from("profiles").upsert(newProfile);
-        } catch (profErr) {
-          console.warn("Notice: could not upsert profile on signup:", profErr);
-        }
+      try {
+        localStorage.setItem(
+          "subhone_active_user_session",
+          JSON.stringify({
+            id: createdUser.id,
+            email: createdUser.email,
+            fullName: createdUser.fullName,
+            role: "customer",
+            phone: createdUser.phone,
+            shopName: null,
+            status: "active",
+            approvalStatus: "approved",
+            timestamp: Date.now(),
+          })
+        );
+      } catch {}
 
-        if (safeRole === "retailer") {
-          // Keep retailer signed out until approved
-          await supabase.auth.signOut();
-          setAppUser(null);
-          setPendingApprovalInfo({
-            email: opts.email.trim(),
-            shopName: opts.shopName?.trim() || "Medical Store",
-            status: "pending",
-          });
-          setLoading(false);
-          return { error: null, emailConfirmationRequired: false, isPendingApproval: true };
-        }
-
-        // Customers are approved freely and logged in immediately!
-        setAppUser({
-          authUser: data.user,
-          profile: newProfile,
-        });
-      }
+      setAppUser({
+        authUser: {
+          id: createdUser.id,
+          email: createdUser.email,
+          phone: createdUser.phone || undefined,
+          user_metadata: {
+            full_name: createdUser.fullName,
+            role: "customer",
+            phone: createdUser.phone,
+            approval_status: "approved",
+          },
+        },
+        profile: newProfile,
+      });
 
       setLoading(false);
-      return { error: null, emailConfirmationRequired: false };
+      return { error: null, emailConfirmationRequired: false, isPendingApproval: false };
     },
     []
   );
@@ -890,6 +997,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       localStorage.removeItem("subhone_active_admin_session");
+      localStorage.removeItem("subhone_active_user_session");
       localStorage.removeItem("subhone_active_phone_session");
       await neonSignOut();
     } catch {}
