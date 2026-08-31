@@ -117,27 +117,27 @@ export async function createNeonUser(opts: {
     const rawPass = opts.password || "SubhOne@2026";
     const { hash } = await hashPasswordWithSalt(rawPass);
 
-    const userId = `user_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
-
     const insertResult = await sql.query(`
-      INSERT INTO public.users (id, name, email, password_hash, role, status, business_name) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO public.users (name, email, password_hash, role, status, business_name) 
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING id, created_at, token_version`,
-      [userId, cleanName, cleanEmail, hash, opts.role, initialStatus, cleanShop]
+      [cleanName, cleanEmail, hash, opts.role, initialStatus, cleanShop]
     );
+
+    const newUserId = insertResult[0].id;
 
     if (isRetailer && insertResult.length > 0) {
       await sql.query(`
         INSERT INTO public.retailer_approval_requests (user_id, status)
         VALUES ($1, 'pending')`, 
-        [userId]
+        [newUserId]
       );
     }
 
     return {
       success: true,
       user: {
-        id: userId,
+        id: newUserId,
         email: cleanEmail,
         fullName: cleanName,
         role: opts.role,

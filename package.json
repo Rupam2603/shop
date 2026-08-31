@@ -16,6 +16,7 @@
     "@neondatabase/neon-js": "^0.7.0-beta",
     "@neondatabase/serverless": "^1.1.0",
     "better-auth": "^1.7.2",
+    "dotenv": "^17.4.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

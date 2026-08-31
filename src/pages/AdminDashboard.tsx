@@ -2736,7 +2736,7 @@ function UsersTab({
   isRefreshing: boolean;
 }) {
   const [roleFilter, setRoleFilter] = useState<"all" | "customer" | "retailer" | "admin">("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "pending" | "blocked" | "rejected">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending" | "blocked" | "rejected">("all");
   const [search, setSearch] = useState("");
   const [usersSubTab, setUsersSubTab] = useState<"users" | "login-logs">("users");
 
@@ -2938,7 +2938,7 @@ function UsersTab({
           </div>
 
           <div className="flex items-center bg-[#f0f5f2] rounded-2xl p-1 border border-[#d6e4d8]">
-            {(["all", "approved", "pending", "blocked"] as const).map((s) => (
+            {(["all", "active", "pending", "blocked"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
