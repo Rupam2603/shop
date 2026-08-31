@@ -1214,29 +1214,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
         if (error || !data) {
           setProductSaveError(error || "Failed to create product in database.");
-          setIsSavingProduct(false);
-          return;
+          return; // don't close modal on failure
         }
-
-        const newProd: Product = {
-          id: data.numeric_id,
-          dbId: data.id,
-          name: data.name,
-          category: data.category_name,
-          brand: data.brand,
-          sku: data.sku || `SKU-${data.numeric_id}`,
-          hsn: data.hsn || "3004",
-          mrp: Number(data.mrp),
-          customerPrice: Number(data.customer_price),
-          retailerPrice: Number(data.retailer_price),
-          stock: data.stock,
-          image: data.image_url,
-          details: data.details || "",
-          badges: Array.isArray(data.badges) && data.badges.length > 0 ? data.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
-        };
-
-        setProducts((prev) => [newProd, ...prev.filter((p) => p.dbId !== data.id && p.id !== data.numeric_id)]);
-        closeModal();
       } else {
         const target = products.find((p) => p.id === form.id);
         let dbId = target?.dbId;
@@ -1251,7 +1230,6 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
         if (!dbId) {
           setProductSaveError("Could not locate product record in database.");
-          setIsSavingProduct(false);
           return;
         }
 
@@ -1275,31 +1253,19 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
         if (error || !data) {
           setProductSaveError(error || "Failed to update product in database.");
-          setIsSavingProduct(false);
-          return;
+          return; // don't close modal on failure
         }
-
-        const updatedProd: Product = {
-          id: data.numeric_id,
-          dbId: data.id,
-          name: data.name,
-          category: data.category_name,
-          brand: data.brand,
-          sku: data.sku || `SKU-${data.numeric_id}`,
-          hsn: data.hsn || "3004",
-          mrp: Number(data.mrp),
-          customerPrice: Number(data.customer_price),
-          retailerPrice: Number(data.retailer_price),
-          stock: data.stock,
-          image: data.image_url,
-          details: data.details || "",
-          badges: Array.isArray(data.badges) && data.badges.length > 0 ? data.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
-        };
-
-        setProducts((prev) => prev.map((p) => (p.dbId === dbId || p.id === form.id ? updatedProd : p)));
-        closeModal();
       }
+
+      // Refresh product list immediately from DB
+      const freshProducts = await fetchProducts();
+      if (freshProducts) {
+        setProducts(freshProducts);
+      }
+      
+      closeModal(); // ONLY close modal on confirmed success
     } catch (err: any) {
+      console.error("Save product error:", err);
       setProductSaveError(err?.message || "An unexpected error occurred while saving.");
     } finally {
       setIsSavingProduct(false);

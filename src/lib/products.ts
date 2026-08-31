@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { sql } from "./neon";
 
 export interface DbCategory {
   id: string;
@@ -162,7 +163,10 @@ export async function createProduct(
     let finalImageUrl = product.image_url;
     if (finalImageUrl && finalImageUrl.startsWith("data:")) {
       const { uploadImageToSupabase } = await import("./storage");
-      const { url: uploadedUrl } = await uploadImageToSupabase(finalImageUrl, "products");
+      const { url: uploadedUrl, error: uploadErr } = await uploadImageToSupabase(finalImageUrl, "products");
+      if (uploadErr) {
+        return { data: null, error: uploadErr };
+      }
       if (uploadedUrl) {
         finalImageUrl = uploadedUrl;
       }
@@ -171,86 +175,83 @@ export async function createProduct(
     // 1. Resolve category_id safely if needed
     let catId = product.category_id;
     if (!catId || catId === "00000000-0000-0000-0000-000000000000") {
-      const { data: cat } = await supabase
-        .from("categories")
-        .select("id")
-        .ilike("name", product.category_name)
-        .maybeSingle();
-      catId = cat?.id || null;
+      const catRows = await sql`SELECT id FROM categories WHERE name ILIKE ${product.category_name} LIMIT 1`;
+      catId = catRows.length > 0 ? catRows[0].id : null;
     }
 
     // 2. Resolve next numeric_id
     let numId = product.numeric_id;
     if (!numId) {
-      const { data: maxProd } = await supabase
-        .from("products")
-        .select("numeric_id")
-        .order("numeric_id", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      numId = maxProd && maxProd.numeric_id ? maxProd.numeric_id + 1 : Math.floor(1000 + Math.random() * 9000);
+      const maxProd = await sql`SELECT numeric_id FROM products ORDER BY numeric_id DESC LIMIT 1`;
+      numId = maxProd.length > 0 && maxProd[0].numeric_id ? maxProd[0].numeric_id + 1 : Math.floor(1000 + Math.random() * 9000);
     }
 
-    const payload: any = {
-      name: product.name,
-      subtitle: product.subtitle || product.details || null,
-      category_id: catId,
-      category_name: product.category_name,
-      brand: product.brand,
-      sku: product.sku || `SKU-${numId}`,
-      hsn: product.hsn || "3004",
-      mrp: Number(product.mrp) || 0,
-      customer_price: Number(product.customer_price) || 0,
-      retailer_price: Number(product.retailer_price) || 0,
-      discount_percent: Number(product.discount_percent) || 0,
-      stock: Number(product.stock) || 0,
-      image_url: finalImageUrl || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80",
-      details: product.details,
-      is_flash_sale: Boolean(product.is_flash_sale),
-      is_featured: Boolean(product.is_featured),
-      badges: product.badges || [],
-      numeric_id: numId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    const pName = product.name;
+    const pSubtitle = product.subtitle || product.details || null;
+    const pCatId = catId;
+    const pCatName = product.category_name;
+    const pBrand = product.brand;
+    const pSku = product.sku || `SKU-${numId}`;
+    const pHsn = product.hsn || "3004";
+    const pMrp = Number(product.mrp) || 0;
+    const pCustPrice = Number(product.customer_price) || 0;
+    const pRetPrice = Number(product.retailer_price) || 0;
+    const pDisc = Number(product.discount_percent) || 0;
+    const pStock = Number(product.stock) || 0;
+    const pImage = finalImageUrl || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80";
+    const pDetails = product.details || null;
+    const pFlash = Boolean(product.is_flash_sale);
+    const pFeat = Boolean(product.is_featured);
+    const pBadges = JSON.stringify(product.badges || []);
 
-    const { data, error } = await supabase
-      .from("products")
-      .insert([payload])
-      .select()
-      .single();
+    const insertedProd = await sql`
+      INSERT INTO products (
+        numeric_id, name, subtitle, category_id, category_name, brand, sku, hsn, mrp,
+        customer_price, retailer_price, discount_percent, stock, image_url, details,
+        is_flash_sale, is_featured, badges, updated_at
+      ) VALUES (
+        ${numId}, ${pName}, ${pSubtitle}, ${pCatId}, ${pCatName}, ${pBrand}, ${pSku}, ${pHsn}, ${pMrp},
+        ${pCustPrice}, ${pRetPrice}, ${pDisc}, ${pStock}, ${pImage}, ${pDetails},
+        ${pFlash}, ${pFeat}, ${pBadges}::jsonb, now()
+      ) RETURNING *
+    `;
 
-    if (error) {
-      console.error("Error creating product in Supabase:", error);
-      return { data: null, error: error.message };
-    }
+    const data = insertedProd[0];
 
     // Keep public.inventory_products in sync
     try {
-      await supabase.from("inventory_products").upsert({
-        id: data.id,
-        numeric_id: data.numeric_id,
-        product_id: data.id,
-        name: data.name,
-        subtitle: data.subtitle,
-        category_id: data.category_id,
-        category_name: data.category_name,
-        brand: data.brand,
-        sku: data.sku,
-        hsn: data.hsn,
-        mrp: data.mrp,
-        customer_price: data.customer_price,
-        retailer_price: data.retailer_price,
-        discount_percent: data.discount_percent,
-        stock: data.stock,
-        image_url: data.image_url,
-        web_image_url: data.image_url,
-        details: data.details,
-        is_flash_sale: data.is_flash_sale,
-        is_featured: data.is_featured,
-        badges: data.badges,
-        updated_at: new Date().toISOString(),
-      });
+      await sql`
+        INSERT INTO inventory_products (
+          id, numeric_id, product_id, name, subtitle, category_id, category_name, brand, sku, hsn, mrp,
+          customer_price, retailer_price, discount_percent, stock, image_url, web_image_url, details,
+          is_flash_sale, is_featured, badges, updated_at
+        ) VALUES (
+          ${data.id}, ${data.numeric_id}, ${data.id}, ${data.name}, ${data.subtitle}, ${data.category_id}, ${data.category_name}, ${data.brand}, ${data.sku}, ${data.hsn}, ${data.mrp},
+          ${data.customer_price}, ${data.retailer_price}, ${data.discount_percent}, ${data.stock}, ${data.image_url}, ${data.image_url}, ${data.details},
+          ${data.is_flash_sale}, ${data.is_featured}, ${JSON.stringify(data.badges)}::jsonb, now()
+        ) ON CONFLICT (id) DO UPDATE SET
+          numeric_id = EXCLUDED.numeric_id,
+          product_id = EXCLUDED.product_id,
+          name = EXCLUDED.name,
+          subtitle = EXCLUDED.subtitle,
+          category_id = EXCLUDED.category_id,
+          category_name = EXCLUDED.category_name,
+          brand = EXCLUDED.brand,
+          sku = EXCLUDED.sku,
+          hsn = EXCLUDED.hsn,
+          mrp = EXCLUDED.mrp,
+          customer_price = EXCLUDED.customer_price,
+          retailer_price = EXCLUDED.retailer_price,
+          discount_percent = EXCLUDED.discount_percent,
+          stock = EXCLUDED.stock,
+          image_url = EXCLUDED.image_url,
+          web_image_url = EXCLUDED.web_image_url,
+          details = EXCLUDED.details,
+          is_flash_sale = EXCLUDED.is_flash_sale,
+          is_featured = EXCLUDED.is_featured,
+          badges = EXCLUDED.badges,
+          updated_at = EXCLUDED.updated_at
+      `;
     } catch (invErr) {
       console.warn("Notice: synced inventory_products:", invErr);
     }
@@ -270,42 +271,97 @@ export async function updateProduct(
   updates: Partial<DbProduct> & { badges?: any[] }
 ): Promise<{ data: DbProduct | null; error: string | null }> {
   try {
-    const payload: any = { ...updates, updated_at: new Date().toISOString() };
-    if (payload.category_id === "00000000-0000-0000-0000-000000000000") {
-      delete payload.category_id;
-    }
-    if (payload.image_url && payload.image_url.startsWith("data:")) {
+    let finalImageUrl = updates.image_url;
+    if (finalImageUrl && finalImageUrl.startsWith("data:")) {
       const { uploadImageToSupabase } = await import("./storage");
-      const { url: uploadedUrl } = await uploadImageToSupabase(payload.image_url, "products");
+      const { url: uploadedUrl, error: uploadErr } = await uploadImageToSupabase(finalImageUrl, "products");
+      if (uploadErr) {
+        return { data: null, error: uploadErr };
+      }
       if (uploadedUrl) {
-        payload.image_url = uploadedUrl;
+        finalImageUrl = uploadedUrl;
       }
     }
-    if (payload.mrp !== undefined) payload.mrp = Number(payload.mrp);
-    if (payload.customer_price !== undefined) payload.customer_price = Number(payload.customer_price);
-    if (payload.retailer_price !== undefined) payload.retailer_price = Number(payload.retailer_price);
-    if (payload.stock !== undefined) payload.stock = Number(payload.stock);
-    if (payload.discount_percent !== undefined) payload.discount_percent = Number(payload.discount_percent);
 
-    const { data, error } = await supabase
-      .from("products")
-      .update(payload)
-      .eq("id", id)
-      .select()
-      .single();
+    const existingRows = await sql`SELECT * FROM products WHERE id = ${id}`;
+    if (existingRows.length === 0) return { data: null, error: "Product not found" };
+    const existing = existingRows[0];
 
-    if (error) {
-      console.error("Error updating product in Supabase:", error);
-      return { data: null, error: error.message };
+    let catId = updates.category_id;
+    if (catId === "00000000-0000-0000-0000-000000000000") {
+      catId = existing.category_id;
     }
+
+    const pName = updates.name !== undefined ? updates.name : existing.name;
+    const pSubtitle = updates.subtitle !== undefined ? updates.subtitle : existing.subtitle;
+    const pCatId = catId !== undefined ? catId : existing.category_id;
+    const pCatName = updates.category_name !== undefined ? updates.category_name : existing.category_name;
+    const pBrand = updates.brand !== undefined ? updates.brand : existing.brand;
+    const pSku = updates.sku !== undefined ? updates.sku : existing.sku;
+    const pHsn = updates.hsn !== undefined ? updates.hsn : existing.hsn;
+    const pMrp = updates.mrp !== undefined ? Number(updates.mrp) : existing.mrp;
+    const pCustPrice = updates.customer_price !== undefined ? Number(updates.customer_price) : existing.customer_price;
+    const pRetPrice = updates.retailer_price !== undefined ? Number(updates.retailer_price) : existing.retailer_price;
+    const pDisc = updates.discount_percent !== undefined ? Number(updates.discount_percent) : existing.discount_percent;
+    const pStock = updates.stock !== undefined ? Number(updates.stock) : existing.stock;
+    const pImage = finalImageUrl !== undefined ? finalImageUrl : existing.image_url;
+    const pDetails = updates.details !== undefined ? updates.details : existing.details;
+    const pFlash = updates.is_flash_sale !== undefined ? Boolean(updates.is_flash_sale) : existing.is_flash_sale;
+    const pFeat = updates.is_featured !== undefined ? Boolean(updates.is_featured) : existing.is_featured;
+    const pBadges = JSON.stringify(updates.badges !== undefined ? updates.badges : existing.badges);
+
+    const updatedRows = await sql`
+      UPDATE products SET
+        name = ${pName},
+        subtitle = ${pSubtitle},
+        category_id = ${pCatId},
+        category_name = ${pCatName},
+        brand = ${pBrand},
+        sku = ${pSku},
+        hsn = ${pHsn},
+        mrp = ${pMrp},
+        customer_price = ${pCustPrice},
+        retailer_price = ${pRetPrice},
+        discount_percent = ${pDisc},
+        stock = ${pStock},
+        image_url = ${pImage},
+        details = ${pDetails},
+        is_flash_sale = ${pFlash},
+        is_featured = ${pFeat},
+        badges = ${pBadges}::jsonb,
+        updated_at = now()
+      WHERE id = ${id}
+      RETURNING *
+    `;
+
+    if (updatedRows.length === 0) return { data: null, error: "Failed to update product" };
+    const data = updatedRows[0];
 
     // Keep public.inventory_products in sync
     try {
-      const invPayload: any = { ...payload };
-      if (invPayload.image_url) {
-        invPayload.web_image_url = invPayload.image_url;
-      }
-      await supabase.from("inventory_products").update(invPayload).eq("id", id);
+      await sql`
+        UPDATE inventory_products SET
+          name = ${data.name},
+          subtitle = ${data.subtitle},
+          category_id = ${data.category_id},
+          category_name = ${data.category_name},
+          brand = ${data.brand},
+          sku = ${data.sku},
+          hsn = ${data.hsn},
+          mrp = ${data.mrp},
+          customer_price = ${data.customer_price},
+          retailer_price = ${data.retailer_price},
+          discount_percent = ${data.discount_percent},
+          stock = ${data.stock},
+          image_url = ${data.image_url},
+          web_image_url = ${data.image_url},
+          details = ${data.details},
+          is_flash_sale = ${data.is_flash_sale},
+          is_featured = ${data.is_featured},
+          badges = ${JSON.stringify(data.badges)}::jsonb,
+          updated_at = now()
+        WHERE id = ${id}
+      `;
     } catch {}
 
     return { data: data as DbProduct, error: null };
@@ -319,14 +375,14 @@ export async function updateProduct(
  * Admin: Delete product
  */
 export async function deleteProduct(id: string): Promise<{ error: string | null }> {
-  const { error } = await supabase.from("products").delete().eq("id", id);
   try {
-    await supabase.from("inventory_products").delete().eq("id", id);
-  } catch {}
-
-  if (error) {
-    return { error: error.message };
+    await sql`DELETE FROM products WHERE id = ${id}`;
+  } catch (err: any) {
+    return { error: err.message };
   }
+  try {
+    await sql`DELETE FROM inventory_products WHERE id = ${id}`;
+  } catch {}
   return { error: null };
 }
 
@@ -338,21 +394,16 @@ export async function updateProductStock(
   newStock: number
 ): Promise<{ error: string | null }> {
   const finalStock = Math.max(0, newStock);
-  const { error } = await supabase
-    .from("products")
-    .update({ stock: finalStock })
-    .eq("id", id);
+  try {
+    await sql`UPDATE products SET stock = ${finalStock}, updated_at = now() WHERE id = ${id}`;
+  } catch (err: any) {
+    return { error: err.message };
+  }
 
   try {
-    await supabase
-      .from("inventory_products")
-      .update({ stock: finalStock, updated_at: new Date().toISOString() })
-      .eq("id", id);
+    await sql`UPDATE inventory_products SET stock = ${finalStock}, updated_at = now() WHERE id = ${id}`;
   } catch {}
 
-  if (error) {
-    return { error: error.message };
-  }
   return { error: null };
 }
 
