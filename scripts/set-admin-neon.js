@@ -6,33 +6,47 @@ const connectionString =
 const sql = neon(connectionString);
 
 async function setAdminCredentials() {
-  const adminEmail = "admin@subhone.com";
+  const adminEmails = ["subhonehealthgroup@gmail.com", "admin@subhone.com"];
   const adminPassword = "Subhone@2026";
-  const adminId = "admin_fixed_id";
+  const adminFullName = "SubhOne Executive Admin";
 
-  console.log(`Setting admin credentials for ${adminEmail} on Neon Postgres...`);
+  console.log(`Configuring Admin credentials for ${adminEmails.join(", ")} on Neon Postgres...`);
 
-  // 1. Update/insert in public.auth_users
-  await sql.query(
-    `INSERT INTO public.auth_users (id, email, password_hash, full_name, role, approval_status, updated_at)
-     VALUES ($1, $2, $3, 'Store Administrator', 'admin', 'approved', NOW())
-     ON CONFLICT (email) DO UPDATE 
-     SET password_hash = $3, full_name = 'Store Administrator', role = 'admin', approval_status = 'approved', updated_at = NOW()`,
-    [adminId, adminEmail, adminPassword]
-  );
+  for (const adminEmail of adminEmails) {
+    const adminId = adminEmail === "subhonehealthgroup@gmail.com" ? "admin_subhonehealthgroup_id" : "admin_fixed_id";
 
-  // 2. Update/insert in public.profiles
-  await sql.query(
-    `INSERT INTO public.profiles (id, email, full_name, role, approval_status, updated_at)
-     VALUES ($1, $2, 'Store Administrator', 'admin', 'approved', NOW())
-     ON CONFLICT (id) DO UPDATE 
-     SET email = $2, full_name = 'Store Administrator', role = 'admin', approval_status = 'approved', updated_at = NOW()`,
-    [adminId, adminEmail]
-  );
+    // 1. Delete any conflicting records with different id if exists, or update
+    await sql.query(
+      `DELETE FROM public.auth_users WHERE email = $1 AND id != $2`,
+      [adminEmail, adminId]
+    );
+    await sql.query(
+      `DELETE FROM public.profiles WHERE email = $1 AND id != $2`,
+      [adminEmail, adminId]
+    );
+
+    // 2. Update/insert in public.auth_users
+    await sql.query(
+      `INSERT INTO public.auth_users (id, email, password_hash, full_name, role, approval_status, updated_at)
+       VALUES ($1, $2, $3, $4, 'admin', 'approved', NOW())
+       ON CONFLICT (id) DO UPDATE 
+       SET email = $2, password_hash = $3, full_name = $4, role = 'admin', approval_status = 'approved', updated_at = NOW()`,
+      [adminId, adminEmail, adminPassword, adminFullName]
+    );
+
+    // 3. Update/insert in public.profiles
+    await sql.query(
+      `INSERT INTO public.profiles (id, email, full_name, role, approval_status, phone, shop_name, updated_at)
+       VALUES ($1, $2, $3, 'admin', 'approved', '+91 98765 43210', 'SubhOne Central Healthcare', NOW())
+       ON CONFLICT (id) DO UPDATE 
+       SET email = $2, full_name = $3, role = 'admin', approval_status = 'approved', phone = '+91 98765 43210', shop_name = 'SubhOne Central Healthcare', updated_at = NOW()`,
+      [adminId, adminEmail, adminFullName]
+    );
+  }
 
   // Verify in Neon DB
-  const check = await sql.query(`SELECT id, email, role, approval_status FROM public.auth_users WHERE email = $1`, [adminEmail]);
-  console.log("Admin credentials saved in Neon database:", check);
+  const check = await sql.query(`SELECT id, email, role, approval_status FROM public.profiles WHERE role = 'admin'`);
+  console.log("Admin accounts verified in Neon database:", check);
 }
 
 setAdminCredentials().catch((err) => {

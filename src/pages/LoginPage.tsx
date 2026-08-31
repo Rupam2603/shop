@@ -286,7 +286,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
     setError("");
     setSuccess("");
     if (role === "admin" && mode === "login") {
-      setEmail("subhonehealthgroup@gmail.com");
+      setEmail("Subhonehealthgroup@gmail.com");
       setPassword("Subhone@2026");
     }
   };
@@ -777,7 +777,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs font-black text-[#073b4c] leading-tight">
-                        Executive Admin: <span className="font-mono text-emerald-800">subhonehealthgroup@gmail.com</span>
+                        Executive Admin: <span className="font-mono text-emerald-800">Subhonehealthgroup@gmail.com</span>
                       </p>
                       <p className="text-[11px] text-[#596b5e] font-semibold mt-0.5">
                         Password: <span className="font-mono text-[#073b4c]">Subhone@2026</span>
@@ -788,11 +788,11 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                     <button
                       type="button"
                       onClick={async () => {
-                        setEmail("subhonehealthgroup@gmail.com");
+                        setEmail("Subhonehealthgroup@gmail.com");
                         setPassword("Subhone@2026");
                         setError("");
                         setLoading(true);
-                        const { error: authErr } = await signIn("subhonehealthgroup@gmail.com", "Subhone@2026", "admin");
+                        const { error: authErr } = await signIn("Subhonehealthgroup@gmail.com", "Subhone@2026", "admin");
                         setLoading(false);
                         if (authErr) setError(authErr);
                       }}
