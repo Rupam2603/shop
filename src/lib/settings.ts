@@ -97,6 +97,7 @@ export async function saveStoreSettingsToDb(settings: StoreSettings): Promise<{ 
         ${payload.default_disc}, 
         ${payload.email_alerts}, 
         ${payload.sms_alerts}, 
+        ${payload.auto_reorder},
         ${payload.updated_at}
       )
       ON CONFLICT (id) DO UPDATE SET
