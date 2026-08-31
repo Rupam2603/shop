@@ -86,6 +86,11 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 - **Inventory Products Database Table (Neon Postgres)**:
   - New table `public.inventory_products` created in Neon Lakebase Postgres storing complete product data along with product web images (`image_url`, `web_image_url`, `gallery_images`), pricing, stock levels, unit, dosage form, batch, and SKU.
   - CRUD operations in `src/lib/products.ts` synchronized with `public.inventory_products` and `public.products`.
+- **Phone Authentication with OTP Verification (Neon Postgres)**:
+  - Table `public.phone_verifications` created in Neon Lakebase Postgres storing phone OTP requests with `phone`, `otp_hash`, `expires_at`, `verified`, `attempts`, `role`, and user profile metadata.
+  - Complete client service layer implemented in `src/lib/phoneAuth.ts` with `normalizePhone`, `sendPhoneOTP`, and `verifyPhoneOTP`.
+  - Integrated into `src/contexts/AuthContext.tsx` (`sendPhoneOtp`, `verifyPhoneOtp`, session persistence).
+  - Modern UI in `src/pages/LoginPage.tsx` supporting 1-click Mobile OTP login & signup for Customers and Retailers, 6-digit auto-advancing code boxes, 30s resend timer, and instant test autofill.
 - **Production URL:** `https://shop-phi-plum.vercel.app` (Live and verified).
 - **Full Responsiveness (Latest):** Comprehensive mobile-first improvements applied across all pages:
   - `src/index.css`: iOS safe-area support (`env(safe-area-inset-*)`), `min-h-[100dvh]`, `text-size-adjust: 100%`, iOS input zoom prevention (`font-size: max(16px,1em)`), `text-wrap: balance` for headings.

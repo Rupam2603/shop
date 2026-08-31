@@ -116,6 +116,20 @@ async function runMigration() {
   `);
 
   await sql.query(`
+    CREATE TABLE IF NOT EXISTS public.phone_verifications (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+      phone TEXT NOT NULL,
+      otp_code TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'customer',
+      full_name TEXT,
+      shop_name TEXT,
+      expires_at TIMESTAMPTZ NOT NULL,
+      verified BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await sql.query(`
     CREATE TABLE IF NOT EXISTS public.orders (
       id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
       order_number TEXT NOT NULL UNIQUE,

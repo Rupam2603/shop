@@ -4,6 +4,8 @@ import { supabase } from "../lib/supabase";
 import type { Profile, UserRole } from "../lib/supabase";
 import { checkRetailerApprovalStatus, registerOrUpdateRetailer } from "../lib/retailers";
 import { neonSignInWithPassword, neonSignUp, neonSignOut } from "../lib/neonAuth";
+import { sendPhoneOTP, verifyPhoneOTP } from "../lib/phoneAuth";
+import type { PhoneOtpSendResult, PhoneOtpVerifyResult } from "../lib/phoneAuth";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -12,6 +14,7 @@ export interface AppUser {
   authUser: {
     id: string;
     email?: string;
+    phone?: string;
     user_metadata?: Record<string, any>;
   };
   /** Our profiles row (contains role, full_name, phone, etc.) */
@@ -32,6 +35,8 @@ interface AuthContextValue {
   clearPendingApproval: () => void;
   signIn: (email: string, password: string, expectedRole?: UserRole) => Promise<{ error: string | null }>;
   signUp: (opts: SignUpOptions) => Promise<{ error: string | null; emailConfirmationRequired: boolean; isPendingApproval?: boolean }>;
+  sendPhoneOtp: (phone: string, role: "customer" | "retailer", meta?: { fullName?: string; shopName?: string }) => Promise<PhoneOtpSendResult>;
+  verifyPhoneOtp: (phone: string, otp: string, role: "customer" | "retailer", meta?: { fullName?: string; shopName?: string }) => Promise<PhoneOtpVerifyResult>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Pick<Profile, "full_name" | "phone" | "shop_name" | "avatar_url">>) => Promise<{ error: string | null }>;
@@ -237,6 +242,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
               }
             } catch {}
+
+            // Check if active phone session exists in storage
+            try {
+              const savedPhone = localStorage.getItem("subhone_active_phone_session");
+              if (savedPhone) {
+                const parsed = JSON.parse(savedPhone);
+                if (parsed?.id && parsed?.phone) {
+                  setAppUser({
+                    authUser: {
+                      id: parsed.id,
+                      phone: parsed.phone,
+                      email: parsed.email,
+                      user_metadata: { role: parsed.role || "customer", full_name: parsed.fullName || "User" },
+                    },
+                    profile: {
+                      id: parsed.id,
+                      full_name: parsed.fullName || "User",
+                      role: parsed.role || "customer",
+                      phone: parsed.phone,
+                      shop_name: parsed.shopName || null,
+                      avatar_url: null,
+                      approval_status: "approved",
+                      created_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString(),
+                    },
+                  });
+                  setLoading(false);
+                  return;
+                }
+              }
+            } catch {}
+
             setAppUser(null);
             setLoading(false);
           }
@@ -271,6 +308,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             }
           } catch {}
+
+          try {
+            const savedPhone = localStorage.getItem("subhone_active_phone_session");
+            if (savedPhone) {
+              const parsed = JSON.parse(savedPhone);
+              if (parsed?.id && parsed?.phone) {
+                setAppUser({
+                  authUser: { id: parsed.id, phone: parsed.phone, email: parsed.email, user_metadata: { role: parsed.role || "customer" } },
+                  profile: {
+                    id: parsed.id,
+                    full_name: parsed.fullName || "User",
+                    role: parsed.role || "customer",
+                    phone: parsed.phone,
+                    shop_name: parsed.shopName || null,
+                    avatar_url: null,
+                    approval_status: "approved",
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  },
+                });
+                setLoading(false);
+                return;
+              }
+            }
+          } catch {}
+
           setAppUser(null);
           setLoading(false);
         }
@@ -318,6 +381,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             }
           } catch {}
+
+          // Check if active phone session exists in storage
+          try {
+            const savedPhone = localStorage.getItem("subhone_active_phone_session");
+            if (savedPhone) {
+              const parsed = JSON.parse(savedPhone);
+              if (parsed?.id && parsed?.phone) {
+                setAppUser({
+                  authUser: {
+                    id: parsed.id,
+                    phone: parsed.phone,
+                    email: parsed.email,
+                    user_metadata: { role: parsed.role || "customer", full_name: parsed.fullName || "User" },
+                  },
+                  profile: {
+                    id: parsed.id,
+                    full_name: parsed.fullName || "User",
+                    role: parsed.role || "customer",
+                    phone: parsed.phone,
+                    shop_name: parsed.shopName || null,
+                    avatar_url: null,
+                    approval_status: "approved",
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  },
+                });
+                setLoading(false);
+                return;
+              }
+            }
+          } catch {}
+
           setAppUser(null);
           setLoading(false);
         }
@@ -708,6 +803,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  // ── Phone OTP Authentication ────────────────────────────────────────────────
+  const sendPhoneOtp = useCallback(
+    async (
+      phone: string,
+      role: "customer" | "retailer",
+      meta?: { fullName?: string; shopName?: string }
+    ): Promise<PhoneOtpSendResult> => {
+      setLoading(true);
+      const res = await sendPhoneOTP({
+        phone,
+        role,
+        fullName: meta?.fullName,
+        shopName: meta?.shopName,
+      });
+      setLoading(false);
+      return res;
+    },
+    []
+  );
+
+  const verifyPhoneOtp = useCallback(
+    async (
+      phone: string,
+      otp: string,
+      role: "customer" | "retailer",
+      meta?: { fullName?: string; shopName?: string }
+    ): Promise<PhoneOtpVerifyResult> => {
+      setLoading(true);
+      const res = await verifyPhoneOTP({
+        phone,
+        otp,
+        role,
+        fullName: meta?.fullName,
+        shopName: meta?.shopName,
+      });
+
+      if (res.success && res.user) {
+        if (res.isPendingApproval) {
+          setAppUser(null);
+          setPendingApprovalInfo({
+            email: res.user.email || `${phone}@phone.subhone.com`,
+            shopName: res.user.profile.shop_name || "Medical Store",
+            status: "pending",
+          });
+        } else {
+          setPendingApprovalInfo(null);
+          setAppUser({
+            authUser: {
+              id: res.user.id,
+              phone: res.user.phone,
+              email: res.user.email,
+              user_metadata: {
+                role: res.user.profile.role,
+                full_name: res.user.profile.full_name,
+                phone: res.user.phone,
+                shop_name: res.user.profile.shop_name,
+              },
+            },
+            profile: res.user.profile,
+          });
+        }
+      }
+
+      setLoading(false);
+      return res;
+    },
+    []
+  );
+
   // ── Reset Password ──────────────────────────────────────────────────────────
   const resetPassword = useCallback(async (email: string): Promise<{ error: string | null }> => {
     try {
@@ -726,6 +890,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       localStorage.removeItem("subhone_active_admin_session");
+      localStorage.removeItem("subhone_active_phone_session");
       await neonSignOut();
     } catch {}
     try {
@@ -767,6 +932,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearPendingApproval,
         signIn,
         signUp,
+        sendPhoneOtp,
+        verifyPhoneOtp,
         resetPassword,
         signOut,
         updateProfile,
