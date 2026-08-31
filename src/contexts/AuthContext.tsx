@@ -2,23 +2,19 @@ import { createContext, useContext, useEffect, useState, useCallback } from "rea
 import type { ReactNode } from "react";
 import { supabase } from "../lib/supabase";
 import type { Profile, UserRole } from "../lib/supabase";
-import { checkRetailerApprovalStatus, registerOrUpdateRetailer } from "../lib/retailers";
+import { checkRetailerApprovalStatus } from "../lib/retailers";
 import { neonSignInWithPassword, neonSignUp, neonSignOut } from "../lib/neonAuth";
 import { sendPhoneOTP, verifyPhoneOTP } from "../lib/phoneAuth";
 import type { PhoneOtpSendResult, PhoneOtpVerifyResult } from "../lib/phoneAuth";
-import { authenticateNeonUser, createNeonUser, fetchAllUsers } from "../lib/users";
-
-// ─── Types ─────────────────────────────────────────────────────────────────────
+import { authenticateNeonUser, createNeonUser } from "../lib/users";
 
 export interface AppUser {
-  /** Auth user (contains id, email, etc.) */
   authUser: {
     id: string;
     email?: string;
     phone?: string;
     user_metadata?: Record<string, any>;
   };
-  /** Our profiles row (contains role, full_name, phone, etc.) */
   profile: Profile;
 }
 
@@ -29,7 +25,6 @@ export interface PendingApprovalInfo {
 }
 
 interface AuthContextValue {
-  /** null = not logged in, undefined = still loading */
   appUser: AppUser | null | undefined;
   loading: boolean;
   pendingApprovalInfo: PendingApprovalInfo | null;
@@ -53,11 +48,7 @@ interface SignUpOptions {
   role: "customer" | "retailer";
 }
 
-// ─── Context ───────────────────────────────────────────────────────────────────
-
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-// ─── Provider ──────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [appUser, setAppUser] = useState<AppUser | null | undefined>(undefined);
@@ -68,9 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPendingApprovalInfo(null);
   }, []);
 
-  /**
-   * Fetches the profile row from the database for a given user ID.
-   */
   const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
     try {
       const { data, error } = await supabase
@@ -89,9 +77,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  /**
-   * Hydrates state based on the active Supabase session
-   */
   const hydrateSession = useCallback(async (sessionUser: any) => {
     if (!sessionUser) {
       setAppUser(null);
@@ -111,7 +96,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (isKnownAdminEmail ? "admin" : "customer");
     const isAdmin = detectedRole === "admin";
 
-    // Strict Gate: Check if user is blocked
     const currentAccountStatus = profile?.approval_status || (rawMeta.approval_status as string) || "approved";
     if (currentAccountStatus === "blocked" && !isAdmin) {
       await supabase.auth.signOut();
@@ -120,7 +104,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Strict Gate: Retailer accounts MUST be approved by Admin
     if (detectedRole === "retailer" && !isAdmin) {
       let isApproved = false;
       let approvalStatus: "pending" | "approved" | "blocked" | "rejected" = (currentAccountStatus as any) || "pending";
@@ -129,7 +112,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isApproved = true;
       }
 
-      // 2. Check retailer_approvals table live
       if (!isApproved && approvalStatus !== "blocked") {
         try {
           const { data: appRow } = await supabase
@@ -147,14 +129,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // 3. Check local cache fallback
       if (!isApproved && approvalStatus === "pending") {
         const localStatus = checkRetailerApprovalStatus(email || sessionUser.id);
         if (localStatus === "approved") isApproved = true;
         else if (localStatus) approvalStatus = localStatus;
       }
 
-      // If not approved, immediately destroy active auth session and block portal access
       if (!isApproved) {
         await supabase.auth.signOut();
         setAppUser(null);
@@ -188,13 +168,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, [fetchProfile]);
 
-  /**
-   * Listen to Supabase auth state changes
-   */
   useEffect(() => {
     let mounted = true;
 
-    // Safety timeout: Never let the app hang on loading for more than 1 second
     const timeoutTimer = setTimeout(() => {
       if (mounted) {
         setLoading(false);
@@ -209,42 +185,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (data?.session?.user) {
             hydrateSession(data.session.user);
           } else {
-            // Check if active local admin session exists in storage
-            try {
-              const savedAdmin = localStorage.getItem("subhone_active_admin_session");
-              if (savedAdmin) {
-                const parsed = JSON.parse(savedAdmin);
-                if (
-                  parsed?.email &&
-                  (parsed.email.toLowerCase() === "subhonehealthgroup@gmail.com" ||
-                   parsed.email.toLowerCase() === "admin@subhone.com")
-                ) {
-                  setAppUser({
-                    authUser: {
-                      id: parsed.id || "admin_fixed_id",
-                      email: parsed.email,
-                      user_metadata: { role: "admin", full_name: parsed.fullName || "Admin" },
-                    },
-                    profile: {
-                      id: parsed.id || "admin_fixed_id",
-                      email: parsed.email,
-                      full_name: parsed.fullName || "Admin",
-                      role: "admin",
-                      phone: "+91 98765 43210",
-                      shop_name: "SubhOne Central Healthcare",
-                      avatar_url: null,
-                      approval_status: "approved",
-                      created_at: new Date().toISOString(),
-                      updated_at: new Date().toISOString(),
-                    },
-                  });
-                  setLoading(false);
-                  return;
-                }
-              }
-            } catch {}
-
-            // Check if active user session exists in storage
             try {
               const savedUser = localStorage.getItem("subhone_active_user_session");
               if (savedUser) {
@@ -280,39 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   return;
                 }
               }
-            } catch {}
-
-            // Check if active phone session exists in storage
-            try {
-              const savedPhone = localStorage.getItem("subhone_active_phone_session");
-              if (savedPhone) {
-                const parsed = JSON.parse(savedPhone);
-                if (parsed?.id && parsed?.phone) {
-                  setAppUser({
-                    authUser: {
-                      id: parsed.id,
-                      phone: parsed.phone,
-                      email: parsed.email,
-                      user_metadata: { role: parsed.role || "customer", full_name: parsed.fullName || "User" },
-                    },
-                    profile: {
-                      id: parsed.id,
-                      full_name: parsed.fullName || "User",
-                      role: parsed.role || "customer",
-                      phone: parsed.phone,
-                      shop_name: parsed.shopName || null,
-                      avatar_url: null,
-                      approval_status: "approved",
-                      created_at: new Date().toISOString(),
-                      updated_at: new Date().toISOString(),
-                    },
-                  });
-                  setLoading(false);
-                  return;
-                }
-              }
-            } catch {}
-
+            } catch { }
             setAppUser(null);
             setLoading(false);
           }
@@ -320,196 +228,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .catch((err) => {
         console.warn("getSession error:", err);
-        if (mounted) {
-          clearTimeout(timeoutTimer);
-          try {
-            const savedAdmin = localStorage.getItem("subhone_active_admin_session");
-            if (savedAdmin) {
-              const parsed = JSON.parse(savedAdmin);
-              if (parsed?.email) {
-                setAppUser({
-                  authUser: { id: parsed.id || "admin_fixed_id", email: parsed.email, user_metadata: { role: "admin" } },
-                  profile: {
-                    id: parsed.id || "admin_fixed_id",
-                    email: parsed.email,
-                    full_name: parsed.fullName || "Admin",
-                    role: "admin",
-                    phone: "+91 98765 43210",
-                    shop_name: "SubhOne Central Healthcare",
-                    avatar_url: null,
-                    approval_status: "approved",
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  },
-                });
-                setLoading(false);
-                return;
-              }
-            }
-          } catch {}
-
-          try {
-            const savedUser = localStorage.getItem("subhone_active_user_session");
-            if (savedUser) {
-              const parsed = JSON.parse(savedUser);
-              if (parsed?.id && parsed?.email) {
-                setAppUser({
-                  authUser: { id: parsed.id, email: parsed.email, phone: parsed.phone || undefined, user_metadata: { role: parsed.role || "customer" } },
-                  profile: {
-                    id: parsed.id,
-                    email: parsed.email,
-                    full_name: parsed.fullName || "User",
-                    role: parsed.role || "customer",
-                    phone: parsed.phone || null,
-                    shop_name: parsed.shopName || null,
-                    avatar_url: null,
-                    approval_status: parsed.approvalStatus || "approved",
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  },
-                });
-                setLoading(false);
-                return;
-              }
-            }
-          } catch {}
-
-          try {
-            const savedPhone = localStorage.getItem("subhone_active_phone_session");
-            if (savedPhone) {
-              const parsed = JSON.parse(savedPhone);
-              if (parsed?.id && parsed?.phone) {
-                setAppUser({
-                  authUser: { id: parsed.id, phone: parsed.phone, email: parsed.email, user_metadata: { role: parsed.role || "customer" } },
-                  profile: {
-                    id: parsed.id,
-                    full_name: parsed.fullName || "User",
-                    role: parsed.role || "customer",
-                    phone: parsed.phone,
-                    shop_name: parsed.shopName || null,
-                    avatar_url: null,
-                    approval_status: "approved",
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  },
-                });
-                setLoading(false);
-                return;
-              }
-            }
-          } catch {}
-
-          setAppUser(null);
-          setLoading(false);
-        }
       });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (mounted) {
         clearTimeout(timeoutTimer);
         if (session?.user) {
           hydrateSession(session.user);
         } else {
-          // Check if active local admin session exists in storage
-          try {
-            const savedAdmin = localStorage.getItem("subhone_active_admin_session");
-            if (savedAdmin) {
-              const parsed = JSON.parse(savedAdmin);
-              if (
-                parsed?.email &&
-                (parsed.email.toLowerCase() === "subhonehealthgroup@gmail.com" ||
-                 parsed.email.toLowerCase() === "admin@subhone.com")
-              ) {
-                setAppUser({
-                  authUser: {
-                    id: parsed.id || "admin_subhonehealthgroup_id",
-                    email: parsed.email,
-                    user_metadata: { role: "admin", full_name: parsed.fullName || "SubhOne Executive Admin" },
-                  },
-                  profile: {
-                    id: parsed.id || "admin_subhonehealthgroup_id",
-                    email: parsed.email,
-                    full_name: parsed.fullName || "SubhOne Executive Admin",
-                    role: "admin",
-                    phone: "+91 98765 43210",
-                    shop_name: "SubhOne Central Healthcare",
-                    avatar_url: null,
-                    approval_status: "approved",
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  },
-                });
-                setLoading(false);
-                return;
-              }
-            }
-          } catch {}
-
-          // Check if active user session exists in storage
-          try {
-            const savedUser = localStorage.getItem("subhone_active_user_session");
-            if (savedUser) {
-              const parsed = JSON.parse(savedUser);
-              if (parsed?.id && parsed?.email) {
-                setAppUser({
-                  authUser: {
-                    id: parsed.id,
-                    email: parsed.email,
-                    phone: parsed.phone || undefined,
-                    user_metadata: { role: parsed.role || "customer", full_name: parsed.fullName || "User" },
-                  },
-                  profile: {
-                    id: parsed.id,
-                    email: parsed.email,
-                    full_name: parsed.fullName || "User",
-                    role: parsed.role || "customer",
-                    phone: parsed.phone || null,
-                    shop_name: parsed.shopName || null,
-                    avatar_url: null,
-                    approval_status: parsed.approvalStatus || "approved",
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  },
-                });
-                setLoading(false);
-                return;
-              }
-            }
-          } catch {}
-
-          // Check if active phone session exists in storage
-          try {
-            const savedPhone = localStorage.getItem("subhone_active_phone_session");
-            if (savedPhone) {
-              const parsed = JSON.parse(savedPhone);
-              if (parsed?.id && parsed?.phone) {
-                setAppUser({
-                  authUser: {
-                    id: parsed.id,
-                    phone: parsed.phone,
-                    email: parsed.email,
-                    user_metadata: { role: parsed.role || "customer", full_name: parsed.fullName || "User" },
-                  },
-                  profile: {
-                    id: parsed.id,
-                    full_name: parsed.fullName || "User",
-                    role: parsed.role || "customer",
-                    phone: parsed.phone,
-                    shop_name: parsed.shopName || null,
-                    avatar_url: null,
-                    approval_status: "approved",
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  },
-                });
-                setLoading(false);
-                return;
-              }
-            }
-          } catch {}
-
           setAppUser(null);
           setLoading(false);
         }
@@ -523,7 +249,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [hydrateSession]);
 
-  // ── Switch/Update Role ───────────────────────────────────────────────────────
   const setRole = useCallback(async (newRole: UserRole) => {
     if (!appUser) return;
     try {
@@ -531,18 +256,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from("profiles")
         .update({ role: newRole, updated_at: new Date().toISOString() })
         .eq("id", appUser.authUser.id);
-    } catch {}
+    } catch { }
 
     setAppUser((prev) =>
       prev
         ? {
-            ...prev,
-            profile: { ...prev.profile, role: newRole },
-            authUser: {
-              ...prev.authUser,
-              user_metadata: { ...prev.authUser.user_metadata, role: newRole },
-            },
-          }
+          ...prev,
+          profile: { ...prev.profile, role: newRole },
+          authUser: {
+            ...prev.authUser,
+            user_metadata: { ...prev.authUser.user_metadata, role: newRole },
+          },
+        }
         : prev
     );
   }, [appUser]);
@@ -551,30 +276,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(
     async (email: string, password: string, expectedRole?: UserRole): Promise<{ error: string | null }> => {
       setLoading(true);
-      const cleanEmail = email.trim().toLowerCase();
-      const cleanPass = password.trim();
-      const isKnownAdmin =
-        cleanEmail === "subhonehealthgroup@gmail.com" ||
-        cleanEmail === "admin@subhone.com";
 
-      // Direct, robust validation for configured Admin credentials
+      // FIX: Email lowercased & password trimmed safely or raw
+      const cleanEmail = email.trim().toLowerCase();
+      const cleanPass = password; // DO NOT TRIM PASSWORDS AS IT CAN CREATE MISMATCHES
+
+      const isKnownAdmin = cleanEmail === "subhonehealthgroup@gmail.com" || cleanEmail === "admin@subhone.com";
+
       if (isKnownAdmin) {
         const isValidAdminPass =
-          cleanPass === "Subhone@2026" ||
-          cleanPass.toLowerCase() === "subhone@2026" ||
-          cleanPass === "SubhOne@2026" ||
-          cleanPass === "admin123" ||
-          cleanPass === "admin@subhone.com";
+          cleanPass === "Subhone@2026" || cleanPass.toLowerCase() === "subhone@2026" || cleanPass === "SubhOne@2026" || cleanPass === "admin123" || cleanPass === "admin@subhone.com";
 
         if (!isValidAdminPass) {
           setLoading(false);
           return { error: "Incorrect admin password. Please enter the valid admin password." };
         }
 
-        const fallbackId = cleanEmail === "subhonehealthgroup@gmail.com" ? "admin_subhonehealthgroup_id" : "admin_fixed_id";
+        const fallbackId = "admin_fixed_id";
         const adminProfile: Profile = {
           id: fallbackId,
-          full_name: cleanEmail === "subhonehealthgroup@gmail.com" ? "SubhOne Executive Admin" : "Store Administrator",
+          full_name: "Store Administrator",
           role: "admin",
           email: cleanEmail,
           phone: "+91 98765 43210",
@@ -585,29 +306,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           updated_at: new Date().toISOString(),
         };
 
-        // Save active admin session to local storage
-        try {
-          localStorage.setItem(
-            "subhone_active_admin_session",
-            JSON.stringify({
-              id: fallbackId,
-              email: cleanEmail,
-              fullName: adminProfile.full_name,
-              role: "admin",
-              timestamp: Date.now(),
-            })
-          );
-        } catch {}
-
         setAppUser({
           authUser: {
             id: fallbackId,
             email: cleanEmail,
-            user_metadata: {
-              full_name: adminProfile.full_name,
-              role: "admin",
-              approval_status: "approved",
-            },
+            user_metadata: { full_name: adminProfile.full_name, role: "admin", approval_status: "approved" },
           },
           profile: adminProfile,
         });
@@ -623,95 +326,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (neonAuthRes.success && neonAuthRes.user) {
           const u = neonAuthRes.user;
 
-          // Check role restrictions
           if (expectedRole === "admin" && u.role !== "admin") {
-            setLoading(false);
-            return { error: "Access denied. This account does not have Admin privileges." };
+            setLoading(false); return { error: "Access denied. This account does not have Admin privileges." };
           }
-
           if (expectedRole === "customer" && u.role === "retailer") {
-            setLoading(false);
-            return { error: "Access denied. This account is registered as a Retailer. Please switch to the Retailer tab." };
+            setLoading(false); return { error: "Access denied. This account is registered as a Retailer." };
           }
-
           if (expectedRole === "retailer" && u.role === "customer") {
-            setLoading(false);
-            return { error: "Access denied. This account is registered as a Customer. Please switch to the Customer tab." };
+            setLoading(false); return { error: "Access denied. This account is registered as a Customer." };
           }
-
-          const userProfile: Profile = {
-            id: u.id,
-            email: u.email,
-            full_name: u.fullName,
-            role: u.role,
-            phone: u.phone,
-            shop_name: u.shopName,
-            avatar_url: u.avatarUrl,
-            approval_status: u.approvalStatus,
-            created_at: u.createdAt,
-            updated_at: new Date().toISOString(),
-          };
-
-          // Save active user session
-          try {
-            localStorage.setItem(
-              "subhone_active_user_session",
-              JSON.stringify({
-                id: u.id,
-                email: u.email,
-                fullName: u.fullName,
-                role: u.role,
-                phone: u.phone,
-                shopName: u.shopName,
-                status: u.status,
-                approvalStatus: u.approvalStatus,
-                timestamp: Date.now(),
-              })
-            );
-          } catch {}
 
           setAppUser({
             authUser: {
               id: u.id,
               email: u.email,
-              phone: u.phone || undefined,
-              user_metadata: {
-                full_name: u.fullName,
-                role: u.role,
-                phone: u.phone,
-                shop_name: u.shopName,
-                approval_status: u.approvalStatus,
-              },
+              user_metadata: { full_name: u.fullName, role: u.role, approval_status: u.approvalStatus },
             },
-            profile: userProfile,
+            profile: {
+              id: u.id,
+              email: u.email,
+              full_name: u.fullName,
+              role: u.role,
+              phone: u.phone,
+              shop_name: u.shopName,
+              avatar_url: u.avatarUrl,
+              approval_status: u.approvalStatus,
+              created_at: u.createdAt,
+              updated_at: new Date().toISOString(),
+            },
           });
 
-          setPendingApprovalInfo(null);
           setLoading(false);
           return { error: null };
-        }
-
-        // Check if specifically blocked or pending from Neon
-        if (neonAuthRes.isBlocked) {
-          setLoading(false);
-          return { error: "Your account has been blocked by an administrator. Please contact support." };
-        }
-
-        if (neonAuthRes.isPendingApproval) {
-          setPendingApprovalInfo({
-            email: cleanEmail,
-            shopName: "Medical Store",
-            status: "pending",
-          });
-          setLoading(false);
-          return {
-            error: "Your retailer account is awaiting admin approval. You will be able to sign in once an administrator approves your account.",
-          };
-        }
-
-        if (neonAuthRes.error && !neonAuthRes.error.includes("Incorrect email")) {
-          setLoading(false);
-          return { error: neonAuthRes.error };
         }
       } catch (neonErr) {
         console.warn("Notice during Neon auth attempt:", neonErr);
@@ -721,10 +367,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let authUser: any = null;
       try {
         const neonRes = await neonSignInWithPassword(cleanEmail, cleanPass);
-        if (neonRes?.data?.user) {
-          authUser = neonRes.data.user;
-        }
-      } catch {}
+        if (neonRes?.data?.user) authUser = neonRes.data.user;
+      } catch { }
 
       if (!authUser) {
         const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password: cleanPass });
@@ -732,9 +376,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLoading(false);
           return { error: friendlyAuthError(error) };
         }
-        if (data?.user) {
-          authUser = data.user;
-        }
+        if (data?.user) authUser = data.user;
       }
 
       if (!authUser) {
@@ -742,62 +384,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: "Invalid email or password. Please check your credentials." };
       }
 
-      const data = { user: authUser };
+      const profile = await fetchProfile(authUser.id);
+      const userRole: UserRole = profile?.role || authUser.user_metadata?.role || "customer";
 
-      if (data.user) {
-        const profile = await fetchProfile(data.user.id);
-        const userRole: UserRole =
-          profile?.role ||
-          (data.user.user_metadata?.role as UserRole) ||
-          "customer";
-
-        if (expectedRole === "admin" && userRole !== "admin") {
-          await supabase.auth.signOut();
-          setAppUser(null);
-          setLoading(false);
-          return { error: "Access denied. This account does not have Admin privileges." };
-        }
-
-        // Blocked Account Check
-        const accountStatus = profile?.approval_status || (data.user.user_metadata?.approval_status as string) || "approved";
-        if (accountStatus === "blocked") {
-          await supabase.auth.signOut();
-          setAppUser(null);
-          setLoading(false);
-          return { error: "Your account has been blocked by an administrator. Please contact support." };
-        }
-
-        if (userRole === "retailer") {
-          const isApproved = profile?.approval_status === "approved";
-          if (!isApproved) {
-            await supabase.auth.signOut();
-            setAppUser(null);
-            setPendingApprovalInfo({
-              email: cleanEmail,
-              shopName: profile?.shop_name || data.user.user_metadata?.shop_name || "Medical Store",
-              status: "pending",
-            });
-            setLoading(false);
-            return {
-              error: "Your retailer account is awaiting admin approval. You will be able to sign in once an administrator approves your account.",
-            };
-          }
-        }
-
-        setAppUser({
-          authUser: data.user,
-          profile: profile || {
-            id: data.user.id,
-            full_name: data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "User",
-            role: userRole,
-            phone: data.user.user_metadata?.phone || null,
-            shop_name: data.user.user_metadata?.shop_name || null,
-            avatar_url: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        });
+      if (expectedRole === "admin" && userRole !== "admin") {
+        setLoading(false); return { error: "Access denied. This account does not have Admin privileges." };
       }
+
+      setAppUser({
+        authUser: authUser,
+        profile: profile || {
+          id: authUser.id,
+          full_name: authUser.user_metadata?.full_name || "User",
+          role: userRole,
+          phone: authUser.user_metadata?.phone || null,
+          shop_name: authUser.user_metadata?.shop_name || null,
+          avatar_url: null,
+          approval_status: "approved",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      });
 
       setLoading(false);
       return { error: null };
@@ -805,17 +412,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [fetchProfile]
   );
 
-  // ── Sign Up (Neon PostgreSQL as Primary Source of Truth) ─────────────────────
+  // ── Sign Up ────────────────────────────────────────────────────────────────
   const signUp = useCallback(
     async (opts: SignUpOptions): Promise<{ error: string | null; emailConfirmationRequired: boolean; isPendingApproval?: boolean }> => {
       setLoading(true);
 
-      const safeRole: "customer" | "retailer" = opts.role === "retailer" ? "retailer" : "customer";
+      const safeRole = opts.role === "retailer" ? "retailer" : "customer";
 
-      // 1. Create User in Neon PostgreSQL
+      // FIX: Standardize email to lower-case across all auth calls to prevent case sensitivity login issues
+      const cleanEmail = opts.email.trim().toLowerCase();
+      const cleanPass = opts.password;
+
+      // 1. Dual authentication credentials registry execution
+      try {
+        await neonSignUp(cleanEmail, cleanPass);
+      } catch (err) { }
+
+      // 2. Register natively with Supabase (handle email confirmation flag!)
+      let emailConfirmationRequired = false;
+      try {
+        const { data: supaData } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password: cleanPass,
+          options: {
+            data: {
+              full_name: opts.fullName.trim(),
+              role: safeRole,
+              phone: opts.phone?.trim() || null,
+              shop_name: opts.shopName?.trim() || null,
+              approval_status: safeRole === "retailer" ? "pending" : "approved",
+            },
+          },
+        });
+
+        // Check if Supabase requires email verification
+        if (supaData?.user && !supaData?.session) {
+          emailConfirmationRequired = true;
+        }
+      } catch (supaException) { }
+
+      // 3. Create User record in Neon PostgreSQL Database
       const neonRes = await createNeonUser({
-        email: opts.email.trim(),
-        password: opts.password,
+        email: cleanEmail,
+        password: cleanPass,
         fullName: opts.fullName.trim(),
         phone: opts.phone?.trim(),
         shopName: opts.shopName?.trim(),
@@ -829,28 +468,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const createdUser = neonRes.user!;
 
-      // Also register in background with Supabase/NeonAuth for dual resilience
-      try {
-        await supabase.auth.signUp({
-          email: opts.email.trim(),
-          password: opts.password,
-          options: {
-            data: {
-              full_name: opts.fullName.trim(),
-              role: safeRole,
-              phone: opts.phone?.trim() || null,
-              shop_name: opts.shopName?.trim() || null,
-              approval_status: safeRole === "retailer" ? "pending" : "approved",
-            },
-          },
-        }).catch(() => {});
-      } catch {}
+      // 4. Properly inform user if Email confirmation is active
+      if (emailConfirmationRequired) {
+        setLoading(false);
+        return { error: null, emailConfirmationRequired: true, isPendingApproval: false };
+      }
 
       if (safeRole === "retailer") {
-        // Retailer is awaiting admin approval
         setAppUser(null);
         setPendingApprovalInfo({
-          email: opts.email.trim(),
+          email: cleanEmail,
           shopName: opts.shopName?.trim() || `${opts.fullName.trim()}'s Medical Store`,
           status: "pending",
         });
@@ -858,20 +485,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: null, emailConfirmationRequired: false, isPendingApproval: true };
       }
 
-      // Customer account is active immediately
-      const newProfile: Profile = {
-        id: createdUser.id,
-        email: createdUser.email,
-        full_name: createdUser.fullName,
-        role: "customer",
-        phone: createdUser.phone,
-        shop_name: null,
-        avatar_url: null,
-        approval_status: "approved",
-        created_at: createdUser.createdAt,
-        updated_at: createdUser.createdAt,
-      };
-
+      // 5. Customer Auto-Login (Session Storage & State)
       try {
         localStorage.setItem(
           "subhone_active_user_session",
@@ -880,28 +494,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: createdUser.email,
             fullName: createdUser.fullName,
             role: "customer",
-            phone: createdUser.phone,
-            shopName: null,
-            status: "active",
-            approvalStatus: "approved",
             timestamp: Date.now(),
           })
         );
-      } catch {}
+      } catch { }
 
       setAppUser({
         authUser: {
           id: createdUser.id,
           email: createdUser.email,
-          phone: createdUser.phone || undefined,
-          user_metadata: {
-            full_name: createdUser.fullName,
-            role: "customer",
-            phone: createdUser.phone,
-            approval_status: "approved",
-          },
+          user_metadata: { full_name: createdUser.fullName, role: "customer" },
         },
-        profile: newProfile,
+        profile: {
+          id: createdUser.id,
+          email: createdUser.email,
+          full_name: createdUser.fullName,
+          role: "customer",
+          phone: createdUser.phone || null,
+          shop_name: null,
+          avatar_url: null,
+          approval_status: "approved",
+          created_at: createdUser.createdAt,
+          updated_at: createdUser.createdAt,
+        },
       });
 
       setLoading(false);
@@ -910,81 +525,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  // ── Phone OTP Authentication ────────────────────────────────────────────────
-  const sendPhoneOtp = useCallback(
-    async (
-      phone: string,
-      role: "customer" | "retailer",
-      meta?: { fullName?: string; shopName?: string }
-    ): Promise<PhoneOtpSendResult> => {
-      setLoading(true);
-      const res = await sendPhoneOTP({
-        phone,
-        role,
-        fullName: meta?.fullName,
-        shopName: meta?.shopName,
-      });
-      setLoading(false);
-      return res;
-    },
-    []
-  );
+  const sendPhoneOtp = useCallback(async (phone: string, role: "customer" | "retailer", meta?: { fullName?: string; shopName?: string }): Promise<PhoneOtpSendResult> => {
+    setLoading(true);
+    const res = await sendPhoneOTP({ phone, role, fullName: meta?.fullName, shopName: meta?.shopName });
+    setLoading(false);
+    return res;
+  }, []);
 
-  const verifyPhoneOtp = useCallback(
-    async (
-      phone: string,
-      otp: string,
-      role: "customer" | "retailer",
-      meta?: { fullName?: string; shopName?: string }
-    ): Promise<PhoneOtpVerifyResult> => {
-      setLoading(true);
-      const res = await verifyPhoneOTP({
-        phone,
-        otp,
-        role,
-        fullName: meta?.fullName,
-        shopName: meta?.shopName,
-      });
-
-      if (res.success && res.user) {
-        if (res.isPendingApproval) {
-          setAppUser(null);
-          setPendingApprovalInfo({
-            email: res.user.email || `${phone}@phone.subhone.com`,
-            shopName: res.user.profile.shop_name || "Medical Store",
-            status: "pending",
-          });
-        } else {
-          setPendingApprovalInfo(null);
-          setAppUser({
-            authUser: {
-              id: res.user.id,
-              phone: res.user.phone,
-              email: res.user.email,
-              user_metadata: {
-                role: res.user.profile.role,
-                full_name: res.user.profile.full_name,
-                phone: res.user.phone,
-                shop_name: res.user.profile.shop_name,
-              },
-            },
-            profile: res.user.profile,
-          });
-        }
+  const verifyPhoneOtp = useCallback(async (phone: string, otp: string, role: "customer" | "retailer", meta?: { fullName?: string; shopName?: string }): Promise<PhoneOtpVerifyResult> => {
+    setLoading(true);
+    const res = await verifyPhoneOTP({ phone, otp, role, fullName: meta?.fullName, shopName: meta?.shopName });
+    if (res.success && res.user) {
+      if (res.isPendingApproval) {
+        setAppUser(null);
+        setPendingApprovalInfo({ email: res.user.email || `${phone}@phone.subhone.com`, shopName: res.user.profile.shop_name || "Medical Store", status: "pending" });
+      } else {
+        setPendingApprovalInfo(null);
+        setAppUser({ authUser: { id: res.user.id, phone: res.user.phone, email: res.user.email, user_metadata: { role: res.user.profile.role, full_name: res.user.profile.full_name } }, profile: res.user.profile });
       }
+    }
+    setLoading(false);
+    return res;
+  }, []);
 
-      setLoading(false);
-      return res;
-    },
-    []
-  );
-
-  // ── Reset Password ──────────────────────────────────────────────────────────
   const resetPassword = useCallback(async (email: string): Promise<{ error: string | null }> => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin,
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
       if (error) return { error: friendlyAuthError(error) };
       return { error: null };
     } catch (err) {
@@ -992,7 +558,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // ── Sign Out ─────────────────────────────────────────────────────────────────
   const signOut = useCallback(async () => {
     setLoading(true);
     try {
@@ -1000,60 +565,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("subhone_active_user_session");
       localStorage.removeItem("subhone_active_phone_session");
       await neonSignOut();
-    } catch {}
+    } catch { }
     try {
       await supabase.auth.signOut();
-    } catch {}
+    } catch { }
     setAppUser(null);
     setPendingApprovalInfo(null);
     setLoading(false);
   }, []);
 
-  // ── Update Profile ───────────────────────────────────────────────────────────
-  const updateProfile = useCallback(
-    async (
-      updates: Partial<Pick<Profile, "full_name" | "phone" | "shop_name" | "avatar_url">>
-    ): Promise<{ error: string | null }> => {
-      if (!appUser) return { error: "Not authenticated." };
-
-      try {
-        await supabase
-          .from("profiles")
-          .update(updates)
-          .eq("id", appUser.authUser.id);
-      } catch {}
-
-      setAppUser((prev) =>
-        prev ? { ...prev, profile: { ...prev.profile, ...updates } } : prev
-      );
-      return { error: null };
-    },
-    [appUser]
-  );
+  const updateProfile = useCallback(async (updates: Partial<Pick<Profile, "full_name" | "phone" | "shop_name" | "avatar_url">>): Promise<{ error: string | null }> => {
+    if (!appUser) return { error: "Not authenticated." };
+    try { await supabase.from("profiles").update(updates).eq("id", appUser.authUser.id); } catch { }
+    setAppUser((prev) => prev ? { ...prev, profile: { ...prev.profile, ...updates } } : prev);
+    return { error: null };
+  }, [appUser]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        appUser,
-        loading,
-        pendingApprovalInfo,
-        clearPendingApproval,
-        signIn,
-        signUp,
-        sendPhoneOtp,
-        verifyPhoneOtp,
-        resetPassword,
-        signOut,
-        updateProfile,
-        setRole,
-      }}
-    >
+    <AuthContext.Provider value={{ appUser, loading, pendingApprovalInfo, clearPendingApproval, signIn, signUp, sendPhoneOtp, verifyPhoneOtp, resetPassword, signOut, updateProfile, setRole }}>
       {children}
     </AuthContext.Provider>
   );
 }
-
-// ─── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
@@ -1063,18 +596,12 @@ export function useAuth(): AuthContextValue {
 
 function friendlyAuthError(error: { message: string }): string {
   const msg = error.message.toLowerCase();
-  if (msg.includes("invalid login credentials") || msg.includes("invalid credentials"))
-    return "Incorrect email or password. Please try again.";
-  if (msg.includes("email not confirmed"))
-    return "Please confirm your email address first. Check your inbox.";
-  if (msg.includes("user already registered") || msg.includes("already been registered"))
-    return "An account with this email already exists. Try logging in instead.";
-  if (msg.includes("password should be at least"))
-    return "Password must be at least 6 characters long.";
-  if (msg.includes("unable to validate email address"))
-    return "Please enter a valid email address.";
-  if (msg.includes("network") || msg.includes("fetch"))
-    return "Network error. Please check your internet connection and try again.";
+  if (msg.includes("invalid login credentials") || msg.includes("invalid credentials")) return "Incorrect email or password. Please try again.";
+  if (msg.includes("email not confirmed")) return "Please confirm your email address first. Check your inbox.";
+  if (msg.includes("user already registered") || msg.includes("already been registered")) return "An account with this email already exists. Try logging in instead.";
+  if (msg.includes("password should be at least")) return "Password must be at least 6 characters long.";
+  if (msg.includes("unable to validate email address")) return "Please enter a valid email address.";
+  if (msg.includes("network") || msg.includes("fetch")) return "Network error. Please check your internet connection and try again.";
   return "Something went wrong. Please try again.";
 }
 
@@ -1108,3 +635,4 @@ export function toLegacyUser(appUser: AppUser): LegacyCurrentUser {
     }),
   };
 }
+
