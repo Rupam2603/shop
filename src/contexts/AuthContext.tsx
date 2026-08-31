@@ -549,7 +549,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Sign In ──────────────────────────────────────────────────────────────────
   const signIn = useCallback(
-    async (email: string, password: string, _expectedRole?: UserRole): Promise<{ error: string | null }> => {
+    async (email: string, password: string, expectedRole?: UserRole): Promise<{ error: string | null }> => {
       setLoading(true);
       const cleanEmail = email.trim().toLowerCase();
       const cleanPass = password.trim();
