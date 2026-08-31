@@ -1694,6 +1694,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           {activeTab === "users" && (
             <UsersTab
               users={managedUsers}
+              currentUser={user}
               onUpdateStatus={handleUpdateUserStatus}
               onChangePassword={handleChangeUserPassword}
               onDeleteUser={handleDeleteUserAccount}
@@ -3020,6 +3021,7 @@ function RetailersTab({
 /* ─── TAB: ALL USERS MANAGEMENT ─── */
 function UsersTab({
   users,
+  currentUser,
   onUpdateStatus,
   onChangePassword,
   onDeleteUser,
@@ -3027,6 +3029,7 @@ function UsersTab({
   isRefreshing,
 }: {
   users: ManagedUser[];
+  currentUser?: CurrentUser;
   onUpdateStatus: (userId: string, status: "approved" | "blocked" | "pending" | "rejected") => Promise<void>;
   onChangePassword: (userId: string, newPass: string) => Promise<void>;
   onDeleteUser: (userId: string) => Promise<void>;
@@ -3254,7 +3257,8 @@ function UsersTab({
             const isSelf =
               u.email.toLowerCase() === "subhonehealthgroup@gmail.com" ||
               u.email.toLowerCase() === "admin@subhone.com" ||
-              u.id === user?.id;
+              (currentUser?.id && u.id === currentUser.id) ||
+              (currentUser?.email && u.email.toLowerCase() === currentUser.email.toLowerCase());
             return (
               <div key={u.id} className="p-4 sm:p-5 hover:bg-white/80 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 {/* User Identity Info */}
