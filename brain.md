@@ -101,6 +101,10 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - **Account Blocking**: Blocked users cannot sign in (*"Your account has been blocked by an administrator. Please contact support."*). Unblocking immediately restores access.
   - **Admin Password Management**: Direct password reset/change tool in Admin Dashboard with salted SHA-256 re-hashing and instant activation.
 - **Production URL:** `https://shop-phi-plum.vercel.app` (Live and verified).
+- **Better Auth MCP & Client Integration**:
+  - Better Auth client configured in `src/lib/auth-client.ts` (`createAuthClient` from `better-auth/react`).
+  - `better-auth` installed with full TypeScript support, session management, and auth hooks.
+  - Seamlessly integrated with Neon Auth Better Auth cloud endpoints and local database authentication fallback.
 - **Full Responsiveness (Latest):** Comprehensive mobile-first improvements applied across all pages:
   - `src/index.css`: iOS safe-area support (`env(safe-area-inset-*)`), `min-h-[100dvh]`, `text-size-adjust: 100%`, iOS input zoom prevention (`font-size: max(16px,1em)`), `text-wrap: balance` for headings.
   - `NavBar.tsx`: Center search bar hidden on mobile (`hidden md:flex`); dedicated mobile search below handles phones.
