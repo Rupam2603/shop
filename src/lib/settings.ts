@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { sql } from "./neon";
 
 export interface StoreSettings {
   storeName: string;
@@ -29,15 +30,10 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
  */
 export async function fetchStoreSettings(): Promise<StoreSettings> {
   try {
-    const { data, error } = await supabase
-      .from("store_settings")
-      .select("*")
-      .eq("id", "default_settings")
-      .maybeSingle();
+    const rows = await sql`SELECT * FROM store_settings WHERE id = 'default_settings' LIMIT 1`;
+    const data = rows[0];
 
-    if (error) {
-      console.warn("Could not fetch store settings from DB:", error.message);
-    } else if (data) {
+    if (data) {
       const dbSettings: StoreSettings = {
         storeName: data.store_name || DEFAULT_STORE_SETTINGS.storeName,
         phone: data.phone || DEFAULT_STORE_SETTINGS.phone,
@@ -53,7 +49,7 @@ export async function fetchStoreSettings(): Promise<StoreSettings> {
       return dbSettings;
     }
   } catch (err) {
-    console.error("Error loading store settings from Supabase:", err);
+    console.error("Error loading store settings from Neon:", err);
   }
 
   // Fallback to localStorage
@@ -87,24 +83,34 @@ export async function saveStoreSettingsToDb(settings: StoreSettings): Promise<{ 
       updated_at: new Date().toISOString(),
     };
 
-    // 2. Try upsert first
-    const { error: upsertError } = await supabase
-      .from("store_settings")
-      .upsert(payload, { onConflict: "id" });
-
-    if (upsertError) {
-      console.warn("Notice during upsert store_settings, trying update:", upsertError.message);
-      // Fallback: try update directly
-      const { error: updateError } = await supabase
-        .from("store_settings")
-        .update(payload)
-        .eq("id", "default_settings");
-
-      if (updateError) {
-        console.error("Failed to update store_settings in Supabase:", updateError);
-        return { success: false, error: updateError.message };
-      }
-    }
+    // 2. Perform UPSERT via raw SQL
+    await sql`
+      INSERT INTO store_settings (
+        id, store_name, phone, email, address, low_threshold, default_disc, email_alerts, sms_alerts, auto_reorder, updated_at
+      ) VALUES (
+        'default_settings', 
+        ${payload.store_name}, 
+        ${payload.phone}, 
+        ${payload.email}, 
+        ${payload.address}, 
+        ${payload.low_threshold}, 
+        ${payload.default_disc}, 
+        ${payload.email_alerts}, 
+        ${payload.sms_alerts}, 
+        ${payload.updated_at}
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        store_name = EXCLUDED.store_name,
+        phone = EXCLUDED.phone,
+        email = EXCLUDED.email,
+        address = EXCLUDED.address,
+        low_threshold = EXCLUDED.low_threshold,
+        default_disc = EXCLUDED.default_disc,
+        email_alerts = EXCLUDED.email_alerts,
+        sms_alerts = EXCLUDED.sms_alerts,
+        auto_reorder = EXCLUDED.auto_reorder,
+        updated_at = EXCLUDED.updated_at
+    `;
 
     return { success: true };
   } catch (err: any) {
@@ -141,40 +147,29 @@ export async function updateAdminProfileInDb(
     // 1. Resolve actual Admin user ID if userId is missing or placeholder
     let targetUserId = userId;
     if (!targetUserId || targetUserId.includes("00000000")) {
-      const { data: adminRow } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("role", "admin")
-        .limit(1)
-        .maybeSingle();
-      if (adminRow?.id) {
-        targetUserId = adminRow.id;
+      const rows = await sql`SELECT id FROM profiles WHERE role = 'admin' LIMIT 1`;
+      if (rows.length > 0) {
+        targetUserId = rows[0].id;
       }
     }
 
     // 2. Update profiles table
     if (targetUserId && !targetUserId.includes("00000000")) {
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update(payload)
-        .eq("id", targetUserId);
-
-      if (profileError) {
-        console.warn("Could not update profile by ID:", profileError.message);
+      if (updates.fullName !== undefined && updates.phone !== undefined && finalAvatarUrl !== undefined) {
+        await sql`UPDATE profiles SET full_name = ${payload.full_name}, phone = ${payload.phone}, avatar_url = ${payload.avatar_url}, updated_at = ${payload.updated_at} WHERE id = ${targetUserId}`;
+      } else if (updates.fullName !== undefined && updates.phone !== undefined) {
+        await sql`UPDATE profiles SET full_name = ${payload.full_name}, phone = ${payload.phone}, updated_at = ${payload.updated_at} WHERE id = ${targetUserId}`;
+      } else if (updates.fullName !== undefined) {
+        await sql`UPDATE profiles SET full_name = ${payload.full_name}, updated_at = ${payload.updated_at} WHERE id = ${targetUserId}`;
       }
     } else {
-      // Upsert by admin role
-      const { data: adminProfile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("role", "admin")
-        .maybeSingle();
-
-      if (adminProfile?.id) {
-        await supabase
-          .from("profiles")
-          .update(payload)
-          .eq("id", adminProfile.id);
+      // Update by admin role if exact ID isn't found
+      if (updates.fullName !== undefined && updates.phone !== undefined && finalAvatarUrl !== undefined) {
+        await sql`UPDATE profiles SET full_name = ${payload.full_name}, phone = ${payload.phone}, avatar_url = ${payload.avatar_url}, updated_at = ${payload.updated_at} WHERE role = 'admin'`;
+      } else if (updates.fullName !== undefined && updates.phone !== undefined) {
+        await sql`UPDATE profiles SET full_name = ${payload.full_name}, phone = ${payload.phone}, updated_at = ${payload.updated_at} WHERE role = 'admin'`;
+      } else if (updates.fullName !== undefined) {
+        await sql`UPDATE profiles SET full_name = ${payload.full_name}, updated_at = ${payload.updated_at} WHERE role = 'admin'`;
       }
     }
 
