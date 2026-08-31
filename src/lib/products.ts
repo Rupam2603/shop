@@ -26,10 +26,48 @@ export interface DbProduct {
   discount_percent: number;
   stock: number;
   image_url: string;
+  web_image_url?: string;
   details: string | null;
   is_flash_sale: boolean;
   is_featured: boolean;
   badges?: any[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbInventoryProduct {
+  id: string;
+  numeric_id: number;
+  product_id?: string | null;
+  name: string;
+  subtitle?: string | null;
+  category_id?: string | null;
+  category_name: string;
+  brand: string;
+  sku?: string | null;
+  batch_no?: string | null;
+  hsn: string;
+  mrp: number;
+  customer_price: number;
+  retailer_price: number;
+  purchase_price?: number;
+  discount_percent: number;
+  stock: number;
+  min_stock_level?: number;
+  unit?: string;
+  dosage_form?: string;
+  strength?: string | null;
+  expiry_date?: string | null;
+  image_url: string;
+  web_image_url?: string;
+  gallery_images?: any[];
+  details?: string | null;
+  description?: string | null;
+  is_active?: boolean;
+  is_flash_sale?: boolean;
+  is_featured?: boolean;
+  badges?: any[];
+  meta_data?: Record<string, any>;
   created_at: string;
   updated_at: string;
 }
@@ -186,6 +224,37 @@ export async function createProduct(
       console.error("Error creating product in Supabase:", error);
       return { data: null, error: error.message };
     }
+
+    // Keep public.inventory_products in sync
+    try {
+      await supabase.from("inventory_products").upsert({
+        id: data.id,
+        numeric_id: data.numeric_id,
+        product_id: data.id,
+        name: data.name,
+        subtitle: data.subtitle,
+        category_id: data.category_id,
+        category_name: data.category_name,
+        brand: data.brand,
+        sku: data.sku,
+        hsn: data.hsn,
+        mrp: data.mrp,
+        customer_price: data.customer_price,
+        retailer_price: data.retailer_price,
+        discount_percent: data.discount_percent,
+        stock: data.stock,
+        image_url: data.image_url,
+        web_image_url: data.image_url,
+        details: data.details,
+        is_flash_sale: data.is_flash_sale,
+        is_featured: data.is_featured,
+        badges: data.badges,
+        updated_at: new Date().toISOString(),
+      });
+    } catch (invErr) {
+      console.warn("Notice: synced inventory_products:", invErr);
+    }
+
     return { data: data as DbProduct, error: null };
   } catch (err: any) {
     console.error("Exception in createProduct:", err);
@@ -229,6 +298,16 @@ export async function updateProduct(
       console.error("Error updating product in Supabase:", error);
       return { data: null, error: error.message };
     }
+
+    // Keep public.inventory_products in sync
+    try {
+      const invPayload: any = { ...payload };
+      if (invPayload.image_url) {
+        invPayload.web_image_url = invPayload.image_url;
+      }
+      await supabase.from("inventory_products").update(invPayload).eq("id", id);
+    } catch {}
+
     return { data: data as DbProduct, error: null };
   } catch (err: any) {
     console.error("Exception in updateProduct:", err);
@@ -241,6 +320,10 @@ export async function updateProduct(
  */
 export async function deleteProduct(id: string): Promise<{ error: string | null }> {
   const { error } = await supabase.from("products").delete().eq("id", id);
+  try {
+    await supabase.from("inventory_products").delete().eq("id", id);
+  } catch {}
+
   if (error) {
     return { error: error.message };
   }
@@ -254,15 +337,45 @@ export async function updateProductStock(
   id: string,
   newStock: number
 ): Promise<{ error: string | null }> {
+  const finalStock = Math.max(0, newStock);
   const { error } = await supabase
     .from("products")
-    .update({ stock: Math.max(0, newStock) })
+    .update({ stock: finalStock })
     .eq("id", id);
+
+  try {
+    await supabase
+      .from("inventory_products")
+      .update({ stock: finalStock, updated_at: new Date().toISOString() })
+      .eq("id", id);
+  } catch {}
 
   if (error) {
     return { error: error.message };
   }
   return { error: null };
+}
+
+/**
+ * Fetch dedicated inventory products from public.inventory_products table
+ */
+export async function fetchInventoryProducts(): Promise<DbInventoryProduct[]> {
+  try {
+    const { data, error } = await supabase
+      .from("inventory_products")
+      .select("*")
+      .order("numeric_id", { ascending: true });
+
+    if (error || !data) {
+      // Fallback to products table
+      const fallback = await fetchProducts();
+      return fallback as DbInventoryProduct[];
+    }
+    return data as DbInventoryProduct[];
+  } catch {
+    const fallback = await fetchProducts();
+    return fallback as DbInventoryProduct[];
+  }
 }
 
 /**

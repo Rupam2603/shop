@@ -77,6 +77,45 @@ async function runMigration() {
   `);
 
   await sql.query(`
+    CREATE TABLE IF NOT EXISTS public.inventory_products (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+      numeric_id INTEGER,
+      product_id TEXT,
+      name TEXT NOT NULL,
+      subtitle TEXT,
+      category_id TEXT,
+      category_name TEXT NOT NULL DEFAULT 'General Medicine',
+      brand TEXT NOT NULL DEFAULT 'SubhOne Pharma',
+      sku TEXT,
+      batch_no TEXT,
+      hsn TEXT NOT NULL DEFAULT '3004',
+      mrp NUMERIC NOT NULL DEFAULT 0,
+      customer_price NUMERIC NOT NULL DEFAULT 0,
+      retailer_price NUMERIC NOT NULL DEFAULT 0,
+      purchase_price NUMERIC NOT NULL DEFAULT 0,
+      discount_percent NUMERIC NOT NULL DEFAULT 0,
+      stock INTEGER NOT NULL DEFAULT 50,
+      min_stock_level INTEGER NOT NULL DEFAULT 10,
+      unit TEXT NOT NULL DEFAULT 'Strip',
+      dosage_form TEXT DEFAULT 'Tablet',
+      strength TEXT,
+      expiry_date TEXT,
+      image_url TEXT NOT NULL DEFAULT '',
+      web_image_url TEXT,
+      gallery_images JSONB DEFAULT '[]'::JSONB,
+      details TEXT,
+      description TEXT,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      is_flash_sale BOOLEAN NOT NULL DEFAULT FALSE,
+      is_featured BOOLEAN NOT NULL DEFAULT FALSE,
+      badges JSONB DEFAULT '[]'::JSONB,
+      meta_data JSONB DEFAULT '{}'::JSONB,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await sql.query(`
     CREATE TABLE IF NOT EXISTS public.orders (
       id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
       order_number TEXT NOT NULL UNIQUE,
