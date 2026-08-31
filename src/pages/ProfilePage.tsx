@@ -622,7 +622,7 @@ export default function ProfilePage({
                                     id: o.id,
                                     customer: user.name || "Customer",
                                     phone: user.phone || "+91 98765 00000",
-                                    role: user.role,
+                                    role: (user.role === "retailer" ? "retailer" : "customer") as "customer" | "retailer",
                                     shopName: user.shopName,
                                     items: o.items.length,
                                     amount: o.total,

@@ -198,6 +198,22 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
     setWishlist((prev) => prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]);
   };
 
+  const handleProductClick = (product: any) => {
+    setSelectedProduct({
+      id: typeof product.id === "number" ? product.id : nameToId(product.name),
+      dbId: product.dbId,
+      name: product.name,
+      brand: product.brand,
+      cat: product.cat || "Supplements",
+      sub: product.sub || product.brand,
+      orig: product.orig || product.price,
+      price: product.price,
+      disc: product.disc || "",
+      img: product.img,
+      stock: product.stock ?? 50,
+    });
+  };
+
   const [showInsuranceModal, setShowInsuranceModal] = useState(false);
   const [activeKeyCat, setActiveKeyCat] = useState("50-off");
 
@@ -353,11 +369,11 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
                       </span>
                     ) : isLowStock ? (
                       <span className="absolute top-2.5 right-2.5 z-10 bg-amber-50/90 text-amber-800 border border-amber-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase animate-pulse shadow-2xs backdrop-blur-md">
-                        Only {pStock} Left
+                        Only {p.stock} Left
                       </span>
                     ) : (
                       <span className="absolute top-2.5 right-2.5 z-10 bg-emerald-50/90 text-emerald-800 border border-emerald-200 text-[8px] font-bold px-2 py-0.5 rounded-full shadow-2xs backdrop-blur-md">
-                        {pStock} in stock
+                        {p.stock} in stock
                       </span>
                     )}
                     <img src={p.img} alt={p.name} className="h-full w-full object-contain mix-blend-multiply group-hover:scale-108 transition-transform duration-300" />

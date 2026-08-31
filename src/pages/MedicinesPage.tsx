@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import ProductDetailModal, { CAT_COLORS, HSN_BY_CAT, retailerPrice, PopupProduct } from "../components/ProductModal";
-import KeyCategoriesBar, { KeyCategoryItem } from "../components/KeyCategoriesBar";
+import KeyCategoriesBar, { KEY_CATEGORIES, KeyCategoryItem } from "../components/KeyCategoriesBar";
 import InsuranceModal from "../components/InsuranceModal";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
 import { useCart } from "../contexts/CartContext";
@@ -171,7 +171,7 @@ export default function MedicinesPage({
 }: {
   initialCategory?: string;
   userRole?: string;
-  onNavigate?: (page: string) => void;
+  onNavigate?: (page: any, category?: string) => void;
 }) {
   const { addToCart } = useCart();
   const isRetailer = userRole === "retailer";
@@ -341,15 +341,15 @@ export default function MedicinesPage({
     if (selectedPriceIdx !== null) {
       const r = PRICE_RANGES[selectedPriceIdx];
       list = list.filter((p) => {
-        const v = parsePrice(isRetailer && p.retailerPrice ? p.retailerPrice : p.price);
+        const v = parsePrice(isRetailer && (p as any).retailerPrice ? (p as any).retailerPrice : p.price);
         return v >= r.min && v <= r.max;
       });
     }
     if (sortBy === "price-asc") {
-      list = [...list].sort((a, b) => parsePrice(isRetailer ? a.retailerPrice : a.price) - parsePrice(isRetailer ? b.retailerPrice : b.price));
+      list = [...list].sort((a, b) => parsePrice(isRetailer ? (a as any).retailerPrice || a.price : a.price) - parsePrice(isRetailer ? (b as any).retailerPrice || b.price : b.price));
     }
     if (sortBy === "price-desc") {
-      list = [...list].sort((a, b) => parsePrice(isRetailer ? b.retailerPrice : b.price) - parsePrice(isRetailer ? a.retailerPrice : a.price));
+      list = [...list].sort((a, b) => parsePrice(isRetailer ? (b as any).retailerPrice || b.price : b.price) - parsePrice(isRetailer ? (a as any).retailerPrice || a.price : a.price));
     }
     if (sortBy === "discount") {
       list = [...list].sort((a, b) => parseInt(b.disc || "0") - parseInt(a.disc || "0"));

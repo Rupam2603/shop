@@ -10,7 +10,7 @@ import {
   detectBrowserLocation,
 } from "../lib/location";
 
-type Page = "home" | "medicines" | "lab-tests" | "consult" | "offers" | "profile" | "checkout";
+import type { Page } from "../App";
 
 interface NavBarProps {
   activePage: Page;
@@ -301,7 +301,7 @@ export default function NavBar({
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 onFocus={() => setIsSearchOpen(true)}
-                placeholder={settings.searchPlaceholder || "Search medicines, salts, lab tests, FMCG..."}
+                placeholder="Search medicines, salts, lab tests, FMCG..."
                 className="w-full bg-white/80 backdrop-blur-md border border-[#dce7db] hover:border-[#006a39]/40 focus:border-[#006a39] rounded-2xl py-2 sm:py-2.5 pl-10 sm:pl-11 pr-10 text-xs sm:text-sm text-[#073b4c] placeholder-[#8aa08e] shadow-xs focus:shadow-md focus:bg-white transition-all outline-none"
               />
               <div className="absolute left-3 sm:left-3.5 pointer-events-none flex items-center justify-center">
@@ -319,23 +319,23 @@ export default function NavBar({
             </div>
 
             {/* Omnisearch Dropdown Results */}
-            {isSearchOpen && (searchValue.trim().length > 0 || searchSuggestions.length > 0) && (
+            {isSearchOpen && (searchValue.trim().length > 0 || searchResults.length > 0) && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="p-3 border-b border-[#e4ede2]/80 bg-[#f7faf8]/80 flex items-center justify-between">
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#006a39]">
-                    {searchValue.trim() ? `Search Results (${searchSuggestions.length})` : "Popular Search Queries"}
+                    {searchValue.trim() ? `Search Results (${searchResults.length})` : "Popular Search Queries"}
                   </span>
                   <button onClick={() => setIsSearchOpen(false)} className="text-xs text-[#728575] hover:text-[#073b4c] font-bold">
                     Close ✕
                   </button>
                 </div>
                 <div className="max-h-80 overflow-y-auto p-2 divide-y divide-[#f0f5f1]">
-                  {searchSuggestions.length === 0 ? (
+                  {searchResults.length === 0 ? (
                     <div className="p-6 text-center text-xs text-[#728575]">
                       No products matching &quot;{searchValue}&quot;. Try generic medicine name or brand.
                     </div>
                   ) : (
-                    searchSuggestions.map((prod) => (
+                    searchResults.map((prod) => (
                       <div
                         key={prod.id}
                         onClick={() => handleProductSelect(prod)}

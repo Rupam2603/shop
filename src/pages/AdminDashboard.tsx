@@ -19,15 +19,6 @@ import {
 } from "../lib/orders";
 import { fetchAllLabBookings, updateLabBookingStatus as dbUpdateLabBookingStatus, DbLabBooking } from "../lib/labTests";
 import {
-  fetchAllRetailers,
-  updateRetailerApprovalStatus,
-  deleteRetailer,
-  deleteMultipleRetailers,
-  bulkUpdateRetailerApprovalStatus,
-  subscribeToRetailersRealtime,
-  RetailerAccount,
-} from "../lib/retailers";
-import {
   printOrDownloadInvoice,
   downloadInvoiceFile,
   printOrDownloadDailyReport,
@@ -40,22 +31,15 @@ import {
   subscribeToStoreSettingsRealtime,
   DEFAULT_STORE_SETTINGS,
 } from "../lib/settings";
-import {
-  fetchAllUsers,
-  updateUserAccountStatus,
-  adminChangeUserPassword,
-  adminDeleteUserAccount,
-  fetchLoginLogs,
-  ManagedUser,
-  LoginLog,
-} from "../lib/users";
+import { fetchAllUsers, updateUserAccountStatus, ManagedUser, adminChangeUserPassword, adminDeleteUserAccount } from "../lib/users";
+import { fetchLoginLogs, LoginLog } from "../lib/loginLogs";
 
 interface Props {
   user: CurrentUser;
   onLogout: () => void;
 }
 
-type AdminTab = "dashboard" | "products" | "inventory" | "orders" | "retailers" | "users" | "lab-tests" | "revenue" | "settings";
+type AdminTab = "dashboard" | "products" | "inventory" | "orders" | "users" | "lab-tests" | "revenue" | "settings";
 
 /* ── Modern Glassmorphism Vector Icons ── */
 const Icons = {
@@ -389,15 +373,15 @@ const MOCK_REVENUE_HISTORY = [
 
 const MOCK_ORDERS = [
   { id: "ORD-2847", customer: "Priya Sharma", phone: "98765 43210", items: 3, amount: 763, status: "Delivered", date: "Aug 27, 2026", payment: "UPI", role: "customer" as const },
-  { id: "ORD-2846", customer: "Sharma Medical & Surgical", phone: "87654 32109", items: 12, amount: 4890, status: "Shipped", date: "Aug 27, 2026", payment: "Card", role: "retailer" as const, shopName: "Sharma Medical Store" },
+  { id: "ORD-2846", customer: "Sharma Medical & Surgical", phone: "87654 32109", items: 12, amount: 4890, status: "Shipped", date: "Aug 27, 2026", payment: "Card", role: "retailer" as const, businessName: "Sharma Medical Store" },
   { id: "ORD-2845", customer: "Anita Patel", phone: "76543 21098", items: 5, amount: 1247, status: "Processing", date: "Aug 27, 2026", payment: "COD", role: "customer" as const },
-  { id: "ORD-2844", customer: "Apex Pharma Distributors", phone: "65432 10987", items: 25, amount: 12450, status: "Delivered", date: "Aug 26, 2026", payment: "UPI", role: "retailer" as const, shopName: "Apex Pharma" },
+  { id: "ORD-2844", customer: "Apex Pharma Distributors", phone: "65432 10987", items: 25, amount: 12450, status: "Delivered", date: "Aug 26, 2026", payment: "UPI", role: "retailer" as const, businessName: "Apex Pharma" },
   { id: "ORD-2843", customer: "Meera Nair", phone: "54321 09876", items: 1, amount: 332, status: "Shipped", date: "Aug 26, 2026", payment: "UPI", role: "customer" as const },
-  { id: "ORD-2842", customer: "Kolkata City Meds", phone: "43210 98765", items: 18, amount: 7650, status: "Cancelled", date: "Aug 26, 2026", payment: "Card", role: "retailer" as const, shopName: "Kolkata City Meds" },
+  { id: "ORD-2842", customer: "Kolkata City Meds", phone: "43210 98765", items: 18, amount: 7650, status: "Cancelled", date: "Aug 26, 2026", payment: "Card", role: "retailer" as const, businessName: "Kolkata City Meds" },
   { id: "ORD-2841", customer: "Deepa Krishnan", phone: "32109 87654", items: 2, amount: 519, status: "Delivered", date: "Aug 25, 2026", payment: "UPI", role: "customer" as const },
-  { id: "ORD-2840", customer: "Apollo Care Chemist", phone: "21098 76543", items: 30, amount: 14834, status: "Processing", date: "Aug 25, 2026", payment: "Card", role: "retailer" as const, shopName: "Apollo Care Chemist" },
+  { id: "ORD-2840", customer: "Apollo Care Chemist", phone: "21098 76543", items: 30, amount: 14834, status: "Processing", date: "Aug 25, 2026", payment: "Card", role: "retailer" as const, businessName: "Apollo Care Chemist" },
   { id: "ORD-2839", customer: "Sunita Rao", phone: "10987 65432", items: 1, amount: 105, status: "Delivered", date: "Aug 25, 2026", payment: "COD", role: "customer" as const },
-  { id: "ORD-2838", customer: "Gupta Health Pharmacy", phone: "09876 54321", items: 15, amount: 6271, status: "Shipped", date: "Aug 24, 2026", payment: "UPI", role: "retailer" as const, shopName: "Gupta Health Pharmacy" },
+  { id: "ORD-2838", customer: "Gupta Health Pharmacy", phone: "09876 54321", items: 15, amount: 6271, status: "Shipped", date: "Aug 24, 2026", payment: "UPI", role: "retailer" as const, businessName: "Gupta Health Pharmacy" },
 ];
 
 const TAB_ITEMS: { id: AdminTab; label: string; icon: React.ReactElement }[] = [
@@ -405,7 +389,6 @@ const TAB_ITEMS: { id: AdminTab; label: string; icon: React.ReactElement }[] = [
   { id: "products", label: "Products", icon: <Icons.Pill className="w-4 h-4" /> },
   { id: "inventory", label: "Inventory", icon: <Icons.Box className="w-4 h-4" /> },
   { id: "orders", label: "Orders", icon: <Icons.Order className="w-4 h-4" /> },
-  { id: "retailers", label: "Retailers", icon: <Icons.Store className="w-4 h-4" /> },
   { id: "users", label: "User Accounts", icon: <Icons.User className="w-4 h-4" /> },
   { id: "lab-tests", label: "Lab Bookings", icon: <Icons.Lab className="w-4 h-4" /> },
   { id: "revenue", label: "Revenue", icon: <Icons.Revenue className="w-4 h-4" /> },
@@ -811,8 +794,6 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [categories, setCategories] = useState<string[]>(INITIAL_CATEGORIES);
-  const [retailers, setRetailers] = useState<RetailerAccount[]>([]);
-  const [isRefreshingRetailers, setIsRefreshingRetailers] = useState(false);
 
   // Admin profile state
   const [adminAvatar, setAdminAvatar] = useState<string>(user?.profileImage || "");
@@ -936,10 +917,6 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       if (mounted && data) setDbLabBookings(data);
     });
 
-    fetchAllRetailers().then((data) => {
-      if (mounted && data) setRetailers(data);
-    });
-
     fetchAllUsers().then((data) => {
       if (mounted && data) setManagedUsers(data);
     });
@@ -994,12 +971,6 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       }
     });
 
-    const unsubscribeRetailers = subscribeToRetailersRealtime(() => {
-      fetchAllRetailers().then((fresh) => {
-        if (mounted && fresh) setRetailers(fresh);
-      });
-    });
-
     const unsubscribeSettings = subscribeToStoreSettingsRealtime((freshSettings) => {
       if (mounted && freshSettings) setSettings(freshSettings);
     });
@@ -1007,7 +978,6 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     return () => {
       mounted = false;
       unsubscribeProducts();
-      unsubscribeRetailers();
       unsubscribeSettings();
     };
   }, []);
@@ -1072,7 +1042,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             rawDate: rawDateStr,
             payment: o.payment_method,
             role: finalRole,
-            shopName: finalShopName,
+            businessName: finalShopName,
           };
         });
     }
@@ -1129,80 +1099,6 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     }
   };
 
-  const handleUpdateRetailerApproval = async (
-    retailerId: string,
-    newStatus: "pending" | "approved" | "rejected"
-  ) => {
-    // 1. Call API first (using the robust Neon atomic update)
-    const res = await updateUserAccountStatus(retailerId, newStatus);
-    
-    // 2. Stop if it failed
-    if (!res.success) {
-      alert("Error updating retailer status. " + (res.error || "Please try again."));
-      return;
-    }
-
-    // 3. Update UI if it succeeded
-    setRetailers((prev) =>
-      prev.map((r) => (r.id === retailerId || r.email.toLowerCase() === retailerId.toLowerCase() ? { ...r, approvalStatus: newStatus } : r))
-    );
-    // Sync managed users if active
-    setManagedUsers((prev) =>
-      prev.map((u) => (u.id === retailerId || u.email.toLowerCase() === retailerId.toLowerCase() ? { ...u, approvalStatus: newStatus as any } : u))
-    );
-  };
-
-  const handleDeleteRetailer = async (retailerId: string) => {
-    setRetailers((prev) =>
-      prev.filter((r) => r.id !== retailerId && r.email.toLowerCase() !== retailerId.toLowerCase())
-    );
-    await deleteRetailer(retailerId);
-  };
-
-  const handleBulkDeleteRetailers = async (retailerIds: string[]) => {
-    const idSet = new Set(retailerIds.map((i) => i.toLowerCase()));
-    setRetailers((prev) =>
-      prev.filter((r) => !idSet.has(r.id.toLowerCase()) && !idSet.has(r.email.toLowerCase()))
-    );
-    await deleteMultipleRetailers(retailerIds);
-  };
-
-  const handleBulkUpdateRetailers = async (
-    retailerIds: string[],
-    newStatus: "pending" | "approved" | "rejected"
-  ) => {
-    let successCount = 0;
-    
-    // 1. Await updates via atomic Neon function for each retailer
-    for (const id of retailerIds) {
-      const res = await updateUserAccountStatus(id, newStatus);
-      if (res.success) {
-        successCount++;
-      } else {
-        console.warn(`Failed to update status for ${id}:`, res.error);
-      }
-    }
-    
-    if (successCount < retailerIds.length) {
-      alert(`Updated ${successCount}/${retailerIds.length} retailers successfully. Some may have failed.`);
-    }
-
-    // 2. Refresh the lists from backend to reflect true state
-    handleRefreshRetailers();
-    handleRefreshUsers();
-  };
-
-  const handleRefreshRetailers = async () => {
-    setIsRefreshingRetailers(true);
-    try {
-      const fresh = await fetchAllRetailers();
-      if (fresh) setRetailers(fresh);
-    } catch (e) {
-      console.error("Error refreshing retailers:", e);
-    } finally {
-      setTimeout(() => setIsRefreshingRetailers(false), 400);
-    }
-  };
 
   const handleRefreshUsers = async () => {
     setIsRefreshingUsers(true);
@@ -1218,10 +1114,10 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
   const handleUpdateUserStatus = async (
     userId: string,
-    newStatus: "approved" | "blocked" | "pending" | "rejected"
+    newStatus: "active" | "blocked" | "pending" | "rejected"
   ) => {
     // 1. Call API first (do NOT update UI optimistically)
-    const res = await updateUserAccountStatus(userId, newStatus);
+    const res = await updateUserAccountStatus(userId, newStatus, user?.id || "admin");
     
     // 2. If it failed, show error and stop
     if (!res.success) {
@@ -1232,12 +1128,9 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
     // 3. If success, update UI to reflect the new truth
     setManagedUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, approvalStatus: newStatus } : u))
+      prev.map((u) => (u.id === userId ? { ...u, status: newStatus } : u))
     );
-    // If user is also in retailers list, keep retailers tab in sync
-    setRetailers((prev) =>
-      prev.map((r) => (r.id === userId ? { ...r, approvalStatus: newStatus as any } : r))
-    );
+
   };
 
   const handleChangeUserPassword = async (userId: string, newPass: string) => {
@@ -1249,7 +1142,6 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
   const handleDeleteUserAccount = async (userId: string) => {
     setManagedUsers((prev) => prev.filter((u) => u.id !== userId));
-    setRetailers((prev) => prev.filter((r) => r.id !== userId));
     const res = await adminDeleteUserAccount(userId);
     if (!res.success) {
       alert("Error deleting user: " + (res.error || "Please try again."));
@@ -1258,8 +1150,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   };
 
   const pendingRetailersCount = useMemo(
-    () => retailers.filter((r) => r.approvalStatus === "pending").length,
-    [retailers]
+    () => managedUsers.filter((u) => u.role === "retailer" && (u.status === "pending")).length,
+    [managedUsers]
   );
 
   const openAdd = () => { setForm(emptyForm(categories[0])); setModal({ open: true, mode: "add" }); };
@@ -1306,7 +1198,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           category_id: null,
           category_name: form.category,
           brand: form.brand.trim() || "Generic",
-          sku: form.sku.trim() || undefined,
+          sku: form.sku.trim() || null,
           hsn: form.hsn.trim() || "3004",
           mrp: Number(form.mrp) || Number(form.customerPrice),
           customer_price: Number(form.customerPrice),
@@ -1558,8 +1450,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
                     {lowStockCount + outOfStockCount}
                   </span>
                 )}
-                {t.id === "retailers" && pendingRetailersCount > 0 && (
-                  <span className="bg-amber-500 text-white text-[10px] font-black rounded-full px-1.5 py-0.2 min-w-[20px] text-center animate-pulse shadow-xs">
+                {t.id === "users" && pendingRetailersCount > 0 && (
+                  <span className="bg-rose-500 text-white text-[10px] font-black rounded-full px-1.5 py-0.2 min-w-[20px] text-center shadow-xs animate-pulse">
                     {pendingRetailersCount}
                   </span>
                 )}
@@ -1711,17 +1603,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               settings={settings}
             />
           )}
-          {activeTab === "retailers" && (
-            <RetailersTab
-              retailers={retailers}
-              onUpdateApproval={handleUpdateRetailerApproval}
-              onDeleteRetailer={handleDeleteRetailer}
-              onBulkDeleteRetailers={handleBulkDeleteRetailers}
-              onBulkUpdateApproval={handleBulkUpdateRetailers}
-              onRefresh={handleRefreshRetailers}
-              isRefreshing={isRefreshingRetailers}
-            />
-          )}
+
           {activeTab === "users" && (
             <UsersTab
               users={managedUsers}
@@ -1843,7 +1725,7 @@ function DashboardTab({
           </div>
           <button
             type="button"
-            onClick={() => onNavigate("retailers")}
+            onClick={() => onNavigate("users")}
             className="px-5 py-2.5 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold transition-all shadow-md flex items-center gap-2 shrink-0 cursor-pointer active:scale-95 self-end sm:self-center"
           >
             <span>Review Applications</span>
@@ -2833,221 +2715,7 @@ function OrdersTab({
   );
 }
 
-/* ─── TAB: RETAILERS WHOLESALE APPROVALS ─── */
-function RetailersTab({
-  retailers,
-  onUpdateApproval,
-  onDeleteRetailer,
-  onBulkDeleteRetailers,
-  onBulkUpdateApproval,
-  onRefresh,
-  isRefreshing = false,
-}: {
-  retailers: RetailerAccount[];
-  onUpdateApproval: (id: string, status: "pending" | "approved" | "rejected") => void;
-  onDeleteRetailer: (id: string) => void;
-  onBulkDeleteRetailers: (ids: string[]) => void;
-  onBulkUpdateApproval: (ids: string[], status: "pending" | "approved" | "rejected") => void;
-  onRefresh?: () => void;
-  isRefreshing?: boolean;
-}) {
-  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
-  const [search, setSearch] = useState("");
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [deleteModalRetailer, setDeleteModalRetailer] = useState<RetailerAccount | null>(null);
 
-  const pendingCount = useMemo(() => retailers.filter((r) => r.approvalStatus === "pending").length, [retailers]);
-  const approvedCount = useMemo(() => retailers.filter((r) => r.approvalStatus === "approved").length, [retailers]);
-  const rejectedCount = useMemo(() => retailers.filter((r) => r.approvalStatus === "rejected").length, [retailers]);
-
-  const filteredRetailers = useMemo(() => {
-    return retailers
-      .filter((r) => {
-        if (filter === "all") return true;
-        return r.approvalStatus === filter;
-      })
-      .filter((r) => {
-        if (!search.trim()) return true;
-        const q = search.toLowerCase();
-        return (
-          r.shopName.toLowerCase().includes(q) ||
-          r.fullName.toLowerCase().includes(q) ||
-          r.email.toLowerCase().includes(q) ||
-          (r.phone && r.phone.toLowerCase().includes(q))
-        );
-      });
-  }, [retailers, filter, search]);
-
-  const isAllSelected = filteredRetailers.length > 0 && filteredRetailers.every((r) => selectedIds.includes(r.id));
-
-  const handleToggleSelectAll = () => {
-    if (isAllSelected) setSelectedIds([]);
-    else setSelectedIds(filteredRetailers.map((r) => r.id));
-  };
-
-  const handleToggleSelectRow = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
-  };
-
-  return (
-    <div className="flex flex-col gap-6">
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div onClick={() => setFilter("pending")} className="glass-admin-card glass-admin-card-hover rounded-3xl p-5 cursor-pointer border-2 transition-all">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-800">Pending Review</span>
-            <span className="bg-amber-100 text-amber-800 text-xs font-black px-2.5 py-0.5 rounded-full">{pendingCount}</span>
-          </div>
-          <p className="font-['Manrope',sans-serif] font-extrabold text-[#92400e] text-3xl">{pendingCount}</p>
-          <p className="text-xs text-[#657969] mt-1">Wholesale applications awaiting verification</p>
-        </div>
-
-        <div onClick={() => setFilter("approved")} className="glass-admin-card glass-admin-card-hover rounded-3xl p-5 cursor-pointer border-2 transition-all">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800">Active Partners</span>
-            <span className="bg-emerald-100 text-emerald-800 text-xs font-black px-2.5 py-0.5 rounded-full">{approvedCount}</span>
-          </div>
-          <p className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-3xl">{approvedCount}</p>
-          <p className="text-xs text-[#657969] mt-1">Approved pharmacies ordering B2B</p>
-        </div>
-
-        <div onClick={() => setFilter("rejected")} className="glass-admin-card glass-admin-card-hover rounded-3xl p-5 cursor-pointer border-2 transition-all">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-rose-800">Declined Access</span>
-            <span className="bg-rose-100 text-rose-800 text-xs font-black px-2.5 py-0.5 rounded-full">{rejectedCount}</span>
-          </div>
-          <p className="font-['Manrope',sans-serif] font-extrabold text-rose-700 text-3xl">{rejectedCount}</p>
-          <p className="text-xs text-[#657969] mt-1">Suspended or declined accounts</p>
-        </div>
-      </div>
-
-      {/* Filter & Search */}
-      <div className="glass-admin-card rounded-3xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
-        <div className="flex items-center gap-2 flex-wrap">
-          {(["all", "pending", "approved", "rejected"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer capitalize ${
-                filter === f
-                  ? "bg-gradient-to-r from-[#006a39] to-[#008749] text-white shadow-md shadow-emerald-950/20"
-                  : "bg-white/80 text-[#596b5e] border border-[#dce7db] hover:bg-white"
-              }`}
-            >
-              {f} ({f === "all" ? retailers.length : f === "pending" ? pendingCount : f === "approved" ? approvedCount : rejectedCount})
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-3 flex-1 max-w-md">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search pharmacy name, owner, email or phone…"
-            className="w-full px-4 py-2 text-xs sm:text-sm bg-white/80 border border-[#dce7db] rounded-2xl focus:outline-none focus:border-[#006a39]"
-          />
-          {onRefresh && (
-            <button onClick={onRefresh} className="px-3.5 py-2 rounded-2xl bg-white border border-[#dce7db] text-xs font-bold text-[#073b4c] hover:bg-emerald-50">
-              <Icons.Refresh className={`w-3.5 h-3.5 text-[#006a39] ${isRefreshing ? "animate-spin" : ""}`} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Retailers List Table */}
-      <div className="glass-admin-card rounded-3xl overflow-hidden shadow-xs">
-        <div className="divide-y divide-[#e4ede2]">
-          {filteredRetailers.map((r) => (
-            <div key={r.id} className="p-4 sm:p-5 hover:bg-white/80 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.includes(r.id)}
-                  onChange={() => handleToggleSelectRow(r.id)}
-                  className="w-4 h-4 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39] mt-2.5"
-                />
-                <div className="w-12 h-12 rounded-2xl bg-sky-100 text-sky-800 flex items-center justify-center font-bold text-xl shrink-0 shadow-xs">
-                  <Icons.Store className="w-6 h-6 text-sky-800" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base truncate">{r.shopName}</p>
-                  <p className="text-xs text-[#596b5e] font-semibold mt-0.5">{r.fullName} · 📞 {r.phone || "No phone"}</p>
-                  <p className="text-xs text-[#728575] font-mono mt-0.5">{r.email}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0">
-                <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full border ${
-                  r.approvalStatus === "approved"
-                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                    : r.approvalStatus === "pending"
-                    ? "bg-amber-50 text-amber-800 border-amber-200 animate-pulse"
-                    : "bg-rose-50 text-rose-800 border-rose-200"
-                }`}>
-                  {r.approvalStatus.toUpperCase()}
-                </span>
-
-                {r.approvalStatus === "pending" && (
-                  <button
-                    onClick={() => onUpdateApproval(r.id, "approved")}
-                    className="px-3.5 py-1.5 rounded-2xl bg-[#006a39] hover:bg-[#008749] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
-                  >
-                    <Icons.Check className="w-3.5 h-3.5" />
-                    <span>Approve</span>
-                  </button>
-                )}
-
-                {r.approvalStatus === "approved" && (
-                  <button
-                    onClick={() => onUpdateApproval(r.id, "rejected")}
-                    className="px-3.5 py-1.5 rounded-2xl border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-bold transition-all cursor-pointer"
-                  >
-                    Decline Access
-                  </button>
-                )}
-
-                <button
-                  onClick={() => setDeleteModalRetailer(r)}
-                  className="p-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors border border-rose-200 text-xs font-bold cursor-pointer"
-                >
-                  <Icons.Trash className="w-4 h-4 text-rose-700" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {filteredRetailers.length === 0 && (
-          <div className="py-16 text-center text-[#728575] text-sm flex flex-col items-center gap-2">
-            <Icons.Store className="w-10 h-10 text-[#728575] stroke-1" />
-            <p className="font-bold text-[#073b4c]">No retailers found</p>
-            <p className="text-xs">Adjust your search or approval status filter.</p>
-          </div>
-        )}
-      </div>
-
-      {/* Delete Retailer Modal */}
-      {deleteModalRetailer && (
-        <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-sm w-full p-7 text-center shadow-2xl animate-in zoom-in-95">
-            <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4 text-2xl shadow-xs">
-              <Icons.Trash className="w-7 h-7 text-rose-600" />
-            </div>
-            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg mb-1">Delete Retailer Account</h3>
-            <p className="text-[#657969] text-xs mb-6 leading-relaxed">Delete {deleteModalRetailer.shopName} ({deleteModalRetailer.email})? This removes wholesale access permanently.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteModalRetailer(null)} className="flex-1 py-2.5 rounded-2xl border border-[#dce7db] text-[#657969] font-bold text-xs hover:bg-white cursor-pointer">Cancel</button>
-              <button onClick={() => { onDeleteRetailer(deleteModalRetailer.id); setDeleteModalRetailer(null); }} className="flex-1 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-md shadow-rose-950/20">Confirm</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 /* ─── TAB: ALL USERS MANAGEMENT ─── */
 function UsersTab({
@@ -3061,7 +2729,7 @@ function UsersTab({
 }: {
   users: ManagedUser[];
   currentUser?: CurrentUser;
-  onUpdateStatus: (userId: string, status: "approved" | "blocked" | "pending" | "rejected") => Promise<void>;
+  onUpdateStatus: (userId: string, status: "active" | "blocked" | "pending" | "rejected") => Promise<void>;
   onChangePassword: (userId: string, newPass: string) => Promise<void>;
   onDeleteUser: (userId: string) => Promise<void>;
   onRefresh: () => void;
@@ -3079,7 +2747,7 @@ function UsersTab({
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  const [statusModal, setStatusModal] = useState<{ user: ManagedUser; targetStatus: "approved" | "blocked" | "pending" | "rejected" } | null>(null);
+  const [statusModal, setStatusModal] = useState<{ user: ManagedUser; targetStatus: "active" | "blocked" | "pending" | "rejected" } | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
 
   const [deleteModalUser, setDeleteModalUser] = useState<ManagedUser | null>(null);
@@ -3090,13 +2758,13 @@ function UsersTab({
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       if (roleFilter !== "all" && u.role !== roleFilter) return false;
-      if (statusFilter !== "all" && u.approvalStatus !== statusFilter) return false;
+      if (statusFilter !== "all" && u.status !== statusFilter) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
         const matchName = u.fullName.toLowerCase().includes(q);
         const matchEmail = u.email.toLowerCase().includes(q);
-        const matchPhone = u.phone?.toLowerCase().includes(q);
-        const matchShop = u.shopName?.toLowerCase().includes(q);
+        const matchPhone = ""?.toLowerCase().includes(q);
+        const matchShop = u.businessName?.toLowerCase().includes(q);
         if (!matchName && !matchEmail && !matchPhone && !matchShop) return false;
       }
       return true;
@@ -3107,8 +2775,8 @@ function UsersTab({
     const total = users.length;
     const customers = users.filter((u) => u.role === "customer").length;
     const retailers = users.filter((u) => u.role === "retailer").length;
-    const blocked = users.filter((u) => u.approvalStatus === "blocked").length;
-    const pending = users.filter((u) => u.approvalStatus === "pending").length;
+    const blocked = users.filter((u) => u.status === "blocked").length;
+    const pending = users.filter((u) => u.status === "pending").length;
     return { total, customers, retailers, blocked, pending };
   }, [users]);
 
@@ -3141,7 +2809,7 @@ function UsersTab({
     if (!statusModal) return;
     setStatusLoading(true);
     try {
-      await onUpdateStatus(statusModal.user.id, statusModal.targetStatus);
+      await onUpdateStatus(statusModal.user.id, statusModal.targetStatus as any);
       setStatusModal(null);
     } catch (err: any) {
       alert("Failed to update status: " + err?.message);
@@ -3319,13 +2987,6 @@ function UsersTab({
               <div key={u.id} className="p-4 sm:p-5 hover:bg-white/80 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 {/* User Identity Info */}
                 <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                  {u.avatarUrl ? (
-                    <img
-                      src={u.avatarUrl}
-                      alt={u.fullName}
-                      className="w-12 h-12 rounded-2xl object-cover shrink-0 shadow-xs border border-[#dce7db]"
-                    />
-                  ) : (
                     <div
                       className={`w-12 h-12 rounded-2xl flex items-center justify-center font-extrabold text-lg shrink-0 shadow-xs ${
                         u.role === "admin"
@@ -3337,7 +2998,6 @@ function UsersTab({
                     >
                       {(u.fullName?.[0] || u.email[0] || "U").toUpperCase()}
                     </div>
-                  )}
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -3360,31 +3020,31 @@ function UsersTab({
                       {/* Status Pill */}
                       <span
                         className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
-                          u.approvalStatus === "approved"
+                          u.status === "active"
                             ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                            : u.approvalStatus === "pending"
+                            : u.status === "pending"
                             ? "bg-amber-50 text-amber-800 border border-amber-200 animate-pulse"
-                            : u.approvalStatus === "blocked"
+                            : u.status === "blocked"
                             ? "bg-rose-100 text-rose-900 border border-rose-200"
                             : "bg-gray-100 text-gray-800 border border-gray-200"
                         }`}
                       >
-                        {u.approvalStatus}
+                        {u.status}
                       </span>
                     </div>
 
                     <p className="text-xs text-[#596b5e] font-mono mt-1 truncate">
                       ✉️ {u.email}
-                      {u.phone ? ` · 📞 ${u.phone}` : ""}
+                      
                     </p>
-                    {u.shopName && (
+                    {u.businessName && (
                       <p className="text-xs text-[#006a39] font-semibold mt-0.5">
-                        🏬 {u.shopName}
+                        🏬 {u.businessName}
                       </p>
                     )}
                     <p className="text-[11px] text-[#8aa08e] mt-1">
                       Joined: {new Date(u.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                      {u.lastSignInAt ? ` · Last Active: ${new Date(u.lastSignInAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : ""}
+                      
                     </p>
                   </div>
                 </div>
@@ -3417,10 +3077,10 @@ function UsersTab({
                   </button>
 
                   {/* Approve button (if pending) */}
-                  {u.approvalStatus === "pending" && !isSelf && (
+                  {u.status === "pending" && !isSelf && (
                     <button
                       type="button"
-                      onClick={() => setStatusModal({ user: u, targetStatus: "approved" })}
+                      onClick={() => setStatusModal({ user: u, targetStatus: "active" })}
                       className="px-3 py-1.5 rounded-xl bg-[#006a39] hover:bg-[#008749] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
                     >
                       <Icons.Check className="w-3.5 h-3.5" />
@@ -3429,7 +3089,7 @@ function UsersTab({
                   )}
 
                   {/* Reject button (if pending) */}
-                  {u.approvalStatus === "pending" && !isSelf && (
+                  {u.status === "pending" && !isSelf && (
                     <button
                       type="button"
                       onClick={() => setStatusModal({ user: u, targetStatus: "rejected" })}
@@ -3440,7 +3100,7 @@ function UsersTab({
                   )}
 
                   {/* Block / Unblock buttons */}
-                  {u.approvalStatus !== "blocked" && !isSelf && (
+                  {u.status !== "blocked" && !isSelf && (
                     <button
                       type="button"
                       onClick={() => setStatusModal({ user: u, targetStatus: "blocked" })}
@@ -3451,10 +3111,10 @@ function UsersTab({
                     </button>
                   )}
 
-                  {u.approvalStatus === "blocked" && !isSelf && (
+                  {u.status === "blocked" && !isSelf && (
                     <button
                       type="button"
-                      onClick={() => setStatusModal({ user: u, targetStatus: "approved" })}
+                      onClick={() => setStatusModal({ user: u, targetStatus: "active" })}
                       className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
                     >
                       <Icons.Check className="w-3.5 h-3.5" />
@@ -3570,11 +3230,11 @@ function UsersTab({
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-xs ${
               statusModal.targetStatus === "blocked"
                 ? "bg-amber-100 text-amber-800"
-                : statusModal.targetStatus === "approved"
+                : statusModal.targetStatus === "active"
                 ? "bg-emerald-100 text-emerald-800"
                 : "bg-rose-100 text-rose-800"
             }`}>
-              {statusModal.targetStatus === "blocked" ? "⚠️" : statusModal.targetStatus === "approved" ? "✓" : "✕"}
+              {statusModal.targetStatus === "blocked" ? "⚠️" : statusModal.targetStatus === "active" ? "✓" : "✕"}
             </div>
             <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg mb-1 capitalize">
               {statusModal.targetStatus} User Account
@@ -3598,7 +3258,7 @@ function UsersTab({
                 className={`flex-1 py-2.5 rounded-2xl text-white font-bold text-xs transition-colors cursor-pointer shadow-md ${
                   statusModal.targetStatus === "blocked"
                     ? "bg-amber-600 hover:bg-amber-700"
-                    : statusModal.targetStatus === "approved"
+                    : statusModal.targetStatus === "active"
                     ? "bg-emerald-600 hover:bg-emerald-700"
                     : "bg-rose-600 hover:bg-rose-700"
                 }`}
@@ -3678,32 +3338,27 @@ function UsersTab({
               </div>
               <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
                 <span className="text-[#657969]">Phone:</span>
-                <span className="font-mono">{detailsModalUser.phone || "Not provided"}</span>
+                <span className="font-mono">Not provided</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
                 <span className="text-[#657969]">User Role:</span>
                 <span className="font-extrabold uppercase text-[#006a39]">{detailsModalUser.role}</span>
               </div>
-              {detailsModalUser.shopName && (
+              {detailsModalUser.businessName && (
                 <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
                   <span className="text-[#657969]">Business / Shop Name:</span>
-                  <span className="font-bold">{detailsModalUser.shopName}</span>
+                  <span className="font-bold">{detailsModalUser.businessName}</span>
                 </div>
               )}
               <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
                 <span className="text-[#657969]">Account Status:</span>
-                <span className="font-extrabold uppercase">{detailsModalUser.approvalStatus}</span>
+                <span className="font-extrabold uppercase">{detailsModalUser.status}</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
                 <span className="text-[#657969]">Created At:</span>
                 <span>{new Date(detailsModalUser.createdAt).toLocaleString("en-IN")}</span>
               </div>
-              {detailsModalUser.lastSignInAt && (
-                <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
-                  <span className="text-[#657969]">Last Sign In:</span>
-                  <span>{new Date(detailsModalUser.lastSignInAt).toLocaleString("en-IN")}</span>
-                </div>
-              )}
+              
             </div>
 
             <button
@@ -3891,13 +3546,13 @@ function LabBookingsTab({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base truncate">{b.test_name}</p>
+                    <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base truncate">{b.package_name}</p>
                     <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-800 border border-purple-200">
-                      ₹{b.test_price}
+                      ₹{b.total_amount}
                     </span>
                   </div>
                   <p className="text-xs text-[#596b5e] font-semibold mt-1">Patient: {b.patient_name} ({b.patient_age} yrs, {b.patient_gender}) · 📞 {b.patient_phone}</p>
-                  <p className="text-xs text-[#728575] mt-0.5">📅 {b.scheduled_date} at {b.scheduled_time} · 📍 {b.collection_address}</p>
+                  <p className="text-xs text-[#728575] mt-0.5">📅 {b.collection_date} at {b.collection_time_slot} · 📍 {b.collection_address.line1}, {b.collection_address.city}</p>
                 </div>
               </div>
 

@@ -510,7 +510,7 @@ export default function OrderTrackingModal({
                     <p className="text-xs font-semibold text-[#073b4c]">{activeOrder.customer_name}</p>
                     <p className="text-xs text-[#6d7a6f] mt-0.5">
                       {typeof activeOrder.shipping_address === "object"
-                        ? `${activeOrder.shipping_address?.address || ""}, ${activeOrder.shipping_address?.city || ""}`
+                        ? `${activeOrder.shipping_address?.line1 || ""}, ${activeOrder.shipping_address?.city || ""}`
                         : "Verified Store Address"}
                     </p>
                     <p className="text-xs text-[#6d7a6f] mt-0.5">Ph: {activeOrder.customer_phone}</p>

@@ -445,10 +445,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 email: u.email,
                 fullName: u.fullName,
                 role: u.role,
-                phone: u.phone,
-                shopName: u.shopName,
+                businessName: u.businessName,
                 status: u.status,
-                approvalStatus: u.approvalStatus,
                 timestamp: Date.now(),
               })
             );
@@ -458,17 +456,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             authUser: {
               id: u.id,
               email: u.email,
-              user_metadata: { full_name: u.fullName, role: u.role, approval_status: u.approvalStatus },
+              user_metadata: { full_name: u.fullName, role: u.role, approval_status: u.status },
             },
             profile: {
               id: u.id,
               email: u.email,
               full_name: u.fullName,
               role: u.role,
-              phone: u.phone,
-              shop_name: u.shopName,
-              avatar_url: u.avatarUrl,
-              approval_status: u.approvalStatus,
+              phone: null,
+              shop_name: u.businessName,
+              avatar_url: null,
+              approval_status: (u.status === "active" ? "approved" : u.status) as "pending" | "approved" | "blocked" | "rejected",
               created_at: u.createdAt,
               updated_at: new Date().toISOString(),
             },
@@ -555,7 +553,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const cleanPass = opts.password;
 
       try {
-        await neonSignUp(cleanEmail, cleanPass);
+        await neonSignUp(cleanEmail, cleanPass, opts.fullName.trim());
       } catch (err) { }
 
       let emailConfirmationRequired = false;
@@ -583,7 +581,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: cleanEmail,
         password: cleanPass,
         fullName: opts.fullName.trim(),
-        phone: opts.phone?.trim(),
         shopName: opts.shopName?.trim(),
         role: safeRole,
       });
@@ -635,8 +632,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: createdUser.email,
           full_name: createdUser.fullName,
           role: "customer",
-          phone: createdUser.phone || null,
-          shop_name: null,
+          phone: null,
+          shop_name: createdUser.businessName || null,
           avatar_url: null,
           approval_status: "approved",
           created_at: createdUser.createdAt,

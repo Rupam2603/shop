@@ -186,9 +186,9 @@ export default function CategoryPage({
     }
 
     if (sortBy === "price-asc") {
-      list = [...list].sort((a, b) => parsePrice(isRetailer ? a.retailerPrice : a.price) - parsePrice(isRetailer ? b.retailerPrice : b.price));
+      list = [...list].sort((a, b) => parsePrice(isRetailer ? (a as any).retailerPrice || a.price : a.price) - parsePrice(isRetailer ? (b as any).retailerPrice || b.price : b.price));
     } else if (sortBy === "price-desc") {
-      list = [...list].sort((a, b) => parsePrice(isRetailer ? b.retailerPrice : b.price) - parsePrice(isRetailer ? a.retailerPrice : a.price));
+      list = [...list].sort((a, b) => parsePrice(isRetailer ? (b as any).retailerPrice || b.price : b.price) - parsePrice(isRetailer ? (a as any).retailerPrice || a.price : a.price));
     } else if (sortBy === "discount") {
       list = [...list].sort((a, b) => parseInt(b.disc || "0") - parseInt(a.disc || "0"));
     }
