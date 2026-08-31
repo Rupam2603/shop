@@ -86,11 +86,9 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 - **Inventory Products Database Table (Neon Postgres)**:
   - New table `public.inventory_products` created in Neon Lakebase Postgres storing complete product data along with product web images (`image_url`, `web_image_url`, `gallery_images`), pricing, stock levels, unit, dosage form, batch, and SKU.
   - CRUD operations in `src/lib/products.ts` synchronized with `public.inventory_products` and `public.products`.
-- **Phone Authentication with OTP Verification (Neon Postgres)**:
-  - Table `public.phone_verifications` created in Neon Lakebase Postgres storing phone OTP requests with `phone`, `otp_hash`, `expires_at`, `verified`, `attempts`, `role`, and user profile metadata.
-  - Complete client service layer implemented in `src/lib/phoneAuth.ts` with `normalizePhone`, `sendPhoneOTP`, and `verifyPhoneOTP`.
-  - Integrated into `src/contexts/AuthContext.tsx` (`sendPhoneOtp`, `verifyPhoneOtp`, session persistence).
-  - Modern UI in `src/pages/LoginPage.tsx` supporting 1-click Mobile OTP login & signup for Customers and Retailers, 6-digit auto-advancing code boxes, 30s resend timer, and instant test autofill.
+- **Email & Password Authentication (Neon Postgres + Better Auth)**:
+  - Streamlined, unified authentication system for Customers, Retailers, and Administrators using verified Email and Password credentials.
+  - Dedicated role switches with tailored access tiers, credential autofill for admin operations, and complete password reset mechanisms.
 - **User Account Management & Admin Approval System (Neon Postgres)**:
   - Table `public.auth_users` created in Neon Lakebase Postgres storing user accounts (`id`, `email`, `phone`, `password_hash`, `salt`, `full_name`, `role`, `status`, `approval_status`, `shop_name`, `avatar_url`, `last_login`, `approved_at`, `approved_by`, `blocked_at`, `created_at`, `updated_at`).
   - Table `public.profiles` synchronized with Neon database.

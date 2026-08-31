@@ -187,11 +187,10 @@ function SuccessBox({ msg }: { msg: string }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function LoginPage({ onBackToStore }: { onBackToStore?: () => void }) {
-  const { signIn, signUp, sendPhoneOtp, verifyPhoneOtp, resetPassword, pendingApprovalInfo, clearPendingApproval } = useAuth();
+  const { signIn, signUp, resetPassword, pendingApprovalInfo, clearPendingApproval } = useAuth();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [selectedRole, setSelectedRole] = useState<UserRole>("customer");
-  const [authMethod, setAuthMethod] = useState<"phone" | "email">("phone");
 
   // Email / password state
   const [email, setEmail] = useState("");
@@ -199,25 +198,9 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
   const [showPass, setShowPass] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Phone OTP state
-  const [phone, setPhone] = useState("");
-  const [otpStage, setOtpStage] = useState<"input_phone" | "verify_otp">("input_phone");
-  const [otpValues, setOtpValues] = useState<string[]>(["", "", "", "", "", ""]);
-  const [otpCountdown, setOtpCountdown] = useState(0);
-  const [demoOtpHint, setDemoOtpHint] = useState<string | null>(null);
-
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // Countdown timer for resend OTP
-  useEffect(() => {
-    if (otpCountdown <= 0) return;
-    const timer = setInterval(() => {
-      setOtpCountdown((prev) => (prev <= 1 ? 0 : prev - 1));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [otpCountdown]);
 
   // Auto-populate remembered credentials on mount
   useEffect(() => {
@@ -298,9 +281,8 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
 
   const resetForm = () => {
     setEmail(""); setPassword(""); setSignupName(""); setSignupPhone("");
-    setSignupShop(""); setSignupConfirm(""); setPhone("");
-    setOtpStage("input_phone"); setOtpValues(["", "", "", "", "", ""]);
-    setDemoOtpHint(null); setError(""); setSuccess("");
+    setSignupShop(""); setSignupConfirm("");
+    setError(""); setSuccess("");
   };
 
   const handleRoleSelect = (role: UserRole) => {
@@ -308,7 +290,6 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
     setError("");
     setSuccess("");
     if (role === "admin") {
-      setAuthMethod("email");
       if (mode === "login") {
         setEmail("Subhonehealthgroup@gmail.com");
         setPassword("Subhone@2026");
@@ -320,113 +301,6 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
     setMode(m);
     resetForm();
     if (m === "signup" && selectedRole === "admin") setSelectedRole("customer");
-  };
-
-  // ── Phone OTP: Step 1 (Send OTP) ───────────────────────────────────────────
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-
-    const cleanPhone = phone.trim().replace(/[^0-9]/g, "");
-    if (cleanPhone.length < 10) {
-      setError("Please enter a valid 10-digit mobile number.");
-      return;
-    }
-
-    if (mode === "signup") {
-      if (!signupName.trim()) {
-        setError("Please enter your full name.");
-        return;
-      }
-      if (selectedRole === "retailer" && !signupShop.trim()) {
-        setError("Please enter your pharmacy or medical store name.");
-        return;
-      }
-    }
-
-    setLoading(true);
-    const safeRole = selectedRole === "retailer" ? "retailer" : "customer";
-    const res = await sendPhoneOtp(cleanPhone, safeRole, {
-      fullName: signupName.trim(),
-      shopName: signupShop.trim(),
-    });
-    setLoading(false);
-
-    if (!res.success) {
-      setError(res.message || res.error || "Failed to send OTP.");
-      return;
-    }
-
-    setOtpStage("verify_otp");
-    setOtpCountdown(30);
-    if (res.demoOtp) {
-      setDemoOtpHint(res.demoOtp);
-    }
-    setSuccess(`OTP sent to +91 ${cleanPhone.slice(-10)}`);
-  };
-
-  // ── Phone OTP: Step 2 (Verify OTP) ─────────────────────────────────────────
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-
-    const enteredOtp = otpValues.join("").trim();
-    if (enteredOtp.length !== 6) {
-      setError("Please enter the complete 6-digit OTP code.");
-      return;
-    }
-
-    const cleanPhone = phone.trim().replace(/[^0-9]/g, "");
-    const safeRole = selectedRole === "retailer" ? "retailer" : "customer";
-
-    setLoading(true);
-    const res = await verifyPhoneOtp(cleanPhone, enteredOtp, safeRole, {
-      fullName: signupName.trim(),
-      shopName: signupShop.trim(),
-    });
-    setLoading(false);
-
-    if (!res.success) {
-      setError(res.error || "Invalid OTP code. Please try again.");
-    }
-  };
-
-  const handleOtpBoxChange = (idx: number, val: string) => {
-    const char = val.replace(/[^0-9]/g, "").slice(-1);
-    const next = [...otpValues];
-    next[idx] = char;
-    setOtpValues(next);
-    setError("");
-
-    // Auto-advance to next box
-    if (char && idx < 5) {
-      const nextInput = document.getElementById(`otp-box-${idx + 1}`);
-      nextInput?.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !otpValues[idx] && idx > 0) {
-      const prevInput = document.getElementById(`otp-box-${idx - 1}`);
-      prevInput?.focus();
-    }
-  };
-
-  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 6);
-    if (pasted) {
-      const next = ["", "", "", "", "", ""];
-      for (let i = 0; i < pasted.length; i++) {
-        next[i] = pasted[i];
-      }
-      setOtpValues(next);
-      const targetIdx = Math.min(pasted.length, 5);
-      const targetInput = document.getElementById(`otp-box-${targetIdx}`);
-      targetInput?.focus();
-    }
   };
 
   // ── Real Supabase Login ────────────────────────────────────────────────────
@@ -936,271 +810,8 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                 </div>
               )}
 
-              {/* ── AUTH METHOD TOGGLE (Phone OTP vs Email/Password) for Customer & Retailer ── */}
-              {selectedRole !== "admin" && (
-                <div className="flex items-center gap-2 p-1 bg-[#e8f2ea]/80 rounded-2xl border border-[#cfe1d2]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMethod("phone");
-                      setError("");
-                      setSuccess("");
-                    }}
-                    className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                      authMethod === "phone"
-                        ? "bg-white text-[#006a39] shadow-sm border border-[#cfe1d2]"
-                        : "text-[#55695a] hover:text-[#006a39]"
-                    }`}
-                  >
-                    <PhoneIcon className="w-4 h-4" />
-                    <span>Mobile OTP {mode === "signup" ? "Signup" : "Login"}</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-black">
-                      Fast
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMethod("email");
-                      setError("");
-                      setSuccess("");
-                    }}
-                    className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                      authMethod === "email"
-                        ? "bg-white text-[#073b4c] shadow-sm border border-[#cfe1d2]"
-                        : "text-[#55695a] hover:text-[#073b4c]"
-                    }`}
-                  >
-                    <MailIcon className="w-4 h-4" />
-                    <span>Email & Password</span>
-                  </button>
-                </div>
-              )}
-
-              {/* ── PHONE OTP AUTH FLOW ── */}
-              {selectedRole !== "admin" && authMethod === "phone" && (
-                <div className="flex flex-col gap-4">
-                  {otpStage === "input_phone" ? (
-                    <form onSubmit={handleSendOtp} className="flex flex-col gap-4">
-                      {mode === "signup" && (
-                        <>
-                          <div>
-                            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
-                              Full Name *
-                            </label>
-                            <div className="relative">
-                              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8fa092] pointer-events-none">
-                                <UserIcon />
-                              </div>
-                              <input
-                                type="text"
-                                value={signupName}
-                                onChange={(e) => { setSignupName(e.target.value); setError(""); }}
-                                placeholder="e.g. Rahul Sharma"
-                                required
-                                className="w-full bg-white/70 backdrop-blur-md border border-[#dce7db] rounded-2xl pl-11 pr-4 py-3 text-sm text-[#073b4c] placeholder:text-[#a8b8aa] focus:outline-none focus:bg-white focus:border-[#006a39] focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-xs"
-                              />
-                            </div>
-                          </div>
-
-                          {selectedRole === "retailer" && (
-                            <div>
-                              <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
-                                Pharmacy / Medical Store Name *
-                              </label>
-                              <div className="relative">
-                                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8fa092] pointer-events-none">
-                                  <BuildingIcon />
-                                </div>
-                                <input
-                                  type="text"
-                                  value={signupShop}
-                                  onChange={(e) => { setSignupShop(e.target.value); setError(""); }}
-                                  placeholder="e.g. LifeCare Pharmacy & Surgical"
-                                  required
-                                  className="w-full bg-white/70 backdrop-blur-md border border-[#dce7db] rounded-2xl pl-11 pr-4 py-3 text-sm text-[#073b4c] placeholder:text-[#a8b8aa] focus:outline-none focus:bg-white focus:border-[#006a39] focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-xs"
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px]">
-                            Mobile Phone Number *
-                          </label>
-                          <span className="text-[10px] text-[#6c8070] font-semibold">
-                            India (+91)
-                          </span>
-                        </div>
-                        <div className="relative flex items-center">
-                          <div className="absolute left-3.5 flex items-center gap-1.5 text-xs font-extrabold text-[#073b4c] border-r border-[#d4e2d3] pr-2.5 pointer-events-none">
-                            <span>🇮🇳</span>
-                            <span>+91</span>
-                          </div>
-                          <input
-                            type="tel"
-                            value={phone}
-                            onChange={(e) => {
-                              setPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 10));
-                              setError("");
-                            }}
-                            placeholder="Enter 10-digit mobile number"
-                            required
-                            autoFocus
-                            className="w-full bg-white/70 backdrop-blur-md border border-[#dce7db] rounded-2xl pl-22 pr-4 py-3 text-sm text-[#073b4c] font-semibold tracking-wide placeholder:text-[#a8b8aa] placeholder:font-normal focus:outline-none focus:bg-white focus:border-[#006a39] focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-xs"
-                          />
-                        </div>
-                      </div>
-
-                      {error && <ErrorBox msg={error} />}
-                      {success && <SuccessBox msg={success} />}
-
-                      <button
-                        type="submit"
-                        disabled={loading || phone.trim().length < 10}
-                        className="w-full py-3.5 rounded-2xl font-['Manrope',sans-serif] font-bold text-sm sm:text-base text-white transition-all hover:opacity-95 active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2.5 shadow-lg cursor-pointer"
-                        style={{
-                          background: cfg.gradient,
-                          boxShadow: `0 12px 28px -6px ${cfg.glow}`,
-                        }}
-                      >
-                        {loading ? (
-                          <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <>
-                            <span>Get Verification Code (OTP)</span>
-                            <span>→</span>
-                          </>
-                        )}
-                      </button>
-                    </form>
-                  ) : (
-                    /* OTP VERIFICATION STEP */
-                    <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
-                      <div className="bg-[#f0f7f2] border border-[#cfe1d2] rounded-2xl p-3.5 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-sm shrink-0">
-                            📱
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-xs font-bold text-[#073b4c] truncate">
-                              Code sent to +91 {phone.slice(-10)}
-                            </p>
-                            <p className="text-[10px] text-[#6c8070]">Valid for 5 minutes</p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOtpStage("input_phone");
-                            setOtpValues(["", "", "", "", "", ""]);
-                            setError("");
-                          }}
-                          className="text-xs font-bold text-[#006a39] hover:underline cursor-pointer shrink-0"
-                        >
-                          Change Number
-                        </button>
-                      </div>
-
-                      {/* Demo OTP Helper Chip */}
-                      {demoOtpHint && (
-                        <div className="bg-emerald-50 border border-emerald-200/90 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-2xs animate-in fade-in">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs">⚡</span>
-                            <span className="text-xs font-bold text-emerald-900">
-                              Instant Demo OTP: <span className="font-mono text-sm tracking-widest text-emerald-800">{demoOtpHint}</span>
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const chars = demoOtpHint.split("");
-                              setOtpValues(chars);
-                              setError("");
-                            }}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold cursor-pointer transition-all active:scale-95"
-                          >
-                            Auto-Fill
-                          </button>
-                        </div>
-                      )}
-
-                      {/* 6-box OTP Input */}
-                      <div>
-                        <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-2 text-center">
-                          Enter 6-Digit Verification Code
-                        </label>
-                        <div className="flex items-center justify-center gap-2 sm:gap-3">
-                          {otpValues.map((digit, idx) => (
-                            <input
-                              key={idx}
-                              id={`otp-box-${idx}`}
-                              type="text"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              maxLength={1}
-                              value={digit}
-                              onChange={(e) => handleOtpBoxChange(idx, e.target.value)}
-                              onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                              onPaste={handleOtpPaste}
-                              className={`w-11 h-13 sm:w-13 sm:h-14 rounded-2xl text-center font-['Manrope',sans-serif] font-extrabold text-xl sm:text-2xl transition-all shadow-xs focus:outline-none ${
-                                digit
-                                  ? "bg-white border-2 border-[#006a39] text-[#073b4c] shadow-sm"
-                                  : "bg-white/70 border border-[#dce7db] text-[#073b4c] focus:border-[#006a39] focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Resend Timer & Action */}
-                      <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#6c8070]">
-                        {otpCountdown > 0 ? (
-                          <span>Resend OTP code in <strong className="text-[#073b4c] font-mono">{otpCountdown}s</strong></span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => handleSendOtp(e)}
-                            className="text-[#006a39] font-bold hover:underline cursor-pointer flex items-center gap-1"
-                          >
-                            <span>↻</span>
-                            <span>Resend OTP Code</span>
-                          </button>
-                        )}
-                      </div>
-
-                      {error && <ErrorBox msg={error} />}
-                      {success && <SuccessBox msg={success} />}
-
-                      <button
-                        type="submit"
-                        disabled={loading || otpValues.join("").length !== 6}
-                        className="w-full py-3.5 rounded-2xl font-['Manrope',sans-serif] font-bold text-sm sm:text-base text-white transition-all hover:opacity-95 active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2.5 shadow-lg cursor-pointer"
-                        style={{
-                          background: cfg.gradient,
-                          boxShadow: `0 12px 28px -6px ${cfg.glow}`,
-                        }}
-                      >
-                        {loading ? (
-                          <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <>
-                            <span>Verify OTP & Sign In as {cfg.label}</span>
-                            <span>→</span>
-                          </>
-                        )}
-                      </button>
-                    </form>
-                  )}
-                </div>
-              )}
-
-              {/* ── EMAIL/PASSWORD FORM (When AuthMethod is Email or Role is Admin) ── */}
-              {(selectedRole === "admin" || authMethod === "email") && mode === "login" && (
+              {/* ── EMAIL/PASSWORD LOGIN FORM ── */}
+              {mode === "login" && (
                 <form onSubmit={handleLogin} className="flex flex-col gap-4">
                   <div>
                     <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
@@ -1303,7 +914,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
               )}
 
               {/* ── EMAIL/PASSWORD SIGN UP FORM ── */}
-              {(selectedRole === "admin" || authMethod === "email") && mode === "signup" && (
+              {mode === "signup" && (
                 <form onSubmit={handleSignup} className="flex flex-col gap-3.5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="sm:col-span-2">
