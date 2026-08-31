@@ -1,3 +1,7 @@
+// ============================================================================
+// FIXED AUTHENTICATION CODE (AuthContext.tsx) - WITH PERSISTENT SESSION ON REFRESH
+// ============================================================================
+
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import type { ReactNode } from "react";
 import { supabase } from "../lib/supabase";
@@ -48,12 +52,108 @@ interface SignUpOptions {
   role: "customer" | "retailer";
 }
 
+// ─── Local Storage Session Recovery ──────────────────────────────────────────
+function getStoredUser(): AppUser | null {
+  try {
+    const savedAdmin = localStorage.getItem("subhone_active_admin_session");
+    if (savedAdmin) {
+      const parsed = JSON.parse(savedAdmin);
+      if (parsed?.email) {
+        return {
+          authUser: {
+            id: parsed.id || "admin_fixed_id",
+            email: parsed.email,
+            user_metadata: { role: "admin", full_name: parsed.fullName || "Admin" },
+          },
+          profile: {
+            id: parsed.id || "admin_fixed_id",
+            email: parsed.email,
+            full_name: parsed.fullName || "Admin",
+            role: "admin",
+            phone: "+91 98765 43210",
+            shop_name: "SubhOne Central Healthcare",
+            avatar_url: null,
+            approval_status: "approved",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        };
+      }
+    }
+
+    const savedUser = localStorage.getItem("subhone_active_user_session");
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser);
+      if (parsed?.id && parsed?.email) {
+        return {
+          authUser: {
+            id: parsed.id,
+            email: parsed.email,
+            phone: parsed.phone,
+            user_metadata: {
+              role: parsed.role || "customer",
+              full_name: parsed.fullName || "User",
+              phone: parsed.phone,
+              shop_name: parsed.shopName,
+              approval_status: parsed.approvalStatus || "approved",
+            },
+          },
+          profile: {
+            id: parsed.id,
+            email: parsed.email,
+            full_name: parsed.fullName || "User",
+            role: parsed.role || "customer",
+            phone: parsed.phone || null,
+            shop_name: parsed.shopName || null,
+            avatar_url: null,
+            approval_status: parsed.approvalStatus || "approved",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        };
+      }
+    }
+
+    const savedPhone = localStorage.getItem("subhone_active_phone_session");
+    if (savedPhone) {
+      const parsed = JSON.parse(savedPhone);
+      if (parsed?.id && parsed?.phone) {
+        return {
+          authUser: {
+            id: parsed.id,
+            phone: parsed.phone,
+            email: parsed.email,
+            user_metadata: { role: parsed.role || "customer", full_name: parsed.fullName || "User" },
+          },
+          profile: {
+            id: parsed.id,
+            full_name: parsed.fullName || "User",
+            role: parsed.role || "customer",
+            phone: parsed.phone,
+            shop_name: parsed.shopName || null,
+            avatar_url: null,
+            approval_status: "approved",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        };
+      }
+    }
+  } catch { }
+  return null;
+}
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [appUser, setAppUser] = useState<AppUser | null | undefined>(undefined);
+  // Initialize state synchronously from LocalStorage to prevent immediate logout redirection during page refresh
+  const [appUser, setAppUser] = useState<AppUser | null | undefined>(() => {
+    return getStoredUser() || undefined;
+  });
   const [pendingApprovalInfo, setPendingApprovalInfo] = useState<PendingApprovalInfo | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(() => {
+    return getStoredUser() ? false : true;
+  });
 
   const clearPendingApproval = useCallback(() => {
     setPendingApprovalInfo(null);
@@ -79,7 +179,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hydrateSession = useCallback(async (sessionUser: any) => {
     if (!sessionUser) {
-      setAppUser(null);
+      const fallbackUser = getStoredUser();
+      setAppUser(fallbackUser);
       setLoading(false);
       return;
     }
@@ -99,6 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentAccountStatus = profile?.approval_status || (rawMeta.approval_status as string) || "approved";
     if (currentAccountStatus === "blocked" && !isAdmin) {
       await supabase.auth.signOut();
+      localStorage.removeItem("subhone_active_user_session");
       setAppUser(null);
       setLoading(false);
       return;
@@ -171,8 +273,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Safety timeout
     const timeoutTimer = setTimeout(() => {
       if (mounted) {
+        const stored = getStoredUser();
+        if (stored) setAppUser(stored);
         setLoading(false);
       }
     }, 1000);
@@ -185,58 +290,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (data?.session?.user) {
             hydrateSession(data.session.user);
           } else {
-            try {
-              const savedUser = localStorage.getItem("subhone_active_user_session");
-              if (savedUser) {
-                const parsed = JSON.parse(savedUser);
-                if (parsed?.id && parsed?.email) {
-                  setAppUser({
-                    authUser: {
-                      id: parsed.id,
-                      email: parsed.email,
-                      phone: parsed.phone || undefined,
-                      user_metadata: {
-                        role: parsed.role || "customer",
-                        full_name: parsed.fullName || "User",
-                        phone: parsed.phone,
-                        shop_name: parsed.shopName,
-                        approval_status: parsed.approvalStatus || "approved",
-                      },
-                    },
-                    profile: {
-                      id: parsed.id,
-                      email: parsed.email,
-                      full_name: parsed.fullName || "User",
-                      role: parsed.role || "customer",
-                      phone: parsed.phone || null,
-                      shop_name: parsed.shopName || null,
-                      avatar_url: null,
-                      approval_status: parsed.approvalStatus || "approved",
-                      created_at: new Date().toISOString(),
-                      updated_at: new Date().toISOString(),
-                    },
-                  });
-                  setLoading(false);
-                  return;
-                }
-              }
-            } catch { }
-            setAppUser(null);
+            const stored = getStoredUser();
+            setAppUser(stored);
             setLoading(false);
           }
         }
       })
-      .catch((err) => {
-        console.warn("getSession error:", err);
+      .catch(() => {
+        if (mounted) {
+          clearTimeout(timeoutTimer);
+          const stored = getStoredUser();
+          setAppUser(stored);
+          setLoading(false);
+        }
       });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (mounted) {
         clearTimeout(timeoutTimer);
         if (session?.user) {
           hydrateSession(session.user);
-        } else {
+        } else if (event === "SIGNED_OUT") {
+          // Explicit sign out cleans storage
+          localStorage.removeItem("subhone_active_admin_session");
+          localStorage.removeItem("subhone_active_user_session");
+          localStorage.removeItem("subhone_active_phone_session");
           setAppUser(null);
+          setLoading(false);
+        } else {
+          // Initial session with null Supabase session must retain localStorage user
+          const stored = getStoredUser();
+          if (stored) {
+            setAppUser(stored);
+          } else {
+            setAppUser(null);
+          }
           setLoading(false);
         }
       }
@@ -276,10 +366,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(
     async (email: string, password: string, expectedRole?: UserRole): Promise<{ error: string | null }> => {
       setLoading(true);
-
-      // FIX: Email lowercased & password trimmed safely or raw
       const cleanEmail = email.trim().toLowerCase();
-      const cleanPass = password; // DO NOT TRIM PASSWORDS AS IT CAN CREATE MISMATCHES
+      const cleanPass = password;
 
       const isKnownAdmin = cleanEmail === "subhonehealthgroup@gmail.com" || cleanEmail === "admin@subhone.com";
 
@@ -306,6 +394,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           updated_at: new Date().toISOString(),
         };
 
+        try {
+          localStorage.setItem(
+            "subhone_active_admin_session",
+            JSON.stringify({
+              id: fallbackId,
+              email: cleanEmail,
+              fullName: adminProfile.full_name,
+              role: "admin",
+              timestamp: Date.now(),
+            })
+          );
+        } catch { }
+
         setAppUser({
           authUser: {
             id: fallbackId,
@@ -319,7 +420,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: null };
       }
 
-      // ── 1. Primary Authentication: Neon PostgreSQL Database ──
+      // 1. Primary Authentication: Neon PostgreSQL Database
       try {
         const neonAuthRes = await authenticateNeonUser(cleanEmail, cleanPass, expectedRole);
 
@@ -335,6 +436,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (expectedRole === "retailer" && u.role === "customer") {
             setLoading(false); return { error: "Access denied. This account is registered as a Customer." };
           }
+
+          try {
+            localStorage.setItem(
+              "subhone_active_user_session",
+              JSON.stringify({
+                id: u.id,
+                email: u.email,
+                fullName: u.fullName,
+                role: u.role,
+                phone: u.phone,
+                shopName: u.shopName,
+                status: u.status,
+                approvalStatus: u.approvalStatus,
+                timestamp: Date.now(),
+              })
+            );
+          } catch { }
 
           setAppUser({
             authUser: {
@@ -363,7 +481,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn("Notice during Neon auth attempt:", neonErr);
       }
 
-      // ── 2. Fallback: Supabase / Native Neon Auth ──
+      // 2. Fallback: Supabase / Native Neon Auth
       let authUser: any = null;
       try {
         const neonRes = await neonSignInWithPassword(cleanEmail, cleanPass);
@@ -391,6 +509,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false); return { error: "Access denied. This account does not have Admin privileges." };
       }
 
+      try {
+        localStorage.setItem(
+          "subhone_active_user_session",
+          JSON.stringify({
+            id: authUser.id,
+            email: authUser.email,
+            fullName: authUser.user_metadata?.full_name || "User",
+            role: userRole,
+            phone: authUser.user_metadata?.phone,
+            shopName: authUser.user_metadata?.shop_name,
+            approvalStatus: "approved",
+            timestamp: Date.now(),
+          })
+        );
+      } catch { }
+
       setAppUser({
         authUser: authUser,
         profile: profile || {
@@ -416,19 +550,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = useCallback(
     async (opts: SignUpOptions): Promise<{ error: string | null; emailConfirmationRequired: boolean; isPendingApproval?: boolean }> => {
       setLoading(true);
-
       const safeRole = opts.role === "retailer" ? "retailer" : "customer";
-
-      // FIX: Standardize email to lower-case across all auth calls to prevent case sensitivity login issues
       const cleanEmail = opts.email.trim().toLowerCase();
       const cleanPass = opts.password;
 
-      // 1. Dual authentication credentials registry execution
       try {
         await neonSignUp(cleanEmail, cleanPass);
       } catch (err) { }
 
-      // 2. Register natively with Supabase (handle email confirmation flag!)
       let emailConfirmationRequired = false;
       try {
         const { data: supaData } = await supabase.auth.signUp({
@@ -445,13 +574,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
         });
 
-        // Check if Supabase requires email verification
         if (supaData?.user && !supaData?.session) {
           emailConfirmationRequired = true;
         }
       } catch (supaException) { }
 
-      // 3. Create User record in Neon PostgreSQL Database
       const neonRes = await createNeonUser({
         email: cleanEmail,
         password: cleanPass,
@@ -468,7 +595,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const createdUser = neonRes.user!;
 
-      // 4. Properly inform user if Email confirmation is active
       if (emailConfirmationRequired) {
         setLoading(false);
         return { error: null, emailConfirmationRequired: true, isPendingApproval: false };
@@ -485,7 +611,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: null, emailConfirmationRequired: false, isPendingApproval: true };
       }
 
-      // 5. Customer Auto-Login (Session Storage & State)
       try {
         localStorage.setItem(
           "subhone_active_user_session",
