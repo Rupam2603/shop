@@ -70,12 +70,12 @@ export async function verifyPasswordHash(password: string, storedHash: string): 
 
 export async function fetchAllUsers(): Promise<ManagedUser[]> {
   try {
-    const rows = await sql.query(`
+    const rows = await sql`
       SELECT id, name, email, role, status, business_name, created_at, approved_at, approved_by, token_version
       FROM public.users
       WHERE deleted_at IS NULL
       ORDER BY created_at DESC
-    `);
+    `;
 
     return rows.map((u: any) => ({
       id: u.id,
@@ -109,7 +109,7 @@ export async function createNeonUser(opts: {
     const isRetailer = opts.role === "retailer";
     const initialStatus = isRetailer ? "pending" : "active";
 
-    const existing = await sql.query(`SELECT id FROM public.users WHERE LOWER(email) = $1 AND deleted_at IS NULL LIMIT 1`, [cleanEmail]);
+    const existing = await sql`SELECT id FROM public.users WHERE LOWER(email) = ${cleanEmail} AND deleted_at IS NULL LIMIT 1`;
     if (existing && existing.length > 0) {
       return { success: false, error: "An account with this email address already exists. Please sign in." };
     }
@@ -117,21 +117,17 @@ export async function createNeonUser(opts: {
     const rawPass = opts.password || "SubhOne@2026";
     const { hash } = await hashPasswordWithSalt(rawPass);
 
-    const insertResult = await sql.query(`
+    const insertResult = await sql`
       INSERT INTO public.users (name, email, password_hash, role, status, business_name) 
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id, created_at, token_version`,
-      [cleanName, cleanEmail, hash, opts.role, initialStatus, cleanShop]
-    );
+      VALUES (${cleanName}, ${cleanEmail}, ${hash}, ${opts.role}, ${initialStatus}, ${cleanShop})
+      RETURNING id, created_at, token_version`;
 
     const newUserId = insertResult[0].id;
 
     if (isRetailer && insertResult.length > 0) {
-      await sql.query(`
+      await sql`
         INSERT INTO public.retailer_approval_requests (user_id, status)
-        VALUES ($1, 'pending')`, 
-        [newUserId]
-      );
+        VALUES (${newUserId}, 'pending')`;
     }
 
     return {
@@ -163,10 +159,10 @@ export async function authenticateNeonUser(
 ): Promise<{ success: boolean; user?: ManagedUser; error?: string; isBlocked?: boolean; }> {
   const cleanEmail = email.trim().toLowerCase();
   try {
-    const rows = await sql.query(`
+    const rows = await sql`
       SELECT id, name, email, password_hash, role, status, business_name, created_at, approved_at, approved_by, token_version, deleted_at
       FROM public.users
-      WHERE LOWER(email) = $1 LIMIT 1`, [cleanEmail]);
+      WHERE LOWER(email) = ${cleanEmail} LIMIT 1`;
 
     if (!rows || rows.length === 0) {
       await writeLoginLog({ email: cleanEmail, status: "failed" });
@@ -210,7 +206,7 @@ export async function authenticateNeonUser(
       return { success: false, error: errorMsg };
     }
 
-    await sql.query(`UPDATE public.users SET updated_at = NOW() WHERE id = $1`, [u.id]).catch(() => {});
+    await sql`UPDATE public.users SET updated_at = NOW() WHERE id = ${u.id}`.catch(() => {});
     await writeLoginLog({ userId: u.id, email: cleanEmail, role: u.role, status: "success" });
 
     return {
@@ -243,36 +239,51 @@ export async function updateUserAccountStatus(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const isApproving = newStatus === "active";
-    await sql.query("BEGIN");
+    const finalAdminId = adminId === "admin_fixed_id" ? null : adminId;
 
     // 1. Update the users table
-    const tokenBumpSql = newStatus === "blocked" ? `, token_version = token_version + 1` : "";
-
-    await sql.query(`
-      UPDATE public.users 
-      SET 
-        status = $1, 
-        updated_at = NOW() 
-        ${isApproving ? `, approved_by = $2, approved_at = NOW()` : ""}
-        ${tokenBumpSql}
-      WHERE id = $3
-    `, isApproving ? [newStatus, adminId, userId] : [newStatus, userId]);
+    if (isApproving) {
+      await sql`
+        UPDATE public.users 
+        SET 
+          status = ${newStatus}, 
+          updated_at = NOW(),
+          approved_by = ${finalAdminId}, 
+          approved_at = NOW()
+        WHERE id = ${userId}
+      `;
+    } else if (newStatus === "blocked") {
+      await sql`
+        UPDATE public.users 
+        SET 
+          status = ${newStatus}, 
+          updated_at = NOW(),
+          token_version = token_version + 1
+        WHERE id = ${userId}
+      `;
+    } else {
+      await sql`
+        UPDATE public.users 
+        SET 
+          status = ${newStatus}, 
+          updated_at = NOW()
+        WHERE id = ${userId}
+      `;
+    }
 
     // 2. Try to update retailer_approval_requests if it exists for this user
-    await sql.query(`
+    await sql`
       UPDATE public.retailer_approval_requests
       SET 
-        status = $1, 
+        status = ${newStatus}, 
         reviewed_at = NOW(), 
-        reviewed_by = $2,
-        notes = COALESCE($3, notes)
-      WHERE user_id = $4
-    `, [newStatus, adminId, notes || null, userId]);
+        reviewed_by = ${finalAdminId},
+        notes = COALESCE(${notes || null}, notes)
+      WHERE user_id = ${userId}
+    `;
 
-    await sql.query("COMMIT");
     return { success: true };
   } catch (err: any) {
-    await sql.query("ROLLBACK").catch(() => {});
     console.error("Error in updateUserAccountStatus:", err);
     return { success: false, error: err?.message || "Failed to update status" };
   }
@@ -280,11 +291,11 @@ export async function updateUserAccountStatus(
 
 export async function softDeleteUser(userId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    await sql.query(`
+    await sql`
       UPDATE public.users 
       SET deleted_at = NOW(), token_version = token_version + 1, updated_at = NOW() 
-      WHERE id = $1
-    `, [userId]);
+      WHERE id = ${userId}
+    `;
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err?.message };
@@ -293,7 +304,7 @@ export async function softDeleteUser(userId: string): Promise<{ success: boolean
 
 export async function hardDeleteUser(userId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    await sql.query(`DELETE FROM public.users WHERE id = $1`, [userId]);
+    await sql`DELETE FROM public.users WHERE id = ${userId}`;
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err?.message };
@@ -302,7 +313,7 @@ export async function hardDeleteUser(userId: string): Promise<{ success: boolean
 
 export async function getUserById(userId: string): Promise<ManagedUser | null> {
   try {
-    const rows = await sql.query(`SELECT * FROM public.users WHERE id = $1 AND deleted_at IS NULL LIMIT 1`, [userId]);
+    const rows = await sql`SELECT * FROM public.users WHERE id = ${userId} AND deleted_at IS NULL LIMIT 1`;
     if (!rows || rows.length === 0) return null;
     const u = rows[0];
     return {
@@ -327,7 +338,7 @@ export async function getUserById(userId: string): Promise<ManagedUser | null> {
 export async function adminChangeUserPassword(userId: string, newPass: string) {
   try {
     const { hash } = await hashPasswordWithSalt(newPass);
-    await sql.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, userId]);
+    await sql`UPDATE users SET password_hash = ${hash} WHERE id = ${userId}`;
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };

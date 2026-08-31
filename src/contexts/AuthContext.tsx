@@ -474,6 +474,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           setLoading(false);
           return { error: null };
+        } else if (neonAuthRes.error && neonAuthRes.error !== "Incorrect email or password." && neonAuthRes.error !== "An unexpected error occurred.") {
+          setLoading(false);
+          return { error: neonAuthRes.error };
         }
       } catch (neonErr) {
         console.warn("Notice during Neon auth attempt:", neonErr);
@@ -608,38 +611,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: null, emailConfirmationRequired: false, isPendingApproval: true };
       }
 
-      try {
-        localStorage.setItem(
-          "subhone_active_user_session",
-          JSON.stringify({
-            id: createdUser.id,
-            email: createdUser.email,
-            fullName: createdUser.fullName,
-            role: "customer",
-            timestamp: Date.now(),
-          })
-        );
-      } catch { }
-
-      setAppUser({
-        authUser: {
-          id: createdUser.id,
-          email: createdUser.email,
-          user_metadata: { full_name: createdUser.fullName, role: "customer" },
-        },
-        profile: {
-          id: createdUser.id,
-          email: createdUser.email,
-          full_name: createdUser.fullName,
-          role: "customer",
-          phone: null,
-          shop_name: createdUser.businessName || null,
-          avatar_url: null,
-          approval_status: "approved",
-          created_at: createdUser.createdAt,
-          updated_at: createdUser.createdAt,
-        },
-      });
+      const loginRes = await signIn(cleanEmail, cleanPass, safeRole);
+      if (loginRes?.error) {
+        setLoading(false);
+        return { error: loginRes.error, emailConfirmationRequired: false, isPendingApproval: false };
+      }
 
       setLoading(false);
       return { error: null, emailConfirmationRequired: false, isPendingApproval: false };
