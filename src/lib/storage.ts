@@ -1,26 +1,35 @@
-/**
- * Uploads a File or Blob or Base64 string and returns its permanent public URL.
- *
- * NOTE: real file storage is not wired up yet. The Neon Data API has no file
- * storage of its own — this needs Neon Object Storage (currently public
- * beta) or another object store, provisioned and wired up as a follow-up.
- * A plain URL or an already-hosted string is still passed through as-is.
- */
 export async function uploadImageToSupabase(
   fileOrBase64: File | Blob | string,
-  _folder: string = "uploads"
+  folder: string = "uploads"
 ): Promise<{ url: string | null; error: string | null }> {
-  if (typeof fileOrBase64 === "string") {
-    if (fileOrBase64.startsWith("http://") || fileOrBase64.startsWith("https://")) {
-      return { url: fileOrBase64, error: null };
+  try {
+    if (typeof fileOrBase64 === "string") {
+      if (fileOrBase64.startsWith("http://") || fileOrBase64.startsWith("https://")) {
+        return { url: fileOrBase64, error: null };
+      }
+      if (!fileOrBase64.startsWith("data:")) {
+        return { url: fileOrBase64, error: null };
+      }
     }
-    if (!fileOrBase64.startsWith("data:")) {
-      return { url: fileOrBase64, error: null };
-    }
-  }
 
-  return {
-    url: null,
-    error: "Image upload isn't available yet — file storage hasn't been set up for this project.",
-  };
+    // Only base64 data URLs need uploading — send to our server-side API route
+    if (typeof fileOrBase64 !== "string") {
+      return { url: null, error: "Only base64 image data is currently supported" };
+    }
+
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: fileOrBase64, folder }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      return { url: null, error: json.error || "Upload failed" };
+    }
+    return { url: json.url, error: null };
+  } catch (error: any) {
+    console.error("Upload error:", error);
+    return { url: null, error: error?.message || "Failed to upload image" };
+  }
 }

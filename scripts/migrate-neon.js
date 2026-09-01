@@ -143,6 +143,7 @@ async function runMigration() {
       status TEXT NOT NULL DEFAULT 'Processing',
       user_role TEXT DEFAULT 'customer',
       shop_name TEXT,
+      idempotency_key TEXT UNIQUE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
@@ -154,6 +155,8 @@ async function runMigration() {
       order_id TEXT NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
       product_id TEXT,
       product_name TEXT NOT NULL,
+      sku TEXT,
+      variant TEXT,
       quantity INTEGER NOT NULL DEFAULT 1,
       unit_price NUMERIC NOT NULL DEFAULT 0,
       total_price NUMERIC NOT NULL DEFAULT 0,
@@ -254,6 +257,21 @@ async function runMigration() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+
+  await sql.query(`
+    CREATE TABLE IF NOT EXISTS public.failed_webhooks (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+      payload JSONB NOT NULL,
+      error TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  // Alter tables to add new columns if they exist but are missing these columns
+  await sql.query(`ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS idempotency_key TEXT UNIQUE;`);
+  await sql.query(`ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS sku TEXT;`);
+  await sql.query(`ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS variant TEXT;`);
+
 
   // Insert initial default settings
   await sql.query(`

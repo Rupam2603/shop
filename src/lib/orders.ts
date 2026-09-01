@@ -33,6 +33,8 @@ export interface DbOrderItem {
   order_id: string;
   product_id: string | null;
   product_name: string;
+  sku?: string | null;
+  variant?: string | null;
   quantity: number;
   unit_price: number;
   total_price: number;
@@ -103,10 +105,7 @@ export async function placeOrder(params: {
     }
 
     const userId = await getEffectiveUserId(params.userId);
-    const orderNumber = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
-
-    let orderData: any = null;
-    let orderId = `ord_${Date.now()}`;
+    const idempotencyKey = crypto.randomUUID();
 
     const effectiveShippingAddress = {
       ...(params.shippingAddress || {}),
@@ -114,88 +113,54 @@ export async function placeOrder(params: {
       shop_name: params.shopName || null,
     };
 
-    // 1. Insert order record into Supabase
-    try {
-      const { data, error } = await supabase
-        .from("orders")
-        .insert([
-          {
-            order_number: orderNumber,
-            user_id: userId,
-            customer_name: params.customerName || "Customer",
-            customer_phone: params.customerPhone || "+91 98765 00000",
-            shipping_address: effectiveShippingAddress,
-            total_amount: params.totalAmount,
-            payment_method: params.paymentMethod || "UPI",
-            payment_status: "Paid",
-            status: "Processing",
-          },
-        ])
-        .select()
-        .single();
+    const res = await fetch('/api/create-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        idempotencyKey,
+        cartItems: params.items,
+        customer: {
+          id: userId,
+          name: params.customerName || "Customer",
+          phone: params.customerPhone || "+91 98765 00000"
+        },
+        paymentType: params.paymentMethod === 'Card' || params.paymentMethod === 'UPI' ? 'online' : params.paymentMethod,
+        paymentRef: null,
+        totalAmount: params.totalAmount,
+        shippingAddress: effectiveShippingAddress,
+        userRole: params.userRole,
+        shopName: params.shopName
+      })
+    });
 
-      if (data && !error) {
-        orderData = data;
-        orderId = data.id;
-      } else if (error) {
-        console.warn("Notice inserting order to Supabase:", error.message);
-      }
-    } catch (e) {
-      console.warn("Supabase order insert error:", e);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Network Error' }));
+      throw new Error(err.error || 'Failed to place order');
     }
 
-    // 2. Insert order items (the DB auto-generates its own id on insert below;
-    // this client-side id is only used for the optimistic local cache copy)
+    const data = await res.json();
+    const orderId = data.id;
+    const orderNumber = data.order_number;
+
     const orderItemsPayload: DbOrderItem[] = params.items.map((item) => ({
       id: crypto.randomUUID(),
       order_id: orderId,
       product_id: item.productId || null,
       product_name: item.name,
+      sku: item.sku || null,
+      variant: item.variant || null,
       quantity: item.quantity,
       unit_price: item.price,
       total_price: item.price * item.quantity,
       image_url: item.imageUrl || null,
     }));
 
-    if (orderData) {
-      try {
-        await supabase.from("order_items").insert(
-          orderItemsPayload.map((it) => ({
-            order_id: it.order_id,
-            product_id: it.product_id,
-            product_name: it.product_name,
-            quantity: it.quantity,
-            unit_price: it.unit_price,
-            total_price: it.total_price,
-            image_url: it.image_url,
-          }))
-        );
-      } catch (e) {
-        console.warn("Notice inserting order_items:", e);
-      }
-
-      // Decrement product stock in real-time
-      for (const item of params.items) {
-        try {
-          if (item.productId && item.productId.includes("-")) {
-            const { data: prod } = await supabase.from("products").select("stock").eq("id", item.productId).single();
-            if (prod) {
-              await supabase.from("products").update({ stock: Math.max(0, prod.stock - item.quantity) }).eq("id", item.productId);
-            }
-          } else {
-            const { data: prod } = await supabase.from("products").select("id, stock").eq("name", item.name).maybeSingle();
-            if (prod) {
-              await supabase.from("products").update({ stock: Math.max(0, prod.stock - item.quantity) }).eq("id", prod.id);
-            }
-          }
-        } catch {}
-      }
-
-      // Clear user's cart in Supabase
-      try {
-        await supabase.from("cart_items").delete().eq("user_id", userId);
-      } catch {}
-    }
+    // Clear user's cart in Supabase
+    try {
+      await supabase.from("cart_items").delete().eq("user_id", userId);
+    } catch {}
 
     const fullOrder: DbOrder = {
       id: orderId,
@@ -205,8 +170,8 @@ export async function placeOrder(params: {
       customer_phone: params.customerPhone || "+91 98765 00000",
       shipping_address: effectiveShippingAddress,
       total_amount: params.totalAmount,
-      payment_method: params.paymentMethod || "UPI",
-      payment_status: "Paid",
+      payment_method: params.paymentMethod || "COD",
+      payment_status: params.paymentMethod === 'Card' || params.paymentMethod === 'UPI' ? "Paid" : "Pending",
       status: "Processing",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

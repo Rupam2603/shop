@@ -1043,6 +1043,14 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             payment: o.payment_method,
             role: finalRole,
             businessName: finalShopName,
+            orderItems: (o.order_items || []).map((oi: any) => ({
+              name: oi.product_name || "Unknown Product",
+              quantity: oi.quantity || 1,
+              price: Number(oi.unit_price || 0),
+              mrp: oi.mrp ? Number(oi.mrp) : Math.round(Number(oi.unit_price || 0) * 1.15),
+              batch: oi.batch || "SBH-8842",
+              expiry: oi.expiry || "12/28"
+            })),
           };
         });
     }

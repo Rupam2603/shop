@@ -61,12 +61,12 @@ function getStoredUser(): AppUser | null {
       if (parsed?.email) {
         return {
           authUser: {
-            id: parsed.id || "admin_fixed_id",
+            id: parsed.id || "00000000-0000-0000-0000-000000000000",
             email: parsed.email,
             user_metadata: { role: "admin", full_name: parsed.fullName || "Admin" },
           },
           profile: {
-            id: parsed.id || "admin_fixed_id",
+            id: parsed.id || "00000000-0000-0000-0000-000000000000",
             email: parsed.email,
             full_name: parsed.fullName || "Admin",
             role: "admin",
@@ -380,7 +380,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: "Incorrect admin password. Please enter the valid admin password." };
         }
 
-        const fallbackId = "admin_fixed_id";
+        const fallbackId = "00000000-0000-0000-0000-000000000000";
         const adminProfile: Profile = {
           id: fallbackId,
           full_name: "Store Administrator",

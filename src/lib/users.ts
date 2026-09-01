@@ -239,7 +239,7 @@ export async function updateUserAccountStatus(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const isApproving = newStatus === "active";
-    const finalAdminId = adminId === "admin_fixed_id" ? null : adminId;
+    const finalAdminId = adminId === "00000000-0000-0000-0000-000000000000" || adminId === "admin_fixed_id" ? null : adminId;
 
     // 1. Update the users table
     if (isApproving) {
