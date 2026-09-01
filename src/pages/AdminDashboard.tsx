@@ -361,28 +361,6 @@ const INITIAL_PRODUCTS: Product[] = [
   { id: 36, name: "Glandiner Oil 145ml", category: "Medical Supplies & General", brand: "Glandiner", sku: "GLD-003", hsn: "9018", mrp: 145, customerPrice: 120, retailerPrice: 102, stock: 64, details: "145ml massage oil bottle" },
 ];
 
-const MOCK_REVENUE_HISTORY = [
-  { date: "Aug 28, 2026", orders: 23, revenue: 14283, upi: 8234, card: 3849, cod: 2200 },
-  { date: "Aug 27, 2026", orders: 19, revenue: 12847, upi: 6420, card: 4190, cod: 2237 },
-  { date: "Aug 26, 2026", orders: 25, revenue: 16734, upi: 9340, card: 5120, cod: 2274 },
-  { date: "Aug 25, 2026", orders: 21, revenue: 13920, upi: 7840, card: 3980, cod: 2100 },
-  { date: "Aug 24, 2026", orders: 17, revenue: 10560, upi: 5823, card: 2940, cod: 1797 },
-  { date: "Aug 23, 2026", orders: 29, revenue: 18492, upi: 10234, card: 6010, cod: 2248 },
-  { date: "Aug 22, 2026", orders: 22, revenue: 15103, upi: 8470, card: 4320, cod: 2313 },
-];
-
-const MOCK_ORDERS = [
-  { id: "ORD-2847", customer: "Priya Sharma", phone: "98765 43210", items: 3, amount: 763, status: "Delivered", date: "Aug 27, 2026", payment: "UPI", role: "customer" as const },
-  { id: "ORD-2846", customer: "Sharma Medical & Surgical", phone: "87654 32109", items: 12, amount: 4890, status: "Shipped", date: "Aug 27, 2026", payment: "Card", role: "retailer" as const, businessName: "Sharma Medical Store" },
-  { id: "ORD-2845", customer: "Anita Patel", phone: "76543 21098", items: 5, amount: 1247, status: "Processing", date: "Aug 27, 2026", payment: "COD", role: "customer" as const },
-  { id: "ORD-2844", customer: "Apex Pharma Distributors", phone: "65432 10987", items: 25, amount: 12450, status: "Delivered", date: "Aug 26, 2026", payment: "UPI", role: "retailer" as const, businessName: "Apex Pharma" },
-  { id: "ORD-2843", customer: "Meera Nair", phone: "54321 09876", items: 1, amount: 332, status: "Shipped", date: "Aug 26, 2026", payment: "UPI", role: "customer" as const },
-  { id: "ORD-2842", customer: "Kolkata City Meds", phone: "43210 98765", items: 18, amount: 7650, status: "Cancelled", date: "Aug 26, 2026", payment: "Card", role: "retailer" as const, businessName: "Kolkata City Meds" },
-  { id: "ORD-2841", customer: "Deepa Krishnan", phone: "32109 87654", items: 2, amount: 519, status: "Delivered", date: "Aug 25, 2026", payment: "UPI", role: "customer" as const },
-  { id: "ORD-2840", customer: "Apollo Care Chemist", phone: "21098 76543", items: 30, amount: 14834, status: "Processing", date: "Aug 25, 2026", payment: "Card", role: "retailer" as const, businessName: "Apollo Care Chemist" },
-  { id: "ORD-2839", customer: "Sunita Rao", phone: "10987 65432", items: 1, amount: 105, status: "Delivered", date: "Aug 25, 2026", payment: "COD", role: "customer" as const },
-  { id: "ORD-2838", customer: "Gupta Health Pharmacy", phone: "09876 54321", items: 15, amount: 6271, status: "Shipped", date: "Aug 24, 2026", payment: "UPI", role: "retailer" as const, businessName: "Gupta Health Pharmacy" },
-];
 
 const TAB_ITEMS: { id: AdminTab; label: string; icon: React.ReactElement }[] = [
   { id: "dashboard", label: "Dashboard", icon: <Icons.Dashboard className="w-4 h-4" /> },
@@ -1054,9 +1032,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           };
         });
     }
-    return MOCK_ORDERS
-      .filter((o) => !deletedOrderIds.includes(o.id))
-      .map((o) => ({ ...o, dbId: "", rawDate: undefined }));
+    return [];
   }, [dbOrders, deletedOrderIds]);
 
   const filteredOrders = useMemo(() => {
@@ -1595,7 +1571,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               onUpdateStatus={handleUpdateLabBookingStatus}
             />
           )}
-          {activeTab === "revenue" && <RevenueTab />}
+          {activeTab === "revenue" && <RevenueTab liveOrders={liveOrders} />}
           {activeTab === "settings" && (
             <SettingsTab
               settings={settings}
@@ -3560,7 +3536,7 @@ function LabBookingsTab({
 }
 
 /* ─── TAB: REVENUE & FINANCIAL ANALYTICS ─── */
-function RevenueTab() {
+function RevenueTab({ liveOrders }: { liveOrders: any[] }) {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -3568,10 +3544,41 @@ function RevenueTab() {
     return () => clearInterval(id);
   }, []);
 
-  const today = MOCK_REVENUE_HISTORY[0];
-  const weekTotal = MOCK_REVENUE_HISTORY.reduce((s, r) => s + r.revenue, 0);
-  const weekOrders = MOCK_REVENUE_HISTORY.reduce((s, r) => s + r.orders, 0);
-  const avgDaily = Math.round(weekTotal / MOCK_REVENUE_HISTORY.length);
+  const revenueHistory = useMemo(() => {
+    const history = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+      const rawDateStr = d.toISOString().split("T")[0];
+      
+      const dayOrders = liveOrders.filter(o => o.rawDate === rawDateStr && o.status !== "Cancelled");
+      const orders = dayOrders.length;
+      const revenue = dayOrders.reduce((acc, o) => acc + o.amount, 0);
+      const upi = dayOrders.filter(o => o.payment === "UPI").reduce((acc, o) => acc + o.amount, 0);
+      const card = dayOrders.filter(o => o.payment === "Card").reduce((acc, o) => acc + o.amount, 0);
+      const cod = dayOrders.filter(o => o.payment === "COD").reduce((acc, o) => acc + o.amount, 0);
+      
+      history.push({
+        date: dateStr,
+        rawDate: rawDateStr,
+        orders,
+        revenue,
+        upi,
+        card,
+        cod
+      });
+    }
+    return history;
+  }, [liveOrders]);
+
+  const today = revenueHistory[0] || { revenue: 0, orders: 0, upi: 0, card: 0, cod: 0 };
+  const yesterday = revenueHistory[1] || { revenue: 0, orders: 0 };
+  const weekTotal = revenueHistory.reduce((s, r) => s + r.revenue, 0);
+  const weekOrders = revenueHistory.reduce((s, r) => s + r.orders, 0);
+  const avgDaily = Math.round(weekTotal / Math.max(1, revenueHistory.length));
+  
+  const growthRate = yesterday.revenue > 0 ? Math.round(((today.revenue - yesterday.revenue) / yesterday.revenue) * 100) : 100;
 
   return (
     <div className="flex flex-col gap-6">
@@ -3591,7 +3598,7 @@ function RevenueTab() {
             <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#657969]">Today&apos;s Gross GMV</p>
             <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-3xl mt-1">₹{today.revenue.toLocaleString()}</p>
           </div>
-          <p className="text-xs text-emerald-700 font-bold mt-3">+{Math.round(((today.revenue - MOCK_REVENUE_HISTORY[1].revenue) / MOCK_REVENUE_HISTORY[1].revenue) * 100)}% vs yesterday</p>
+          <p className="text-xs text-emerald-700 font-bold mt-3">{growthRate > 0 ? '+' : ''}{growthRate}% vs yesterday</p>
         </div>
 
         <div className="glass-admin-card rounded-3xl p-6 flex flex-col justify-between">
@@ -3619,7 +3626,7 @@ function RevenueTab() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e4ede2]">
-              {MOCK_REVENUE_HISTORY.map((r, i) => (
+              {revenueHistory.map((r, i) => (
                 <tr key={r.date} className="hover:bg-white/80 transition-colors">
                   <td className="py-3 font-bold text-[#073b4c]">{r.date} {i === 0 && " (Today)"}</td>
                   <td className="py-3 text-[#596b5e] font-semibold">{r.orders}</td>

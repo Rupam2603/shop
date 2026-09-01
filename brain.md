@@ -113,4 +113,7 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - `CartDrawer.tsx`: Full-width on phones, uses `h-[100dvh]`, removed `pl-10` offset.
   - `CheckoutModal.tsx`: Bottom-sheet pattern on mobile (`items-end sm:items-center`), `rounded-t-2xl sm:rounded-2xl`, `max-h-[80dvh]`.
   - `LoginPage.tsx`: Uses `min-h-[100dvh]` for dynamic viewport height.
+- **Order Management & Invoices (Neon Serverless)**:
+  - Order creation handled atomically via `@neondatabase/serverless` API routes (`/api/create-order` and `/api/webhook-payment`) to prevent order loss and ensure exact inventory decrements via ACID transactions.
+  - `order_items` schema upgraded to store price, product name, and snapshot data, decoupling past invoices from live product table changes. Invoices generated via `AdminDashboard.tsx` and `invoiceGenerator.ts` now perfectly reflect the historic state of an order using this schema.
 

@@ -124,9 +124,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             };
           });
 
-        if (loaded.length > 0) {
-          setItems(loaded);
-        }
+        setItems(loaded);
+      } else {
+        setItems([]);
       }
     } catch (err) {
       console.warn("Supabase cart sync error:", err);
@@ -143,8 +143,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user?.id) {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setUserId(null);
+        setItems([]);
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+        } catch (e) {}
+      } else if (session?.user?.id) {
         setUserId(session.user.id);
         loadCartFromSupabase(session.user.id);
       } else {

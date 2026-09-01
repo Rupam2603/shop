@@ -1,4 +1,6 @@
-import { neon } from '@neondatabase/serverless';
+import { Pool } from '@neondatabase/serverless';
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UOkw6Ks9FcjE@ep-falling-cell-azm5qjrf-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require" });
 
 export default async function handler(req: any, res: any) {
     if (req.method !== 'POST') {
@@ -8,7 +10,7 @@ export default async function handler(req: any, res: any) {
     // ACK the webhook fast, always — gateways disable webhooks that time out
     res.status(200).send('ok');
 
-    const sql = neon(process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UOkw6Ks9FcjE@ep-falling-cell-azm5qjrf-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require");
+    const client = await pool.connect();
 
     try {
         const { payment_id, cartItems, customer, paymentType, totalAmount, shippingAddress, userRole, shopName } = req.body;
@@ -20,17 +22,18 @@ export default async function handler(req: any, res: any) {
 
         // Call the same logic for order creation
         // 1. Check idempotency first — prevents duplicate/lost orders on retry
-        const existing = await sql(`SELECT id, order_number FROM orders WHERE idempotency_key = $1`, [idempotencyKey]);
+        const { rows: existing } = await client.query(`SELECT id, order_number FROM orders WHERE idempotency_key = $1`, [idempotencyKey]);
         if (existing.length > 0) {
+            client.release();
             return;
         }
 
         const orderNumber = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
 
-        await sql('BEGIN');
+        await client.query('BEGIN');
 
         try {
-            const orderRes = await sql(`
+            const { rows: orderRes } = await client.query(`
                 INSERT INTO orders (
                     order_number, user_id, customer_name, customer_phone, shipping_address, 
                     total_amount, payment_method, payment_status, status, user_role, shop_name, idempotency_key
@@ -45,7 +48,7 @@ export default async function handler(req: any, res: any) {
             const orderId = orderRes[0].id;
 
             for (const item of cartItems) {
-                await sql(`
+                await client.query(`
                     INSERT INTO order_items (
                         order_id, product_id, product_name, sku, variant, quantity, unit_price, total_price, image_url
                     )
@@ -60,28 +63,31 @@ export default async function handler(req: any, res: any) {
                 if (targetId) {
                     if (targetId.includes('-')) {
                         // UUID format, presumably id
-                        await sql(`UPDATE products SET stock = GREATEST(0, stock - $1) WHERE id = $2`, [item.quantity, targetId]);
+                        await client.query(`UPDATE products SET stock = GREATEST(0, stock - $1) WHERE id = $2`, [item.quantity, targetId]);
                     } else {
                         // string format, presumably name
-                        await sql(`UPDATE products SET stock = GREATEST(0, stock - $1) WHERE name = $2`, [item.quantity, item.name]);
+                        await client.query(`UPDATE products SET stock = GREATEST(0, stock - $1) WHERE name = $2`, [item.quantity, item.name]);
                     }
                 }
             }
 
-            await sql('COMMIT');
+            await client.query('COMMIT');
+            client.release();
         } catch (err) {
-            await sql('ROLLBACK');
+            await client.query('ROLLBACK');
+            client.release();
             throw err;
         }
     } catch (err: any) {
         // CRITICAL: log to a dead-letter table
         try {
-            await sql(
+            await client.query(
                 `INSERT INTO failed_webhooks (payload, error, created_at) VALUES ($1,$2,now())`,
                 [JSON.stringify(req.body), err.message]
             );
         } catch (logErr) {
             console.error('Failed to log webhook error:', logErr);
         }
+        client.release();
     }
 }
