@@ -13,6 +13,8 @@ export interface CartItem {
   mrp: number;
   imageUrl: string;
   quantity: number;
+  sku?: string | null;
+  retailerPrice?: number;
 }
 
 export interface AddToCartPayload {
@@ -81,6 +83,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<"customer" | "retailer" | "admin">("customer");
 
   // Sync to localStorage whenever items change
   useEffect(() => {
@@ -92,7 +95,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [items]);
 
   // Load from Supabase on auth change
-  const loadCartFromSupabase = useCallback(async (uid: string) => {
+  const loadCartFromSupabase = useCallback(async (uid: string, role: "customer" | "retailer" | "admin" = "customer") => {
     if (!isUuid(uid)) return;
     try {
       const { data, error } = await supabase
@@ -117,10 +120,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               name: p.name,
               brand: p.brand || "Generic",
               category: p.category_name || "Medicines",
-              price: Number(p.customer_price) || 0,
+              price: Number(role === "retailer" ? p.retailer_price : p.customer_price) || 0,
               mrp: Number(p.mrp) || Number(p.customer_price) || 0,
               imageUrl: p.image_url || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80",
               quantity: Math.max(1, row.quantity || 1),
+              sku: p.sku || null,
+              retailerPrice: Number(p.retailer_price) || 0,
             };
           });
 
@@ -134,11 +139,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const syncAuthenticatedCart = async (uid: string, metadataRole?: string) => {
+      let role: "customer" | "retailer" | "admin" = metadataRole === "retailer" ? "retailer" : metadataRole === "admin" ? "admin" : "customer";
+      try {
+        const { data: profile } = await supabase.from("profiles").select("role").eq("id", uid).maybeSingle();
+        if (profile?.role === "retailer" || profile?.role === "admin" || profile?.role === "customer") role = profile.role;
+      } catch {}
+      setUserId(uid);
+      setUserRole(role);
+      await loadCartFromSupabase(uid, role);
+    };
+
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user?.id) {
-        setUserId(user.id);
-        loadCartFromSupabase(user.id);
-      }
+      if (user?.id) syncAuthenticatedCart(user.id, user.user_metadata?.role as string);
     });
 
     const {
@@ -146,13 +159,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         setUserId(null);
+        setUserRole("customer");
         setItems([]);
         try {
           localStorage.removeItem(STORAGE_KEY);
         } catch (e) {}
       } else if (session?.user?.id) {
-        setUserId(session.user.id);
-        loadCartFromSupabase(session.user.id);
+        syncAuthenticatedCart(session.user.id, session.user.user_metadata?.role as string);
       } else {
         setUserId(null);
       }
@@ -178,7 +191,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           : 0;
 
       const price = parseNumericPrice(
-        product.customer_price ?? product.price,
+        userRole === "retailer"
+          ? (product.retailer_price ?? product.customer_price ?? product.price)
+          : (product.customer_price ?? product.price),
         100
       );
       const mrp = parseNumericPrice(
@@ -227,6 +242,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           mrp,
           imageUrl,
           quantity: quantityToAdd,
+          sku: (product as any).sku || null,
+          retailerPrice: parseNumericPrice((product as any).retailer_price, price),
         };
         return [...prev, newItem];
       });

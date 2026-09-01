@@ -617,20 +617,36 @@ export default function ProfilePage({
                               </button>
 
                               <button
-                                onClick={() =>
+                                onClick={() => {
+                                  const dbOrder = dbOrders.find((db) => db.order_number === o.id);
+                                  if (!dbOrder) return;
                                   printOrDownloadInvoice({
-                                    id: o.id,
-                                    customer: user.name || "Customer",
-                                    phone: user.phone || "+91 98765 00000",
-                                    role: (user.role === "retailer" ? "retailer" : "customer") as "customer" | "retailer",
-                                    shopName: user.shopName,
-                                    items: o.items.length,
-                                    amount: o.total,
-                                    status: o.status,
-                                    date: o.date,
-                                    payment: "UPI",
-                                  })
-                                }
+                                    id: dbOrder.order_number,
+                                    dbId: dbOrder.id,
+                                    customer: dbOrder.customer_name,
+                                    phone: dbOrder.customer_phone,
+                                    role: dbOrder.user_role === "retailer" ? "retailer" : "customer",
+                                    shopName: dbOrder.shop_name || undefined,
+                                    address: typeof dbOrder.shipping_address === "object"
+                                      ? `${dbOrder.shipping_address?.line1 || ""}, ${dbOrder.shipping_address?.city || ""}, ${dbOrder.shipping_address?.state || ""} - ${dbOrder.shipping_address?.pincode || ""}`
+                                      : "Delivery Address",
+                                    items: dbOrder.order_items?.length || 0,
+                                    amount: Number(dbOrder.total_amount),
+                                    status: dbOrder.status,
+                                    date: dbOrder.created_at,
+                                    payment: dbOrder.payment_method,
+                                    paymentStatus: dbOrder.payment_status,
+                                    orderItems: (dbOrder.order_items || []).map((item) => ({
+                                      name: item.product_name,
+                                      quantity: item.quantity,
+                                      price: Number(item.unit_price),
+                                      totalPrice: Number(item.total_price),
+                                      mrp: item.mrp == null ? Number(item.unit_price) : Number(item.mrp),
+                                      batch: item.batch_no || undefined,
+                                      expiry: item.expiry_date || undefined,
+                                    })),
+                                  });
+                                }}
                                 className="flex items-center gap-1 bg-[#f0f7ee] hover:bg-[#c3dec0] text-[#006a39] text-xs font-bold px-3 py-1.5 rounded-xl transition-all border border-[#c3dec0] cursor-pointer"
                                 title="Download / Print Invoice Bill PDF"
                               >

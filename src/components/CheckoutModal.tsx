@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { fetchUserAddresses, DbAddress, createAddress } from "../lib/addresses";
@@ -51,6 +51,7 @@ export default function CheckoutModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [orderPlaced, setOrderPlaced] = useState<{ id: string; orderNumber: string } | null>(null);
+  const orderRequestKey = useRef<string | null>(null);
 
   // New address form state
   const [showNewAddr, setShowNewAddr] = useState(false);
@@ -69,6 +70,7 @@ export default function CheckoutModal({
     if (open) {
       setError("");
       setOrderPlaced(null);
+      orderRequestKey.current = crypto.randomUUID();
       // Pre-fill name/phone from logged-in user
       setNewAddr((prev) => ({
         ...prev,
@@ -95,11 +97,14 @@ export default function CheckoutModal({
   const finalTotal = subtotal + deliveryFee;
 
   const handlePlaceOrder = async () => {
+    if (loading) return;
     setError("");
+    setLoading(true);
 
     // Guard: cart must have items
     if (items.length === 0) {
       setError("Your cart is empty. Please add items and try again.");
+      setLoading(false);
       return;
     }
 
@@ -120,7 +125,6 @@ export default function CheckoutModal({
         return;
       }
 
-      setLoading(true);
       const { data: savedAddr } = await createAddress({
         label: newAddr.label || "Home",
         name,
@@ -152,7 +156,6 @@ export default function CheckoutModal({
         return;
       }
       shippingAddress = found;
-      setLoading(true);
     }
 
     const { data: order, error: orderErr } = await placeOrder({
@@ -165,6 +168,7 @@ export default function CheckoutModal({
       userId: appUser?.authUser?.id || appUser?.profile?.id,
       userRole: isRetailer ? "retailer" : "customer",
       shopName: effectiveShopName || null,
+      idempotencyKey: orderRequestKey.current || undefined,
     });
     setLoading(false);
 
@@ -174,6 +178,7 @@ export default function CheckoutModal({
     }
 
     clearCart();
+    orderRequestKey.current = null;
     setOrderPlaced({ id: order.id, orderNumber: order.order_number });
   };
 

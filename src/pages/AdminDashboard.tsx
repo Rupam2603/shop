@@ -21,6 +21,7 @@ import { fetchAllLabBookings, updateLabBookingStatus as dbUpdateLabBookingStatus
 import {
   printOrDownloadInvoice,
   downloadInvoiceFile,
+  type InvoiceOrderData,
   printOrDownloadDailyReport,
   downloadDailyReportFile,
 } from "../lib/invoiceGenerator";
@@ -888,8 +889,17 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     });
 
     fetchAllOrders().then((data) => {
-      if (mounted && data) setDbOrders(data);
+      if (mounted) setDbOrders(data);
     });
+
+    // Neon Data API has no realtime channel. Poll the authoritative orders table
+    // so orders placed in another browser appear automatically in the admin panel.
+    const orderPoll = window.setInterval(() => {
+      if (!mounted || document.hidden) return;
+      fetchAllOrders().then((data) => {
+        if (mounted) setDbOrders(data);
+      }).catch((err) => console.error("Order polling failed:", err));
+    }, 5000);
 
     fetchAllLabBookings().then((data) => {
       if (mounted && data) setDbLabBookings(data);
@@ -955,6 +965,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
     return () => {
       mounted = false;
+      window.clearInterval(orderPoll);
       unsubscribeProducts();
       unsubscribeSettings();
     };
@@ -1020,15 +1031,17 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             rawDate: rawDateStr,
             payment: o.payment_method,
             role: finalRole,
-            businessName: finalShopName,
+            shopName: finalShopName,
             orderItems: (o.order_items || []).map((oi: any) => ({
               name: oi.product_name || "Unknown Product",
-              quantity: oi.quantity || 1,
+              quantity: Number(oi.quantity || 0),
               price: Number(oi.unit_price || 0),
-              mrp: oi.mrp ? Number(oi.mrp) : Math.round(Number(oi.unit_price || 0) * 1.15),
-              batch: oi.batch || "SBH-8842",
-              expiry: oi.expiry || "12/28"
+              totalPrice: Number(oi.total_price || 0),
+              mrp: oi.mrp == null ? Number(oi.unit_price || 0) : Number(oi.mrp),
+              batch: oi.batch_no || undefined,
+              expiry: oi.expiry_date || undefined,
             })),
+            paymentStatus: o.payment_status,
           };
         });
     }
@@ -1244,7 +1257,22 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       // Refresh product list immediately from DB
       const freshProducts = await fetchProducts();
       if (freshProducts) {
-        setProducts(freshProducts);
+        setProducts(freshProducts.map((p) => ({
+          id: p.numeric_id,
+          dbId: p.id,
+          name: p.name,
+          category: p.category_name,
+          brand: p.brand,
+          sku: p.sku || `SKU-${p.numeric_id}`,
+          hsn: p.hsn || "3004",
+          mrp: Number(p.mrp),
+          customerPrice: Number(p.customer_price),
+          retailerPrice: Number(p.retailer_price),
+          stock: p.stock,
+          image: p.image_url,
+          details: p.details || "",
+          badges: Array.isArray(p.badges) && p.badges.length > 0 ? p.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
+        })));
       }
       
       closeModal(); // ONLY close modal on confirmed success
@@ -2135,6 +2163,8 @@ function OrdersTab({
     payment: string;
     role?: "retailer" | "customer";
     shopName?: string;
+    orderItems?: InvoiceOrderData["orderItems"];
+    paymentStatus?: string;
   }[];
   filter: string;
   setFilter: (v: string) => void;
@@ -2189,6 +2219,8 @@ function OrdersTab({
     payment: string;
     role?: "retailer" | "customer";
     shopName?: string;
+    paymentStatus?: string;
+    orderItems?: InvoiceOrderData["orderItems"];
   } | null>(null);
 
   const STATUS_FILTERS = ["All", "Processing", "Dispatched", "Shipped", "Out for Delivery", "Delivered", "Cancelled"];

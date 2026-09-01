@@ -2,6 +2,7 @@ export interface InvoiceOrderItem {
   name: string;
   quantity: number;
   price: number;
+  totalPrice?: number;
   mrp?: number;
   batch?: string;
   expiry?: string;
@@ -20,6 +21,7 @@ export interface InvoiceOrderData {
   status: string;
   date: string;
   payment: string;
+  paymentStatus?: string;
   orderItems?: InvoiceOrderItem[];
 }
 
@@ -102,18 +104,9 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
     : `${order.customer} (Customer)`;
 
   // Generate item rows
-  const rawItems = order.orderItems && order.orderItems.length > 0
-    ? order.orderItems
-    : [
-        {
-          name: isRetailer ? "Volini Spray 249ml (Wholesale Bulk Pack)" : "Volini Spray 249ml",
-          quantity: Math.max(1, order.items || 1),
-          price: Math.round(order.amount / Math.max(1, order.items || 1)),
-          mrp: Math.round((order.amount / Math.max(1, order.items || 1)) * 1.15),
-          batch: "SBH-8842",
-          expiry: "07/28",
-        },
-      ];
+  // Never invent products, quantities, batches, prices or dates. The invoice
+  // must be a faithful rendering of the order snapshot stored in the database.
+  const rawItems = order.orderItems && order.orderItems.length > 0 ? order.orderItems : [];
 
   let subtotal = 0;
   let totalMrp = 0;
@@ -121,13 +114,15 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
   const itemRowsHtml = rawItems.map((it, idx) => {
     const itemQty = it.quantity || 1;
     const itemRate = it.price || 100;
-    const itemMrp = it.mrp || Math.round(itemRate * 1.15);
-    const itemAmt = itemRate * itemQty;
-    const batch = it.batch || `SBH-${8840 + idx}`;
-    const expiry = it.expiry || "12/28";
+    const itemMrp = Number.isFinite(Number(it.mrp)) && Number(it.mrp) > 0 ? Number(it.mrp) : null;
+    const itemAmt = Number.isFinite(Number(it.totalPrice)) && Number(it.totalPrice) >= 0
+      ? Number(it.totalPrice)
+      : itemRate * itemQty;
+    const batch = it.batch || "—";
+    const expiry = it.expiry || "—";
 
     subtotal += itemAmt;
-    totalMrp += itemMrp * itemQty;
+    totalMrp += (itemMrp || itemRate) * itemQty;
 
     return `
       <tr>
@@ -136,17 +131,18 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
         <td style="text-align:center; padding: 7px 6px; border: 1px solid #333; font-family: monospace;">${batch}</td>
         <td style="text-align:center; padding: 7px 6px; border: 1px solid #333;">${expiry}</td>
         <td style="text-align:center; padding: 7px 6px; border: 1px solid #333; font-weight: 600;">${itemQty}</td>
-        <td style="text-align:right; padding: 7px 8px; border: 1px solid #333;">₹${itemMrp.toLocaleString()}</td>
+        <td style="text-align:right; padding: 7px 8px; border: 1px solid #333;">${itemMrp == null ? "—" : `₹${itemMrp.toLocaleString()}`}</td>
         <td style="text-align:right; padding: 7px 8px; border: 1px solid #333; font-weight: 600;">₹${itemRate.toLocaleString()}</td>
         <td style="text-align:right; padding: 7px 8px; border: 1px solid #333; font-weight: 700;">₹${itemAmt.toLocaleString()}</td>
       </tr>
     `;
   }).join("");
 
-  const discount = Math.max(0, totalMrp - subtotal);
-  const gstAmount = Math.round(subtotal * 0.05); // 5% GST on medicines
-  const grandTotal = order.amount || subtotal;
-  const deliveryCharge = isRetailer || grandTotal >= 150 ? 0 : 40;
+  const grandTotal = Number(order.amount || 0);
+  // Current order schema stores the final total, not separate tax/discount fields.
+  // Derive only the delivery component when it is explicitly represented by the
+  // difference between item totals and the stored final total.
+  const deliveryCharge = Math.max(0, Math.round((grandTotal - subtotal) * 100) / 100);
 
   const paymentMode = (order.payment || "UPI").toUpperCase();
   const isCash = paymentMode.includes("CASH");
@@ -210,7 +206,7 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
           </tr>
         </thead>
         <tbody>
-          ${itemRowsHtml}
+          ${itemRowsHtml || `<tr><td colspan="8" style="padding: 12px; border: 1px solid #333; text-align: center; color: #777;">Item snapshot unavailable for this legacy order.</td></tr>`}
         </tbody>
       </table>
 
@@ -225,8 +221,7 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
           </div>
           <div>
             <strong>Payment Status:</strong>
-            <span style="display: inline-block; margin-left: 6px; font-weight: 600;">☑ Paid</span>
-            <span style="display: inline-block; margin-left: 12px; font-weight: 600;">☐ Pending</span>
+            <span style="display: inline-block; margin-left: 6px; font-weight: 600;">${order.paymentStatus || "Unknown"}</span>
           </div>
         </div>
 
@@ -236,12 +231,8 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
             <td style="padding: 3px 6px; font-size: 11px; text-align: right; font-weight: 600;">₹${subtotal.toLocaleString()}</td>
           </tr>
           <tr>
-            <td style="padding: 3px 6px; font-size: 11px;">Discount:</td>
-            <td style="padding: 3px 6px; font-size: 11px; text-align: right; color: #006a39; font-weight: 600;">-₹${discount.toLocaleString()}</td>
-          </tr>
-          <tr>
-            <td style="padding: 3px 6px; font-size: 11px;">GST (Incl.):</td>
-            <td style="padding: 3px 6px; font-size: 11px; text-align: right;">₹${gstAmount.toLocaleString()}</td>
+            <td style="padding: 3px 6px; font-size: 11px;">Tax / Discount:</td>
+            <td style="padding: 3px 6px; font-size: 11px; text-align: right;">Included in stored item prices</td>
           </tr>
           <tr>
             <td style="padding: 3px 6px; font-size: 11px;">Delivery Charges:</td>

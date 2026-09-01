@@ -39,9 +39,12 @@ export interface DbOrderItem {
   unit_price: number;
   total_price: number;
   image_url: string | null;
+  mrp?: number | null;
+  batch_no?: string | null;
+  expiry_date?: string | null;
 }
 
-const LOCAL_ORDERS_KEY = "subhone_local_orders_v2";
+const LOCAL_ORDERS_KEY_PREFIX = "subhone_local_orders_v3";
 const DELETED_ORDERS_KEY = "subhone_deleted_order_ids_v1";
 
 export function getDeletedOrderIds(): string[] {
@@ -64,9 +67,10 @@ export function markOrderAsDeletedLocally(orderId: string, orderNumber?: string)
   }
 }
 
-function getLocalOrders(): DbOrder[] {
+function getLocalOrders(userId?: string): DbOrder[] {
   try {
-    const raw = localStorage.getItem(LOCAL_ORDERS_KEY);
+    if (!userId) return [];
+    const raw = localStorage.getItem(`${LOCAL_ORDERS_KEY_PREFIX}:${userId}`);
     const list: DbOrder[] = raw ? JSON.parse(raw) : [];
     const deleted = getDeletedOrderIds();
     return list.filter((o) => !deleted.includes(o.id) && !deleted.includes(o.order_number));
@@ -77,9 +81,9 @@ function getLocalOrders(): DbOrder[] {
 
 function saveLocalOrder(order: DbOrder) {
   try {
-    const list = getLocalOrders();
+    const list = getLocalOrders(order.user_id);
     const updated = [order, ...list.filter((o) => o.id !== order.id && o.order_number !== order.order_number)];
-    localStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(updated));
+    localStorage.setItem(`${LOCAL_ORDERS_KEY_PREFIX}:${order.user_id}`, JSON.stringify(updated));
   } catch (e) {
     console.warn("Could not save order locally:", e);
   }
@@ -98,6 +102,7 @@ export async function placeOrder(params: {
   userId?: string;
   userRole?: "retailer" | "customer" | "admin";
   shopName?: string | null;
+  idempotencyKey?: string;
 }): Promise<{ data: DbOrder | null; error: string | null }> {
   try {
     if (!params.items || params.items.length === 0) {
@@ -105,7 +110,7 @@ export async function placeOrder(params: {
     }
 
     const userId = await getEffectiveUserId(params.userId);
-    const idempotencyKey = crypto.randomUUID();
+    const idempotencyKey = params.idempotencyKey || crypto.randomUUID();
 
     const effectiveShippingAddress = {
       ...(params.shippingAddress || {}),
@@ -120,7 +125,7 @@ export async function placeOrder(params: {
       },
       body: JSON.stringify({
         idempotencyKey,
-        cartItems: params.items,
+        cartItems: params.items.map((item) => ({ ...item, productNumericId: item.productNumericId, productId: item.productId || null })),
         customer: {
           id: userId,
           name: params.customerName || "Customer",
@@ -144,18 +149,27 @@ export async function placeOrder(params: {
     const orderId = data.id;
     const orderNumber = data.order_number;
 
-    const orderItemsPayload: DbOrderItem[] = params.items.map((item) => ({
-      id: crypto.randomUUID(),
-      order_id: orderId,
-      product_id: item.productId || null,
-      product_name: item.name,
-      sku: item.sku || null,
-      variant: item.variant || null,
-      quantity: item.quantity,
-      unit_price: item.price,
-      total_price: item.price * item.quantity,
-      image_url: item.imageUrl || null,
-    }));
+    const orderItemsPayload: DbOrderItem[] = Array.isArray(data.order_items)
+      ? data.order_items.map((item: any) => ({
+          id: item.id,
+          order_id: item.order_id,
+          product_id: item.product_id ?? null,
+          product_name: item.product_name,
+          sku: item.sku ?? null,
+          variant: item.variant ?? null,
+          quantity: Number(item.quantity),
+          unit_price: Number(item.unit_price),
+          total_price: Number(item.total_price),
+          image_url: item.image_url ?? null,
+          mrp: item.mrp == null ? null : Number(item.mrp),
+          batch_no: item.batch_no ?? null,
+          expiry_date: item.expiry_date ?? null,
+        }))
+      : [];
+
+    if (orderItemsPayload.length !== params.items.length) {
+      throw new Error("Order was created without all order items. Please contact support before retrying.");
+    }
 
     // Clear user's cart in Supabase
     try {
@@ -163,20 +177,20 @@ export async function placeOrder(params: {
     } catch {}
 
     const fullOrder: DbOrder = {
-      id: orderId,
-      order_number: orderNumber,
-      user_id: userId,
-      customer_name: params.customerName || "Customer",
-      customer_phone: params.customerPhone || "+91 98765 00000",
-      shipping_address: effectiveShippingAddress,
-      total_amount: params.totalAmount,
-      payment_method: params.paymentMethod || "COD",
-      payment_status: params.paymentMethod === 'Card' || params.paymentMethod === 'UPI' ? "Paid" : "Pending",
-      status: "Processing",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      user_role: params.userRole || "customer",
-      shop_name: params.shopName || null,
+      id: data.id,
+      order_number: data.order_number,
+      user_id: data.user_id || userId,
+      customer_name: data.customer_name || params.customerName || "Customer",
+      customer_phone: data.customer_phone || params.customerPhone || "",
+      shipping_address: data.shipping_address || effectiveShippingAddress,
+      total_amount: Number(data.total_amount ?? params.totalAmount),
+      payment_method: data.payment_method || params.paymentMethod || "COD",
+      payment_status: data.payment_status || (params.paymentMethod === 'Card' || params.paymentMethod === 'UPI' ? "Paid" : "Pending"),
+      status: data.status || "Processing",
+      created_at: data.created_at || new Date().toISOString(),
+      updated_at: data.updated_at || new Date().toISOString(),
+      user_role: data.user_role || params.userRole || "customer",
+      shop_name: data.shop_name ?? params.shopName ?? null,
       order_items: orderItemsPayload,
     };
 
@@ -194,7 +208,6 @@ export async function placeOrder(params: {
  * Fetch orders for the logged-in user with their items
  */
 export async function fetchUserOrders(explicitUserId?: string): Promise<DbOrder[]> {
-  const localOrders = getLocalOrders();
   try {
     const userId = await getEffectiveUserId(explicitUserId);
 
@@ -204,6 +217,7 @@ export async function fetchUserOrders(explicitUserId?: string): Promise<DbOrder[
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
+    const localOrders = getLocalOrders(userId);
     if (error || !data) {
       return localOrders;
     }
@@ -219,7 +233,7 @@ export async function fetchUserOrders(explicitUserId?: string): Promise<DbOrder[
     );
   } catch (err) {
     console.warn("fetchUserOrders error, returning local:", err);
-    return localOrders;
+    return getLocalOrders(explicitUserId);
   }
 }
 
@@ -235,7 +249,7 @@ export async function fetchAllOrders(): Promise<DbOrder[]> {
 
     if (error) {
       console.error("Error fetching all orders:", error.message);
-      return getLocalOrders();
+      return [];
     }
 
     const deletedIds = getDeletedOrderIds();
@@ -263,27 +277,21 @@ export async function fetchAllOrders(): Promise<DbOrder[]> {
         // 1. From database profile record
         // 2. From order user_role or shipping_address user_role metadata
         // 3. Fallback inference from shop name
-        let resolvedRole: "retailer" | "customer" = "customer";
-        if (prof?.role === "retailer" || o.user_role === "retailer" || shipAddr?.user_role === "retailer") {
-          resolvedRole = "retailer";
-        } else if (prof?.role === "customer" || o.user_role === "customer" || shipAddr?.user_role === "customer") {
-          resolvedRole = "customer";
-        } else if (
-          prof?.shop_name ||
-          o.shop_name ||
-          shipAddr?.shop_name ||
-          o.customer_name?.toLowerCase().includes("store") ||
-          o.customer_name?.toLowerCase().includes("pharmacy") ||
-          o.customer_name?.toLowerCase().includes("medical")
-        ) {
-          resolvedRole = "retailer";
-        }
+        // The order stores a historical snapshot. Never let a later profile
+        // change rewrite the identity of an already-created order.
+        let resolvedRole: "retailer" | "customer" =
+          o.user_role === "retailer" || shipAddr?.user_role === "retailer"
+            ? "retailer"
+            : o.user_role === "customer" || shipAddr?.user_role === "customer"
+            ? "customer"
+            : prof?.role === "retailer"
+            ? "retailer"
+            : "customer";
 
         const resolvedShopName =
-          prof?.shop_name ||
           o.shop_name ||
           shipAddr?.shop_name ||
-          (resolvedRole === "retailer" ? o.customer_name : null);
+          (resolvedRole === "retailer" ? prof?.shop_name || o.customer_name : null);
 
         return {
           ...o,
@@ -293,10 +301,10 @@ export async function fetchAllOrders(): Promise<DbOrder[]> {
       }) as DbOrder[];
     }
 
-    return getLocalOrders();
+    return [];
   } catch (e) {
     console.error("Error in fetchAllOrders:", e);
-    return getLocalOrders();
+    return [];
   }
 }
 
@@ -402,16 +410,8 @@ export async function deleteOrder(orderId: string): Promise<{ error: string | nu
       // ignore
     }
 
-    // 4. Clean up local storage cache
-    try {
-      const locals = getLocalOrders();
-      const updated = locals.filter(
-        (o) => o.id !== trimmed && o.order_number !== trimmed && !targetUuids.includes(o.id)
-      );
-      localStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(updated));
-    } catch {
-      // ignore
-    }
+    // Local order caches are user-scoped and are not used by the admin panel.
+    // The deleted-id registry above prevents stale cached orders from reappearing.
 
     return { error: dbError };
   } catch (e: any) {
@@ -442,7 +442,7 @@ export async function fetchOrderByNumber(orderNumberOrId: string): Promise<DbOrd
     if (data && !error) return data as DbOrder;
 
     // Check local storage fallback
-    const locals = getLocalOrders();
+    const locals = getLocalOrders(await getEffectiveUserId());
     const match = locals.find(
       (o) =>
         o.order_number.toLowerCase() === trimmed.toLowerCase() ||
@@ -467,5 +467,7 @@ export function subscribeToUserOrdersRealtime(_userId: string, _onUpdate: () => 
 }
 
 export function subscribeToOrdersRealtime(_onUpdate: (payload: any) => void) {
+  // Neon Data API does not provide the Supabase realtime channel used by the
+  // legacy UI. The admin dashboard uses polling instead (see AdminDashboard).
   return () => {};
 }
