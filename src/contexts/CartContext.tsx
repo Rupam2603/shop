@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "../lib/supabase";
 import { DbProduct, fetchProducts } from "../lib/products";
+import { useAuth } from "./AuthContext";
 
 export interface CartItem {
   id: string; // unique item id
@@ -138,41 +139,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const { appUser } = useAuth();
+
   useEffect(() => {
-    const syncAuthenticatedCart = async (uid: string, metadataRole?: string) => {
-      let role: "customer" | "retailer" | "admin" = metadataRole === "retailer" ? "retailer" : metadataRole === "admin" ? "admin" : "customer";
+    if (appUser?.authUser?.id) {
+      const role = appUser.profile?.role || appUser.authUser.user_metadata?.role || "customer";
+      setUserId(appUser.authUser.id);
+      setUserRole(role as "customer" | "retailer" | "admin");
+      loadCartFromSupabase(appUser.authUser.id, role as "customer" | "retailer" | "admin");
+    } else {
+      setUserId(null);
+      setUserRole("customer");
+      setItems([]);
       try {
-        const { data: profile } = await supabase.from("profiles").select("role").eq("id", uid).maybeSingle();
-        if (profile?.role === "retailer" || profile?.role === "admin" || profile?.role === "customer") role = profile.role;
-      } catch {}
-      setUserId(uid);
-      setUserRole(role);
-      await loadCartFromSupabase(uid, role);
-    };
-
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user?.id) syncAuthenticatedCart(user.id, user.user_metadata?.role as string);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        setUserId(null);
-        setUserRole("customer");
-        setItems([]);
-        try {
-          localStorage.removeItem(STORAGE_KEY);
-        } catch (e) {}
-      } else if (session?.user?.id) {
-        syncAuthenticatedCart(session.user.id, session.user.user_metadata?.role as string);
-      } else {
-        setUserId(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [loadCartFromSupabase]);
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {}
+    }
+  }, [appUser?.authUser?.id, appUser?.profile?.role, loadCartFromSupabase]);
 
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);

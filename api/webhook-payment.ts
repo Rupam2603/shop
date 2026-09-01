@@ -68,9 +68,15 @@ export default async function handler(req: any, res: any) {
 
       const productId = typeof raw?.productId === 'string' && raw.productId.trim() ? raw.productId.trim() : null;
       const numericId = Number(raw?.productNumericId);
-      const lookup = productId
+      const hasNumericId = Number.isInteger(numericId) && numericId > 0;
+      
+      let lookup = productId
         ? await client.query(`SELECT id, numeric_id, name, sku, mrp, customer_price, retailer_price, stock, image_url FROM products WHERE id = $1 FOR UPDATE`, [productId])
-        : await client.query(`SELECT id, numeric_id, name, sku, mrp, customer_price, retailer_price, stock, image_url FROM products WHERE numeric_id = $1 FOR UPDATE`, [numericId]);
+        : { rows: [] as any[] };
+        
+      if (!lookup.rows.length && hasNumericId) {
+        lookup = await client.query(`SELECT id, numeric_id, name, sku, mrp, customer_price, retailer_price, stock, image_url FROM products WHERE numeric_id = $1 FOR UPDATE`, [numericId]);
+      }
 
       if (!lookup.rows.length) throw new Error(`Product not found: ${raw?.name || productId || numericId}.`);
       const product = lookup.rows[0];

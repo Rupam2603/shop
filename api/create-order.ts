@@ -98,7 +98,7 @@ export default async function handler(req: any, res: any) {
         throw new Error(`Product identity is missing for ${raw?.name || 'an item'}.`);
       }
 
-      const lookup = productId
+      let lookup = productId
         ? await client.query(
             `SELECT id, numeric_id, name, sku, mrp, customer_price, retailer_price,
                     stock, image_url
@@ -107,7 +107,10 @@ export default async function handler(req: any, res: any) {
               FOR UPDATE`,
             [productId]
           )
-        : await client.query(
+        : { rows: [] as any[] };
+
+      if (!lookup.rows.length && hasNumericId) {
+        lookup = await client.query(
             `SELECT id, numeric_id, name, sku, mrp, customer_price, retailer_price,
                     stock, image_url
                FROM products
@@ -115,6 +118,7 @@ export default async function handler(req: any, res: any) {
               FOR UPDATE`,
             [numericId]
           );
+      }
 
       if (!lookup.rows.length) {
         throw new Error(`Product not found: ${raw?.name || productId || numericId}.`);
