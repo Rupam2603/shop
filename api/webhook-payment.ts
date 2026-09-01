@@ -66,19 +66,27 @@ export default async function handler(req: any, res: any) {
       const quantity = Number(raw?.quantity);
       if (!Number.isInteger(quantity) || quantity <= 0) throw new Error(`Invalid quantity for ${raw?.name || 'product'}.`);
 
-      const productId = typeof raw?.productId === 'string' && raw.productId.trim() ? raw.productId.trim() : null;
+      const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+      const rawProductId = typeof raw?.productId === 'string' && raw.productId.trim() ? raw.productId.trim() : null;
+      const validProductId = rawProductId && isUuid(rawProductId) ? rawProductId : null;
+
       const numericId = Number(raw?.productNumericId);
       const hasNumericId = Number.isInteger(numericId) && numericId > 0;
+      const productName = typeof raw?.name === 'string' ? raw.name.trim() : null;
       
-      let lookup = productId
-        ? await client.query(`SELECT id, numeric_id, name, sku, mrp, customer_price, retailer_price, stock, image_url FROM products WHERE id = $1 FOR UPDATE`, [productId])
+      let lookup = validProductId
+        ? await client.query(`SELECT id, numeric_id, name, sku, mrp, customer_price, retailer_price, stock, image_url FROM products WHERE id = $1 FOR UPDATE`, [validProductId])
         : { rows: [] as any[] };
         
       if (!lookup.rows.length && hasNumericId) {
         lookup = await client.query(`SELECT id, numeric_id, name, sku, mrp, customer_price, retailer_price, stock, image_url FROM products WHERE numeric_id = $1 FOR UPDATE`, [numericId]);
       }
 
-      if (!lookup.rows.length) throw new Error(`Product not found: ${raw?.name || productId || numericId}.`);
+      if (!lookup.rows.length && productName) {
+        lookup = await client.query(`SELECT id, numeric_id, name, sku, mrp, customer_price, retailer_price, stock, image_url FROM products WHERE name = $1 FOR UPDATE`, [productName]);
+      }
+
+      if (!lookup.rows.length) throw new Error(`Product not found: ${productName || rawProductId || numericId}.`);
       const product = lookup.rows[0];
       const stock = toNumber(product.stock);
       if (stock < quantity) throw new Error(`${product.name} has only ${stock} unit${stock === 1 ? '' : 's'} available.`);

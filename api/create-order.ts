@@ -90,22 +90,26 @@ export default async function handler(req: any, res: any) {
         throw new Error(`Invalid quantity for ${raw?.name || 'product'}.`);
       }
 
-      const productId = typeof raw?.productId === 'string' && raw.productId.trim() ? raw.productId.trim() : null;
+      const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+      const rawProductId = typeof raw?.productId === 'string' && raw.productId.trim() ? raw.productId.trim() : null;
+      const validProductId = rawProductId && isUuid(rawProductId) ? rawProductId : null;
+
       const numericId = Number(raw?.productNumericId);
       const hasNumericId = Number.isInteger(numericId) && numericId > 0;
+      const productName = typeof raw?.name === 'string' ? raw.name.trim() : null;
 
-      if (!productId && !hasNumericId) {
+      if (!validProductId && !hasNumericId && !productName) {
         throw new Error(`Product identity is missing for ${raw?.name || 'an item'}.`);
       }
 
-      let lookup = productId
+      let lookup = validProductId
         ? await client.query(
             `SELECT id, numeric_id, name, sku, mrp, customer_price, retailer_price,
                     stock, image_url
                FROM products
               WHERE id = $1
               FOR UPDATE`,
-            [productId]
+            [validProductId]
           )
         : { rows: [] as any[] };
 
@@ -120,8 +124,19 @@ export default async function handler(req: any, res: any) {
           );
       }
 
+      if (!lookup.rows.length && productName) {
+        lookup = await client.query(
+            `SELECT id, numeric_id, name, sku, mrp, customer_price, retailer_price,
+                    stock, image_url
+               FROM products
+              WHERE name = $1
+              FOR UPDATE`,
+            [productName]
+          );
+      }
+
       if (!lookup.rows.length) {
-        throw new Error(`Product not found: ${raw?.name || productId || numericId}.`);
+        throw new Error(`Product not found: ${productName || rawProductId || numericId}.`);
       }
 
       const product = lookup.rows[0];
