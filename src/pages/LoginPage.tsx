@@ -289,12 +289,6 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
     setSelectedRole(role);
     setError("");
     setSuccess("");
-    if (role === "admin") {
-      if (mode === "login") {
-        setEmail("Subhonehealthgroup@gmail.com");
-        setPassword("Subhone@2026");
-      }
-    }
   };
 
   const switchMode = (m: "login" | "signup") => {
@@ -775,7 +769,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
 
               {/* Quick Admin Demo Credentials Banner */}
               {selectedRole === "admin" && (
-                <div className="bg-gradient-to-r from-[#073b4c]/10 via-[#006a39]/10 to-[#073b4c]/10 border border-[#073b4c]/20 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                <div className="bg-gradient-to-r from-[#073b4c]/10 via-[#006a39]/10 to-[#073b4c]/10 border border-[#073b4c]/20 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 shadow-xs">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-9 h-9 rounded-xl bg-[#073b4c] text-white flex items-center justify-center text-sm shrink-0 font-extrabold shadow-xs">
                       🛡️
@@ -788,24 +782,6 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                         Password: <span className="font-mono text-[#073b4c]">Subhone@2026</span>
                       </p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setEmail("Subhonehealthgroup@gmail.com");
-                        setPassword("Subhone@2026");
-                        setError("");
-                        setLoading(true);
-                        const { error: authErr } = await signIn("Subhonehealthgroup@gmail.com", "Subhone@2026", "admin");
-                        setLoading(false);
-                        if (authErr) setError(authErr);
-                      }}
-                      className="px-4 py-2 rounded-xl bg-[#006a39] hover:bg-[#005a30] text-white text-xs font-extrabold transition-all shadow-md cursor-pointer active:scale-95 flex items-center gap-1.5"
-                    >
-                      <span>⚡ Instant Admin Login</span>
-                      <span>→</span>
-                    </button>
                   </div>
                 </div>
               )}
