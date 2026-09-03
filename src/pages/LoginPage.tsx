@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import type { UserRole } from "../App";
 import { useAuth } from "../contexts/AuthContext";
 import { lookupRetailerApprovalStatus, registerOrUpdateRetailer, RetailerAccount } from "../lib/retailers";
+import { Meteors } from "../components/magicui/meteors";
+import { BorderBeam } from "../components/magicui/border-beam";
+import { ShimmerButton } from "../components/magicui/shimmer-button";
+import { AnimatedGridPattern } from "../components/magicui/animated-grid-pattern";
+import { SmoothTabs } from "../components/smoothui/smooth-tabs";
 
 // ─── Role UI configuration ────────────────────────────────────────────────────
 
@@ -414,6 +419,11 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
         }}
       />
 
+      {/* Magic UI–style meteor shower streaking across the dark canvas */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <Meteors number={28} />
+      </div>
+
       {/* ── MASTER GLASS CONTAINER ── */}
       <div className="relative z-10 w-full max-w-6xl my-auto">
         
@@ -455,8 +465,10 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
         </div>
 
         {/* ── DUAL PANE GLASS CARD ── */}
-        <div className="w-full rounded-3xl overflow-hidden glass-master-card border border-white/40 shadow-2xl flex flex-col lg:flex-row">
-          
+        <div className="relative w-full rounded-3xl overflow-hidden glass-master-card border border-white/40 shadow-2xl flex flex-col lg:flex-row">
+          {/* Magic UI–style rotating gradient border beam framing the whole card */}
+          <BorderBeam thickness={1.5} duration={10} colorFrom="#10b981" colorTo="#22d3ee" className="z-20" />
+
           {/* ── LEFT SHOWCASE PANE (Glassmorphic Deep Ambient Panel) ── */}
           <div 
             className="hidden lg:flex lg:w-5/12 p-10 flex-col justify-between relative overflow-hidden text-white"
@@ -464,6 +476,8 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
               background: "linear-gradient(160deg, rgba(7, 59, 76, 0.95) 0%, rgba(6, 44, 56, 0.92) 50%, rgba(0, 106, 57, 0.88) 100%)",
             }}
           >
+            {/* Magic UI–style faint animated grid pattern */}
+            <AnimatedGridPattern className="text-white/60" numSquares={16} id="login-grid" />
             {/* Ambient specular highlight lines inside panel */}
             <div className="absolute top-0 right-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
             <div className="absolute top-0 left-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none" />
@@ -567,34 +581,23 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                 </button>
               )}
 
-              {/* Mode Switcher Tabs (Segmented Glass Pill) */}
-              <div className="flex p-1.5 rounded-2xl bg-[#f0f5f2] border border-[#d6e4d8] shadow-inner relative">
-                <button
-                  type="button"
-                  onClick={() => switchMode("login")}
-                  className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold font-['Manrope',sans-serif] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
-                    mode === "login"
-                      ? "bg-white text-[#073b4c] shadow-md shadow-[#073b4c]/10 border border-white"
-                      : "text-[#657969] hover:text-[#073b4c]"
-                  }`}
-                >
-                  <LockIcon className={mode === "login" ? "text-[#006a39]" : "text-[#8ea292]"} />
-                  <span>Sign In</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => switchMode("signup")}
-                  className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold font-['Manrope',sans-serif] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
-                    mode === "signup"
-                      ? "bg-white text-[#073b4c] shadow-md shadow-[#073b4c]/10 border border-white"
-                      : "text-[#657969] hover:text-[#073b4c]"
-                  }`}
-                >
-                  <SparklesIcon className={mode === "signup" ? "text-[#006a39]" : "text-[#8ea292]"} />
-                  <span>Create Account</span>
-                </button>
-              </div>
+              {/* Mode Switcher Tabs — smooth-ui–inspired sliding pill indicator */}
+              <SmoothTabs
+                active={mode}
+                onChange={(m) => switchMode(m as "login" | "signup")}
+                tabs={[
+                  {
+                    key: "login",
+                    label: "Sign In",
+                    icon: <LockIcon className={mode === "login" ? "text-[#006a39]" : "text-[#8ea292]"} />,
+                  },
+                  {
+                    key: "signup",
+                    label: "Create Account",
+                    icon: <SparklesIcon className={mode === "signup" ? "text-[#006a39]" : "text-[#8ea292]"} />,
+                  },
+                ]}
+              />
 
               {/* Header Title & Subtitle */}
               <div>
@@ -768,7 +771,6 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
               )}
 
 
-
               {/* ── EMAIL/PASSWORD LOGIN FORM ── */}
               {mode === "login" && (
                 <form onSubmit={handleLogin} className="flex flex-col gap-4">
@@ -850,15 +852,13 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                   {error && <ErrorBox msg={error} />}
                   {success && <SuccessBox msg={success} />}
 
-                  {/* Primary Login Button */}
-                  <button
+                  {/* Primary Login Button — Magic UI–style shimmer sweep */}
+                  <ShimmerButton
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3.5 rounded-2xl font-['Manrope',sans-serif] font-bold text-sm sm:text-base text-white transition-all hover:opacity-95 active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2.5 shadow-lg cursor-pointer"
-                    style={{
-                      background: cfg.gradient,
-                      boxShadow: `0 12px 28px -6px ${cfg.glow}`,
-                    }}
+                    background={cfg.gradient}
+                    glow={`0 12px 28px -6px ${cfg.glow}`}
+                    className="w-full py-3.5 rounded-2xl font-['Manrope',sans-serif] font-bold text-sm sm:text-base text-white transition-all hover:opacity-95 active:scale-[0.99] disabled:opacity-60 shadow-lg cursor-pointer"
                   >
                     {loading ? (
                       <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -868,7 +868,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                         <span>→</span>
                       </>
                     )}
-                  </button>
+                  </ShimmerButton>
                 </form>
               )}
 
@@ -1007,14 +1007,13 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                   {error && <ErrorBox msg={error} />}
                   {success && <SuccessBox msg={success} />}
 
-                  <button
+                  {/* Magic UI–style shimmer sweep on the signup CTA too */}
+                  <ShimmerButton
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3.5 rounded-2xl font-['Manrope',sans-serif] font-bold text-sm sm:text-base text-white transition-all hover:opacity-95 active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2.5 shadow-lg cursor-pointer mt-1"
-                    style={{
-                      background: cfg.gradient,
-                      boxShadow: `0 12px 28px -6px ${cfg.glow}`,
-                    }}
+                    background={cfg.gradient}
+                    glow={`0 12px 28px -6px ${cfg.glow}`}
+                    className="w-full py-3.5 rounded-2xl font-['Manrope',sans-serif] font-bold text-sm sm:text-base text-white transition-all hover:opacity-95 active:scale-[0.99] disabled:opacity-60 shadow-lg cursor-pointer mt-1"
                   >
                     {loading ? (
                       <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -1024,7 +1023,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                         <span>→</span>
                       </>
                     )}
-                  </button>
+                  </ShimmerButton>
 
                   <p className="text-center text-[10px] text-[#869989] leading-normal mt-2">
                     By signing up, you agree to SubhOne&apos;s Terms of Service and Medical Data Privacy Policy.
