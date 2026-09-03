@@ -117,6 +117,7 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Database schema migrated across Neon database clusters (`ep-falling-cell-azm5qjrf` and `ep-divine-scene-az33au23`): Added `mrp NUMERIC`, `sku TEXT`, `variant TEXT`, `batch_no TEXT`, `expiry_date TEXT`, and `image_url TEXT` to `public.order_items`.
   - Added `idempotency_key`, `user_role`, `shop_name`, `customer_name`, `customer_phone`, `payment_method`, `payment_status`, `status`, `total_amount`, and `shipping_address` to `public.orders`.
   - Order creation handled atomically via `@neondatabase/serverless` API routes (`/api/create-order` and `/api/webhook-payment`), eliminating checkout failure (`column "mrp" of relation "order_items" does not exist`).
+  - Added dedicated Serverless Orders API route (`/api/orders.ts`) supporting `GET`, `PATCH`, and `DELETE`. Bypasses browser PostgREST JWT restrictions so `fetchAllOrders` and `fetchUserOrders` retrieve live authoritative orders directly from Neon PostgreSQL.
   - Strict invoice synchronization implemented across all platforms:
     - `src/lib/invoiceGenerator.ts`: Renders exact product name, SKU, batch number, expiry date, quantity, MRP, unit rate, and line totals for both retail customers and wholesale retailers.
     - `src/pages/AdminDashboard.tsx`: Order inspection dialog and PDF/print invoice generation reflect full item snapshots.

@@ -210,20 +210,37 @@ export async function placeOrder(params: {
 export async function fetchUserOrders(explicitUserId?: string): Promise<DbOrder[]> {
   try {
     const userId = await getEffectiveUserId(explicitUserId);
+    let dbOrders: DbOrder[] = [];
 
-    const { data, error } = await supabase
-      .from("orders")
-      .select("*, order_items(*)")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-
-    const localOrders = getLocalOrders(userId);
-    if (error || !data) {
-      return localOrders;
+    // 1. Primary: Serverless Orders API
+    try {
+      const resp = await fetch(`/api/orders?userId=${encodeURIComponent(userId)}`, {
+        headers: { Accept: "application/json" },
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        if (Array.isArray(json?.orders) && json.orders.length > 0) {
+          dbOrders = json.orders as DbOrder[];
+        }
+      }
+    } catch (apiErr) {
+      console.warn("Direct /api/orders query failed for user orders, trying fallback:", apiErr);
     }
 
-    // Merge Supabase orders with any local orders
-    const dbOrders = data as DbOrder[];
+    // 2. Fallback: Supabase client
+    if (dbOrders.length === 0) {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*, order_items(*)")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (!error && Array.isArray(data)) {
+        dbOrders = data as DbOrder[];
+      }
+    }
+
+    const localOrders = getLocalOrders(userId);
     const dbOrderNumbers = new Set(dbOrders.map((o) => o.order_number));
     const extraLocals = localOrders.filter((l) => !dbOrderNumbers.has(l.order_number));
     const deletedIds = getDeletedOrderIds();
@@ -242,14 +259,35 @@ export async function fetchUserOrders(explicitUserId?: string): Promise<DbOrder[
  */
 export async function fetchAllOrders(): Promise<DbOrder[]> {
   try {
-    const { data: orders, error } = await supabase
-      .from("orders")
-      .select("*, order_items(*)")
-      .order("created_at", { ascending: false });
+    let orders: any[] | null = null;
 
-    if (error) {
-      console.error("Error fetching all orders:", error.message);
-      return [];
+    // 1. Primary: Query the authoritative Serverless Orders API (/api/orders)
+    try {
+      const resp = await fetch("/api/orders", {
+        headers: { Accept: "application/json" },
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        if (Array.isArray(json?.orders)) {
+          orders = json.orders;
+        }
+      }
+    } catch (apiErr) {
+      console.warn("Direct /api/orders query failed, trying fallback:", apiErr);
+    }
+
+    // 2. Fallback: Query Supabase / Neon Data API client if /api/orders was unavailable
+    if (!orders) {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*, order_items(*)")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.warn("Supabase fetchAllOrders error:", error.message);
+      } else if (Array.isArray(data)) {
+        orders = data;
+      }
     }
 
     const deletedIds = getDeletedOrderIds();
@@ -261,12 +299,14 @@ export async function fetchAllOrders(): Promise<DbOrder[]> {
       const userIds = Array.from(new Set(activeOrders.map((o) => o.user_id).filter(Boolean)));
       let profileMap = new Map<string, any>();
       if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("id, role, shop_name, full_name, phone")
-          .in("id", userIds);
+        try {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, role, shop_name, full_name, phone")
+            .in("id", userIds);
 
-        profileMap = new Map((profiles || []).map((p) => [p.id, p]));
+          profileMap = new Map((profiles || []).map((p) => [p.id, p]));
+        } catch { }
       }
 
       return activeOrders.map((o) => {
@@ -315,6 +355,21 @@ export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus
 ): Promise<{ error: string | null }> {
+  // 1. Primary: Serverless Orders API
+  try {
+    const resp = await fetch("/api/orders", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId, status }),
+    });
+    if (resp.ok) {
+      return { error: null };
+    }
+  } catch (apiErr) {
+    console.warn("PATCH /api/orders failed, falling back to Supabase client:", apiErr);
+  }
+
+  // 2. Fallback: Supabase update logic
   if (status === "Cancelled") {
     try {
       const { data: orderItems } = await supabase
@@ -362,7 +417,14 @@ export async function deleteOrder(orderId: string): Promise<{ error: string | nu
     const trimmed = orderId.trim();
     markOrderAsDeletedLocally(trimmed);
 
-    // 1. Locate all matching order records from database
+    // 1. Primary: Serverless Orders API
+    try {
+      await fetch(`/api/orders?orderId=${encodeURIComponent(trimmed)}`, {
+        method: "DELETE",
+      });
+    } catch { }
+
+    // 2. Fallback: Supabase client
     let targetUuids: string[] = [];
     try {
       const { data: matched } = await supabase
@@ -380,52 +442,46 @@ export async function deleteOrder(orderId: string): Promise<{ error: string | nu
       console.warn("Could not query matching orders before deletion:", findErr);
     }
 
-    if (targetUuids.length === 0) {
-      targetUuids = [trimmed];
-    }
-
-    // 2. Cascade delete from order_items table first (avoids foreign key constraint violation)
-    for (const uuid of targetUuids) {
-      try {
+    if (targetUuids.length > 0) {
+      for (const uuid of targetUuids) {
         await supabase.from("order_items").delete().eq("order_id", uuid);
-      } catch (itemDelErr) {
-        console.warn("order_items delete note:", itemDelErr);
+        await supabase.from("orders").delete().eq("id", uuid);
       }
-    }
-
-    // 3. Delete from orders table
-    let dbError: string | null = null;
-    for (const uuid of targetUuids) {
-      const { error } = await supabase.from("orders").delete().eq("id", uuid);
-      if (error) {
-        console.warn("Database order delete by ID warning:", error);
-        dbError = error.message;
-      }
-    }
-
-    // Also attempt delete by order_number
-    try {
+    } else {
+      await supabase.from("order_items").delete().eq("order_id", trimmed);
+      await supabase.from("orders").delete().eq("id", trimmed);
       await supabase.from("orders").delete().eq("order_number", trimmed);
-    } catch {
-      // ignore
     }
 
-    // Local order caches are user-scoped and are not used by the admin panel.
-    // The deleted-id registry above prevents stale cached orders from reappearing.
-
-    return { error: dbError };
-  } catch (e: any) {
-    console.error("Error deleting order:", e);
-    return { error: e.message || "Failed to delete order" };
+    return { error: null };
+  } catch (err: any) {
+    console.error("deleteOrder failed:", err);
+    return { error: err?.message || "Failed to delete order." };
   }
 }
 
 /**
- * Fetch a single order by order number or ID
+ * Fetch a single order by order number or UUID
  */
 export async function fetchOrderByNumber(orderNumberOrId: string): Promise<DbOrder | null> {
   try {
     const trimmed = orderNumberOrId.trim();
+
+    // 1. Primary: Serverless Orders API
+    try {
+      const paramKey = trimmed.startsWith("ORD-") ? "orderNumber" : "orderId";
+      const resp = await fetch(`/api/orders?${paramKey}=${encodeURIComponent(trimmed)}`, {
+        headers: { Accept: "application/json" },
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        if (Array.isArray(json?.orders) && json.orders.length > 0) {
+          return json.orders[0] as DbOrder;
+        }
+      }
+    } catch { }
+
+    // 2. Fallback: Supabase client
     let query = supabase
       .from("orders")
       .select("*, order_items(*)");
