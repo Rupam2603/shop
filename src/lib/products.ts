@@ -31,6 +31,7 @@ export interface DbProduct {
   details: string | null;
   is_flash_sale: boolean;
   is_featured: boolean;
+  is_listed?: boolean;
   badges?: any[];
   created_at: string;
   updated_at: string;
@@ -67,6 +68,7 @@ export interface DbInventoryProduct {
   is_active?: boolean;
   is_flash_sale?: boolean;
   is_featured?: boolean;
+  is_listed?: boolean;
   badges?: any[];
   meta_data?: Record<string, any>;
   created_at: string;
@@ -80,6 +82,7 @@ export interface ProductFilters {
   maxPrice?: number;
   search?: string;
   sortBy?: "featured" | "price-asc" | "price-desc" | "discount";
+  includeUnlisted?: boolean;
 }
 
 /**
@@ -105,7 +108,10 @@ export async function fetchCategories(): Promise<DbCategory[]> {
  */
 export async function fetchProducts(filters: ProductFilters = {}): Promise<DbProduct[]> {
   try {
-    const rows = await sql`SELECT * FROM products ORDER BY numeric_id ASC`;
+    const rows = filters.includeUnlisted
+      ? await sql`SELECT * FROM products ORDER BY numeric_id ASC`
+      : await sql`SELECT * FROM products WHERE is_listed = true ORDER BY numeric_id ASC`;
+
     let prods: DbProduct[] = (rows as any[]).map((r) => ({
       ...r,
       numeric_id: Number(r.numeric_id) || 0,
@@ -116,6 +122,7 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<DbPro
       stock: Number(r.stock) || 0,
       is_flash_sale: Boolean(r.is_flash_sale),
       is_featured: Boolean(r.is_featured),
+      is_listed: r.is_listed !== false,
     }));
 
     if (filters.category && filters.category !== "All") {
@@ -165,7 +172,11 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<DbPro
   } catch (error) {
     console.error("Error fetching products via sql, attempting fallback:", error);
     try {
-      const { data, error: supErr } = await supabase.from("products").select("*");
+      let q = supabase.from("products").select("*");
+      if (!filters.includeUnlisted) {
+        q = q.eq("is_listed", true);
+      }
+      const { data, error: supErr } = await q;
       if (!supErr && data) {
         return (data as any[]).map((r) => ({
           ...r,
@@ -175,6 +186,7 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<DbPro
           retailer_price: Number(r.retailer_price) || 0,
           discount_percent: Number(r.discount_percent) || 0,
           stock: Number(r.stock) || 0,
+          is_listed: r.is_listed !== false,
         })) as DbProduct[];
       }
     } catch {}
@@ -235,17 +247,18 @@ export async function createProduct(
     const pDetails = product.details || null;
     const pFlash = Boolean(product.is_flash_sale);
     const pFeat = Boolean(product.is_featured);
+    const pIsListed = product.is_listed !== false;
     const pBadges = JSON.stringify(product.badges || []);
 
     const insertedProd = await sql`
       INSERT INTO products (
         numeric_id, name, subtitle, category_id, category_name, brand, sku, hsn, mrp,
         customer_price, retailer_price, discount_percent, stock, image_url, details,
-        is_flash_sale, is_featured, badges, updated_at
+        is_flash_sale, is_featured, is_listed, badges, updated_at
       ) VALUES (
         ${numId}, ${pName}, ${pSubtitle}, ${pCatId}, ${pCatName}, ${pBrand}, ${pSku}, ${pHsn}, ${pMrp},
         ${pCustPrice}, ${pRetPrice}, ${pDisc}, ${pStock}, ${pImage}, ${pDetails},
-        ${pFlash}, ${pFeat}, ${pBadges}::jsonb, now()
+        ${pFlash}, ${pFeat}, ${pIsListed}, ${pBadges}::jsonb, now()
       ) RETURNING *
     `;
 
@@ -257,11 +270,11 @@ export async function createProduct(
         INSERT INTO inventory_products (
           id, numeric_id, product_id, name, subtitle, category_id, category_name, brand, sku, hsn, mrp,
           customer_price, retailer_price, discount_percent, stock, image_url, web_image_url, details,
-          is_flash_sale, is_featured, badges, updated_at
+          is_flash_sale, is_featured, is_listed, badges, updated_at
         ) VALUES (
           ${data.id}, ${data.numeric_id}, ${data.id}, ${data.name}, ${data.subtitle}, ${data.category_id}, ${data.category_name}, ${data.brand}, ${data.sku}, ${data.hsn}, ${data.mrp},
           ${data.customer_price}, ${data.retailer_price}, ${data.discount_percent}, ${data.stock}, ${data.image_url}, ${data.image_url}, ${data.details},
-          ${data.is_flash_sale}, ${data.is_featured}, ${JSON.stringify(data.badges)}::jsonb, now()
+          ${data.is_flash_sale}, ${data.is_featured}, ${pIsListed}, ${JSON.stringify(data.badges)}::jsonb, now()
         ) ON CONFLICT (id) DO UPDATE SET
           numeric_id = EXCLUDED.numeric_id,
           product_id = EXCLUDED.product_id,
@@ -282,6 +295,7 @@ export async function createProduct(
           details = EXCLUDED.details,
           is_flash_sale = EXCLUDED.is_flash_sale,
           is_featured = EXCLUDED.is_featured,
+          is_listed = EXCLUDED.is_listed,
           badges = EXCLUDED.badges,
           updated_at = EXCLUDED.updated_at
       `;
@@ -341,6 +355,7 @@ export async function updateProduct(
     const pDetails = updates.details !== undefined ? updates.details : existing.details;
     const pFlash = updates.is_flash_sale !== undefined ? Boolean(updates.is_flash_sale) : existing.is_flash_sale;
     const pFeat = updates.is_featured !== undefined ? Boolean(updates.is_featured) : existing.is_featured;
+    const pIsListed = updates.is_listed !== undefined ? Boolean(updates.is_listed) : (existing.is_listed !== undefined ? Boolean(existing.is_listed) : true);
     const pBadges = JSON.stringify(updates.badges !== undefined ? updates.badges : existing.badges);
 
     const updatedRows = await sql`
@@ -361,6 +376,7 @@ export async function updateProduct(
         details = ${pDetails},
         is_flash_sale = ${pFlash},
         is_featured = ${pFeat},
+        is_listed = ${pIsListed},
         badges = ${pBadges}::jsonb,
         updated_at = now()
       WHERE id = ${id}
@@ -391,6 +407,7 @@ export async function updateProduct(
           details = ${data.details},
           is_flash_sale = ${data.is_flash_sale},
           is_featured = ${data.is_featured},
+          is_listed = ${pIsListed},
           badges = ${JSON.stringify(data.badges)}::jsonb,
           updated_at = now()
         WHERE id = ${id}
@@ -401,6 +418,22 @@ export async function updateProduct(
   } catch (err: any) {
     console.error("Exception in updateProduct:", err);
     return { data: null, error: err?.message || "Failed to update product" };
+  }
+}
+
+/**
+ * Toggle product storefront visibility (is_listed) directly
+ */
+export async function toggleProductListing(id: string, isListed: boolean): Promise<{ error: string | null }> {
+  try {
+    await sql`UPDATE products SET is_listed = ${isListed}, updated_at = now() WHERE id = ${id}`;
+    try {
+      await sql`UPDATE inventory_products SET is_listed = ${isListed}, updated_at = now() WHERE id = ${id}`;
+    } catch {}
+    return { error: null };
+  } catch (err: any) {
+    console.error("Error toggling product listing:", err);
+    return { error: err?.message || "Failed to update listing status" };
   }
 }
 

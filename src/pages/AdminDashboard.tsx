@@ -7,6 +7,7 @@ import {
   updateProduct as dbUpdateProduct,
   deleteProduct as dbDeleteProduct,
   updateProductStock as dbUpdateStock,
+  toggleProductListing as dbToggleListing,
   subscribeToProductsRealtime,
 } from "../lib/products";
 import {
@@ -241,6 +242,7 @@ type Product = {
   image?: string;
   details?: string;
   badges?: ProductBadge[];
+  isListed?: boolean;
 };
 
 type Settings = {
@@ -406,6 +408,7 @@ const emptyForm = (category = INITIAL_CATEGORIES[0]): ProductFormState => ({
   name: "", category, brand: "", sku: "", hsn: CAT_HSN[category] ?? "", mrp: 0,
   customerPrice: 0, retailerPrice: 0, stock: 0, image: undefined, details: "",
   badges: DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
+  isListed: true,
 });
 
 const INPUT_CLS = "w-full bg-white/70 backdrop-blur-md border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] placeholder:text-[#a8b8aa] focus:outline-none focus:bg-white focus:border-[#006a39] focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-xs";
@@ -717,6 +720,32 @@ function ProductModal({
               placeholder="0" className={INPUT_CLS} />
           </Field>
 
+          {/* Storefront Listing Visibility Switch */}
+          <div className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${form.isListed !== false ? "bg-emerald-50/70 border-emerald-200" : "bg-amber-50/70 border-amber-200"}`}>
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${form.isListed !== false ? "bg-emerald-600 text-white" : "bg-amber-600 text-white"}`}>
+                {form.isListed !== false ? "✓" : "!"}
+              </div>
+              <div>
+                <p className="font-bold text-xs text-[#073b4c]">
+                  {form.isListed !== false ? "Listed on Storefront (Active)" : "Draft / Unlisted (Hidden)"}
+                </p>
+                <p className="text-[10px] text-[#657969]">
+                  {form.isListed !== false
+                    ? "Visible to both customers and retailers for online browsing and ordering."
+                    : "Hidden from customers and retailers. Only visible in Admin Dashboard."}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setForm((p) => ({ ...p, isListed: p.isListed === false ? true : false }))}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs shrink-0 ${form.isListed !== false ? "bg-emerald-700 text-white hover:bg-emerald-800" : "bg-amber-600 text-white hover:bg-amber-700"}`}
+            >
+              {form.isListed !== false ? "● Published" : "○ Draft"}
+            </button>
+          </div>
+
           {/* Badges & Tags */}
           <div className="bg-[#f5f9f6] rounded-2xl p-4 border border-[#dce8dc] flex flex-col gap-3">
             <div className="flex items-center justify-between">
@@ -884,7 +913,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     };
     loadAdminProfile();
 
-    fetchProducts().then((data) => {
+    fetchProducts({ includeUnlisted: true }).then((data) => {
       if (mounted) {
         setProducts(
           (data || []).map((p) => ({
@@ -901,6 +930,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             stock: p.stock,
             image: p.image_url,
             details: p.details || "",
+            isListed: p.is_listed !== false,
             badges: Array.isArray(p.badges) && p.badges.length > 0 ? p.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
           }))
         );
@@ -1226,6 +1256,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           details: form.details?.trim() || null,
           is_flash_sale: isFlashSale,
           is_featured: isFeatured,
+          is_listed: form.isListed !== false,
           badges: form.badges || [],
         });
 
@@ -1265,6 +1296,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           details: form.details?.trim() || null,
           is_flash_sale: isFlashSale,
           is_featured: isFeatured,
+          is_listed: form.isListed !== false,
           badges: form.badges || [],
         });
 
@@ -1275,7 +1307,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       }
 
       // Refresh product list immediately from DB
-      const freshProducts = await fetchProducts();
+      const freshProducts = await fetchProducts({ includeUnlisted: true });
       if (freshProducts) {
         setProducts(freshProducts.map((p) => ({
           id: p.numeric_id,
@@ -1291,6 +1323,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           stock: p.stock,
           image: p.image_url,
           details: p.details || "",
+          isListed: p.is_listed !== false,
           badges: Array.isArray(p.badges) && p.badges.length > 0 ? p.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
         })));
       }
@@ -1301,6 +1334,42 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       setProductSaveError(err?.message || "An unexpected error occurred while saving.");
     } finally {
       setIsSavingProduct(false);
+    }
+  };
+
+  const handleToggleProductListing = async (p: Product) => {
+    const newListed = p.isListed === false ? true : false;
+    setProducts((prev) => prev.map((item) => (item.id === p.id ? { ...item, isListed: newListed } : item)));
+    let targetDbId = p.dbId;
+    if (!targetDbId) {
+      const { data: found } = await supabase.from("products").select("id").eq("numeric_id", p.id).maybeSingle();
+      if (found) targetDbId = found.id;
+    }
+    if (targetDbId) {
+      const { error } = await dbToggleListing(targetDbId, newListed);
+      if (error) {
+        alert("Failed to update listing status: " + error);
+        const fresh = await fetchProducts({ includeUnlisted: true });
+        if (fresh) {
+          setProducts(fresh.map((prod) => ({
+            id: prod.numeric_id,
+            dbId: prod.id,
+            name: prod.name,
+            category: prod.category_name,
+            brand: prod.brand,
+            sku: prod.sku || `SKU-${prod.numeric_id}`,
+            hsn: prod.hsn || "3004",
+            mrp: Number(prod.mrp),
+            customerPrice: Number(prod.customer_price),
+            retailerPrice: Number(prod.retailer_price),
+            stock: prod.stock,
+            image: prod.image_url,
+            details: prod.details || "",
+            isListed: prod.is_listed !== false,
+            badges: Array.isArray(prod.badges) && prod.badges.length > 0 ? prod.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
+          })));
+        }
+      }
     }
   };
 
@@ -1577,6 +1646,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               search={search} setSearch={setSearch}
               catFilter={catFilter} setCatFilter={setCatFilter}
               onEdit={openEdit} onDelete={(id) => setDeleteId(id)}
+              onToggleListing={handleToggleProductListing}
             />
           )}
           {activeTab === "inventory" && (
@@ -1837,11 +1907,20 @@ function DashboardTab({
 }
 
 /* ─── TAB: PRODUCTS CATALOG ─── */
-function ProductsTab({ products, allProductCount, categories, search, setSearch, catFilter, setCatFilter, onEdit, onDelete }: {
+function ProductsTab({ products, allProductCount, categories, search, setSearch, catFilter, setCatFilter, onEdit, onDelete, onToggleListing }: {
   products: Product[]; allProductCount: number; categories: string[];
   search: string; setSearch: (v: string) => void; catFilter: string; setCatFilter: (v: string) => void;
   onEdit: (p: Product) => void; onDelete: (id: number) => void;
+  onToggleListing?: (p: Product) => void;
 }) {
+  const [statusFilter, setStatusFilter] = useState<"All" | "listed" | "unlisted">("All");
+
+  const displayedProducts = useMemo(() => {
+    if (statusFilter === "listed") return products.filter((p) => p.isListed !== false);
+    if (statusFilter === "unlisted") return products.filter((p) => p.isListed === false);
+    return products;
+  }, [products, statusFilter]);
+
   return (
     <div className="flex flex-col gap-5">
       {/* Filter Bar */}
@@ -1860,7 +1939,17 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
           />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="bg-white/80 border border-[#dce7db] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-[#073b4c] focus:outline-none focus:border-[#006a39] transition-all cursor-pointer"
+          >
+            <option value="All">All Visibility</option>
+            <option value="listed">● Listed on Storefront</option>
+            <option value="unlisted">○ Draft / Unlisted</option>
+          </select>
+
           <select
             value={catFilter}
             onChange={(e) => setCatFilter(e.target.value)}
@@ -1870,7 +1959,7 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
             {categories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
           <span className="text-xs font-bold text-[#657969] px-3 py-1 rounded-xl bg-white/70 border border-[#dce7db]">
-            {products.length} Items
+            {displayedProducts.length} Items
           </span>
         </div>
       </div>
@@ -1878,7 +1967,7 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
       {/* Product List */}
       <div className="glass-admin-card rounded-3xl overflow-hidden shadow-xs">
         <div className="divide-y divide-[#e4ede2]">
-          {products.map((p) => {
+          {displayedProducts.map((p) => {
             const st = stockStatus(p.stock);
             const catColor = CAT_ACCENT[p.category] ?? "#006a39";
 
@@ -1902,6 +1991,9 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base truncate">{p.name}</p>
+                      <span className={`font-mono text-[10px] px-2 py-0.5 rounded-full font-bold border ${p.isListed !== false ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-amber-50 text-amber-800 border-amber-200"}`}>
+                        {p.isListed !== false ? "● Listed on Store" : "○ Draft (Hidden)"}
+                      </span>
                       <span className="font-mono text-[10px] bg-sky-50 text-sky-800 border border-sky-200 px-2 py-0.5 rounded-full font-bold">
                         HSN: {p.hsn}
                       </span>
@@ -1959,6 +2051,14 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
                 <div className="flex items-center gap-2 shrink-0 justify-end">
                   <button
                     type="button"
+                    onClick={() => onToggleListing?.(p)}
+                    className={`p-2.5 rounded-xl border transition-colors cursor-pointer shadow-2xs ${p.isListed !== false ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200" : "bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200"}`}
+                    title={p.isListed !== false ? "Click to unlist (hide from storefront)" : "Click to publish (show on storefront)"}
+                  >
+                    {p.isListed !== false ? <Icons.Eye className="w-4 h-4 text-emerald-700" /> : <Icons.Ban className="w-4 h-4 text-amber-700" />}
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => onEdit(p)}
                     className="p-2.5 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 transition-colors cursor-pointer border border-sky-200 shadow-2xs"
                     title="Edit Product"
@@ -1979,11 +2079,11 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
           })}
         </div>
 
-        {products.length === 0 && (
+        {displayedProducts.length === 0 && (
           <div className="py-16 text-center text-[#728575] text-sm flex flex-col items-center gap-2">
             <Icons.Pill className="w-10 h-10 text-[#728575] stroke-1" />
             <p className="font-bold text-[#073b4c]">No products found</p>
-            <p className="text-xs">Try adjusting your category filter or search terms.</p>
+            <p className="text-xs">Try adjusting your visibility filter, category filter or search terms.</p>
           </div>
         )}
       </div>

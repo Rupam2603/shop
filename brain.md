@@ -133,8 +133,10 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Keyword-intelligent assistant with instant answers, WhatsApp click-to-chat, direct phone calling (`tel:+919876543210`), and deep links to Order Tracking.
 - **Authoritative Admin-Only Catalog & Direct Neon SQL Fetching (`src/lib/products.ts`)**:
   - `fetchProducts()` and `fetchCategories()` rewritten to query Neon Postgres directly via `@neondatabase/serverless` `sql` with auto-casting, eliminating anonymous HTTP 400 errors from the PostgREST Data API.
-  - Removed all hardcoded/fake product catalogs (`ALL_PRODUCTS` ~80 items, `FLASH` ~4 items, `bestSellers`, and static `ALL_CATEGORIES.products`) across `src/pages/MedicinesPage.tsx`, `src/pages/CategoryPage.tsx`, `src/pages/HomePage.tsx`, and `src/pages/OffersPage.tsx`.
-  - Both Customer and Retailer storefronts and the Admin portal strictly and exclusively render products added/listed by the Admin in the authoritative `public.products` database table.
+  - Added indexed `is_listed` boolean column (`products.is_listed` and `inventory_products.is_listed`) in Neon Postgres.
+  - Storefront queries (`fetchProducts()`) strictly filter by `WHERE is_listed = true`, ensuring only products explicitly published/listed by the administrator appear to customers and retailers.
+  - Admin portal queries with `includeUnlisted: true` (`fetchProducts({ includeUnlisted: true })`), displaying all products along with `● Listed` / `○ Draft (Hidden)` indicators, a visibility filter, a Product Modal switch, and 1-click publishing toggle (`toggleProductListing`).
+  - Removed all hardcoded/fake product catalogs (`ALL_PRODUCTS` ~80 items, `FLASH` ~4 items, `bestSellers`, and static `ALL_CATEGORIES.products`) across all storefront views.
   - Dynamically computes brands, category counts, and discounts directly from active database products.
 - **Footer Phone Removal & Cross-Device Cache Invalidation**:
   - Removed phone number section from `src/components/Footer.tsx` for both Customer and Retailer portals across all viewport sizes.
