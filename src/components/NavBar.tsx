@@ -374,20 +374,8 @@ export default function NavBar({
           </div>
 
 
-          {/* Right section: Support, Cart, Highly Visible Profile, Highly Visible Logout */}
+          {/* Right section: Cart, Highly Visible Profile, Highly Visible Logout */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            {/* 24/7 Support Quick Trigger */}
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent("subhone:open_support_chat"))}
-              className="p-2 sm:px-2.5 sm:py-1.5 rounded-2xl bg-emerald-50/90 hover:bg-emerald-100 border border-emerald-200/90 text-[#006a39] text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:scale-105 active:scale-95 shrink-0"
-              title="24/7 Live Support Chat"
-              aria-label="24/7 Support"
-            >
-              <span className="text-sm">💬</span>
-              <span className="hidden md:inline font-black text-[11px]">Support</span>
-            </button>
-
             {/* Shopping Cart Button */}
             <button
               type="button"
