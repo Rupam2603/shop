@@ -83,70 +83,103 @@ export interface ProductFilters {
 }
 
 /**
- * Fetch all categories from Supabase
+ * Fetch all categories from Neon Postgres
  */
 export async function fetchCategories(): Promise<DbCategory[]> {
-  const { data, error } = await supabase
-    .from("categories")
-    .select("*")
-    .order("name", { ascending: true });
-
-  if (error) {
-    console.error("Error fetching categories:", error);
-    return [];
+  try {
+    const rows = await sql`SELECT * FROM categories ORDER BY name ASC`;
+    return rows as DbCategory[];
+  } catch (error) {
+    console.error("Error fetching categories via sql, attempting fallback:", error);
+    try {
+      const { data } = await supabase.from("categories").select("*").order("name", { ascending: true });
+      return (data || []) as DbCategory[];
+    } catch {
+      return [];
+    }
   }
-  return data as DbCategory[];
 }
 
 /**
- * Fetch products from Supabase with optional filters
+ * Fetch products directly from Neon Postgres authoritative products table
  */
 export async function fetchProducts(filters: ProductFilters = {}): Promise<DbProduct[]> {
-  let query = supabase.from("products").select("*");
+  try {
+    const rows = await sql`SELECT * FROM products ORDER BY numeric_id ASC`;
+    let prods: DbProduct[] = (rows as any[]).map((r) => ({
+      ...r,
+      numeric_id: Number(r.numeric_id) || 0,
+      mrp: Number(r.mrp) || 0,
+      customer_price: Number(r.customer_price) || 0,
+      retailer_price: Number(r.retailer_price) || 0,
+      discount_percent: Number(r.discount_percent) || 0,
+      stock: Number(r.stock) || 0,
+      is_flash_sale: Boolean(r.is_flash_sale),
+      is_featured: Boolean(r.is_featured),
+    }));
 
-  if (filters.category && filters.category !== "All") {
-    query = query.eq("category_name", filters.category);
-  }
+    if (filters.category && filters.category !== "All") {
+      const targetCat = filters.category.toLowerCase().trim();
+      prods = prods.filter((p) => p.category_name && p.category_name.toLowerCase().trim() === targetCat);
+    }
 
-  if (filters.brand && filters.brand.length > 0) {
-    query = query.in("brand", filters.brand);
-  }
+    if (filters.brand && filters.brand.length > 0) {
+      prods = prods.filter((p) => filters.brand?.includes(p.brand));
+    }
 
-  if (filters.minPrice !== undefined) {
-    query = query.gte("customer_price", filters.minPrice);
-  }
+    if (filters.minPrice !== undefined) {
+      prods = prods.filter((p) => p.customer_price >= filters.minPrice!);
+    }
 
-  if (filters.maxPrice !== undefined && filters.maxPrice !== Infinity) {
-    query = query.lte("customer_price", filters.maxPrice);
-  }
+    if (filters.maxPrice !== undefined && filters.maxPrice !== Infinity) {
+      prods = prods.filter((p) => p.customer_price <= filters.maxPrice!);
+    }
 
-  if (filters.search && filters.search.trim()) {
-    const term = `%${filters.search.trim()}%`;
-    query = query.or(`name.ilike.${term},brand.ilike.${term},subtitle.ilike.${term}`);
-  }
+    if (filters.search && filters.search.trim()) {
+      const term = filters.search.trim().toLowerCase();
+      prods = prods.filter(
+        (p) =>
+          (p.name && p.name.toLowerCase().includes(term)) ||
+          (p.brand && p.brand.toLowerCase().includes(term)) ||
+          (p.subtitle && p.subtitle.toLowerCase().includes(term)) ||
+          (p.details && p.details.toLowerCase().includes(term))
+      );
+    }
 
-  switch (filters.sortBy) {
-    case "price-asc":
-      query = query.order("customer_price", { ascending: true });
-      break;
-    case "price-desc":
-      query = query.order("customer_price", { ascending: false });
-      break;
-    case "discount":
-      query = query.order("discount_percent", { ascending: false });
-      break;
-    default:
-      query = query.order("numeric_id", { ascending: true });
-      break;
-  }
+    switch (filters.sortBy) {
+      case "price-asc":
+        prods.sort((a, b) => a.customer_price - b.customer_price);
+        break;
+      case "price-desc":
+        prods.sort((a, b) => b.customer_price - a.customer_price);
+        break;
+      case "discount":
+        prods.sort((a, b) => (b.discount_percent || 0) - (a.discount_percent || 0));
+        break;
+      default:
+        prods.sort((a, b) => (a.numeric_id || 0) - (b.numeric_id || 0));
+        break;
+    }
 
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("Error fetching products:", error);
+    return prods;
+  } catch (error) {
+    console.error("Error fetching products via sql, attempting fallback:", error);
+    try {
+      const { data, error: supErr } = await supabase.from("products").select("*");
+      if (!supErr && data) {
+        return (data as any[]).map((r) => ({
+          ...r,
+          numeric_id: Number(r.numeric_id) || 0,
+          mrp: Number(r.mrp) || 0,
+          customer_price: Number(r.customer_price) || 0,
+          retailer_price: Number(r.retailer_price) || 0,
+          discount_percent: Number(r.discount_percent) || 0,
+          stock: Number(r.stock) || 0,
+        })) as DbProduct[];
+      }
+    } catch {}
     return [];
   }
-  return data as DbProduct[];
 }
 
 /**

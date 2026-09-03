@@ -8,10 +8,6 @@ import type { Page } from "../App";
 import imgMainFeatured from "@/imports/HealthSupplementsSubhOne/12180d12bdb759cb4c1126433eb9617bcf5f0e37.png";
 import imgVitamins from "@/imports/HealthSupplementsSubhOne/82fde6fb40fb3f0de4e0ae8e660633ef3205b656.png";
 import imgAyurveda from "@/imports/HealthSupplementsSubhOne/5bf6c30bcdaa73c2f154fa0056e19083a2be7538.png";
-import imgWheyProtein from "@/imports/HealthSupplementsSubhOne/d5d15fa3258f8a08d359a05ee21c14dc9b5772a4.png";
-import imgOmega3 from "@/imports/HealthSupplementsSubhOne/f2d5336de26350e80b974508f11f2c0dd8b163aa.png";
-import imgMultivitamins from "@/imports/HealthSupplementsSubhOne/3c99917897bd535bf5e0599101f9a9230ad0a63d.png";
-import imgAshwagandha from "@/imports/HealthSupplementsSubhOne/572e3e713ff3505ed972644010e32394fe453e53.png";
 
 interface OffersPageProps {
   userRole?: string;
@@ -25,65 +21,6 @@ const categoryTabs = [
   "Omega & Fish Oil",
   "Immunity Boosters",
   "Weight Management",
-];
-
-const bestSellers = [
-  {
-    img: imgWheyProtein,
-    badge: "",
-    brand: "OPTIMUM NUTRITION",
-    brandColor: "#006a39",
-    name: "Gold Standard 100% Whey Protein Isolate",
-    rating: "4.8",
-    reviews: "(1.2k)",
-    price: "₹3,499",
-    orig: "₹3,999",
-    disc: "12%",
-    cat: "Energy, Hydration & Supplements",
-    stock: 50,
-  },
-  {
-    img: imgOmega3,
-    badge: "",
-    brand: "NATURE'S BOUNTY",
-    brandColor: "#006a39",
-    name: "Triple Strength Omega-3 Fish Oil 1400mg",
-    rating: "4.6",
-    reviews: "(850)",
-    price: "₹1,249",
-    orig: "₹1,499",
-    disc: "16%",
-    cat: "Energy, Hydration & Supplements",
-    stock: 35,
-  },
-  {
-    img: imgMultivitamins,
-    badge: "BEST VALUE",
-    brand: "CENTRUM",
-    brandColor: "#006a39",
-    name: "Adult Multivitamin & Multimineral Supplement",
-    rating: "4.9",
-    reviews: "(2.1k)",
-    price: "₹999",
-    orig: "₹1,299",
-    disc: "23%",
-    cat: "Energy, Hydration & Supplements",
-    stock: 40,
-  },
-  {
-    img: imgAshwagandha,
-    badge: "",
-    brand: "HIMALAYA",
-    brandColor: "#006a39",
-    name: "Organic Ashwagandha Root Extract",
-    rating: "4.7",
-    reviews: "(420)",
-    price: "₹649",
-    orig: "₹799",
-    disc: "18%",
-    cat: "Energy, Hydration & Supplements",
-    stock: 25,
-  },
 ];
 
 function StarIcon() {
@@ -126,8 +63,12 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
   useEffect(() => {
     let mounted = true;
     fetchProducts().then((data) => {
-      if (mounted && data && data.length > 0) {
-        setDbProducts(data);
+      if (mounted) {
+        setDbProducts(data || []);
+      }
+    }).catch(() => {
+      if (mounted) {
+        setDbProducts([]);
       }
     });
 
@@ -152,7 +93,7 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
   }, []);
 
   const displayProducts = useMemo(() => {
-    if (!dbProducts || dbProducts.length === 0) return bestSellers;
+    if (!dbProducts || dbProducts.length === 0) return [];
 
     const suppProducts = dbProducts.filter((p) =>
       p.category_name === "Energy, Hydration & Supplements" ||
@@ -160,20 +101,20 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
       p.discount_percent >= 15
     );
 
-    if (suppProducts.length === 0) return bestSellers;
+    const baseList = suppProducts.length > 0 ? suppProducts : dbProducts;
 
-    let filtered = suppProducts;
+    let filtered = baseList;
     if (activeTab === "Protein") {
-      filtered = suppProducts.filter((p) => p.name.toLowerCase().includes("protein") || p.name.toLowerCase().includes("glucon"));
+      filtered = baseList.filter((p) => /protein|glucon|horlicks/i.test(p.name + " " + (p.details || "")));
     } else if (activeTab === "Vitamins & Minerals") {
-      filtered = suppProducts.filter((p) => p.name.toLowerCase().includes("vitamin") || p.name.toLowerCase().includes("zinc") || p.name.toLowerCase().includes("chyawanprash"));
+      filtered = baseList.filter((p) => /vitamin|zinc|chyawanprash|mineral/i.test(p.name + " " + (p.details || "")));
     } else if (activeTab === "Omega & Fish Oil") {
-      filtered = suppProducts.filter((p) => p.name.toLowerCase().includes("omega") || p.name.toLowerCase().includes("oil"));
+      filtered = baseList.filter((p) => /omega|oil/i.test(p.name + " " + (p.details || "")));
     } else if (activeTab === "Immunity Boosters") {
-      filtered = suppProducts.filter((p) => p.name.toLowerCase().includes("chyawanprash") || p.name.toLowerCase().includes("honey") || p.name.toLowerCase().includes("ors"));
+      filtered = baseList.filter((p) => /chyawanprash|honey|ors|immunity/i.test(p.name + " " + (p.details || "")));
     }
 
-    if (filtered.length === 0) filtered = suppProducts;
+    if (filtered.length === 0) filtered = baseList;
 
     return filtered.slice(0, 8).map((p) => ({
       dbId: p.id,

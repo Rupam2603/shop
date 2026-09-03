@@ -131,10 +131,14 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - In-app responsive 24/7 live assistance widget floating in bottom right.
   - Quick-reply carousel: delivery time/charges, serviceable pincodes, prescription policy, order tracking, wholesale inquiry, and human support.
   - Keyword-intelligent assistant with instant answers, WhatsApp click-to-chat, direct phone calling (`tel:+919876543210`), and deep links to Order Tracking.
-- **Simplified Authentication UI/UX (`src/pages/LoginPage.tsx`)**:
-  - Redesigned into a clean, modern, centered card on soft healthcare gradient backdrop.
-  - Intuitive segmented controls for mode switching (`[ Sign In | Create Account ]`) and account type (`[ Customer | Retailer | Admin ]`).
-  - Streamlined input fields with clear labels, password visibility toggle, remember-me support, and dedicated retailer status check modal.
+- **Authoritative Admin-Only Catalog & Direct Neon SQL Fetching (`src/lib/products.ts`)**:
+  - `fetchProducts()` and `fetchCategories()` rewritten to query Neon Postgres directly via `@neondatabase/serverless` `sql` with auto-casting, eliminating anonymous HTTP 400 errors from the PostgREST Data API.
+  - Removed all hardcoded/fake product catalogs (`ALL_PRODUCTS` ~80 items, `FLASH` ~4 items, `bestSellers`, and static `ALL_CATEGORIES.products`) across `src/pages/MedicinesPage.tsx`, `src/pages/CategoryPage.tsx`, `src/pages/HomePage.tsx`, and `src/pages/OffersPage.tsx`.
+  - Both Customer and Retailer storefronts and the Admin portal strictly and exclusively render products added/listed by the Admin in the authoritative `public.products` database table.
+  - Dynamically computes brands, category counts, and discounts directly from active database products.
+- **Footer Phone Removal & Cross-Device Cache Invalidation**:
+  - Removed phone number section from `src/components/Footer.tsx` for both Customer and Retailer portals across all viewport sizes.
+  - Added strict `no-cache, no-store, must-revalidate` headers for `/index.html` in `vercel.json` and `<meta http-equiv="Cache-Control">` in `index.html` to prevent stale caches on desktop browsers while keeping hashed static assets immutable.
 
 
 

@@ -790,7 +790,7 @@ function ProductModal({
 /* ─── Main Admin Dashboard Component ─── */
 export default function AdminDashboard({ user, onLogout }: Props) {
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(INITIAL_CATEGORIES);
 
   // Admin profile state
@@ -885,9 +885,9 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     loadAdminProfile();
 
     fetchProducts().then((data) => {
-      if (mounted && data && data.length > 0) {
+      if (mounted) {
         setProducts(
-          data.map((p) => ({
+          (data || []).map((p) => ({
             id: p.numeric_id,
             dbId: p.id,
             name: p.name,
