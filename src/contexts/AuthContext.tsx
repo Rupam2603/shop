@@ -55,7 +55,11 @@ interface SignUpOptions {
 // ─── Local Storage Session Recovery ──────────────────────────────────────────
 function getStoredUser(): AppUser | null {
   try {
-    const savedAdmin = localStorage.getItem("subhone_active_admin_session");
+    // Purge any legacy persistent admin session from localStorage so admin always has to log in
+    localStorage.removeItem("subhone_active_admin_session");
+
+    // Only recover admin from sessionStorage (active tab session)
+    const savedAdmin = sessionStorage.getItem("subhone_active_admin_session");
     if (savedAdmin) {
       const parsed = JSON.parse(savedAdmin);
       if (parsed?.email) {
@@ -84,7 +88,10 @@ function getStoredUser(): AppUser | null {
     const savedUser = localStorage.getItem("subhone_active_user_session");
     if (savedUser) {
       const parsed = JSON.parse(savedUser);
-      if (parsed?.id && parsed?.email) {
+      // Ensure admin accounts are never auto-logged-in from persistent localStorage
+      if (parsed?.role === "admin") {
+        localStorage.removeItem("subhone_active_user_session");
+      } else if (parsed?.id && parsed?.email) {
         return {
           authUser: {
             id: parsed.id,
@@ -314,6 +321,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           hydrateSession(session.user);
         } else if (event === "SIGNED_OUT") {
           // Explicit sign out cleans storage
+          sessionStorage.removeItem("subhone_active_admin_session");
           localStorage.removeItem("subhone_active_admin_session");
           localStorage.removeItem("subhone_active_user_session");
           localStorage.removeItem("subhone_active_phone_session");
@@ -395,7 +403,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
 
         try {
-          localStorage.setItem(
+          sessionStorage.setItem(
             "subhone_active_admin_session",
             JSON.stringify({
               id: fallbackId,
@@ -405,6 +413,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               timestamp: Date.now(),
             })
           );
+          localStorage.removeItem("subhone_active_admin_session");
+          localStorage.removeItem("subhone_active_user_session");
         } catch { }
 
         setAppUser({
@@ -438,18 +448,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           try {
-            localStorage.setItem(
-              "subhone_active_user_session",
-              JSON.stringify({
-                id: u.id,
-                email: u.email,
-                fullName: u.fullName,
-                role: u.role,
-                businessName: u.businessName,
-                status: u.status,
-                timestamp: Date.now(),
-              })
-            );
+            if (u.role === "admin") {
+              sessionStorage.setItem(
+                "subhone_active_admin_session",
+                JSON.stringify({
+                  id: u.id,
+                  email: u.email,
+                  fullName: u.fullName,
+                  role: "admin",
+                  timestamp: Date.now(),
+                })
+              );
+              localStorage.removeItem("subhone_active_user_session");
+              localStorage.removeItem("subhone_active_admin_session");
+            } else {
+              localStorage.setItem(
+                "subhone_active_user_session",
+                JSON.stringify({
+                  id: u.id,
+                  email: u.email,
+                  fullName: u.fullName,
+                  role: u.role,
+                  businessName: u.businessName,
+                  status: u.status,
+                  timestamp: Date.now(),
+                })
+              );
+            }
           } catch { }
 
           setAppUser({
@@ -511,19 +536,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        localStorage.setItem(
-          "subhone_active_user_session",
-          JSON.stringify({
-            id: authUser.id,
-            email: authUser.email,
-            fullName: authUser.user_metadata?.full_name || "User",
-            role: userRole,
-            phone: authUser.user_metadata?.phone,
-            shopName: authUser.user_metadata?.shop_name,
-            approvalStatus: "approved",
-            timestamp: Date.now(),
-          })
-        );
+        if (userRole === "admin") {
+          sessionStorage.setItem(
+            "subhone_active_admin_session",
+            JSON.stringify({
+              id: authUser.id,
+              email: authUser.email,
+              fullName: authUser.user_metadata?.full_name || "Admin",
+              role: "admin",
+              timestamp: Date.now(),
+            })
+          );
+          localStorage.removeItem("subhone_active_user_session");
+          localStorage.removeItem("subhone_active_admin_session");
+        } else {
+          localStorage.setItem(
+            "subhone_active_user_session",
+            JSON.stringify({
+              id: authUser.id,
+              email: authUser.email,
+              fullName: authUser.user_metadata?.full_name || "User",
+              role: userRole,
+              phone: authUser.user_metadata?.phone,
+              shopName: authUser.user_metadata?.shop_name,
+              approvalStatus: "approved",
+              timestamp: Date.now(),
+            })
+          );
+        }
       } catch { }
 
       setAppUser({
@@ -659,6 +699,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     setLoading(true);
     try {
+      sessionStorage.removeItem("subhone_active_admin_session");
       localStorage.removeItem("subhone_active_admin_session");
       localStorage.removeItem("subhone_active_user_session");
       localStorage.removeItem("subhone_active_phone_session");

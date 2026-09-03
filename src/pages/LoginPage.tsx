@@ -767,24 +767,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                 </div>
               )}
 
-              {/* Quick Admin Demo Credentials Banner */}
-              {selectedRole === "admin" && (
-                <div className="bg-gradient-to-r from-[#073b4c]/10 via-[#006a39]/10 to-[#073b4c]/10 border border-[#073b4c]/20 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 shadow-xs">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-[#073b4c] text-white flex items-center justify-center text-sm shrink-0 font-extrabold shadow-xs">
-                      🛡️
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-black text-[#073b4c] leading-tight">
-                        Executive Admin: <span className="font-mono text-emerald-800">Subhonehealthgroup@gmail.com</span>
-                      </p>
-                      <p className="text-[11px] text-[#596b5e] font-semibold mt-0.5">
-                        Password: <span className="font-mono text-[#073b4c]">Subhone@2026</span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+
 
               {/* ── EMAIL/PASSWORD LOGIN FORM ── */}
               {mode === "login" && (
