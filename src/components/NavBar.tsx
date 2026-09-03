@@ -225,16 +225,16 @@ export default function NavBar({
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-2xl text-[#073b4c] bg-white/70 hover:bg-white/95 border border-[#dce7db] shadow-2xs backdrop-blur-md transition-all cursor-pointer shrink-0"
+              className="lg:hidden p-1.5 sm:p-2 rounded-xl sm:rounded-2xl text-[#073b4c] bg-white/70 hover:bg-white/95 border border-[#dce7db] shadow-2xs backdrop-blur-md transition-all cursor-pointer shrink-0"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="sm:w-[22px] sm:h-[22px]">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="sm:w-[22px] sm:h-[22px]">
                   <line x1="3" y1="12" x2="21" y2="12" />
                   <line x1="3" y1="6" x2="21" y2="6" />
                   <line x1="3" y1="18" x2="21" y2="18" />
@@ -246,18 +246,18 @@ export default function NavBar({
             <button
               type="button"
               onClick={() => handleNavClick("home")}
-              className="flex items-center gap-1.5 sm:gap-2.5 cursor-pointer focus:outline-none group min-w-0"
+              className="flex items-center gap-1.5 sm:gap-2.5 cursor-pointer focus:outline-none group shrink-0"
             >
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-[#006a39] to-[#047857] flex items-center justify-center shadow-lg shadow-emerald-900/15 group-hover:scale-105 transition-transform shrink-0 border border-white/30">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="sm:w-[22px] sm:h-[22px]">
+              <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#006a39] to-[#047857] flex items-center justify-center shadow-md sm:shadow-lg shadow-emerald-900/15 group-hover:scale-105 transition-transform shrink-0 border border-white/30">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="sm:w-[22px] sm:h-[22px]">
                   <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" fill="white" />
                 </svg>
               </div>
-              <div className="flex flex-col text-left leading-none min-w-0">
-                <span className="font-['Manrope',sans-serif] font-black text-[#006a39] text-sm xs:text-base sm:text-2xl tracking-tight drop-shadow-2xs truncate max-w-[125px] xs:max-w-[160px] sm:max-w-none">
-                  {settings.storeName || "SubhOne"}
+              <div className="flex flex-col text-left leading-none">
+                <span className="font-['Manrope',sans-serif] font-black text-[#006a39] text-[11px] min-[360px]:text-xs min-[410px]:text-sm sm:text-2xl tracking-tight drop-shadow-2xs whitespace-nowrap">
+                  {settings.storeName || "SubhOne Health Group"}
                 </span>
-                <span className="text-[9px] font-extrabold text-[#047857] tracking-widest uppercase hidden sm:inline">
+                <span className="text-[8px] sm:text-[9px] font-extrabold text-[#047857] tracking-widest uppercase hidden min-[480px]:inline">
                   Pharmacy & Diagnostic
                 </span>
               </div>
