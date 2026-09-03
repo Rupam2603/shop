@@ -3,6 +3,7 @@ import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { fetchUserAddresses, DbAddress, createAddress } from "../lib/addresses";
 import { placeOrder } from "../lib/orders";
+import InfinityLoader from "./InfinityLoader";
 
 interface CheckoutModalProps {
   open: boolean;
@@ -184,7 +185,14 @@ export default function CheckoutModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center sm:p-4 overflow-y-auto min-h-[100dvh]">
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden sm:my-6">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden sm:my-6 relative">
+        {/* Loading Overlay with InfinityLoader */}
+        {loading && (
+          <div className="absolute inset-0 bg-white/90 backdrop-blur-md z-50 flex items-center justify-center p-6 transition-all duration-300">
+            <InfinityLoader size={120} text="Securing & processing your order…" />
+          </div>
+        )}
+
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-[#e4ede2] flex items-center justify-between bg-[#f8fafb]">
           <h2 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg">

@@ -123,7 +123,9 @@ The application reads configuration through `import.meta.env` (defined in `.env`
     - `src/pages/AdminDashboard.tsx`: Order inspection dialog and PDF/print invoice generation reflect full item snapshots.
     - `src/pages/ProfilePage.tsx`: Downloadable invoice bill PDF for both customers and retailers matches the placed order items.
     - `src/components/OrderTrackingModal.tsx`: Real-time order tracking details and invoice bill reflect exact database-stored items without simulated fallbacks.
-- **Admin Authentication Security**:
-  - Removed demo credential banners and instant login bypasses.
-  - Admin authentication requires manual credential entry, stored strictly in `sessionStorage` with automatic local storage purge on site entry to prevent accidental auto-login bypasses.
+- **Infinity Loop Glowing Loader**:
+  - Implemented `src/components/InfinityLoader.tsx` featuring a pure SVG/CSS animated infinity symbol (lemniscate `∞`) with a luminous glowing beam and trailing comet effect.
+  - Non-black background requirement strictly adhered to (rendered on clean transparent / translucent glassmorphic light backdrops).
+  - Integrated into initial app auth resolution (`LoadingScreen`), order tracking search modal (`OrderTrackingModal`), and order placement checkout overlay (`CheckoutModal`).
+
 

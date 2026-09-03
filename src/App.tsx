@@ -14,6 +14,7 @@ import ProfilePage from "./pages/ProfilePage";
 import CartDrawer from "./components/CartDrawer";
 import CheckoutModal from "./components/CheckoutModal";
 import OrderTrackingModal from "./components/OrderTrackingModal";
+import InfinityLoader from "./components/InfinityLoader";
 import { useAuth, toLegacyUser } from "./contexts/AuthContext";
 import { parseHashToState, pushPageState, replacePageState } from "./lib/navigation";
 import { supabase } from "./lib/supabase";
@@ -73,10 +74,7 @@ function ConsultPage() {
 function LoadingScreen() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f5fbf2]">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-full border-4 border-[#006a39] border-t-transparent animate-spin" />
-        <p className="text-[#073b4c] font-semibold text-sm">Loading SubhOne…</p>
-      </div>
+      <InfinityLoader size={130} text="Loading SubhOne…" />
     </div>
   );
 }

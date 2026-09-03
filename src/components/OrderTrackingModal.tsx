@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { DbOrder, fetchUserOrders, fetchOrderByNumber, subscribeToUserOrdersRealtime, subscribeToOrdersRealtime } from "../lib/orders";
 import { printOrDownloadInvoice, downloadInvoiceFile, InvoiceOrderData } from "../lib/invoiceGenerator";
+import InfinityLoader from "./InfinityLoader";
 
 interface Props {
   isOpen: boolean;
@@ -283,9 +284,8 @@ export default function OrderTrackingModal({
         {/* ── Modal Main Body ── */}
         <div className="p-5 sm:p-7 overflow-y-auto flex-1 flex flex-col gap-6">
           {loading ? (
-            <div className="py-20 flex flex-col items-center justify-center gap-3 text-center">
-              <div className="w-10 h-10 border-3 border-[#006a39] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm font-bold text-[#073b4c]">Connecting to live tracking satellites...</p>
+            <div className="py-20 flex flex-col items-center justify-center">
+              <InfinityLoader size={120} text="Connecting to live tracking satellites..." />
             </div>
           ) : notFound ? (
             <div className="py-16 text-center flex flex-col items-center gap-3">
