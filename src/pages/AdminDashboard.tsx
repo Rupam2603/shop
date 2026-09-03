@@ -388,9 +388,17 @@ function orderStatus(s: string): { color: string; bg: string; border: string } {
     case "Dispatched":
     case "Dispatch": return { color: "#7c3aed", bg: "rgba(237, 233, 254, 0.8)", border: "#ddd6fe" };
     case "Processing": return { color: "#d97706", bg: "rgba(254, 243, 199, 0.8)", border: "#fde68a" };
-    case "Cancelled": return { color: "#b91c1c", bg: "rgba(254, 226, 226, 0.8)", border: "#fecaca" };
+    case "Cancelled": return { color: "#b91c1c", bg: "rgba(226, 232, 240, 0.8)", border: "#fecaca" };
     default: return { color: "#374151", bg: "rgba(243, 244, 246, 0.8)", border: "#e5e7eb" };
   }
+}
+
+function safeDiscountPercent(base: number, price: number): number {
+  if (!base || base <= 0 || !price || price < 0) return 0;
+  const discount = base - price;
+  if (discount <= 0) return 0;
+  const pct = (discount / base) * 100;
+  return Math.round(pct);
 }
 
 type ProductFormState = Omit<Product, "id"> & { id?: number };
@@ -677,16 +685,16 @@ function ProductModal({
               <div className="bg-sky-50/80 backdrop-blur-md rounded-2xl p-3.5 text-center border border-sky-200">
                 <p className="text-[10px] text-sky-800 font-extrabold uppercase tracking-wide">Customer Retail View</p>
                 <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xl sm:text-2xl mt-0.5">₹{form.customerPrice}</p>
-                {form.mrp > form.customerPrice && (
-                  <p className="text-[10px] font-bold text-emerald-700 mt-0.5">{Math.round(((form.mrp - form.customerPrice) / form.mrp) * 100)}% off MRP</p>
-                )}
+                <p className="text-[10px] font-bold text-emerald-700 mt-0.5">
+                  {safeDiscountPercent(form.mrp, form.customerPrice)}% off MRP
+                </p>
               </div>
               <div className="bg-emerald-50/80 backdrop-blur-md rounded-2xl p-3.5 text-center border border-emerald-200">
                 <p className="text-[10px] text-emerald-800 font-extrabold uppercase tracking-wide">Retailer Wholesale View</p>
                 <p className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-xl sm:text-2xl mt-0.5">₹{form.retailerPrice}</p>
-                {form.customerPrice > form.retailerPrice && (
-                  <p className="text-[10px] font-bold text-emerald-800 mt-0.5">{Math.round(((form.customerPrice - form.retailerPrice) / form.customerPrice) * 100)}% wholesale discount</p>
-                )}
+                <p className="text-[10px] font-bold text-emerald-800 mt-0.5">
+                  {safeDiscountPercent(form.customerPrice, form.retailerPrice)}% wholesale discount
+                </p>
               </div>
             </div>
           )}
