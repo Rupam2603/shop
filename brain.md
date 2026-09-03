@@ -108,7 +108,7 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Seamlessly integrated with Neon Auth Better Auth cloud endpoints and local database authentication fallback.
 - **Full Responsiveness & Mobile-First Tightening (Latest)**: Comprehensive mobile-first polish applied across storefront and admin portal:
   - `src/index.css`: iOS safe-area support (`env(safe-area-inset-*)`), `min-h-[100dvh]`, `text-size-adjust: 100%`, iOS input zoom prevention (`font-size: max(16px, 1em)`), `text-wrap: balance` for `h1, h2, h3, h4`.
-  - `NavBar.tsx`: Added `safe-top` to sticky header with backdrop blur; center search bar hidden on mobile (`hidden md:flex`) with clean mobile search bar below; minimum 44px touch targets on navigation toggles.
+  - `NavBar.tsx`: Added `safe-top` to sticky header with backdrop blur; fixed mobile topbar spacing so Brand Logo truncates gracefully and Cart, Profile Avatar, and Logout buttons fit side-by-side without overflowing or being clipped on small screens (360px–390px); added Sign In / Register button in mobile drawer for guest users.
   - `ProductModal.tsx` & `AdminDashboard.tsx` modals: Responsive bottom-sheet pattern on mobile (`flex items-end sm:items-center`, `rounded-t-3xl sm:rounded-3xl`, `max-h-[90dvh] sm:max-h-[92vh]`).
   - `CartDrawer.tsx`: Full-width on phones, `h-[100dvh]`, and `safe-bottom pb-6 sm:pb-5` checkout CTA drawer.
   - `AdminDashboard.tsx`: Top bar uses `safe-top` and accessible 44px hamburger menu button; KPI stat cards stack flexibly (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`); user stats stack cleanly (`grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5`).

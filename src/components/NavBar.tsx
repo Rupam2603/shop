@@ -218,23 +218,23 @@ export default function NavBar({
     <>
       <header className="safe-top sticky top-0 z-40 bg-white/80 backdrop-blur-2xl border-b border-white/60 shadow-xs transition-all duration-300">
         {/* Tier 1: Main Header Row (Logo, Location, Wide Search, Cart, Profile, Logout) */}
-        <div className="max-w-[1480px] mx-auto px-3 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="max-w-[1480px] mx-auto px-2 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-1.5 sm:gap-4">
           {/* Left section: Hamburger, Brand Logo & Location Pill */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 sm:flex-initial">
             {/* Mobile Hamburger Button */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-2xl text-[#073b4c] bg-white/70 hover:bg-white/95 border border-[#dce7db] shadow-2xs backdrop-blur-md transition-all cursor-pointer"
+              className="lg:hidden p-2 rounded-2xl text-[#073b4c] bg-white/70 hover:bg-white/95 border border-[#dce7db] shadow-2xs backdrop-blur-md transition-all cursor-pointer shrink-0"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               ) : (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="3" y1="12" x2="21" y2="12" />
                   <line x1="3" y1="6" x2="21" y2="6" />
                   <line x1="3" y1="18" x2="21" y2="18" />
@@ -246,15 +246,15 @@ export default function NavBar({
             <button
               type="button"
               onClick={() => handleNavClick("home")}
-              className="flex items-center gap-2.5 cursor-pointer focus:outline-none group"
+              className="flex items-center gap-1.5 sm:gap-2.5 cursor-pointer focus:outline-none group min-w-0"
             >
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#006a39] to-[#047857] flex items-center justify-center shadow-lg shadow-emerald-900/15 group-hover:scale-105 transition-transform shrink-0 border border-white/30">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-[#006a39] to-[#047857] flex items-center justify-center shadow-lg shadow-emerald-900/15 group-hover:scale-105 transition-transform shrink-0 border border-white/30">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="sm:w-[22px] sm:h-[22px]">
                   <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" fill="white" />
                 </svg>
               </div>
-              <div className="flex flex-col text-left leading-none">
-                <span className="font-['Manrope',sans-serif] font-black text-[#006a39] text-xl sm:text-2xl tracking-tight drop-shadow-2xs">
+              <div className="flex flex-col text-left leading-none min-w-0">
+                <span className="font-['Manrope',sans-serif] font-black text-[#006a39] text-sm xs:text-base sm:text-2xl tracking-tight drop-shadow-2xs truncate max-w-[125px] xs:max-w-[160px] sm:max-w-none">
                   {settings.storeName || "SubhOne"}
                 </span>
                 <span className="text-[9px] font-extrabold text-[#047857] tracking-widest uppercase hidden sm:inline">
@@ -375,18 +375,18 @@ export default function NavBar({
 
 
           {/* Right section: Cart, Highly Visible Profile, Highly Visible Logout */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Shopping Cart Button */}
             <button
               type="button"
               onClick={openCart}
-              className="p-2 sm:p-2.5 rounded-2xl bg-white/80 hover:bg-emerald-50/90 border border-emerald-200/80 backdrop-blur-md transition-all relative text-[#006a39] cursor-pointer flex items-center gap-1.5 shadow-xs hover:shadow-md hover:scale-105 active:scale-95 group"
+              className="p-2 sm:p-2.5 rounded-2xl bg-white/80 hover:bg-emerald-50/90 border border-emerald-200/80 backdrop-blur-md transition-all relative text-[#006a39] cursor-pointer flex items-center justify-center shadow-xs hover:shadow-md hover:scale-105 active:scale-95 group shrink-0"
               title="Shopping Cart"
               aria-label="Shopping Cart"
             >
               <CartIcon />
               {itemCount > 0 && (
-                <span className="bg-gradient-to-br from-[#006a39] to-[#047857] text-white text-[11px] font-black rounded-full px-2 py-0.5 min-w-[20px] text-center shadow-xs border border-white/40">
+                <span className="absolute -top-1.5 -right-1.5 sm:static bg-gradient-to-br from-[#006a39] to-[#047857] text-white text-[10px] sm:text-[11px] font-black rounded-full px-1.5 py-0.2 sm:px-2 sm:py-0.5 min-w-[18px] text-center shadow-xs border border-white/40">
                   {itemCount}
                 </span>
               )}
@@ -400,8 +400,9 @@ export default function NavBar({
                   onProfile?.();
                   setMobileMenuOpen(false);
                 }}
-                className="flex items-center gap-1.5 sm:gap-2.5 p-1.5 sm:px-3.5 sm:py-1.5 rounded-2xl bg-white/80 hover:bg-white/95 border border-[#dce7db] backdrop-blur-md transition-all cursor-pointer shadow-xs hover:shadow-md hover:-translate-y-0.5 group shrink-0"
+                className="flex items-center gap-1.5 sm:gap-2.5 p-1 sm:px-3.5 sm:py-1.5 rounded-2xl bg-white/80 hover:bg-white/95 border border-[#dce7db] backdrop-blur-md transition-all cursor-pointer shadow-xs hover:shadow-md hover:-translate-y-0.5 group shrink-0"
                 title="View Profile & Account Details"
+                aria-label="Profile"
               >
                 <div
                   className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center font-['Manrope',sans-serif] font-black text-xs text-white shrink-0 shadow-xs ring-1 ring-white/60"
@@ -446,7 +447,7 @@ export default function NavBar({
                   onProfile?.();
                   setMobileMenuOpen(false);
                 }}
-                className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] hover:opacity-95 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-emerald-950/15 transition-all cursor-pointer shrink-0 active:scale-95"
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] hover:opacity-95 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-emerald-950/15 transition-all cursor-pointer shrink-0 active:scale-95"
                 title="Sign In or Register Account"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -578,7 +579,7 @@ export default function NavBar({
               ))}
             </nav>
 
-            {user && (
+            {user ? (
               <div className="mt-4 pt-4 border-t border-[#f0f4f0] flex flex-col gap-2.5">
                 <button
                   type="button"
@@ -616,6 +617,24 @@ export default function NavBar({
                     <line x1="21" y1="12" x2="9" y2="12" />
                   </svg>
                   <span>Sign Out / Logout</span>
+                </button>
+              </div>
+            ) : (
+              <div className="mt-4 pt-4 border-t border-[#f0f4f0]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onProfile?.();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-[#006a39] to-[#047857] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md cursor-pointer active:scale-98"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                    <polyline points="10 17 15 12 10 7" />
+                    <line x1="15" y1="12" x2="3" y2="12" />
+                  </svg>
+                  <span>Sign In / Register</span>
                 </button>
               </div>
             )}
