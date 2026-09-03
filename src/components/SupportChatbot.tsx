@@ -23,6 +23,28 @@ const QUICK_REPLIES: QuickReply[] = [
   { id: "human", label: "📞 Human Support", query: "talk to human support" },
 ];
 
+export function BotIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M12 2v3" />
+      <rect width="18" height="13" x="3" y="6" rx="4" />
+      <circle cx="9" cy="12" r="1.5" fill="currentColor" />
+      <circle cx="15" cy="12" r="1.5" fill="currentColor" />
+      <path d="M10 15h4" />
+      <path d="M2 13h1" />
+      <path d="M21 13h1" />
+    </svg>
+  );
+}
+
 function nowTime() {
   const d = new Date();
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -198,16 +220,16 @@ export default function SupportChatbot({ onTrackOrder }: { onTrackOrder?: () => 
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-[999] bg-[#006a39] hover:bg-[#00522c] text-white py-2.5 px-3.5 sm:px-4 rounded-full shadow-2xl shadow-emerald-950/40 flex items-center gap-2 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-2 border-white group ring-4 ring-emerald-500/20"
-          aria-label="Open 24/7 SubhOne Support Chat"
+          className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-[999] bg-[#006a39] hover:bg-[#00522c] text-white py-2.5 px-3.5 sm:px-4 rounded-full shadow-2xl shadow-emerald-950/40 flex items-center gap-2.5 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-2 border-white group ring-4 ring-emerald-500/20"
+          aria-label="Open 24/7 SubhOne Support Chatbot"
         >
-          <div className="relative flex items-center justify-center">
-            <span className="text-base sm:text-lg">💬</span>
+          <div className="relative flex items-center justify-center w-7 h-7 rounded-xl bg-white/20 border border-white/30">
+            <BotIcon className="w-4 h-4 text-white" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#006a39] rounded-full animate-ping" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#006a39] rounded-full" />
           </div>
           <div className="text-left">
-            <p className="text-[11px] sm:text-xs font-black tracking-wide leading-tight">24/7 Support</p>
+            <p className="text-[11px] sm:text-xs font-black tracking-wide leading-tight">24/7 Support Bot</p>
             <p className="text-[9px] sm:text-[10px] text-emerald-200 font-semibold leading-none mt-0.5">Online Care</p>
           </div>
         </button>
@@ -220,12 +242,12 @@ export default function SupportChatbot({ onTrackOrder }: { onTrackOrder?: () => 
           {/* Header */}
           <div className="bg-gradient-to-r from-[#006a39] to-[#047857] text-white px-4 py-3.5 flex items-center justify-between shadow-xs select-none">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-sm border border-white/20">
-                🌿
+              <div className="w-9 h-9 rounded-2xl bg-white/15 flex items-center justify-center text-white border border-white/20">
+                <BotIcon className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className="font-['Manrope',sans-serif] font-black text-xs sm:text-sm tracking-tight flex items-center gap-1.5">
-                  SubhOne Support
+                  SubhOne Support Bot
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 </h3>
                 <p className="text-[10px] text-emerald-100 font-medium">24/7 Live Customer Care</p>
