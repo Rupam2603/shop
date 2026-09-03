@@ -39,6 +39,16 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
     ),
   },
   {
+    id: "pain-relief",
+    name: "Pain Relief",
+    filterCat: "Pain Relief & Balms",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v3.01h.01L3 8c0 1.65 1.19 3.02 2.76 3.28L9 11.72V19c0 1.1.89 2 2 2h2c1.11 0 2-.9 2-2v-7.28l3.24-.44C19.81 11.02 21 9.65 21 8V5c0-1.1-.9-2-2-2z" />
+      </svg>
+    ),
+  },
+  {
     id: "insurance",
     name: "Insurance",
     filterCat: "Insurance",

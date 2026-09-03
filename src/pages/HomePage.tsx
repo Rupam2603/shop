@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import type { Page } from "../App";
 import ProductDetailModal, { nameToId, type PopupProduct } from "../components/ProductModal";
-import KeyCategoriesBar, { KeyCategoryItem } from "../components/KeyCategoriesBar";
+import KeyCategoriesBar, { KEY_CATEGORIES, KeyCategoryItem } from "../components/KeyCategoriesBar";
+import { KEY_CATEGORIES_CONFIG } from "../lib/keyCategories";
 import InsuranceModal from "../components/InsuranceModal";
 import { useCart } from "../contexts/CartContext";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
@@ -64,11 +65,13 @@ export interface HomeCategoryProduct {
 }
 
 export interface HomeCategorySectionItem {
+  id?: string;
   cat: string;
   short: string;
   accent: string;
   lightBg: string;
   iconBg: string;
+  tagline?: string;
   count: number;
   icon: React.ReactNode;
   products: HomeCategoryProduct[];
@@ -259,7 +262,7 @@ function CategorySection({
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <div
             className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-xs border border-white/40 group-hover:scale-105 transition-transform"
-            style={{ backgroundColor: item.iconBg }}
+            style={{ backgroundColor: item.iconBg, color: item.accent }}
           >
             {item.icon}
           </div>
@@ -267,8 +270,8 @@ function CategorySection({
             <h2 className="font-['Manrope',sans-serif] font-extrabold text-base sm:text-xl truncate" style={{ color: item.accent }}>
               {item.cat}
             </h2>
-            <p className="text-[#657969] text-[11px] sm:text-xs mt-0.5 font-medium">
-              {item.count} certified medicines · Express Dispatch
+            <p className="text-[#657969] text-[11px] sm:text-xs mt-0.5 font-medium truncate">
+              {item.tagline ? item.tagline : `${item.count} certified medicines · Express Dispatch`}
             </p>
           </div>
         </div>
@@ -338,7 +341,6 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
       onNavigate(cat.route as Page);
       return;
     }
-    onNavigate("category" as any, cat.id);
   };
 
   useEffect(() => {
@@ -376,13 +378,45 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
   const categoriesData = useMemo(() => {
     if (!dbProducts || dbProducts.length === 0) return [];
 
-    return CATEGORY_CONFIGS.map((catConfig) => {
-      const prodsForCat = dbProducts.filter((p) => p.category_name === catConfig.cat);
+    // Eligible key categories (excluding purely service routes like insurance and lab-tests)
+    const eligibleConfigs = KEY_CATEGORIES_CONFIG.filter((c) => c.id !== "all" && !c.route);
+
+    const sections = eligibleConfigs.map((catConfig) => {
+      const prodsForCat = dbProducts.filter((p) => {
+        if (catConfig.filterFn) {
+          const match = catConfig.filterFn({
+            name: p.name,
+            sub: p.details || p.subtitle || "",
+            cat: p.category_name,
+            disc: p.discount_percent > 0 ? `${p.discount_percent}%` : "",
+            price: String(p.customer_price),
+          });
+          if (match) return true;
+        }
+        return (
+          p.category_name.toLowerCase().includes(catConfig.short.toLowerCase()) ||
+          p.category_name.toLowerCase().includes(catConfig.id.toLowerCase())
+        );
+      });
+
       if (prodsForCat.length === 0) return null;
 
+      const keyCat = KEY_CATEGORIES.find((k) => k.id === catConfig.id);
+
       return {
-        ...catConfig,
+        id: catConfig.id,
+        cat: catConfig.name,
+        short: catConfig.short,
+        accent: catConfig.accent,
+        lightBg: catConfig.lightBg,
+        iconBg: catConfig.iconBg,
+        tagline: catConfig.tagline,
         count: prodsForCat.length,
+        icon: keyCat?.icon || (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" />
+          </svg>
+        ),
         products: prodsForCat.slice(0, 8).map((p) => ({
           name: p.name,
           sub: p.details || p.subtitle || p.brand,
@@ -396,7 +430,14 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
         })),
       };
     }).filter(Boolean) as HomeCategorySectionItem[];
-  }, [dbProducts, isRetailer]);
+
+    if (activeKeyCat && activeKeyCat !== "all") {
+      const selectedOnly = sections.filter((s) => s.id === activeKeyCat);
+      if (selectedOnly.length > 0) return selectedOnly;
+    }
+
+    return sections;
+  }, [dbProducts, isRetailer, activeKeyCat]);
 
   const flashSaleData = useMemo(() => {
     if (!dbProducts || dbProducts.length === 0) return [];
@@ -514,47 +555,49 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
           </div>
         </div>
 
-        {/* Category browser — compact */}
-        <section className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-xl">Browse All Categories</h2>
-            <button onClick={() => onNavigate("medicines", "All")} className="font-bold text-[#006a39] text-xs flex items-center gap-1 hover:underline">
-              View All <ArrowRight />
+        {/* Active Key Category Filter Indicator */}
+        {activeKeyCat !== "all" && (
+          <div className="flex items-center justify-between p-3 sm:p-4 bg-emerald-50/90 border border-emerald-200/90 rounded-2xl shadow-2xs">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-[#006a39]">Key Category:</span>
+              <span className="text-xs font-extrabold text-[#073b4c] bg-white px-3 py-1 rounded-full border border-emerald-200 shadow-2xs">
+                {KEY_CATEGORIES.find((k) => k.id === activeKeyCat)?.name || activeKeyCat}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveKeyCat("all")}
+              className="text-xs font-extrabold text-[#006a39] hover:underline cursor-pointer flex items-center gap-1"
+            >
+              Show All Key Categories ✕
             </button>
           </div>
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 sm:gap-2.5">
-            {CATEGORY_CONFIGS.map((c) => {
-              const count = dbProducts ? dbProducts.filter((p) => p.category_name === c.cat).length : 0;
-              return (
-                <button
-                  key={c.cat}
-                  onClick={() => onNavigate("medicines", c.cat)}
-                  className="group flex flex-col items-center gap-1.5 p-2 sm:p-3 rounded-2xl border border-[#e4ede2] bg-white hover:shadow-md hover:-translate-y-0.5 transition-all w-full"
-                >
-                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform" style={{ backgroundColor: c.lightBg }}>
-                    <div style={{ transform: "scale(0.8)" }}>{c.icon}</div>
-                  </div>
-                  <p className="font-semibold text-[10px] sm:text-[11px] leading-tight text-center line-clamp-2" style={{ color: c.accent }}>{c.short}</p>
-                  <p className="text-[#9aa89b] text-[9px]">{count} items</p>
-                </button>
-              );
-            })}
-          </div>
-        </section>
+        )}
 
-        <div className="border-t border-[#dee4db]" />
-
-        {/* Category sections */}
+        {/* Key Category sections */}
         {categoriesData.map((item) => (
           <CategorySection
-            key={item.cat}
+            key={item.id || item.cat}
             item={item}
             isRetailer={isRetailer}
-            onViewAll={() => onNavigate("medicines", item.cat)}
+            onViewAll={() => onNavigate("category" as any, item.id || item.cat)}
             onProductClick={setSelectedProduct}
             onAddToCart={handleAddToCartFromCategory}
           />
         ))}
+
+        {categoriesData.length === 0 && (
+          <div className="bg-white rounded-2xl border border-[#e4ede2] p-8 text-center flex flex-col items-center gap-3">
+            <p className="text-sm font-bold text-[#073b4c]">No products found in this key category yet.</p>
+            <button
+              type="button"
+              onClick={() => setActiveKeyCat("all")}
+              className="px-4 py-2 bg-[#006a39] text-white text-xs font-bold rounded-xl hover:bg-[#00522c] transition-colors cursor-pointer"
+            >
+              View All Key Categories
+            </button>
+          </div>
+        )}
 
         {/* Flash Sale */}
         {flashSaleData.length > 0 && (

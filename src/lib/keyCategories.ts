@@ -40,6 +40,21 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
       ),
   },
   {
+    id: "pain-relief",
+    name: "Pain Relief & Muscle Care",
+    short: "Pain Relief",
+    tagline: "Instant pain relief balms, joint gels & muscular sprays",
+    description: "Target aches, sprains, joint stiffness, and inflammation with Volini, Amrutanjan, Moov, and fast-acting analgesic remedies.",
+    accent: "#c0392b",
+    lightBg: "#fff0ee",
+    iconBg: "#ffd5cf",
+    filterFn: (p) =>
+      p.cat.includes("Pain") ||
+      /pain|balm|volini|amrutanjan|spray|gel|sprain|muscle|joint|ache|moov|fast relief/i.test(
+        p.name + " " + (p.sub || "") + " " + p.cat
+      ),
+  },
+  {
     id: "insurance",
     name: "Health & Pharmacy Insurance",
     short: "Insurance",
