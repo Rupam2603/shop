@@ -1036,10 +1036,11 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               name: oi.product_name || "Unknown Product",
               quantity: Number(oi.quantity || 0),
               price: Number(oi.unit_price || 0),
-              totalPrice: Number(oi.total_price || 0),
+              totalPrice: Number(oi.total_price || (Number(oi.unit_price || 0) * Number(oi.quantity || 0))),
               mrp: oi.mrp == null ? Number(oi.unit_price || 0) : Number(oi.mrp),
               batch: oi.batch_no || undefined,
               expiry: oi.expiry_date || undefined,
+              sku: oi.sku || undefined,
             })),
             paymentStatus: o.payment_status,
           };
@@ -2669,7 +2670,59 @@ function OrdersTab({
                 <div className="p-4 bg-white rounded-2xl border border-[#dce7db]">
                   <p className="text-[10px] font-extrabold text-[#728575] uppercase tracking-wider">Payment & Status</p>
                   <p className="font-bold text-[#073b4c] text-sm mt-1">₹{previewInvoice.amount.toLocaleString()} ({previewInvoice.payment})</p>
-                  <p className="text-xs text-emerald-800 font-bold mt-0.5">{previewInvoice.status}</p>
+                  <p className="text-xs text-emerald-800 font-bold mt-0.5">{previewInvoice.status} · {previewInvoice.paymentStatus || "Paid"}</p>
+                </div>
+              </div>
+
+              {/* Items Breakdown Table */}
+              <div className="bg-white rounded-2xl border border-[#dce7db] p-4 overflow-hidden">
+                <p className="text-[10px] font-extrabold text-[#728575] uppercase tracking-wider mb-2.5">
+                  Ordered Products Breakdown ({previewInvoice.orderItems?.length || previewInvoice.items} items)
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-[#e4ede2] text-[10px] uppercase font-extrabold text-[#596b5e]">
+                        <th className="py-2 px-1 text-center w-8">#</th>
+                        <th className="py-2 px-2">Item</th>
+                        <th className="py-2 px-2 text-center">Batch / Exp</th>
+                        <th className="py-2 px-2 text-center">Qty</th>
+                        <th className="py-2 px-2 text-right">MRP</th>
+                        <th className="py-2 px-2 text-right">Rate</th>
+                        <th className="py-2 px-2 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#f0f4f0]">
+                      {previewInvoice.orderItems && previewInvoice.orderItems.length > 0 ? (
+                        previewInvoice.orderItems.map((it, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50/50">
+                            <td className="py-2 px-1 text-center font-bold text-[#657969]">{idx + 1}</td>
+                            <td className="py-2 px-2 font-bold text-[#073b4c]">
+                              {it.name}
+                              {it.sku && <span className="block text-[10px] font-normal text-[#657969]">SKU: {it.sku}</span>}
+                            </td>
+                            <td className="py-2 px-2 text-center font-mono text-[10px] text-[#657969]">
+                              {it.batch || "—"} / {it.expiry || "—"}
+                            </td>
+                            <td className="py-2 px-2 text-center font-bold text-[#073b4c]">{it.quantity}</td>
+                            <td className="py-2 px-2 text-right text-[#657969]">
+                              {it.mrp ? `₹${Number(it.mrp).toLocaleString()}` : "—"}
+                            </td>
+                            <td className="py-2 px-2 text-right font-bold text-[#006a39]">₹{Number(it.price).toLocaleString()}</td>
+                            <td className="py-2 px-2 text-right font-extrabold text-[#073b4c]">
+                              ₹{(Number(it.totalPrice) || (Number(it.price) * Number(it.quantity))).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="py-4 text-center text-[#9aa89b]">
+                            Standard order bundle ({previewInvoice.items} items)
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>

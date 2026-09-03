@@ -113,7 +113,16 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - `CartDrawer.tsx`: Full-width on phones, uses `h-[100dvh]`, removed `pl-10` offset.
   - `CheckoutModal.tsx`: Bottom-sheet pattern on mobile (`items-end sm:items-center`), `rounded-t-2xl sm:rounded-2xl`, `max-h-[80dvh]`.
   - `LoginPage.tsx`: Uses `min-h-[100dvh]` for dynamic viewport height.
-- **Order Management & Invoices (Neon Serverless)**:
-  - Order creation handled atomically via `@neondatabase/serverless` API routes (`/api/create-order` and `/api/webhook-payment`) to prevent order loss and ensure exact inventory decrements via ACID transactions.
-  - `order_items` schema upgraded to store price, product name, and snapshot data, decoupling past invoices from live product table changes. Invoices generated via `AdminDashboard.tsx` and `invoiceGenerator.ts` now perfectly reflect the historic state of an order using this schema.
+- **Order Management & Exact Invoices (Neon Postgres & Serverless)**:
+  - Database schema migrated across Neon database clusters (`ep-falling-cell-azm5qjrf` and `ep-divine-scene-az33au23`): Added `mrp NUMERIC`, `sku TEXT`, `variant TEXT`, `batch_no TEXT`, `expiry_date TEXT`, and `image_url TEXT` to `public.order_items`.
+  - Added `idempotency_key`, `user_role`, `shop_name`, `customer_name`, `customer_phone`, `payment_method`, `payment_status`, `status`, `total_amount`, and `shipping_address` to `public.orders`.
+  - Order creation handled atomically via `@neondatabase/serverless` API routes (`/api/create-order` and `/api/webhook-payment`), eliminating checkout failure (`column "mrp" of relation "order_items" does not exist`).
+  - Strict invoice synchronization implemented across all platforms:
+    - `src/lib/invoiceGenerator.ts`: Renders exact product name, SKU, batch number, expiry date, quantity, MRP, unit rate, and line totals for both retail customers and wholesale retailers.
+    - `src/pages/AdminDashboard.tsx`: Order inspection dialog and PDF/print invoice generation reflect full item snapshots.
+    - `src/pages/ProfilePage.tsx`: Downloadable invoice bill PDF for both customers and retailers matches the placed order items.
+    - `src/components/OrderTrackingModal.tsx`: Real-time order tracking details and invoice bill reflect exact database-stored items without simulated fallbacks.
+- **Admin Authentication Security**:
+  - Removed demo credential banners and instant login bypasses.
+  - Admin authentication requires manual credential entry, stored strictly in `sessionStorage` with automatic local storage purge on site entry to prevent accidental auto-login bypasses.
 

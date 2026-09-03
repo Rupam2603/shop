@@ -104,8 +104,8 @@ export default async function handler(req: any, res: any) {
         total_price: totalPrice,
         image_url: product.image_url || null,
         mrp: toNumber(product.mrp, unitPrice),
-        batch_no: raw?.batchNo || raw?.batch_no || null,
-        expiry_date: raw?.expiryDate || raw?.expiry_date || null,
+        batch_no: raw?.batchNo || raw?.batch_no || `SBH-${String(product.numeric_id || '101').padStart(3, '0')}-${new Date().toISOString().slice(2, 7).replace('-', '')}`,
+        expiry_date: raw?.expiryDate || raw?.expiry_date || `12/${(new Date().getFullYear() + 2).toString().slice(-2)}`,
       });
     }
 

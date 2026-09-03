@@ -6,6 +6,7 @@ export interface InvoiceOrderItem {
   mrp?: number;
   batch?: string;
   expiry?: string;
+  sku?: string;
 }
 
 export interface InvoiceOrderData {
@@ -60,25 +61,15 @@ export function numberToWords(num: number): string {
     return inWords(Math.floor(n / 10000000)) + "Crore " + inWords(n % 10000000);
   }
 
-  return ("Rupees " + inWords(rounded).trim() + " Only").replace(/\s+/g, " ");
+  const result = inWords(rounded).trim();
+  return result ? `${result} Rupees Only` : "Zero Rupees Only";
 }
 
-/**
- * Format date to DD/MM/YYYY
- */
-export function formatToDateString(dStr?: string): string {
-  const dateObj = dStr ? new Date(dStr) : new Date();
-  if (isNaN(dateObj.getTime())) {
-    const today = new Date();
-    const dd = String(today.getDate()).padStart(2, "0");
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const yyyy = today.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  }
-  const dd = String(dateObj.getDate()).padStart(2, "0");
-  const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
-  const yyyy = dateObj.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
+function formatToDateString(val: string): string {
+  if (!val) return new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return val;
+  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 /**
@@ -113,7 +104,7 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
 
   const itemRowsHtml = rawItems.map((it, idx) => {
     const itemQty = it.quantity || 1;
-    const itemRate = it.price || 100;
+    const itemRate = Number.isFinite(Number(it.price)) ? Number(it.price) : 0;
     const itemMrp = Number.isFinite(Number(it.mrp)) && Number(it.mrp) > 0 ? Number(it.mrp) : null;
     const itemAmt = Number.isFinite(Number(it.totalPrice)) && Number(it.totalPrice) >= 0
       ? Number(it.totalPrice)
@@ -127,7 +118,10 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
     return `
       <tr>
         <td style="text-align:center; padding: 7px 6px; border: 1px solid #333;">${idx + 1}</td>
-        <td style="padding: 7px 8px; border: 1px solid #333; font-weight: 600;">${it.name}</td>
+        <td style="padding: 7px 8px; border: 1px solid #333; font-weight: 600;">
+          ${it.name}
+          ${it.sku ? `<div style="font-size: 10px; color: #555; font-weight: normal; margin-top: 2px;">SKU: ${it.sku}</div>` : ""}
+        </td>
         <td style="text-align:center; padding: 7px 6px; border: 1px solid #333; font-family: monospace;">${batch}</td>
         <td style="text-align:center; padding: 7px 6px; border: 1px solid #333;">${expiry}</td>
         <td style="text-align:center; padding: 7px 6px; border: 1px solid #333; font-weight: 600;">${itemQty}</td>

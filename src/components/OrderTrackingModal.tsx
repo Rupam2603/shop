@@ -184,17 +184,20 @@ export default function OrderTrackingModal({
           ? `${activeOrder.shipping_address?.line1 || ""}, ${activeOrder.shipping_address?.city || ""}, ${activeOrder.shipping_address?.state || ""} - ${activeOrder.shipping_address?.pincode || ""}`
           : "Delivery Address Provided",
         items: activeOrder.order_items?.length || 1,
-        amount: activeOrder.total_amount,
+        amount: Number(activeOrder.total_amount),
         status: activeOrder.status,
         date: activeOrder.created_at,
         payment: activeOrder.payment_method || "UPI",
-        orderItems: activeOrder.order_items?.map((it) => ({
+        paymentStatus: activeOrder.payment_status || "Paid",
+        orderItems: (activeOrder.order_items || []).map((it) => ({
           name: it.product_name,
           quantity: it.quantity,
-          price: it.unit_price,
-          mrp: Math.round(it.unit_price * 1.15),
-          batch: "SBH-8840",
-          expiry: "12/28",
+          price: Number(it.unit_price),
+          totalPrice: Number(it.total_price) || (Number(it.unit_price) * Number(it.quantity)),
+          mrp: it.mrp != null ? Number(it.mrp) : Number(it.unit_price),
+          batch: it.batch_no || undefined,
+          expiry: it.expiry_date || undefined,
+          sku: it.sku || undefined,
         })),
       }
     : null;
@@ -487,12 +490,22 @@ export default function OrderTrackingModal({
                   <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
                     {activeOrder.order_items && activeOrder.order_items.length > 0 ? (
                       activeOrder.order_items.map((it) => (
-                        <div key={it.id} className="flex items-center justify-between text-xs py-1 border-b border-[#f0f4f0] last:border-0">
+                        <div key={it.id} className="flex items-center justify-between text-xs py-1.5 border-b border-[#f0f4f0] last:border-0">
                           <div>
                             <p className="font-semibold text-[#073b4c]">{it.product_name}</p>
-                            <p className="text-[10px] text-[#6d7a6f]">Qty: {it.quantity} unit{it.quantity > 1 ? "s" : ""}</p>
+                            <div className="flex items-center gap-2 text-[10px] text-[#6d7a6f] mt-0.5">
+                              <span>Qty: {it.quantity}</span>
+                              <span>·</span>
+                              <span>Rate: ₹{Number(it.unit_price).toLocaleString()}</span>
+                              {it.batch_no && (
+                                <>
+                                  <span>·</span>
+                                  <span className="font-mono">Batch: {it.batch_no}</span>
+                                </>
+                              )}
+                            </div>
                           </div>
-                          <span className="font-bold text-[#073b4c]">₹{it.total_price.toLocaleString()}</span>
+                          <span className="font-bold text-[#073b4c]">₹{(Number(it.total_price) || (Number(it.unit_price) * Number(it.quantity))).toLocaleString()}</span>
                         </div>
                       ))
                     ) : (

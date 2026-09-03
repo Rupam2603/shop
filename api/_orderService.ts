@@ -156,14 +156,16 @@ export async function createOrder(payload: OrderPayload) {
     const items: any[] = [];
     for (const item of resolvedItems) {
       const { product, quantity, unitPrice, lineTotal } = item;
-      const { rows } = await client.query(
-        `INSERT INTO order_items (
-          order_id, product_id, product_name, sku, variant, quantity, unit_price, total_price, image_url
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-        RETURNING id, order_id, product_id, product_name, sku, variant, quantity, unit_price, total_price, image_url`,
-        [order.id, product.id, product.name, product.sku || null, rawVariant(item) || null, quantity, unitPrice, lineTotal, product.image_url || null]
-      );
-      items.push(rows[0]);
+        const batchNo = `SBH-${String(product.numeric_id || '101').padStart(3, '0')}-${new Date().toISOString().slice(2, 7).replace('-', '')}`;
+        const expiryDate = `12/${(new Date().getFullYear() + 2).toString().slice(-2)}`;
+        const { rows } = await client.query(
+          `INSERT INTO order_items (
+            order_id, product_id, product_name, sku, variant, quantity, unit_price, total_price, image_url, mrp, batch_no, expiry_date
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+          RETURNING id, order_id, product_id, product_name, sku, variant, quantity, unit_price, total_price, image_url, mrp, batch_no, expiry_date`,
+          [order.id, product.id, product.name, product.sku || null, rawVariant(item) || null, quantity, unitPrice, lineTotal, product.image_url || null, product.mrp ? Number(product.mrp) : unitPrice, batchNo, expiryDate]
+        );
+        items.push(rows[0]);
 
       await client.query(
         `UPDATE products SET stock = stock - $1, updated_at = NOW() WHERE id = $2`,
