@@ -153,6 +153,11 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Admin Panel Add Product form (`ProductModal` in `AdminDashboard.tsx`) category dropdown aligned directly with the storefront Key Categories, defaulting to "Skin Care & Ointments".
   - Updated `KeyCategoriesBar.tsx` `filterCat` mappings so clicking categories instantly filters corresponding products for both retail customers and wholesale retailers.
   - Updated `MedicinesPage.tsx` sidebar filter list (`CATEGORY_LIST`) and category matching logic to reflect canonical Key Categories while preserving backward compatibility for legacy names.
+- **Highly Functional Product Search & Similar Products Engine (Active)**:
+  - Created `src/lib/productSearch.ts`: Multi-pass tokenization and relevance scoring algorithm. Matches exact and partial substrings in name and brand, splits into words for word-order invariance, and emphasizes similar products from the same brand, matching name tokens, and same categories when exact matches are few or zero.
+  - Created `src/pages/SearchPage.tsx`: Dedicated full-featured Search Results Page with real-time query updates, exact vs similar match breakdown badges, smart fallback banner when showing similar products, brand pills, in-stock filter, sort dropdown (Relevance, Price, Discount), customer vs retailer dynamic pricing, and cart quantity steppers.
+  - Upgraded global search in `src/components/NavBar.tsx`: Form submission on Enter or search icon click immediately routes to `/search?q=...` (`#search?q=...`), with a live smart dropdown showing top items, brand matches, and a "View all results" button.
+  - Updated `src/lib/navigation.ts` and `src/App.tsx`: Added `"search"` to `Page` route state, supporting both browser query parameters (`/search?q=...`) and hash routes (`#search?q=...`) with seamless browser history popstate handling.
 
 
 

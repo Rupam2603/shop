@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../contexts/CartContext";
 import { useStoreSettings } from "../contexts/StoreSettingsContext";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
+import { searchProducts } from "../lib/productSearch";
 import ProductDetailModal, { type PopupProduct } from "./ProductModal";
 import LocationModal from "./LocationModal";
 import {
@@ -14,11 +15,12 @@ import type { Page } from "../App";
 
 interface NavBarProps {
   activePage: Page;
-  onNavigate: (page: Page) => void;
+  onNavigate: (page: Page, category?: string, query?: string) => void;
   user?: { role: string; name: string; email: string; id?: string } | null;
   onLogout?: () => void;
   onProfile?: () => void;
   onTrackOrder?: (orderNumber?: string) => void;
+  onSearch?: (query: string) => void;
 }
 
 function SearchIcon() {
@@ -71,6 +73,7 @@ export default function NavBar({
   onLogout,
   onProfile,
   onTrackOrder,
+  onSearch,
 }: NavBarProps) {
   const { itemCount, openCart } = useCart();
   const { settings } = useStoreSettings();
@@ -120,10 +123,10 @@ export default function NavBar({
     };
   }, [user]);
 
-  // Global hotkey Ctrl+K to search
+  // Global hotkey Ctrl+K / Cmd+K to focus search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
         searchInputRef.current?.focus();
         setIsSearchOpen(true);
@@ -169,18 +172,28 @@ export default function NavBar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const searchResults = useMemo(() => {
-    if (!searchValue.trim() || dbProducts.length === 0) return [];
-    const query = searchValue.toLowerCase().trim();
-    return dbProducts
-      .filter(
-        (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.brand.toLowerCase().includes(query) ||
-          p.category_name.toLowerCase().includes(query)
-      )
-      .slice(0, 8);
+  // Smart Search & Similar Products matching
+  const searchPayload = useMemo(() => {
+    if (!searchValue.trim() || dbProducts.length === 0) return null;
+    return searchProducts(dbProducts, searchValue);
   }, [searchValue, dbProducts]);
+
+  const searchResults = useMemo(() => {
+    if (!searchPayload) return [];
+    return searchPayload.results.slice(0, 8);
+  }, [searchPayload]);
+
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const q = searchValue.trim();
+    if (!q) return;
+    setIsSearchOpen(false);
+    if (onSearch) {
+      onSearch(q);
+    } else {
+      onNavigate("search", "All", q);
+    }
+  };
 
   const handleNavClick = (page: Page, isTrack?: boolean) => {
     if (isTrack) {
@@ -294,19 +307,23 @@ export default function NavBar({
 
           {/* Center section: Large Omnisearch Bar (desktop/tablet only — mobile has its own below) */}
           <div ref={searchRef} className="hidden md:flex flex-1 max-w-2xl relative">
-            <div className="relative flex items-center">
+            <form onSubmit={handleSearchSubmit} className="relative flex items-center w-full">
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 onFocus={() => setIsSearchOpen(true)}
-                placeholder="Search medicines, salts, lab tests, FMCG..."
+                placeholder="Search medicines, brands, salts, FMCG..."
                 className="w-full bg-white/80 backdrop-blur-md border border-[#dce7db] hover:border-[#006a39]/40 focus:border-[#006a39] rounded-2xl py-2 sm:py-2.5 pl-10 sm:pl-11 pr-10 text-xs sm:text-sm text-[#073b4c] placeholder-[#8aa08e] shadow-xs focus:shadow-md focus:bg-white transition-all outline-none"
               />
-              <div className="absolute left-3 sm:left-3.5 pointer-events-none flex items-center justify-center">
+              <button
+                type="submit"
+                className="absolute left-3 sm:left-3.5 flex items-center justify-center text-[#006a39] hover:scale-110 transition-transform cursor-pointer"
+                title="Search Products"
+              >
                 <SearchIcon />
-              </div>
+              </button>
               {searchValue && (
                 <button
                   type="button"
@@ -316,14 +333,14 @@ export default function NavBar({
                   ✕
                 </button>
               )}
-            </div>
+            </form>
 
             {/* Omnisearch Dropdown Results */}
             {isSearchOpen && (searchValue.trim().length > 0 || searchResults.length > 0) && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="p-3 border-b border-[#e4ede2]/80 bg-[#f7faf8]/80 flex items-center justify-between">
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#006a39]">
-                    {searchValue.trim() ? `Search Results (${searchResults.length})` : "Popular Search Queries"}
+                    {searchValue.trim() ? `Search Results (${searchPayload?.results.length || 0})` : "Popular Search Queries"}
                   </span>
                   <button onClick={() => setIsSearchOpen(false)} className="text-xs text-[#728575] hover:text-[#073b4c] font-bold">
                     Close ✕
@@ -332,43 +349,65 @@ export default function NavBar({
                 <div className="max-h-80 overflow-y-auto p-2 divide-y divide-[#f0f5f1]">
                   {searchResults.length === 0 ? (
                     <div className="p-6 text-center text-xs text-[#728575]">
-                      No products matching &quot;{searchValue}&quot;. Try generic medicine name or brand.
+                      No products matching &quot;{searchValue}&quot;. Press enter to explore similar recommendations.
                     </div>
                   ) : (
-                    searchResults.map((prod) => (
-                      <div
-                        key={prod.id}
-                        onClick={() => handleProductSelect(prod)}
-                        className="p-2.5 rounded-2xl hover:bg-[#f0f7f1] flex items-center gap-3 cursor-pointer transition-all group"
-                      >
-                        <img
-                          src={prod.image_url}
-                          alt={prod.name}
-                          className="w-11 h-11 rounded-xl object-contain bg-white border border-[#e4ede2] p-1 shrink-0"
-                          onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=100&q=80"; }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-['Manrope',sans-serif] font-bold text-xs text-[#073b4c] group-hover:text-[#006a39] truncate">
-                            {prod.name}
-                          </p>
-                          <p className="text-[10px] text-[#728575] truncate">
-                            {prod.brand} · {prod.category_name}
-                          </p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <span className="font-bold text-xs text-[#073b4c] block">
-                            ₹{isRetailer ? Math.round(prod.retailer_price) : Math.round(prod.customer_price)}
-                          </span>
-                          {prod.mrp > prod.customer_price && (
-                            <span className="text-[9px] text-[#8aa08e] line-through">
-                              ₹{Math.round(prod.mrp)}
+                    searchResults.map((item) => {
+                      const prod = item.product;
+                      return (
+                        <div
+                          key={prod.id}
+                          onClick={() => handleProductSelect(prod)}
+                          className="p-2.5 rounded-2xl hover:bg-[#f0f7f1] flex items-center gap-3 cursor-pointer transition-all group"
+                        >
+                          <img
+                            src={prod.image_url}
+                            alt={prod.name}
+                            className="w-11 h-11 rounded-xl object-contain bg-white border border-[#e4ede2] p-1 shrink-0"
+                            onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=100&q=80"; }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="font-['Manrope',sans-serif] font-bold text-xs text-[#073b4c] group-hover:text-[#006a39] truncate">
+                                {prod.name}
+                              </p>
+                              {item.isSimilar && (
+                                <span className="bg-blue-100 text-blue-800 text-[8px] font-black px-1.5 py-0.2 rounded-full uppercase">
+                                  {item.similarityReason === "brand" ? "Same Brand" : "Similar"}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-[#728575] truncate">
+                              {prod.brand} · {prod.category_name}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="font-bold text-xs text-[#073b4c] block">
+                              ₹{isRetailer ? Math.round(prod.retailer_price) : Math.round(prod.customer_price)}
                             </span>
-                          )}
+                            {prod.mrp > prod.customer_price && (
+                              <span className="text-[9px] text-[#8aa08e] line-through">
+                                ₹{Math.round(prod.mrp)}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
+                {searchValue.trim() && (
+                  <div className="p-2.5 bg-[#f0f7f1] border-t border-[#e4ede2]">
+                    <button
+                      type="button"
+                      onClick={() => handleSearchSubmit()}
+                      className="w-full py-2 px-3 rounded-xl bg-[#006a39] hover:bg-[#005a30] text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                    >
+                      <span>View all {searchPayload?.results.length || 0} results &amp; similar products for &ldquo;{searchValue}&rdquo;</span>
+                      <span>→</span>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -465,10 +504,14 @@ export default function NavBar({
 
         {/* Mobile Dedicated Search Bar (Visible on mobile screens < md) */}
         <div className="md:hidden px-3 pt-1 pb-2.5 bg-white border-t border-[#f0f4f0] relative">
-          <div className="relative w-full">
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#006a39]">
+          <form onSubmit={handleSearchSubmit} className="relative w-full">
+            <button
+              type="submit"
+              className="absolute inset-y-0 left-3 flex items-center text-[#006a39] cursor-pointer"
+              title="Search"
+            >
               <SearchIcon />
-            </div>
+            </button>
             <input
               type="text"
               value={searchValue}
@@ -477,13 +520,7 @@ export default function NavBar({
                 setSearchValue(e.target.value);
                 setIsSearchOpen(true);
               }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && searchValue.trim()) {
-                  setIsSearchOpen(false);
-                  onNavigate("medicines");
-                }
-              }}
-              placeholder="Search medicines, supplements, stock…"
+              placeholder="Search medicines, brands, stock…"
               className="w-full pl-9 pr-8 py-2 bg-[#f3f7f2] border border-[#d6e5d4] rounded-xl text-xs text-[#073b4c] placeholder:text-[#6d7a6f] focus:outline-none focus:bg-white focus:border-[#006a39] transition-all font-semibold"
             />
             {searchValue.trim() && (
@@ -498,41 +535,62 @@ export default function NavBar({
                 </svg>
               </button>
             )}
-          </div>
+          </form>
 
           {/* Mobile Search Results Dropdown */}
           {isSearchOpen && searchValue.trim().length > 0 && (
             <div className="absolute top-full left-3 right-3 mt-1.5 bg-white rounded-xl shadow-2xl border border-[#e4ede2] overflow-hidden z-50 max-h-[280px] overflow-y-auto divide-y divide-[#f0f4f0]">
               <div className="p-2 bg-[#f8fafb] flex items-center justify-between text-[11px] text-[#6d7a6f] px-3 font-bold">
                 <span>Results for &quot;{searchValue}&quot;</span>
-                <span className="text-[#006a39]">{searchResults.length} found</span>
+                <span className="text-[#006a39]">{searchPayload?.results.length || 0} found</span>
               </div>
               {searchResults.length === 0 ? (
-                <div className="p-4 text-center text-xs text-[#9aa89b]">No products found</div>
+                <div className="p-4 text-center text-xs text-[#9aa89b]">No direct matches. Press Search to explore similar items.</div>
               ) : (
-                searchResults.map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => handleProductSelect(p)}
-                    className="p-2.5 flex items-center justify-between text-xs hover:bg-[#f5fbf2] cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <img src={p.image_url} alt={p.name} className="w-8 h-8 object-contain rounded shrink-0 bg-gray-50 p-0.5" />
-                      <div className="truncate">
-                        <p className="font-bold text-[#073b4c] truncate">{p.name}</p>
-                        <p className="text-[10px] text-[#9aa89b] truncate">{p.brand} · {p.category_name}</p>
+                searchResults.map((item) => {
+                  const p = item.product;
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => handleProductSelect(p)}
+                      className="p-2.5 flex items-center justify-between text-xs hover:bg-[#f5fbf2] cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <img src={p.image_url} alt={p.name} className="w-8 h-8 object-contain rounded shrink-0 bg-gray-50 p-0.5" />
+                        <div className="truncate">
+                          <div className="flex items-center gap-1">
+                            <p className="font-bold text-[#073b4c] truncate">{p.name}</p>
+                            {item.isSimilar && (
+                              <span className="bg-blue-100 text-blue-800 text-[7px] font-black px-1 py-0.2 rounded uppercase">
+                                {item.similarityReason === "brand" ? "Brand" : "Similar"}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-[#9aa89b] truncate">{p.brand} · {p.category_name}</p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-extrabold text-[#073b4c]">₹{Math.round(isRetailer ? p.retailer_price : p.customer_price)}</p>
+                        <span className={`text-[8px] font-bold px-1 py-0.2 rounded ${
+                          (p.stock ?? 0) <= 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-800"
+                        }`}>
+                          {(p.stock ?? 0) <= 0 ? "Out" : `${p.stock} in stock`}
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-extrabold text-[#073b4c]">₹{Math.round(isRetailer ? p.retailer_price : p.customer_price)}</p>
-                      <span className={`text-[8px] font-bold px-1 py-0.2 rounded ${
-                        p.stock <= 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-800"
-                      }`}>
-                        {p.stock <= 0 ? "Out" : `${p.stock} in stock`}
-                      </span>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
+              )}
+              {searchValue.trim() && (
+                <div className="p-2 bg-[#f0f7f1] border-t border-[#e4ede2]">
+                  <button
+                    type="button"
+                    onClick={() => handleSearchSubmit()}
+                    className="w-full py-2 px-3 rounded-lg bg-[#006a39] text-white text-xs font-bold text-center block cursor-pointer"
+                  >
+                    View all results &amp; similar products →
+                  </button>
+                </div>
               )}
             </div>
           )}

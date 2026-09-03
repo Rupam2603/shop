@@ -4,43 +4,72 @@ import type { Page } from "../App";
 export interface NavigationState {
   page: Page;
   category?: string;
+  query?: string;
   modal?: string | null;
   timestamp: number;
 }
 
 /**
- * Parse current window.location.hash into active page and category
+ * Parse current window.location into active page, category, and search query
  */
-export function parseHashToState(): { page: Page; category: string } {
-  const hash = window.location.hash.replace(/^#/, "");
-  if (!hash) return { page: "home", category: "All" };
+export function parseHashToState(): { page: Page; category: string; query: string } {
+  const path = window.location.pathname.replace(/^\//, "");
+  const searchParams = new URLSearchParams(window.location.search);
+  const qFromUrl = searchParams.get("q");
 
-  // Remove any modal suffix if present in hash
+  const hash = window.location.hash.replace(/^#/, "");
   const cleanHash = hash.split("-modal")[0];
   const [pagePart, queryPart] = cleanHash.split("?");
-  const validPages: Page[] = ["home", "medicines", "lab-tests", "consult", "offers", "profile", "checkout"];
-  const page = validPages.includes(pagePart as Page) ? (pagePart as Page) : "home";
 
-  let category = "All";
-  if (queryPart) {
-    const params = new URLSearchParams(queryPart);
-    category = params.get("cat") || "All";
+  const validPages: Page[] = [
+    "home",
+    "medicines",
+    "category",
+    "insurance",
+    "vaccines",
+    "lab-tests",
+    "consult",
+    "offers",
+    "profile",
+    "checkout",
+    "search",
+  ];
+
+  let page: Page = "home";
+  if (path === "search" || (qFromUrl && path !== "login")) {
+    page = "search";
+  } else if (validPages.includes(pagePart as Page)) {
+    page = pagePart as Page;
   }
 
-  return { page, category };
+  const hashParams = new URLSearchParams(queryPart || "");
+  const category = hashParams.get("cat") || "All";
+  const query = hashParams.get("q") || qFromUrl || "";
+
+  return { page, category, query };
 }
 
 /**
  * Push a new page state into window.history
  */
-export function pushPageState(page: Page, category = "All") {
-  const hash = category && category !== "All"
-    ? `#${page}?cat=${encodeURIComponent(category)}`
-    : `#${page}`;
+export function pushPageState(page: Page, category = "All", query = "") {
+  let hash = `#${page}`;
+  const params = new URLSearchParams();
+  if (page === "search" && query) {
+    params.set("q", query);
+  } else if (category && category !== "All") {
+    params.set("cat", category);
+  }
+
+  const paramStr = params.toString();
+  if (paramStr) {
+    hash += `?${paramStr}`;
+  }
 
   const state: NavigationState = {
     page,
     category,
+    query,
     modal: null,
     timestamp: Date.now(),
   };
@@ -53,10 +82,19 @@ export function pushPageState(page: Page, category = "All") {
 /**
  * Replace the current history state with the base page state
  */
-export function replacePageState(page: Page, category = "All") {
-  const hash = category && category !== "All"
-    ? `#${page}?cat=${encodeURIComponent(category)}`
-    : `#${page}`;
+export function replacePageState(page: Page, category = "All", query = "") {
+  let hash = `#${page}`;
+  const params = new URLSearchParams();
+  if (page === "search" && query) {
+    params.set("q", query);
+  } else if (category && category !== "All") {
+    params.set("cat", category);
+  }
+
+  const paramStr = params.toString();
+  if (paramStr) {
+    hash += `?${paramStr}`;
+  }
 
   const state: NavigationState = {
     page,

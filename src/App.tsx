@@ -8,6 +8,7 @@ import VaccinesPage from "./pages/VaccinesPage";
 import LabTestsPage from "./pages/LabTestsPage";
 import MedicinesPage from "./pages/MedicinesPage";
 import OffersPage from "./pages/OffersPage";
+import SearchPage from "./pages/SearchPage";
 import LoginPage from "./pages/LoginPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import ProfilePage from "./pages/ProfilePage";
@@ -20,7 +21,7 @@ import { useAuth, toLegacyUser } from "./contexts/AuthContext";
 import { parseHashToState, pushPageState, replacePageState } from "./lib/navigation";
 import { supabase } from "./lib/supabase";
 
-export type Page = "home" | "medicines" | "category" | "insurance" | "vaccines" | "lab-tests" | "consult" | "offers" | "profile" | "checkout";
+export type Page = "home" | "medicines" | "category" | "insurance" | "vaccines" | "lab-tests" | "consult" | "offers" | "profile" | "checkout" | "search";
 export type UserRole = "admin" | "retailer" | "customer";
 
 export interface Address {
@@ -163,6 +164,7 @@ export default function App() {
   const { appUser, loading, signOut, updateProfile } = useAuth();
   const [activePage, setActivePage] = useState<Page>(() => parseHashToState().page);
   const [initialCategory, setInitialCategory] = useState<string>(() => parseHashToState().category);
+  const [searchQuery, setSearchQuery] = useState<string>(() => parseHashToState().query);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [trackingModal, setTrackingModal] = useState<{ open: boolean; orderNumber: string | null }>({
     open: false,
@@ -171,13 +173,14 @@ export default function App() {
 
   useEffect(() => {
     const current = parseHashToState();
-    replacePageState(current.page, current.category);
+    replacePageState(current.page, current.category, current.query);
 
     const handlePopState = (e: PopStateEvent) => {
       if (e.state?.modal) return;
-      const { page, category } = parseHashToState();
+      const { page, category, query } = parseHashToState();
       setActivePage(page);
       setInitialCategory(category);
+      setSearchQuery(query);
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -191,16 +194,17 @@ export default function App() {
     if (!prevUserRef.current && appUser) {
       if (appUser.profile?.role !== "admin") {
         setActivePage("home");
-        replacePageState("home", "All");
+        replacePageState("home", "All", "");
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     }
     prevUserRef.current = appUser;
   }, [appUser]);
 
-  const navigateTo = (page: Page, category = "All") => {
-    pushPageState(page, category);
+  const navigateTo = (page: Page, category = "All", query = "") => {
+    pushPageState(page, category, query);
     setInitialCategory(category);
+    setSearchQuery(query);
     setActivePage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -262,6 +266,13 @@ export default function App() {
       case "medicines": return <MedicinesPage initialCategory={initialCategory} userRole={currentUser.role} onNavigate={navigateTo} />;
       case "offers": return <OffersPage userRole={currentUser.role} onNavigate={navigateTo} />;
       case "consult": return <ConsultPage />;
+      case "search": return (
+        <SearchPage
+          initialQuery={searchQuery}
+          userRole={currentUser.role}
+          onNavigate={navigateTo}
+        />
+      );
       case "profile": return (
         <ProfilePage
           user={currentUser}
@@ -277,7 +288,8 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-[#f5fbf2]">
       <NavBar
         activePage={activePage}
-        onNavigate={(p) => navigateTo(p)}
+        onNavigate={navigateTo}
+        onSearch={(q) => navigateTo("search", "All", q)}
         user={currentUser}
         onLogout={signOut}
         onProfile={() => navigateTo("profile")}
