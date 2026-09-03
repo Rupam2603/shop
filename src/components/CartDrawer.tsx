@@ -313,7 +313,7 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
 
           {/* Footer with Summary & Checkout CTA */}
           {items.length > 0 && (
-            <div className="border-t border-[#e4ede2] p-5 bg-[#f8fafb] flex flex-col gap-3">
+            <div className="border-t border-[#e4ede2] p-5 pb-6 sm:pb-5 safe-bottom bg-[#f8fafb] flex flex-col gap-3">
               {hasOutOfStockItems && (
                 <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
                   <span>⚠️</span>

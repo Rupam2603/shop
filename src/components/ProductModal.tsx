@@ -314,11 +314,11 @@ export default function ProductDetailModal({
 
   return (
     <div
-      className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200"
+      className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-end sm:items-center justify-center p-0 sm:p-5 overflow-y-auto animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl w-full max-w-[920px] shadow-2xl my-auto max-h-[92vh] overflow-y-auto flex flex-col relative animate-in zoom-in-95 duration-150"
+        className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-t-3xl sm:rounded-3xl w-full max-w-[920px] shadow-2xl max-h-[90dvh] sm:max-h-[92vh] overflow-y-auto flex flex-col relative animate-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Product Details Section */}

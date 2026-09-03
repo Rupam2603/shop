@@ -106,13 +106,13 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Better Auth client configured in `src/lib/auth-client.ts` (`createAuthClient` from `better-auth/react`).
   - `better-auth` installed with full TypeScript support, session management, and auth hooks.
   - Seamlessly integrated with Neon Auth Better Auth cloud endpoints and local database authentication fallback.
-- **Full Responsiveness (Latest):** Comprehensive mobile-first improvements applied across all pages:
-  - `src/index.css`: iOS safe-area support (`env(safe-area-inset-*)`), `min-h-[100dvh]`, `text-size-adjust: 100%`, iOS input zoom prevention (`font-size: max(16px,1em)`), `text-wrap: balance` for headings.
-  - `NavBar.tsx`: Center search bar hidden on mobile (`hidden md:flex`); dedicated mobile search below handles phones.
-  - `HomePage.tsx`: Category browser changed from horizontal scroll to responsive CSS grid (`grid-cols-4 sm:grid-cols-6 md:grid-cols-8`).
-  - `CartDrawer.tsx`: Full-width on phones, uses `h-[100dvh]`, removed `pl-10` offset.
-  - `CheckoutModal.tsx`: Bottom-sheet pattern on mobile (`items-end sm:items-center`), `rounded-t-2xl sm:rounded-2xl`, `max-h-[80dvh]`.
-  - `LoginPage.tsx`: Uses `min-h-[100dvh]` for dynamic viewport height.
+- **Full Responsiveness & Mobile-First Tightening (Latest)**: Comprehensive mobile-first polish applied across storefront and admin portal:
+  - `src/index.css`: iOS safe-area support (`env(safe-area-inset-*)`), `min-h-[100dvh]`, `text-size-adjust: 100%`, iOS input zoom prevention (`font-size: max(16px, 1em)`), `text-wrap: balance` for `h1, h2, h3, h4`.
+  - `NavBar.tsx`: Added `safe-top` to sticky header with backdrop blur; center search bar hidden on mobile (`hidden md:flex`) with clean mobile search bar below; minimum 44px touch targets on navigation toggles.
+  - `ProductModal.tsx` & `AdminDashboard.tsx` modals: Responsive bottom-sheet pattern on mobile (`flex items-end sm:items-center`, `rounded-t-3xl sm:rounded-3xl`, `max-h-[90dvh] sm:max-h-[92vh]`).
+  - `CartDrawer.tsx`: Full-width on phones, `h-[100dvh]`, and `safe-bottom pb-6 sm:pb-5` checkout CTA drawer.
+  - `AdminDashboard.tsx`: Top bar uses `safe-top` and accessible 44px hamburger menu button; KPI stat cards stack flexibly (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`); user stats stack cleanly (`grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5`).
+  - `HomePage.tsx`: Product cards feature `lg:w-auto` for seamless grid layout while preserving horizontal snap scroll on mobile.
 - **Order Management & Exact Invoices (Neon Postgres & Serverless)**:
   - Database schema migrated across Neon database clusters (`ep-falling-cell-azm5qjrf` and `ep-divine-scene-az33au23`): Added `mrp NUMERIC`, `sku TEXT`, `variant TEXT`, `batch_no TEXT`, `expiry_date TEXT`, and `image_url TEXT` to `public.order_items`.
   - Added `idempotency_key`, `user_role`, `shop_name`, `customer_name`, `customer_phone`, `payment_method`, `payment_status`, `status`, `total_amount`, and `shipping_address` to `public.orders`.

@@ -495,8 +495,8 @@ function ProductModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-3 sm:p-5 animate-in fade-in overflow-y-auto">
-      <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-xl w-full my-auto overflow-hidden shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-end sm:items-center justify-center p-0 sm:p-5 animate-in fade-in overflow-y-auto">
+      <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-t-3xl sm:rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[90dvh] sm:max-h-[92vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-7 py-5 border-b border-[#e4ede2] bg-gradient-to-r from-white/90 via-emerald-50/30 to-white/90 shrink-0">
           <div className="flex items-center gap-3">
@@ -1484,14 +1484,14 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       <div className="flex-1 flex flex-col min-h-screen min-w-0 relative z-10">
         
         {/* Sticky Glass Topbar */}
-        <header className="glass-admin-header sticky top-0 z-30 px-4 sm:px-8 h-18 flex items-center justify-between shrink-0">
+        <header className="safe-top glass-admin-header sticky top-0 z-30 px-4 sm:px-8 h-18 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3.5">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden p-2 rounded-xl bg-white/80 border border-[#d5dcd3] text-[#073b4c] hover:bg-white cursor-pointer"
+              className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-xl bg-white/80 border border-[#d5dcd3] text-[#073b4c] hover:bg-white cursor-pointer active:scale-95"
               aria-label="Open navigation menu"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
             <div>
               <div className="flex items-center gap-2">
@@ -1714,7 +1714,7 @@ function DashboardTab({
       )}
 
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
         {stats.map((s) => (
           <div key={s.label} className="glass-admin-card glass-admin-card-hover rounded-3xl p-4 sm:p-6 flex flex-col justify-between gap-3">
             <div className="flex items-center justify-between">
@@ -2629,8 +2629,8 @@ function OrdersTab({
 
       {/* Invoice Details Preview Modal */}
       {previewInvoice && (
-        <div className="fixed inset-0 z-50 bg-[#07242e]/70 backdrop-blur-xl flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-[#07242e]/70 backdrop-blur-xl flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+          <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-t-3xl sm:rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
             <div className="p-5 bg-[#073b4c] text-white flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
@@ -2919,7 +2919,7 @@ function UsersTab({
 
 
       {usersSubTab === "users" && (
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
         <div onClick={() => { setRoleFilter("all"); setStatusFilter("all"); }} className="glass-admin-card glass-admin-card-hover rounded-3xl p-4 cursor-pointer border-2 transition-all">
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#657969]">Total Registered</span>
           <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-2xl sm:text-3xl mt-1">{stats.total}</p>

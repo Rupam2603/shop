@@ -182,7 +182,7 @@ function ProductCard({
   return (
     <div
       onClick={onClick}
-      className={`w-[155px] sm:w-[195px] shrink-0 snap-start bg-white/85 backdrop-blur-xl rounded-3xl border ${
+      className={`w-[155px] sm:w-[195px] lg:w-auto shrink-0 lg:shrink snap-start bg-white/85 backdrop-blur-xl rounded-3xl border ${
         isOutOfStock ? "border-rose-200/80 opacity-75" : "border-white/90 hover:border-emerald-300/80"
       } shadow-xs hover:shadow-xl hover:shadow-emerald-950/8 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer`}
     >

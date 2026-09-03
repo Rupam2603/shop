@@ -216,7 +216,7 @@ export default function NavBar({
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-2xl border-b border-white/60 shadow-xs transition-all duration-300">
+      <header className="safe-top sticky top-0 z-40 bg-white/80 backdrop-blur-2xl border-b border-white/60 shadow-xs transition-all duration-300">
         {/* Tier 1: Main Header Row (Logo, Location, Wide Search, Cart, Profile, Logout) */}
         <div className="max-w-[1480px] mx-auto px-3 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
           {/* Left section: Hamburger, Brand Logo & Location Pill */}
