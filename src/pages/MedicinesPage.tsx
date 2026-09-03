@@ -19,7 +19,6 @@ const CATEGORY_LIST = [
   "Medical Supplies & General",
 ];
 
-const ALL_BRANDS = [...new Set(ALL_PRODUCTS.map((p) => p.brand))].sort();
 
 const PRICE_RANGES = [
   { label: "Under ₹50",    min: 0,    max: 50 },
