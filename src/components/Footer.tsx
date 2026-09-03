@@ -144,14 +144,6 @@ export default function Footer() {
                   <span className="ml-auto text-[9px] bg-[#006a39] text-white px-2 py-0.5 rounded-full uppercase font-bold">Online</span>
                 </button>
               </li>
-              {settings.phone && (
-                <li className="flex items-center gap-2 font-bold text-[#073b4c]">
-                  <span>📞</span>
-                  <a href={`tel:${settings.phone}`} className="hover:text-[#006a39] transition-colors">
-                    {settings.phone}
-                  </a>
-                </li>
-              )}
               {settings.email && (
                 <li className="flex items-center gap-2 font-medium">
                   <span>✉️</span>
