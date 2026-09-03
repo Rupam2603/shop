@@ -141,6 +141,13 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 - **Footer Phone Removal & Cross-Device Cache Invalidation**:
   - Removed phone number section from `src/components/Footer.tsx` for both Customer and Retailer portals across all viewport sizes.
   - Added strict `no-cache, no-store, must-revalidate` headers for `/index.html` in `vercel.json` and `<meta http-equiv="Cache-Control">` in `index.html` to prevent stale caches on desktop browsers while keeping hashed static assets immutable.
+- **Bulk Excel Product Upload & Unified Discount Calculation (Active)**:
+  - Installed SheetJS (`xlsx`) and `lucide-react` for client-side Excel parsing and file handling.
+  - Implemented `src/lib/pricing.ts`: Single source of truth for MRP-baseline customer and retailer discount percentages, offer margin calculations, and pricing validation warnings used by both manual product form and bulk import.
+  - Implemented `src/lib/productExcelImport.ts`: Robust Excel importer that scans rows to auto-locate headers, maps standard product master sheet columns, computes customer/retailer discounts dynamically, and surfaces validation errors/warnings.
+  - Implemented `src/lib/bulkInsertProducts.ts`: Batched database writes (chunks of 10) that safely call `createProduct` from `src/lib/products.ts`, creating records across Neon Postgres `products` and `inventory_products` tables with sequential IDs and category resolution.
+  - Implemented `src/components/BulkProductUploadModal.tsx`: Interactive drag-and-drop modal featuring file drop zone, downloadable sample `.xlsx` template, live preview table with calculated pricing, validation status flags, and real-time batch upload progress.
+  - Integrated "Upload Excel" action buttons in `AdminDashboard.tsx` (top navigation bar and product filter toolbar), enabling seamless 1-click bulk imports.
 
 
 

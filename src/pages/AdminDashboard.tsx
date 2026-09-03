@@ -1,6 +1,9 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { CurrentUser } from "../App";
 import { supabase } from "../lib/supabase";
+import BulkProductUploadModal from "../components/BulkProductUploadModal";
+import { calculatePricing } from "../lib/pricing";
+import { Upload } from "lucide-react";
 import {
   fetchProducts,
   createProduct as dbCreateProduct,
@@ -683,35 +686,42 @@ function ProductModal({
           </div>
 
           {/* Pricing Preview Glass Cards */}
-          {(form.customerPrice > 0 && form.retailerPrice > 0) && (
-            <div className="grid grid-cols-2 gap-3 animate-in fade-in">
-              <div className="bg-sky-50/80 backdrop-blur-md rounded-2xl p-3.5 text-center border border-sky-200 flex flex-col justify-center">
-                <p className="text-[10px] text-sky-800 font-extrabold uppercase tracking-wide">Customer Retail View</p>
-                <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xl sm:text-2xl mt-0.5">₹{form.customerPrice}</p>
-                {form.mrp > form.customerPrice && (
-                  <p className="text-[10px] font-bold text-emerald-700 mt-0.5">
-                    {safeDiscountPercent(form.mrp, form.customerPrice)}% off MRP
-                  </p>
-                )}
-              </div>
-              <div className="bg-emerald-50/80 backdrop-blur-md rounded-2xl p-3.5 text-center border border-emerald-200 flex flex-col justify-center">
-                <p className="text-[10px] text-emerald-800 font-extrabold uppercase tracking-wide">Retailer Wholesale View</p>
-                <p className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-xl sm:text-2xl mt-0.5">₹{form.retailerPrice}</p>
-                <div className="flex flex-col gap-0.5 mt-0.5">
-                  {form.mrp > form.retailerPrice && (
-                    <p className="text-[10px] font-bold text-emerald-800">
-                      {safeDiscountPercent(form.mrp, form.retailerPrice)}% off MRP
-                    </p>
-                  )}
-                  {form.customerPrice > form.retailerPrice && (
-                    <p className="text-[9px] font-semibold text-[#006a39]/85">
-                      +{safeDiscountPercent(form.customerPrice, form.retailerPrice)}% extra retailer margin
+          {(form.customerPrice > 0 && form.retailerPrice > 0) && (() => {
+            const pricing = calculatePricing({
+              mrp: form.mrp || 0,
+              customerPrice: form.customerPrice || 0,
+              retailerPrice: form.retailerPrice || 0,
+            });
+            return (
+              <div className="grid grid-cols-2 gap-3 animate-in fade-in">
+                <div className="bg-sky-50/80 backdrop-blur-md rounded-2xl p-3.5 text-center border border-sky-200 flex flex-col justify-center">
+                  <p className="text-[10px] text-sky-800 font-extrabold uppercase tracking-wide">Customer Retail View</p>
+                  <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xl sm:text-2xl mt-0.5">₹{form.customerPrice}</p>
+                  {pricing.customerOfferPercent !== null && (
+                    <p className="text-[10px] font-bold text-emerald-700 mt-0.5">
+                      {pricing.customerOfferPercent}% off MRP
                     </p>
                   )}
                 </div>
+                <div className="bg-emerald-50/80 backdrop-blur-md rounded-2xl p-3.5 text-center border border-emerald-200 flex flex-col justify-center">
+                  <p className="text-[10px] text-emerald-800 font-extrabold uppercase tracking-wide">Retailer Wholesale View</p>
+                  <p className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-xl sm:text-2xl mt-0.5">₹{form.retailerPrice}</p>
+                  <div className="flex flex-col gap-0.5 mt-0.5">
+                    {pricing.retailerOfferPercent !== null && (
+                      <p className="text-[10px] font-bold text-emerald-800">
+                        {pricing.retailerOfferPercent}% off MRP
+                      </p>
+                    )}
+                    {pricing.retailerMarginPercent !== null && (
+                      <p className="text-[9px] font-semibold text-[#006a39]/85">
+                        +{pricing.retailerMarginPercent}% extra retailer margin
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Stock */}
           <Field label="Inventory Stock (Available Units)">
@@ -833,6 +843,31 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [modal, setModal] = useState<{ open: boolean; mode: "add" | "edit" }>({ open: false, mode: "add" });
   const [form, setForm] = useState<ProductFormState>(emptyForm());
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+
+  const refetchProducts = useCallback(() => {
+    fetchProducts({ includeUnlisted: true }).then((data) => {
+      setProducts(
+        (data || []).map((p) => ({
+          id: p.numeric_id,
+          dbId: p.id,
+          name: p.name,
+          category: p.category_name,
+          brand: p.brand,
+          sku: p.sku || `SKU-${p.numeric_id}`,
+          hsn: p.hsn || "3004",
+          mrp: Number(p.mrp),
+          customerPrice: Number(p.customer_price),
+          retailerPrice: Number(p.retailer_price),
+          stock: p.stock,
+          image: p.image_url,
+          details: p.details || "",
+          isListed: p.is_listed !== false,
+          badges: Array.isArray(p.badges) && p.badges.length > 0 ? p.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
+        }))
+      );
+    });
+  }, []);
 
   // Inventory state
   const [stockEdits, setStockEdits] = useState<Record<number, string>>({});
@@ -913,29 +948,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     };
     loadAdminProfile();
 
-    fetchProducts({ includeUnlisted: true }).then((data) => {
-      if (mounted) {
-        setProducts(
-          (data || []).map((p) => ({
-            id: p.numeric_id,
-            dbId: p.id,
-            name: p.name,
-            category: p.category_name,
-            brand: p.brand,
-            sku: p.sku || `SKU-${p.numeric_id}`,
-            hsn: p.hsn || "3004",
-            mrp: Number(p.mrp),
-            customerPrice: Number(p.customer_price),
-            retailerPrice: Number(p.retailer_price),
-            stock: p.stock,
-            image: p.image_url,
-            details: p.details || "",
-            isListed: p.is_listed !== false,
-            badges: Array.isArray(p.badges) && p.badges.length > 0 ? p.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
-          }))
-        );
-      }
-    });
+    refetchProducts();
 
     fetchAllOrders().then((data) => {
       if (mounted) setDbOrders(data);
@@ -1594,12 +1607,24 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {activeTab === "products" && (
-              <button onClick={openAdd} className="flex items-center gap-2 bg-gradient-to-r from-[#006a39] to-[#008749] text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-2xl hover:opacity-95 transition-all shadow-md shadow-emerald-950/15 cursor-pointer active:scale-95">
-                <span>+</span>
-                <span>Add Product</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowBulkUpload(true)}
+                  className="flex items-center gap-1.5 sm:gap-2 bg-white/95 hover:bg-emerald-50 text-[#006a39] border border-emerald-300/90 text-xs sm:text-sm font-extrabold px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl transition-all shadow-xs hover:scale-102 active:scale-95 cursor-pointer"
+                  title="Upload products in bulk using Excel template"
+                >
+                  <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#006a39]" />
+                  <span>Upload Excel</span>
+                </button>
+
+                <button onClick={openAdd} className="flex items-center gap-2 bg-gradient-to-r from-[#006a39] to-[#008749] text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-2xl hover:opacity-95 transition-all shadow-md shadow-emerald-950/15 cursor-pointer active:scale-95">
+                  <span>+</span>
+                  <span>Add Product</span>
+                </button>
+              </>
             )}
 
             <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-white/70 backdrop-blur-md border border-[#dce7db] shadow-xs">
@@ -1647,6 +1672,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               catFilter={catFilter} setCatFilter={setCatFilter}
               onEdit={openEdit} onDelete={(id) => setDeleteId(id)}
               onToggleListing={handleToggleProductListing}
+              onOpenBulkUpload={() => setShowBulkUpload(true)}
             />
           )}
           {activeTab === "inventory" && (
@@ -1717,6 +1743,18 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         onSave={saveProduct} onClose={closeModal}
         isSaving={isSavingProduct} saveError={productSaveError}
       />
+
+      {/* Bulk Excel Product Upload Modal */}
+      {showBulkUpload && (
+        <BulkProductUploadModal
+          supabase={supabase}
+          onClose={() => setShowBulkUpload(false)}
+          onImported={() => {
+            setShowBulkUpload(false);
+            refetchProducts();
+          }}
+        />
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteId !== null && (
@@ -1907,11 +1945,12 @@ function DashboardTab({
 }
 
 /* ─── TAB: PRODUCTS CATALOG ─── */
-function ProductsTab({ products, allProductCount, categories, search, setSearch, catFilter, setCatFilter, onEdit, onDelete, onToggleListing }: {
+function ProductsTab({ products, allProductCount, categories, search, setSearch, catFilter, setCatFilter, onEdit, onDelete, onToggleListing, onOpenBulkUpload }: {
   products: Product[]; allProductCount: number; categories: string[];
   search: string; setSearch: (v: string) => void; catFilter: string; setCatFilter: (v: string) => void;
   onEdit: (p: Product) => void; onDelete: (id: number) => void;
   onToggleListing?: (p: Product) => void;
+  onOpenBulkUpload?: () => void;
 }) {
   const [statusFilter, setStatusFilter] = useState<"All" | "listed" | "unlisted">("All");
 
@@ -1961,6 +2000,18 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
           <span className="text-xs font-bold text-[#657969] px-3 py-1 rounded-xl bg-white/70 border border-[#dce7db]">
             {displayedProducts.length} Items
           </span>
+
+          {onOpenBulkUpload && (
+            <button
+              type="button"
+              onClick={onOpenBulkUpload}
+              className="flex items-center gap-1.5 bg-white/90 hover:bg-emerald-50 text-[#006a39] border border-emerald-300/80 text-xs font-bold px-3.5 py-2.5 rounded-2xl transition-all shadow-xs hover:scale-102 cursor-pointer ml-auto sm:ml-0"
+              title="Bulk import products via Excel spreadsheet"
+            >
+              <Upload className="w-3.5 h-3.5 text-[#006a39]" />
+              <span>Import Excel</span>
+            </button>
+          )}
         </div>
       </div>
 
