@@ -682,19 +682,30 @@ function ProductModal({
           {/* Pricing Preview Glass Cards */}
           {(form.customerPrice > 0 && form.retailerPrice > 0) && (
             <div className="grid grid-cols-2 gap-3 animate-in fade-in">
-              <div className="bg-sky-50/80 backdrop-blur-md rounded-2xl p-3.5 text-center border border-sky-200">
+              <div className="bg-sky-50/80 backdrop-blur-md rounded-2xl p-3.5 text-center border border-sky-200 flex flex-col justify-center">
                 <p className="text-[10px] text-sky-800 font-extrabold uppercase tracking-wide">Customer Retail View</p>
                 <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xl sm:text-2xl mt-0.5">₹{form.customerPrice}</p>
-                <p className="text-[10px] font-bold text-emerald-700 mt-0.5">
-                  {safeDiscountPercent(form.mrp, form.customerPrice)}% off MRP
-                </p>
+                {form.mrp > form.customerPrice && (
+                  <p className="text-[10px] font-bold text-emerald-700 mt-0.5">
+                    {safeDiscountPercent(form.mrp, form.customerPrice)}% off MRP
+                  </p>
+                )}
               </div>
-              <div className="bg-emerald-50/80 backdrop-blur-md rounded-2xl p-3.5 text-center border border-emerald-200">
+              <div className="bg-emerald-50/80 backdrop-blur-md rounded-2xl p-3.5 text-center border border-emerald-200 flex flex-col justify-center">
                 <p className="text-[10px] text-emerald-800 font-extrabold uppercase tracking-wide">Retailer Wholesale View</p>
                 <p className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-xl sm:text-2xl mt-0.5">₹{form.retailerPrice}</p>
-                <p className="text-[10px] font-bold text-emerald-800 mt-0.5">
-                  {safeDiscountPercent(form.customerPrice, form.retailerPrice)}% wholesale discount
-                </p>
+                <div className="flex flex-col gap-0.5 mt-0.5">
+                  {form.mrp > form.retailerPrice && (
+                    <p className="text-[10px] font-bold text-emerald-800">
+                      {safeDiscountPercent(form.mrp, form.retailerPrice)}% off MRP
+                    </p>
+                  )}
+                  {form.customerPrice > form.retailerPrice && (
+                    <p className="text-[9px] font-semibold text-[#006a39]/85">
+                      +{safeDiscountPercent(form.customerPrice, form.retailerPrice)}% extra retailer margin
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}
