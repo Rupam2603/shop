@@ -148,6 +148,11 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Implemented `src/lib/bulkInsertProducts.ts`: Batched database writes (chunks of 10) that safely call `createProduct` from `src/lib/products.ts`, creating records across Neon Postgres `products` and `inventory_products` tables with sequential IDs and category resolution.
   - Implemented `src/components/BulkProductUploadModal.tsx`: Interactive drag-and-drop modal featuring file drop zone, downloadable sample `.xlsx` template, live preview table with calculated pricing, validation status flags, and real-time batch upload progress.
   - Integrated "Upload Excel" action buttons in `AdminDashboard.tsx` (top navigation bar and product filter toolbar), enabling seamless 1-click bulk imports.
+- **Key Category Alignment Across Admin Panel & Storefront (Active)**:
+  - Canonical product categories synchronized via `KEY_PRODUCT_CATEGORIES` in `src/lib/keyCategories.ts`: "Skin Care & Ointments", "Pain Relief & Muscle Care", "Weight Loss & Metabolism", "Daily Wellness & Immunity", "Monsoon Health & Antiseptics", "Baby Care & Infant Nutrition", "Women's Health & Hygiene", "Men's Health & Vitality", "Diet & Digestive Health", "Hair Care & Scalp Therapy", "Vaccines & Medical Disposables", and "Medical Supplies & Devices".
+  - Admin Panel Add Product form (`ProductModal` in `AdminDashboard.tsx`) category dropdown aligned directly with the storefront Key Categories, defaulting to "Skin Care & Ointments".
+  - Updated `KeyCategoriesBar.tsx` `filterCat` mappings so clicking categories instantly filters corresponding products for both retail customers and wholesale retailers.
+  - Updated `MedicinesPage.tsx` sidebar filter list (`CATEGORY_LIST`) and category matching logic to reflect canonical Key Categories while preserving backward compatibility for legacy names.
 
 
 

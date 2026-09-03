@@ -4,19 +4,13 @@ import KeyCategoriesBar, { KEY_CATEGORIES, KeyCategoryItem } from "../components
 import InsuranceModal from "../components/InsuranceModal";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
 import { useCart } from "../contexts/CartContext";
+import { KEY_PRODUCT_CATEGORIES } from "../lib/keyCategories";
 
 const U = (id: string) => `https://images.unsplash.com/${id}?w=300&q=80`;
 
 const CATEGORY_LIST = [
   "All",
-  "Pain Relief & Balms",
-  "Energy, Hydration & Supplements",
-  "First Aid & Antiseptics",
-  "Antacids, Digestion & Laxatives",
-  "Skin Care, Powders & Ointments",
-  "Personal Care, Hygiene & Others",
-  "Baby Care",
-  "Medical Supplies & General",
+  ...KEY_PRODUCT_CATEGORIES,
 ];
 
 
@@ -193,44 +187,72 @@ export default function MedicinesPage({
         p.cat.includes("Skin") ||
         /cream|powder|ointment|antifungal|gel|boroline|salical|b-tex|ring guard/i.test(p.name + " " + p.sub)
       );
+    } else if (activeKeyCat === "pain-relief") {
+      list = list.filter((p) =>
+        p.cat.includes("Pain") ||
+        /pain|balm|volini|amrutanjan|spray|gel|sprain|muscle|joint|ache|moov/i.test(p.name + " " + p.sub + " " + p.cat)
+      );
     } else if (activeKeyCat === "weight-loss") {
       list = list.filter((p) =>
+        p.cat.includes("Weight") ||
         /sugar free|isabgol|softovac|weight|slimming|supplement|diet|chyawanprash/i.test(p.name + " " + p.sub + " " + p.cat)
       );
     } else if (activeKeyCat === "wellness") {
       list = list.filter((p) =>
+        p.cat.includes("Wellness") ||
+        p.cat.includes("Immunity") ||
         p.cat.includes("Energy") ||
         /wellness|chyawanprash|honey|ors|glucon|tonic|ayurvedic/i.test(p.name + " " + p.sub)
       );
     } else if (activeKeyCat === "monsoon") {
       list = list.filter((p) =>
+        p.cat.includes("Monsoon") ||
+        p.cat.includes("Antiseptic") ||
+        p.cat.includes("First Aid") ||
         /dettol|antiseptic|hansaplast|suthol|dusting|candid|cough|vicks|boroline/i.test(p.name + " " + p.sub + " " + p.cat)
       );
     } else if (activeKeyCat === "baby") {
-      list = list.filter((p) => p.cat.includes("Baby") || /baby|nipple|bottle/i.test(p.name + " " + p.sub));
+      list = list.filter((p) => p.cat.includes("Baby") || /baby|nipple|bottle|infant/i.test(p.name + " " + p.sub));
     } else if (activeKeyCat === "women") {
       list = list.filter((p) =>
+        p.cat.includes("Women") ||
+        p.cat.includes("Personal Care") ||
+        p.cat.includes("Hygiene") ||
         /v wash|veet|hair remover|body oil|intimate|women|hygiene|skincare/i.test(p.name + " " + p.sub + " " + p.cat)
       );
     } else if (activeKeyCat === "men") {
       list = list.filter((p) =>
+        p.cat.includes("Men") ||
         /balm|volini|amrutanjan|energy|glucon|pain relief|oil|soap|sanitizer/i.test(p.name + " " + p.sub + " " + p.cat)
       );
     } else if (activeKeyCat === "vaccines") {
       list = list.filter((p) =>
+        p.cat.includes("Vaccine") ||
         /mask|surgical|dettol|sanitizer|first aid|medical|antiseptic/i.test(p.name + " " + p.sub + " " + p.cat)
       );
     } else if (activeKeyCat === "diet") {
       list = list.filter((p) =>
+        p.cat.includes("Diet") ||
         p.cat.includes("Digestion") ||
         /eno|sugar free|isabgol|softovac|pet safa|honey|ors|laxative/i.test(p.name + " " + p.sub)
       );
     } else if (activeKeyCat === "hair") {
       list = list.filter((p) =>
+        p.cat.includes("Hair") ||
         /hair|oil|love nature|scalp|shampoo|dandruff|body oil/i.test(p.name + " " + p.sub + " " + p.cat)
       );
+    } else if (activeKeyCat === "medical-supplies") {
+      list = list.filter((p) =>
+        p.cat.includes("Medical") ||
+        p.cat.includes("Supplies") ||
+        /thermometer|oximeter|monitor|cuff|glove|mask|disposable|bandage/i.test(p.name + " " + p.sub + " " + p.cat)
+      );
     } else if (selectedCategory !== "All") {
-      list = list.filter((p) => p.cat === selectedCategory);
+      const target = selectedCategory.toLowerCase().trim();
+      list = list.filter((p) => {
+        const cat = (p.cat || "").toLowerCase().trim();
+        return cat === target || cat.includes(target) || target.includes(cat);
+      });
     }
 
     if (selectedBrands.length) {

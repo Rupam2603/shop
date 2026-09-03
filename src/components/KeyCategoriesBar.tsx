@@ -28,7 +28,7 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
   {
     id: "skin",
     name: "Skin",
-    filterCat: "Skin Care, Powders & Ointments",
+    filterCat: "Skin Care & Ointments",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 2a8 8 0 0 0-8 8c0 4.418 3.582 10 8 12 4.418-2 8-7.582 8-12a8 8 0 0 0-8-8z" />
@@ -41,7 +41,7 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
   {
     id: "pain-relief",
     name: "Pain Relief",
-    filterCat: "Pain Relief & Balms",
+    filterCat: "Pain Relief & Muscle Care",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M19 3H5c-1.1 0-2 .9-2 2v3.01h.01L3 8c0 1.65 1.19 3.02 2.76 3.28L9 11.72V19c0 1.1.89 2 2 2h2c1.11 0 2-.9 2-2v-7.28l3.24-.44C19.81 11.02 21 9.65 21 8V5c0-1.1-.9-2-2-2z" />
@@ -90,7 +90,7 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
   {
     id: "weight-loss",
     name: "Weight Loss",
-    filterCat: "Weight Loss",
+    filterCat: "Weight Loss & Metabolism",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="18" height="18" rx="4" />
@@ -105,7 +105,7 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
   {
     id: "wellness",
     name: "Wellness",
-    filterCat: "Energy, Hydration & Supplements",
+    filterCat: "Daily Wellness & Immunity",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -118,7 +118,7 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
   {
     id: "monsoon",
     name: "Monsoon",
-    filterCat: "Monsoon",
+    filterCat: "Monsoon Health & Antiseptics",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17.5 14a4.5 4.5 0 0 0 .5-8.97A7 7 0 0 0 4.1 8.5 5 5 0 0 0 5 18h12" />
@@ -131,7 +131,7 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
   {
     id: "baby",
     name: "Baby",
-    filterCat: "Baby Care",
+    filterCat: "Baby Care & Infant Nutrition",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="11" r="7" />
@@ -147,7 +147,7 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
   {
     id: "women",
     name: "Women",
-    filterCat: "Personal Care, Hygiene & Others",
+    filterCat: "Women's Health & Hygiene",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 2a5 5 0 0 0-5 5c0 2.5 1.5 4.5 3 5v1a2 2 0 0 0-2 2v2h8v-2a2 2 0 0 0-2-2v-1c1.5-.5 3-2.5 3-5a5 5 0 0 0-5-5z" />
@@ -158,7 +158,7 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
   {
     id: "men",
     name: "Men",
-    filterCat: "Men",
+    filterCat: "Men's Health & Vitality",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="7" r="4" />
@@ -170,7 +170,7 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
   {
     id: "vaccines",
     name: "Vaccines",
-    filterCat: "Vaccines",
+    filterCat: "Vaccines & Medical Disposables",
     route: "vaccines",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -187,7 +187,7 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
   {
     id: "diet",
     name: "Diet",
-    filterCat: "Antacids, Digestion & Laxatives",
+    filterCat: "Diet & Digestive Health",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 14a8 8 0 0 0 16 0H4z" />
@@ -200,7 +200,7 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
   {
     id: "hair",
     name: "Hair",
-    filterCat: "Skin Care, Powders & Ointments",
+    filterCat: "Hair Care & Scalp Therapy",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 3C8 3 5 6.5 5 11c0 6 3 10 7 10 2 0 3-1 4-3s1.5-4 1.5-6.5c0-4.5-2.5-8.5-5.5-8.5z" />

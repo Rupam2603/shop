@@ -12,6 +12,27 @@ export interface KeyCategoryMeta {
   filterFn?: (product: { name: string; sub?: string; cat: string; disc?: string; price?: string }) => boolean;
 }
 
+/**
+ * Canonical product categories matching the Key Categories showcased across the storefront
+ * for both retail customers and wholesale retailers.
+ */
+export const KEY_PRODUCT_CATEGORIES = [
+  "Skin Care & Ointments",
+  "Pain Relief & Muscle Care",
+  "Weight Loss & Metabolism",
+  "Daily Wellness & Immunity",
+  "Monsoon Health & Antiseptics",
+  "Baby Care & Infant Nutrition",
+  "Women's Health & Hygiene",
+  "Men's Health & Vitality",
+  "Diet & Digestive Health",
+  "Hair Care & Scalp Therapy",
+  "Vaccines & Medical Disposables",
+  "Medical Supplies & Devices",
+] as const;
+
+export type KeyProductCategory = typeof KEY_PRODUCT_CATEGORIES[number];
+
 export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
   {
     id: "all",
@@ -114,6 +135,8 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     lightBg: "#fffbeb",
     iconBg: "#fde68a",
     filterFn: (p) =>
+      p.cat.includes("Wellness") ||
+      p.cat.includes("Immunity") ||
       p.cat.includes("Energy") ||
       /wellness|chyawanprash|honey|ors|glucon|tonic|ayurvedic|immunity|glucose/i.test(
         p.name + " " + (p.sub || "")
@@ -129,6 +152,9 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     lightBg: "#ecfeff",
     iconBg: "#a5f3fc",
     filterFn: (p) =>
+      p.cat.includes("Monsoon") ||
+      p.cat.includes("Antiseptic") ||
+      p.cat.includes("First Aid") ||
       /dettol|antiseptic|hansaplast|suthol|dusting|candid|cough|vicks|boroline|bandage|washproof/i.test(
         p.name + " " + (p.sub || "") + " " + p.cat
       ),
@@ -155,6 +181,9 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     lightBg: "#fdf2f8",
     iconBg: "#fbcfe8",
     filterFn: (p) =>
+      p.cat.includes("Women") ||
+      p.cat.includes("Personal Care") ||
+      p.cat.includes("Hygiene") ||
       /v wash|veet|hair remover|body oil|intimate|women|hygiene|skincare|boroline|moistur/i.test(
         p.name + " " + (p.sub || "") + " " + p.cat
       ),
@@ -169,6 +198,7 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     lightBg: "#f0fdfa",
     iconBg: "#99f6e4",
     filterFn: (p) =>
+      p.cat.includes("Men") ||
       /balm|volini|amrutanjan|energy|glucon|pain relief|oil|soap|sanitizer|spray|moov/i.test(
         p.name + " " + (p.sub || "") + " " + p.cat
       ),
@@ -183,7 +213,9 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     lightBg: "#f0fdfa",
     iconBg: "#99f6e4",
     route: "vaccines",
-    filterFn: () => true,
+    filterFn: (p) =>
+      p.cat.includes("Vaccine") ||
+      /vaccine|immuniz|injection|syringe|needle/i.test(p.name + " " + (p.sub || "") + " " + p.cat),
   },
   {
     id: "diet",
@@ -195,7 +227,10 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     lightBg: "#f0fdf4",
     iconBg: "#bbf7d0",
     filterFn: (p) =>
-      p.cat.includes("Digestion") ||
+      p.cat.includes("Diet") ||
+      p.cat.includes("Digest") ||
+      p.cat.includes("Antacid") ||
+      p.cat.includes("Laxative") ||
       /eno|sugar free|isabgol|softovac|pet safa|honey|ors|laxative|churna|nityam/i.test(
         p.name + " " + (p.sub || "")
       ),
@@ -210,7 +245,25 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     lightBg: "#faf5ff",
     iconBg: "#e9d5ff",
     filterFn: (p) =>
+      p.cat.includes("Hair") ||
       /hair|oil|love nature|scalp|shampoo|dandruff|body oil|jac/i.test(
+        p.name + " " + (p.sub || "") + " " + p.cat
+      ),
+  },
+  {
+    id: "medical-supplies",
+    name: "Medical Supplies & Devices",
+    short: "Medical Supplies",
+    tagline: "Clinical diagnostics, surgical disposables & health monitors",
+    description: "Hospital-grade home clinical equipment including digital thermometers, pulse oximeters, blood pressure monitors, glucose meters, sterile dressings, and surgical gloves.",
+    accent: "#374151",
+    lightBg: "#f8fafc",
+    iconBg: "#e2e8f0",
+    filterFn: (p) =>
+      p.cat.includes("Medical") ||
+      p.cat.includes("Supplies") ||
+      p.cat.includes("Device") ||
+      /thermometer|oximeter|monitor|cuff|glove|mask|disposable|bandage|syringe|needle|device/i.test(
         p.name + " " + (p.sub || "") + " " + p.cat
       ),
   },

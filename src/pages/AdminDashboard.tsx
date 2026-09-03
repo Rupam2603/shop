@@ -3,6 +3,7 @@ import type { CurrentUser } from "../App";
 import { supabase } from "../lib/supabase";
 import BulkProductUploadModal from "../components/BulkProductUploadModal";
 import { calculatePricing } from "../lib/pricing";
+import { KEY_PRODUCT_CATEGORIES } from "../lib/keyCategories";
 import { Upload } from "lucide-react";
 import {
   fetchProducts,
@@ -260,17 +261,9 @@ type Settings = {
   autoReorder: boolean;
 };
 
-const INITIAL_CATEGORIES = [
+const INITIAL_CATEGORIES: string[] = [
+  ...KEY_PRODUCT_CATEGORIES,
   "Skin Care, Powders & Ointments",
-  "Weight Loss & Metabolism",
-  "Daily Wellness & Immunity",
-  "Monsoon Health & Antiseptics",
-  "Baby Care & Infant Nutrition",
-  "Women's Health & Hygiene",
-  "Men's Health & Vitality",
-  "Vaccines & Medical Disposables",
-  "Diet & Digestive Health",
-  "Hair Care & Scalp Therapy",
   "Pain Relief & Balms",
   "Energy, Hydration & Supplements",
   "First Aid & Antiseptics",
@@ -283,17 +276,19 @@ const INITIAL_CATEGORIES = [
 ];
 
 const CAT_HSN: Record<string, string> = {
-  "Skin Care, Powders & Ointments": "3304",
   "Skin Care & Ointments": "3304",
+  "Pain Relief & Muscle Care": "3004",
   "Weight Loss & Metabolism": "2106",
   "Daily Wellness & Immunity": "2106",
   "Monsoon Health & Antiseptics": "3808",
   "Baby Care & Infant Nutrition": "3924",
   "Women's Health & Hygiene": "3305",
   "Men's Health & Vitality": "3004",
-  "Vaccines & Medical Disposables": "3002",
   "Diet & Digestive Health": "3004",
   "Hair Care & Scalp Therapy": "3305",
+  "Vaccines & Medical Disposables": "3002",
+  "Medical Supplies & Devices": "9018",
+  "Skin Care, Powders & Ointments": "3304",
   "Pain Relief & Balms": "3004",
   "Energy, Hydration & Supplements": "2106",
   "First Aid & Antiseptics": "3808",
@@ -306,17 +301,19 @@ const CAT_HSN: Record<string, string> = {
 };
 
 const CAT_ACCENT: Record<string, string> = {
-  "Skin Care, Powders & Ointments": "#7c3aed",
   "Skin Care & Ointments": "#7c3aed",
+  "Pain Relief & Muscle Care": "#c0392b",
   "Weight Loss & Metabolism": "#ea580c",
   "Daily Wellness & Immunity": "#d97706",
   "Monsoon Health & Antiseptics": "#0891b2",
   "Baby Care & Infant Nutrition": "#0284c7",
   "Women's Health & Hygiene": "#db2777",
   "Men's Health & Vitality": "#0f766e",
-  "Vaccines & Medical Disposables": "#475569",
   "Diet & Digestive Health": "#16a34a",
   "Hair Care & Scalp Therapy": "#9333ea",
+  "Vaccines & Medical Disposables": "#0f766e",
+  "Medical Supplies & Devices": "#374151",
+  "Skin Care, Powders & Ointments": "#7c3aed",
   "Pain Relief & Balms": "#c0392b",
   "Energy, Hydration & Supplements": "#d97706",
   "First Aid & Antiseptics": "#047857",
@@ -847,8 +844,9 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
   const refetchProducts = useCallback(() => {
     fetchProducts({ includeUnlisted: true }).then((data) => {
+      const dbProds = data || [];
       setProducts(
-        (data || []).map((p) => ({
+        dbProds.map((p) => ({
           id: p.numeric_id,
           dbId: p.id,
           name: p.name,
@@ -866,6 +864,10 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           badges: Array.isArray(p.badges) && p.badges.length > 0 ? p.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
         }))
       );
+      setCategories((prev) => {
+        const productCats = dbProds.map((p) => p.category_name).filter(Boolean);
+        return Array.from(new Set([...INITIAL_CATEGORIES, ...prev, ...productCats]));
+      });
     });
   }, []);
 

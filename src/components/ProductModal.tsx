@@ -26,17 +26,19 @@ export interface PopupProduct {
 }
 
 export const CAT_COLORS: Record<string, string> = {
-  "Skin Care, Powders & Ointments":  "#7c3aed",
   "Skin Care & Ointments":          "#7c3aed",
+  "Pain Relief & Muscle Care":       "#c0392b",
   "Weight Loss & Metabolism":       "#ea580c",
   "Daily Wellness & Immunity":      "#d97706",
   "Monsoon Health & Antiseptics":    "#0891b2",
   "Baby Care & Infant Nutrition":   "#0284c7",
   "Women's Health & Hygiene":       "#db2777",
   "Men's Health & Vitality":        "#0f766e",
-  "Vaccines & Medical Disposables": "#475569",
   "Diet & Digestive Health":        "#16a34a",
   "Hair Care & Scalp Therapy":      "#9333ea",
+  "Vaccines & Medical Disposables": "#475569",
+  "Medical Supplies & Devices":      "#37474f",
+  "Skin Care, Powders & Ointments":  "#7c3aed",
   "Pain Relief & Balms":             "#c0392b",
   "Energy, Hydration & Supplements": "#e07b00",
   "First Aid & Antiseptics":         "#006a39",
@@ -49,17 +51,19 @@ export const CAT_COLORS: Record<string, string> = {
 };
 
 export const HSN_BY_CAT: Record<string, string> = {
-  "Skin Care, Powders & Ointments":  "3304",
   "Skin Care & Ointments":          "3304",
+  "Pain Relief & Muscle Care":       "3004",
   "Weight Loss & Metabolism":       "2106",
   "Daily Wellness & Immunity":      "2106",
   "Monsoon Health & Antiseptics":    "3808",
   "Baby Care & Infant Nutrition":   "3924",
   "Women's Health & Hygiene":       "3305",
   "Men's Health & Vitality":        "3004",
-  "Vaccines & Medical Disposables": "3002",
   "Diet & Digestive Health":        "3004",
   "Hair Care & Scalp Therapy":      "3305",
+  "Vaccines & Medical Disposables": "3002",
+  "Medical Supplies & Devices":      "9018",
+  "Skin Care, Powders & Ointments":  "3304",
   "Pain Relief & Balms":             "3004",
   "Energy, Hydration & Supplements": "2106",
   "First Aid & Antiseptics":         "3808",
