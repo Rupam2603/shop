@@ -216,7 +216,14 @@ export default function App() {
   if (loading) return <LoadingScreen />;
 
   // ── Not logged in → show Login page ──────────────────────────────────────
-  if (!appUser) return <LoginPage />;
+  if (!appUser) {
+    return (
+      <>
+        <LoginPage />
+        <SupportChatbot onTrackOrder={() => openTracking()} />
+      </>
+    );
+  }
 
   // ── Convert profile to the shape existing components expect ───────────────
   const currentUser: CurrentUser = toLegacyUser(appUser);
@@ -224,10 +231,13 @@ export default function App() {
   // ── Admin → redirect to admin dashboard ──────────────────────────────────
   if (currentUser.role === "admin") {
     return (
-      <AdminDashboard
-        user={currentUser}
-        onLogout={signOut}
-      />
+      <>
+        <AdminDashboard
+          user={currentUser}
+          onLogout={signOut}
+        />
+        <SupportChatbot onTrackOrder={() => openTracking()} />
+      </>
     );
   }
 

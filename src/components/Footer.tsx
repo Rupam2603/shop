@@ -91,8 +91,22 @@ export default function Footer() {
                 </li>
               )}
               <li>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent("subhone:open_support_chat"))}
+                  className="text-[#006a39] font-bold hover:underline flex items-center gap-1.5 cursor-pointer text-xs sm:text-sm text-left"
+                >
+                  <span>💬</span>
+                  <span>Open 24/7 Live Support Chat</span>
+                </button>
+              </li>
+              <li>
                 <a
                   href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.dispatchEvent(new CustomEvent("subhone:open_support_chat"));
+                  }}
                   className="text-[#596b5e] font-medium hover:text-[#006a39] transition-colors"
                 >
                   FAQs & Order Tracking

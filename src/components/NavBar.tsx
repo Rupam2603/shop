@@ -374,8 +374,20 @@ export default function NavBar({
           </div>
 
 
-          {/* Right section: Cart, Highly Visible Profile, Highly Visible Logout */}
+          {/* Right section: Support, Cart, Highly Visible Profile, Highly Visible Logout */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* 24/7 Support Quick Trigger */}
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent("subhone:open_support_chat"))}
+              className="p-2 sm:px-2.5 sm:py-1.5 rounded-2xl bg-emerald-50/90 hover:bg-emerald-100 border border-emerald-200/90 text-[#006a39] text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:scale-105 active:scale-95 shrink-0"
+              title="24/7 Live Support Chat"
+              aria-label="24/7 Support"
+            >
+              <span className="text-sm">💬</span>
+              <span className="hidden md:inline font-black text-[11px]">Support</span>
+            </button>
+
             {/* Shopping Cart Button */}
             <button
               type="button"
@@ -577,6 +589,22 @@ export default function NavBar({
                   )}
                 </button>
               ))}
+
+              {/* 24/7 Live Customer Support Mobile Trigger */}
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent("subhone:open_support_chat"));
+                  setMobileMenuOpen(false);
+                }}
+                className="flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-black bg-emerald-50 text-[#006a39] border border-emerald-200/90 hover:bg-emerald-100 transition-colors mt-2 cursor-pointer shadow-2xs"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-base">💬</span>
+                  <span>24/7 Customer Care Chat</span>
+                </div>
+                <span className="text-[10px] bg-[#006a39] text-white px-2 py-0.5 rounded-full uppercase tracking-wider font-extrabold">Online</span>
+              </button>
             </nav>
 
             {user ? (
