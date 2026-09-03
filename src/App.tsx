@@ -15,6 +15,7 @@ import CartDrawer from "./components/CartDrawer";
 import CheckoutModal from "./components/CheckoutModal";
 import OrderTrackingModal from "./components/OrderTrackingModal";
 import InfinityLoader from "./components/InfinityLoader";
+import SupportChatbot from "./components/SupportChatbot";
 import { useAuth, toLegacyUser } from "./contexts/AuthContext";
 import { parseHashToState, pushPageState, replacePageState } from "./lib/navigation";
 import { supabase } from "./lib/supabase";
@@ -316,6 +317,9 @@ export default function App() {
         userPhone={currentUser.phone}
         userName={currentUser.name}
       />
+
+      {/* 24/7 Live Customer Support Chatbot */}
+      <SupportChatbot onTrackOrder={() => openTracking()} />
     </div>
   );
 }

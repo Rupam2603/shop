@@ -127,5 +127,14 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Implemented `src/components/InfinityLoader.tsx` featuring a pure SVG/CSS animated infinity symbol (lemniscate `∞`) with a luminous glowing beam and trailing comet effect.
   - Non-black background requirement strictly adhered to (rendered on clean transparent / translucent glassmorphic light backdrops).
   - Integrated into initial app auth resolution (`LoadingScreen`), order tracking search modal (`OrderTrackingModal`), and order placement checkout overlay (`CheckoutModal`).
+- **24/7 Customer Support Chatbot (`src/components/SupportChatbot.tsx`)**:
+  - In-app responsive 24/7 live assistance widget floating in bottom right.
+  - Quick-reply carousel: delivery time/charges, serviceable pincodes, prescription policy, order tracking, wholesale inquiry, and human support.
+  - Keyword-intelligent assistant with instant answers, WhatsApp click-to-chat, direct phone calling (`tel:+919876543210`), and deep links to Order Tracking.
+- **Simplified Authentication UI/UX (`src/pages/LoginPage.tsx`)**:
+  - Redesigned into a clean, modern, centered card on soft healthcare gradient backdrop.
+  - Intuitive segmented controls for mode switching (`[ Sign In | Create Account ]`) and account type (`[ Customer | Retailer | Admin ]`).
+  - Streamlined input fields with clear labels, password visibility toggle, remember-me support, and dedicated retailer status check modal.
+
 
 
