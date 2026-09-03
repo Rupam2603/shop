@@ -215,26 +215,6 @@ export default function SupportChatbot({ onTrackOrder }: { onTrackOrder?: () => 
 
   return (
     <div className="relative font-['Inter',sans-serif]">
-      {/* ── Floating Chat Button (Prominent & High z-index) ── */}
-      {!open && (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-[999] bg-[#006a39] hover:bg-[#00522c] text-white py-2.5 px-3.5 sm:px-4 rounded-full shadow-2xl shadow-emerald-950/40 flex items-center gap-2.5 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border-2 border-white group ring-4 ring-emerald-500/20"
-          aria-label="Open 24/7 SubhOne Support Chatbot"
-        >
-          <div className="relative flex items-center justify-center w-7 h-7 rounded-xl bg-white/20 border border-white/30">
-            <BotIcon className="w-4 h-4 text-white" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#006a39] rounded-full animate-ping" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#006a39] rounded-full" />
-          </div>
-          <div className="text-left">
-            <p className="text-[11px] sm:text-xs font-black tracking-wide leading-tight">24/7 Support Bot</p>
-            <p className="text-[9px] sm:text-[10px] text-emerald-200 font-semibold leading-none mt-0.5">Online Care</p>
-          </div>
-        </button>
-      )}
-
       {/* ── Chat Window Overlay / Container ── */}
       {open && (
         <div className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-[1000] w-[calc(100vw-24px)] sm:w-96 bg-white/98 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#d6e4d8] overflow-hidden flex flex-col max-h-[82vh] h-[520px] animate-in slide-in-from-bottom-5 duration-200">
