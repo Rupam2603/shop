@@ -49,45 +49,6 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
     ),
   },
   {
-    id: "insurance",
-    name: "Insurance",
-    filterCat: "Insurance",
-    route: "insurance",
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        <polyline points="9 12 11 14 15 10" />
-      </svg>
-    ),
-  },
-  {
-    id: "checkups",
-    name: "Checkups",
-    filterCat: "Checkups",
-    route: "lab-tests",
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M8 2h8" />
-        <path d="M9 2v4.5a3 3 0 0 1-.88 2.12L4.5 12.24A4 4 0 0 0 3.32 15.08v3.42A3.5 3.5 0 0 0 6.82 22h10.36a3.5 3.5 0 0 0 3.5-3.5v-3.42a4 4 0 0 0-1.18-2.84l-3.62-3.62A3 3 0 0 1 15 6.5V2" />
-        <line x1="6" y1="16" x2="18" y2="16" />
-      </svg>
-    ),
-  },
-  {
-    id: "50-off",
-    name: "50% OFF",
-    filterCat: "50% OFF",
-    route: "offers",
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2l2.4 2.4 3.4-.4 1.4 3.1 3.1 1.4-.4 3.4L22 12l-2.1 2.1.4 3.4-3.1 1.4-1.4 3.1-3.4-.4L12 22l-2.4-2.4-3.4.4-1.4-3.1-3.1-1.4.4-3.4L2 12l2.1-2.1-.4-3.4 3.1-1.4 1.4-3.1 3.4.4L12 2z" />
-        <line x1="15" y1="9" x2="9" y2="15" />
-        <circle cx="9.5" cy="9.5" r="1.2" fill="currentColor" stroke="none" />
-        <circle cx="14.5" cy="14.5" r="1.2" fill="currentColor" stroke="none" />
-      </svg>
-    ),
-  },
-  {
     id: "weight-loss",
     name: "Weight Loss",
     filterCat: "Weight Loss & Metabolism",
@@ -206,6 +167,45 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
         <path d="M12 3C8 3 5 6.5 5 11c0 6 3 10 7 10 2 0 3-1 4-3s1.5-4 1.5-6.5c0-4.5-2.5-8.5-5.5-8.5z" />
         <path d="M9 13c1 3 3 5 4 5" />
         <path d="M18 5l.5 1.5L20 7l-1.5.5L18 9l-.5-1.5L16 7l1.5-.5L18 5z" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  },
+  {
+    id: "insurance",
+    name: "Insurance",
+    filterCat: "Insurance",
+    route: "insurance",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <polyline points="9 12 11 14 15 10" />
+      </svg>
+    ),
+  },
+  {
+    id: "checkups",
+    name: "Checkups",
+    filterCat: "Checkups",
+    route: "lab-tests",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8 2h8" />
+        <path d="M9 2v4.5a3 3 0 0 1-.88 2.12L4.5 12.24A4 4 0 0 0 3.32 15.08v3.42A3.5 3.5 0 0 0 6.82 22h10.36a3.5 3.5 0 0 0 3.5-3.5v-3.42a4 4 0 0 0-1.18-2.84l-3.62-3.62A3 3 0 0 1 15 6.5V2" />
+        <line x1="6" y1="16" x2="18" y2="16" />
+      </svg>
+    ),
+  },
+  {
+    id: "50-off",
+    name: "50% OFF",
+    filterCat: "50% OFF",
+    route: "offers",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2l2.4 2.4 3.4-.4 1.4 3.1 3.1 1.4-.4 3.4L22 12l-2.1 2.1.4 3.4-3.1 1.4-1.4 3.1-3.4-.4L12 22l-2.4-2.4-3.4.4-1.4-3.1-3.1-1.4.4-3.4L2 12l2.1-2.1-.4-3.4 3.1-1.4 1.4-3.1 3.4.4L12 2z" />
+        <line x1="15" y1="9" x2="9" y2="15" />
+        <circle cx="9.5" cy="9.5" r="1.2" fill="currentColor" stroke="none" />
+        <circle cx="14.5" cy="14.5" r="1.2" fill="currentColor" stroke="none" />
       </svg>
     ),
   },

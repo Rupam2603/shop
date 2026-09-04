@@ -162,3 +162,6 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Passed canonical `dbId`, `numeric_id`, `customer_price`, and `retailer_price` in `addToCart` payloads across `ProductModal.tsx`, `HomePage.tsx`, `CategoryPage.tsx`, `MedicinesPage.tsx`, `OffersPage.tsx`, and `SearchPage.tsx`.
   - Updated `retailerPrice` helper in `ProductModal.tsx` to directly return exact `explicitRetailerPrice` when provided.
   - Updated `CartContext.tsx` to default `userRole` to `"retailer"` and prioritize `product.retailer_price`, ensuring items stored in local state and sent to `placeOrder` match Neon Postgres database rates exactly.
+- **Key Categories Bar Order Reorganization**:
+  - Moved "Insurance", "Checkups", and "50% OFF" to the end of the categories section in both `src/components/KeyCategoriesBar.tsx` and `src/lib/keyCategories.ts`, placing tangible healthcare and medicine categories upfront.
+
