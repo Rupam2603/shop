@@ -162,7 +162,7 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Passed canonical `dbId`, `numeric_id`, `customer_price`, and `retailer_price` in `addToCart` payloads across `ProductModal.tsx`, `HomePage.tsx`, `CategoryPage.tsx`, `MedicinesPage.tsx`, `OffersPage.tsx`, and `SearchPage.tsx`.
   - Updated `retailerPrice` helper in `ProductModal.tsx` to directly return exact `explicitRetailerPrice` when provided.
   - Updated `CartContext.tsx` to default `userRole` to `"retailer"` and prioritize `product.retailer_price`, ensuring items stored in local state and sent to `placeOrder` match Neon Postgres database rates exactly.
-- **Key Categories Bar Order & Scrolling**:
-  - Added "Vaccine" at the very end of the category sequence across `src/components/KeyCategoriesBar.tsx` and `src/lib/keyCategories.ts`.
-  - Configured full-fidelity horizontal touch/mouse wheel scrolling (`overflow-x-auto`, `scroll-smooth`, `-webkit-overflow-scrolling: touch`) with thin custom scrollbar (`scrollbar-thin scrollbar-thumb-emerald-200/60`), ensuring seamless horizontal scrolling without items wrapping or clipping when full.
+- **Mobile Navigation Drawer Streamlining**:
+  - Removed emoji icons and pruned secondary items (Medicines & OTC, Lab Tests, Doctor Consult, Special Offers) from the mobile drawer in `src/components/NavBar.tsx`.
+  - Cleanly retained only "Home" and "Track Order" along with direct support chat and profile/account actions.
 

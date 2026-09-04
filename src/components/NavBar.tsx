@@ -52,12 +52,8 @@ function CartIcon() {
 }
 
 const navCategories: { label: string; page: Page; isTrack?: boolean }[] = [
-  { label: "🏠 Home", page: "home" },
-  { label: "💊 Medicines & OTC", page: "medicines" },
-  { label: "🧪 Lab Tests", page: "lab-tests" },
-  { label: "🩺 Doctor Consult", page: "consult" },
-  { label: "🏷️ Special Offers", page: "offers" },
-  { label: "🚚 Track Order", page: "home", isTrack: true },
+  { label: "Home", page: "home" },
+  { label: "Track Order", page: "home", isTrack: true },
 ];
 
 const ROLE_COLORS: Record<string, string> = {
