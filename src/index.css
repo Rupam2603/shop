@@ -54,8 +54,14 @@ body {
     radial-gradient(at 10% 10%, rgba(0, 106, 57, 0.04) 0px, transparent 50%),
     radial-gradient(at 90% 20%, rgba(14, 116, 144, 0.03) 0px, transparent 50%),
     radial-gradient(at 50% 80%, rgba(0, 106, 57, 0.03) 0px, transparent 50%);
-  background-attachment: fixed;
+  background-attachment: scroll;
   color: #171d18;
+}
+
+@media (min-width: 1024px) {
+  body {
+    background-attachment: fixed;
+  }
 }
 
 /* ─── Premium Glassmorphism Design System Tokens ─── */
@@ -424,5 +430,34 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ── Mobile Scroll Performance Optimizations ──────────────────────────── */
+@media (max-width: 768px) {
+  /* Disable expensive backdrop-blur filters on repeated product cards & banners while scrolling */
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-lg,
+  .backdrop-blur-md,
+  .backdrop-blur-xs,
+  .glass-card,
+  .glass-card-interactive,
+  .glass-panel {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Enhance touch scroll physics and avoid layout thrashing */
+  body, html {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+  }
+
+  /* Lazy layout & paint offscreen product sections to keep 60/120fps mobile scroll */
+  section, .snap-start {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 300px;
+  }
+}
+
 
 
