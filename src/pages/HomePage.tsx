@@ -53,6 +53,9 @@ function FlashIcon() {
 }
 
 export interface HomeCategoryProduct {
+  id?: number;
+  dbId?: string;
+  numeric_id?: number;
   name: string;
   sub: string;
   price: string;
@@ -62,6 +65,8 @@ export interface HomeCategoryProduct {
   brand?: string;
   cat?: string;
   stock?: number;
+  customer_price?: number;
+  retailer_price?: number;
 }
 
 export interface HomeCategorySectionItem {
@@ -293,16 +298,19 @@ function CategorySection({
             accent={item.accent}
             isRetailer={isRetailer}
             onClick={() => onProductClick({
-              id: nameToId(p.name),
+              id: p.numeric_id || p.id || nameToId(p.name),
+              dbId: p.dbId,
               name: p.name,
               sub: p.sub,
               price: p.price,
-              orig: p.orig,
-              disc: p.disc,
+              orig: p.orig || "",
+              disc: p.disc || "",
               cat: item.cat,
-              brand: p.name.split(" ")[0],
+              brand: p.brand || p.name.split(" ")[0],
               img: p.img,
-              stock: (p as any).stock ?? 50,
+              stock: p.stock ?? 50,
+              customer_price: p.customer_price,
+              retailer_price: p.retailer_price,
             })}
             onAddToCart={() => onAddToCart(p, item.cat)}
           />
@@ -418,6 +426,9 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
           </svg>
         ),
         products: prodsForCat.slice(0, 8).map((p) => ({
+          id: p.numeric_id,
+          dbId: p.id,
+          numeric_id: p.numeric_id,
           name: p.name,
           sub: p.details || p.subtitle || p.brand,
           price: `₹${Math.round(p.retailer_price || p.customer_price)}`,
@@ -427,6 +438,8 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
           brand: p.brand,
           cat: p.category_name,
           stock: p.stock ?? 50,
+          customer_price: p.customer_price,
+          retailer_price: p.retailer_price,
         })),
       };
     }).filter(Boolean) as HomeCategorySectionItem[];
@@ -447,10 +460,13 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
     if (list.length === 0) return [];
 
     return list.slice(0, 4).map((p) => ({
+      id: p.numeric_id,
+      dbId: p.id,
+      numeric_id: p.numeric_id,
       name: p.name,
       sub: p.details || p.subtitle || p.brand,
-      price: isRetailer ? `₹${Math.round(p.retailer_price)}` : `₹${Math.round(p.customer_price)}`,
-      orig: p.mrp > p.customer_price ? `₹${Math.round(p.mrp)}` : "",
+      price: `₹${Math.round(p.retailer_price || p.customer_price)}`,
+      orig: p.mrp > (p.retailer_price || p.customer_price) ? `₹${Math.round(p.mrp)}` : "",
       disc: `${p.discount_percent}%`,
       cat: p.category_name,
       brand: p.brand,
@@ -458,17 +474,23 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
       badge: `${p.discount_percent}% OFF`,
       color: "#ba1a1a",
       stock: p.stock ?? 50,
+      customer_price: p.customer_price,
+      retailer_price: p.retailer_price,
     }));
   }, [dbProducts, isRetailer]);
 
   const handleAddToCartFromCategory = (p: HomeCategoryProduct, cat: string) => {
     addToCart({
-      id: nameToId(p.name),
+      id: p.numeric_id || p.id || nameToId(p.name),
+      dbId: p.dbId,
+      numeric_id: p.numeric_id || p.id,
       name: p.name,
       sub: p.sub,
       cat,
-      brand: p.name.split(" ")[0],
-      price: p.price,
+      brand: p.brand || p.name.split(" ")[0],
+      price: p.retailer_price ?? p.customer_price ?? p.price,
+      customer_price: p.customer_price,
+      retailer_price: p.retailer_price,
       orig: p.orig,
       img: p.img,
     });
@@ -626,7 +648,21 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
                   return (
                     <div
                       key={p.name}
-                      onClick={() => setSelectedProduct({ id: nameToId(p.name), name: p.name, sub: p.sub, price: p.price, orig: p.orig, disc: p.disc, cat: p.cat, brand: p.brand, img: p.img, stock: pStock })}
+                      onClick={() => setSelectedProduct({
+                        id: (p as any).numeric_id || nameToId(p.name),
+                        dbId: (p as any).dbId,
+                        name: p.name,
+                        sub: p.sub,
+                        price: p.price,
+                        orig: p.orig || "",
+                        disc: p.disc,
+                        cat: p.cat,
+                        brand: p.brand,
+                        img: p.img,
+                        stock: pStock,
+                        customer_price: (p as any).customer_price,
+                        retailer_price: (p as any).retailer_price,
+                      })}
                       className={`w-[170px] sm:w-[220px] lg:w-auto shrink-0 snap-start bg-white rounded-2xl border ${isOutOfStock ? "border-red-200 opacity-80" : "border-[rgba(189,202,188,0.4)]"} overflow-hidden flex flex-col group hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer`}
                     >
                       <div className="bg-[#f8fafb] h-32 sm:h-40 relative overflow-hidden flex items-center justify-center">
@@ -673,12 +709,16 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 addToCart({
-                                  id: nameToId(p.name),
+                                  id: (p as any).numeric_id || nameToId(p.name),
+                                  dbId: (p as any).dbId,
+                                  numeric_id: (p as any).numeric_id,
                                   name: p.name,
                                   sub: p.sub,
                                   cat: p.cat,
                                   brand: p.brand,
-                                  price: p.price,
+                                  price: (p as any).retailer_price ?? (p as any).customer_price ?? p.price,
+                                  customer_price: (p as any).customer_price,
+                                  retailer_price: (p as any).retailer_price,
                                   orig: p.orig,
                                   img: p.img,
                                 });

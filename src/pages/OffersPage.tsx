@@ -132,6 +132,8 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
       disc: p.discount_percent > 0 ? `${p.discount_percent}%` : "",
       cat: p.category_name,
       stock: p.stock ?? 50,
+      customer_price: p.customer_price,
+      retailer_price: p.retailer_price,
     }));
   }, [dbProducts, activeTab, isRetailer]);
 
@@ -355,12 +357,15 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
                           onClick={(e) => {
                             e.stopPropagation();
                             addToCart({
-                              id: (p as any).id || nameToId(p.name),
+                              id: (p as any).dbId || (p as any).id || nameToId(p.name),
+                              dbId: (p as any).dbId,
                               numeric_id: (p as any).id,
                               name: p.name,
                               brand: p.brand,
                               cat: p.cat || "Energy, Hydration & Supplements",
-                              price: p.price,
+                              price: (p as any).retailer_price ?? (p as any).customer_price ?? p.price,
+                              customer_price: (p as any).customer_price,
+                              retailer_price: (p as any).retailer_price,
                               orig: p.orig,
                               img: p.img,
                             });

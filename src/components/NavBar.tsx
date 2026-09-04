@@ -220,6 +220,8 @@ export default function NavBar({
       brand: p.brand,
       img: p.image_url,
       stock: p.stock ?? 50,
+      customer_price: p.customer_price,
+      retailer_price: p.retailer_price,
     });
     setIsSearchOpen(false);
     setSearchValue("");

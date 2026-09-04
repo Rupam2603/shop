@@ -98,6 +98,8 @@ export default function CategoryPage({
       brand: p.brand,
       img: p.image_url,
       stock: p.stock ?? 50,
+      customer_price: p.customer_price,
+      retailer_price: p.retailer_price,
     }));
   }, [dbProducts]);
 
@@ -364,11 +366,15 @@ export default function CategoryPage({
                               e.stopPropagation();
                               addToCart({
                                 id: p.id,
+                                dbId: p.dbId,
+                                numeric_id: p.id,
                                 name: p.name,
                                 sub: p.sub,
                                 cat: p.cat,
                                 brand: p.brand,
-                                price: isRetailer ? retailerPrice(p.price) : p.price,
+                                price: p.retailer_price ?? p.customer_price ?? p.price,
+                                customer_price: p.customer_price,
+                                retailer_price: p.retailer_price,
                                 orig: p.orig,
                                 img: p.img,
                               });

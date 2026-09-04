@@ -23,6 +23,8 @@ export interface PopupProduct {
   brand: string;
   img: string;
   stock?: number;
+  customer_price?: number;
+  retailer_price?: number;
 }
 
 export const CAT_COLORS: Record<string, string> = {
@@ -75,7 +77,10 @@ export const HSN_BY_CAT: Record<string, string> = {
   "Full Body Health Checkups":       "9993",
 };
 
-export function retailerPrice(priceStr: string): string {
+export function retailerPrice(priceStr: string, explicitRetailerPrice?: number): string {
+  if (typeof explicitRetailerPrice === "number" && !isNaN(explicitRetailerPrice)) {
+    return `₹${Math.round(explicitRetailerPrice)}`;
+  }
   const n = parseFloat(priceStr.replace(/[₹,]/g, "")) || 0;
   return `₹${Math.round(n * 0.85)}`;
 }
@@ -428,7 +433,7 @@ export default function ProductDetailModal({
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-['Manrope',sans-serif] font-extrabold text-[#0369a1]">
-                      {retailerPrice(product.price)}
+                      {retailerPrice(product.price, product.retailer_price)}
                     </span>
                     <span className="text-xs bg-[#dbeafe] text-[#1d4ed8] font-bold px-2 py-0.5 rounded uppercase">
                       Wholesale B2B Rate
@@ -512,14 +517,21 @@ export default function ProductDetailModal({
               ) : (
                 <button
                   onClick={() => {
+                    const chosenPrice = isRetailer
+                      ? (product.retailer_price ?? retailerPrice(product.price, product.retailer_price))
+                      : product.price;
+
                     addToCart(
                       {
-                        id: product.id,
+                        id: product.dbId || product.id,
+                        dbId: product.dbId,
                         numeric_id: product.id,
                         name: product.name,
                         brand: product.brand,
                         cat: product.cat,
-                        price: isRetailer ? retailerPrice(product.price) : product.price,
+                        price: chosenPrice,
+                        customer_price: product.customer_price,
+                        retailer_price: product.retailer_price,
                         orig: product.orig,
                         img: product.img,
                       },
@@ -534,7 +546,7 @@ export default function ProductDetailModal({
                   <span>·</span>
                   <span>
                     {isRetailer
-                      ? `₹${(parseFloat(retailerPrice(product.price).replace(/[₹,]/g, "")) || 0) * qty}`
+                      ? `₹${(product.retailer_price ?? (parseFloat(retailerPrice(product.price, product.retailer_price).replace(/[₹,]/g, "")) || 0)) * qty}`
                       : `₹${(parseFloat(product.price.replace(/[₹,]/g, "")) || 0) * qty}`}
                   </span>
                 </button>

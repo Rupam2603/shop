@@ -84,7 +84,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<"customer" | "retailer" | "admin">("customer");
+  const [userRole, setUserRole] = useState<"customer" | "retailer" | "admin">("retailer");
 
   // Sync to localStorage whenever items change
   useEffect(() => {
@@ -143,13 +143,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (appUser?.authUser?.id) {
-      const role = appUser.profile?.role || appUser.authUser.user_metadata?.role || "customer";
+      const rawRole = appUser.profile?.role || appUser.authUser.user_metadata?.role || "retailer";
+      const role = rawRole === "customer" ? "retailer" : rawRole;
       setUserId(appUser.authUser.id);
       setUserRole(role as "customer" | "retailer" | "admin");
       loadCartFromSupabase(appUser.authUser.id, role as "customer" | "retailer" | "admin");
     } else {
       setUserId(null);
-      setUserRole("customer");
+      setUserRole("retailer");
       setItems([]);
       try {
         localStorage.removeItem(STORAGE_KEY);
@@ -174,9 +175,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           : 0;
 
       const price = parseNumericPrice(
-        userRole === "retailer"
-          ? (product.retailer_price ?? product.customer_price ?? product.price)
-          : (product.customer_price ?? product.price),
+        product.retailer_price ??
+          (userRole === "retailer"
+            ? (product.customer_price ?? product.price)
+            : (product.customer_price ?? product.price)),
         100
       );
       const mrp = parseNumericPrice(
