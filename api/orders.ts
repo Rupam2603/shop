@@ -35,21 +35,29 @@ export default async function handler(req: any, res: any) {
     if (req.method === 'GET') {
       const { userId, orderNumber, orderId } = req.query || {};
 
-      let query = 'SELECT * FROM orders';
+      let query = `
+        SELECT 
+          o.*,
+          dp.name AS delivery_partner_name,
+          dpp.phone AS delivery_partner_phone
+        FROM orders o
+        LEFT JOIN users dp ON dp.id = o.delivery_partner_id
+        LEFT JOIN delivery_partner_profiles dpp ON dpp.user_id = o.delivery_partner_id
+      `;
       const params: any[] = [];
 
       if (orderId) {
-        query += ' WHERE id = $1';
+        query += ' WHERE o.id = $1';
         params.push(orderId);
       } else if (orderNumber) {
-        query += ' WHERE order_number = $1';
+        query += ' WHERE o.order_number = $1';
         params.push(orderNumber);
       } else if (userId) {
-        query += ' WHERE user_id = $1';
+        query += ' WHERE o.user_id = $1';
         params.push(userId);
       }
 
-      query += ' ORDER BY created_at DESC';
+      query += ' ORDER BY o.created_at DESC';
 
       const ordersRes = await client.query(query, params);
       const orders = ordersRes.rows || [];

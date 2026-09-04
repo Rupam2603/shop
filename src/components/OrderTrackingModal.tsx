@@ -91,11 +91,24 @@ export default function OrderTrackingModal({
       setLivePulse(true);
     });
 
+    // Poll active order every 10 seconds to detect partner assignments, status progression, and reassignments
+    const pollTimer = setInterval(() => {
+      if (!mounted) return;
+      if (searchInput.trim()) {
+        fetchOrderByNumber(searchInput.trim()).then((fresh) => {
+          if (mounted && fresh) {
+            setActiveOrder(fresh);
+          }
+        });
+      }
+    }, 10000);
+
     return () => {
       mounted = false;
       unsub();
+      clearInterval(pollTimer);
     };
-  }, [isOpen, initialOrderNumber]);
+  }, [isOpen, initialOrderNumber, searchInput]);
 
   // Handle Search submit
   const handleSearch = async (e?: React.FormEvent) => {
@@ -355,6 +368,12 @@ export default function OrderTrackingModal({
                       partnerId={activeOrder.delivery_partner_id}
                       orderId={activeOrder.id}
                       partnerName={activeOrder.delivery_partner_name || "Express Delivery Partner"}
+                      partnerPhone={activeOrder.delivery_partner_phone || undefined}
+                      customerAddress={
+                        typeof activeOrder.shipping_address === "object"
+                          ? `${activeOrder.shipping_address?.line1 || ""}, ${activeOrder.shipping_address?.city || ""}`
+                          : undefined
+                      }
                       height="360px"
                     />
                   </div>
@@ -542,6 +561,56 @@ export default function OrderTrackingModal({
                     </span>
                   </div>
                 </div>
+
+                {/* Delivery Partner Card (when assigned) */}
+                {activeOrder.delivery_partner_id && (
+                  <div className="bg-gradient-to-br from-[#f8fafb] to-[#f0f7ee] rounded-2xl border border-[#c3dec0] p-5 shadow-xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <h4 className="font-bold text-xs uppercase tracking-wider text-[#006a39] flex items-center gap-1.5">
+                          <span>🛵</span>
+                          <span>Delivery Executive</span>
+                        </h4>
+                        <span className="bg-[#d1fae5] text-[#006a39] border border-[#a7f3d0] text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase">
+                          {activeOrder.delivery_status === "delivered"
+                            ? "Delivered"
+                            : activeOrder.delivery_status === "picked_up"
+                            ? "Picked Up"
+                            : "Assigned"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3 mt-3">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#006a39] to-[#008749] text-white font-extrabold text-lg flex items-center justify-center shadow-md shrink-0 border border-white">
+                          {(activeOrder.delivery_partner_name?.[0] || "D").toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs text-[#657969]">I'm your delivery partner</p>
+                          <h4 className="font-['Manrope',sans-serif] font-black text-sm sm:text-base text-[#073b4c] truncate">
+                            {activeOrder.delivery_partner_name || "Delivery Partner"}
+                          </h4>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-[#dce7db] flex items-center justify-between gap-3">
+                      <span className="text-xs text-[#657969]">Direct Contact:</span>
+                      {activeOrder.delivery_partner_phone ? (
+                        <a
+                          href={`tel:${activeOrder.delivery_partner_phone}`}
+                          className="inline-flex items-center gap-2 bg-[#006a39] hover:bg-[#005a30] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                          </svg>
+                          <span>Call {activeOrder.delivery_partner_phone}</span>
+                        </a>
+                      ) : (
+                        <span className="text-xs text-[#9aa89b] font-medium">Number not shared</span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           ) : (

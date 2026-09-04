@@ -125,10 +125,15 @@ export default function ProfilePage({
   const displayOrders = dbOrders.length > 0
     ? dbOrders.map((o) => ({
         id: o.order_number,
+        dbId: o.id,
         date: new Date(o.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
         status: o.status,
         total: Number(o.total_amount),
         items: o.order_items?.map((item) => `${item.product_name} ×${item.quantity}`) || ["Order items"],
+        deliveryPartnerId: o.delivery_partner_id,
+        deliveryStatus: o.delivery_status,
+        deliveryPartnerName: o.delivery_partner_name,
+        deliveryPartnerPhone: o.delivery_partner_phone,
       }))
     : user.role === "retailer" ? RETAILER_ORDERS : CUSTOMER_ORDERS;
 
@@ -579,6 +584,32 @@ export default function ProfilePage({
                               <span className="font-mono text-sm font-bold" style={{ color: accent }}>{o.id}</span>
                               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ color: st.color, backgroundColor: st.bg }}>{o.status}</span>
                               <span className="text-[#9aa89b] text-xs">{o.date}</span>
+
+                              {/* Delivery Partner Strip (only when assigned) */}
+                              {(o as any).deliveryPartnerId && (
+                                <div className="inline-flex items-center gap-2 bg-[#f0f7ee] border border-[#c3dec0] rounded-full px-2.5 py-0.5 text-xs font-semibold text-[#006a39]">
+                                  <span className="text-[11px]">🛵</span>
+                                  <span>
+                                    {(o as any).deliveryStatus === "picked_up"
+                                      ? "Picked up by"
+                                      : "Assigned to"}{" "}
+                                    <strong className="font-bold text-[#073b4c]">
+                                      {(o as any).deliveryPartnerName || "Delivery Partner"}
+                                    </strong>
+                                  </span>
+                                  {(o as any).deliveryPartnerPhone ? (
+                                    <a
+                                      href={`tel:${(o as any).deliveryPartnerPhone}`}
+                                      className="w-6 h-6 rounded-full bg-[#006a39] hover:bg-[#005a30] text-white flex items-center justify-center transition-all cursor-pointer active:scale-90 shadow-2xs"
+                                      title={`Call ${(o as any).deliveryPartnerName || "Partner"} (${(o as any).deliveryPartnerPhone})`}
+                                    >
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                      </svg>
+                                    </a>
+                                  ) : null}
+                                </div>
+                              )}
                             </div>
                             <div className="flex flex-wrap items-center gap-2 mb-3">
                               {o.items.map((item) => (

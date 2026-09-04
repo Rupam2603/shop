@@ -200,3 +200,18 @@ The application reads configuration through `import.meta.env` (defined in `.env`
     - Week picker (pick any day to derive Monday–Sunday with resolved human date text) and Month/Year picker.
     - Scope filter: "All Delivery Partners" or specific partner selection.
     - Download Excel button with progress spinner and feedback alerts.
+- **Delivery Partner Visibility in Retailer Order Tracking (Sep 2026)**:
+  - **Data Layer & Joins**:
+    - Extended `DbOrder` in `src/lib/orders.ts` with `delivery_partner_phone?: string | null`.
+    - Updated `/api/orders` to `LEFT JOIN users dp ON dp.id = o.delivery_partner_id` and `LEFT JOIN delivery_partner_profiles dpp ON dpp.user_id = o.delivery_partner_id`, populating `delivery_partner_name` and `delivery_partner_phone` directly on order retrieval.
+    - Added fallback partner lookup enrichment in `fetchUserOrders` and `fetchOrderByNumber` in `src/lib/orders.ts` to ensure joined name and phone are always present even when running against Supabase client fallback.
+  - **Profile Page Order Cards (`src/pages/ProfilePage.tsx`)**:
+    - Added delivery partner strip directly on the order card when `deliveryPartnerId` is present: shows *"Picked up by {deliveryPartnerName}"* (or *"Assigned to"*) with partner name and direct clickable `tel:` call button icon.
+    - Completely absent when order has not yet been accepted by a partner, preserving standard appearance for unassigned/processing orders.
+    - Automatically covers both retail customers and wholesale pharmacy retailers since `ProfilePage.tsx` order history is shared.
+  - **Order Tracking Modal (`src/components/OrderTrackingModal.tsx`)**:
+    - Embedded `LiveDeliveryMap` with live moving GPS pin, partner phone, and delivery address whenever `delivery_status` is `"accepted"` or `"picked_up"`.
+    - Once marked `"delivered"` or if still `"unassigned"`, safely switches back to static status timeline without leaving stale or frozen location coordinates.
+    - Added parallel **Delivery Executive Card** in the tracking detail view showing partner name (*"I'm your delivery partner, {name}"*), partner avatar, delivery status tag, and prominent `tel:` call button.
+    - Added reactive 10-second polling interval to auto-refresh active order status and instantly display newly assigned delivery partners or reassignments without closing the modal.
+

@@ -30,6 +30,7 @@ export interface DbOrder {
   delivery_accepted_at?: string | null;
   delivery_status?: "unassigned" | "accepted" | "picked_up" | "delivered" | string | null;
   delivery_partner_name?: string | null;
+  delivery_partner_phone?: string | null;
 }
 
 export function getDisplayStatus(order: DbOrder, partnerName?: string): string {
@@ -252,6 +253,43 @@ export async function fetchUserOrders(explicitUserId?: string): Promise<DbOrder[
 
       if (!error && Array.isArray(data)) {
         dbOrders = data as DbOrder[];
+      }
+    }
+
+    // Enrich delivery partner details if missing from payload
+    const partnerIds = Array.from(
+      new Set(
+        dbOrders
+          .map((o) => o.delivery_partner_id)
+          .filter((id): id is string => Boolean(id) && (!dbOrders.find((d) => d.delivery_partner_id === id)?.delivery_partner_name))
+      )
+    );
+
+    if (partnerIds.length > 0) {
+      try {
+        const { data: partnerUsers } = await supabase
+          .from("users")
+          .select("id, name, full_name")
+          .in("id", partnerIds);
+
+        const { data: partnerProfiles } = await supabase
+          .from("delivery_partner_profiles")
+          .select("user_id, phone")
+          .in("user_id", partnerIds);
+
+        const nameMap = new Map((partnerUsers || []).map((u: any) => [u.id, u.full_name || u.name]));
+        const phoneMap = new Map((partnerProfiles || []).map((p: any) => [p.user_id, p.phone]));
+
+        dbOrders = dbOrders.map((o) => {
+          if (!o.delivery_partner_id) return o;
+          return {
+            ...o,
+            delivery_partner_name: o.delivery_partner_name || nameMap.get(o.delivery_partner_id) || null,
+            delivery_partner_phone: o.delivery_partner_phone || phoneMap.get(o.delivery_partner_id) || null,
+          };
+        });
+      } catch (err) {
+        console.warn("Could not enrich delivery partner details in fetchUserOrders:", err);
       }
     }
 
@@ -510,7 +548,32 @@ export async function fetchOrderByNumber(orderNumberOrId: string): Promise<DbOrd
     }
 
     const { data, error } = await query.maybeSingle();
-    if (data && !error) return data as DbOrder;
+    if (data && !error) {
+      const order = data as DbOrder;
+      if (order.delivery_partner_id && (!order.delivery_partner_name || !order.delivery_partner_phone)) {
+        try {
+          const { data: pUser } = await supabase
+            .from("users")
+            .select("id, name, full_name")
+            .eq("id", order.delivery_partner_id)
+            .maybeSingle();
+
+          const { data: pProfile } = await supabase
+            .from("delivery_partner_profiles")
+            .select("user_id, phone")
+            .eq("user_id", order.delivery_partner_id)
+            .maybeSingle();
+
+          if (pUser) {
+            order.delivery_partner_name = (pUser as any).full_name || (pUser as any).name || order.delivery_partner_name;
+          }
+          if (pProfile) {
+            order.delivery_partner_phone = (pProfile as any).phone || order.delivery_partner_phone;
+          }
+        } catch {}
+      }
+      return order;
+    }
 
     // Check local storage fallback
     const locals = getLocalOrders(await getEffectiveUserId());
