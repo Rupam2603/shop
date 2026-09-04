@@ -129,23 +129,6 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
     ),
   },
   {
-    id: "vaccines",
-    name: "Vaccines",
-    filterCat: "Vaccines & Medical Disposables",
-    route: "vaccines",
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="4" y="8" width="8" height="12" rx="2" />
-        <path d="M6 8V5a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v3" />
-        <line x1="8" y1="12" x2="8" y2="16" />
-        <path d="M18 3l3 3-8 8-3-3 8-8z" />
-        <line x1="14" y1="7" x2="17" y2="10" />
-        <line x1="12" y1="16" x2="9" y2="19" />
-        <line x1="9" y1="19" x2="7" y2="21" />
-      </svg>
-    ),
-  },
-  {
     id: "diet",
     name: "Diet",
     filterCat: "Diet & Digestive Health",
@@ -206,6 +189,23 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
         <line x1="15" y1="9" x2="9" y2="15" />
         <circle cx="9.5" cy="9.5" r="1.2" fill="currentColor" stroke="none" />
         <circle cx="14.5" cy="14.5" r="1.2" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  },
+  {
+    id: "vaccines",
+    name: "Vaccines",
+    filterCat: "Vaccines & Medical Disposables",
+    route: "vaccines",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="8" width="8" height="12" rx="2" />
+        <path d="M6 8V5a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v3" />
+        <line x1="8" y1="12" x2="8" y2="16" />
+        <path d="M18 3l3 3-8 8-3-3 8-8z" />
+        <line x1="14" y1="7" x2="17" y2="10" />
+        <line x1="12" y1="16" x2="9" y2="19" />
+        <line x1="9" y1="19" x2="7" y2="21" />
       </svg>
     ),
   },

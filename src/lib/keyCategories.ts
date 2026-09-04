@@ -168,20 +168,6 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
       ),
   },
   {
-    id: "vaccines",
-    name: "Vaccines & Immunization Services",
-    short: "Vaccines",
-    tagline: "Certified Cold-Chain Vaccines & Safe Home Immunization",
-    description: "Book adult & pediatric vaccines with 2°C–8°C strict cold-chain tracking and licensed nurse visits for Flu, HPV, Hepatitis B, Tetanus, Typhoid, and Pneumonia.",
-    accent: "#0f766e",
-    lightBg: "#f0fdfa",
-    iconBg: "#99f6e4",
-    route: "vaccines",
-    filterFn: (p) =>
-      p.cat.includes("Vaccine") ||
-      /vaccine|immuniz|injection|syringe|needle/i.test(p.name + " " + (p.sub || "") + " " + p.cat),
-  },
-  {
     id: "diet",
     name: "Diet & Digestive Health",
     short: "Diet",
@@ -266,5 +252,19 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     iconBg: "#fecaca",
     route: "offers",
     filterFn: (p) => parseInt(p.disc || "0") >= 20,
+  },
+  {
+    id: "vaccines",
+    name: "Vaccines & Immunization Services",
+    short: "Vaccines",
+    tagline: "Certified Cold-Chain Vaccines & Safe Home Immunization",
+    description: "Book adult & pediatric vaccines with 2°C–8°C strict cold-chain tracking and licensed nurse visits for Flu, HPV, Hepatitis B, Tetanus, Typhoid, and Pneumonia.",
+    accent: "#0f766e",
+    lightBg: "#f0fdfa",
+    iconBg: "#99f6e4",
+    route: "vaccines",
+    filterFn: (p) =>
+      p.cat.includes("Vaccine") ||
+      /vaccine|immuniz|injection|syringe|needle/i.test(p.name + " " + (p.sub || "") + " " + p.cat),
   },
 ];
