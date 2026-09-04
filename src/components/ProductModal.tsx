@@ -270,10 +270,12 @@ export default function ProductDetailModal({
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handleEsc);
-    document.body.style.overflow = "hidden";
+    // Don't lock body scroll — the modal backdrop handles touch containment
     return () => {
       document.removeEventListener("keydown", handleEsc);
+      // Ensure body scroll is never left locked
       document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     };
   }, [onClose]);
 

@@ -6,22 +6,25 @@ html {
   text-size-adjust: 100%;
   scroll-behavior: smooth;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: scroll;
+  height: 100%;
 }
 
 body {
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: visible;
   -webkit-tap-highlight-color: transparent;
   min-height: 100%;
-  min-height: 100dvh;
+  height: auto;
+  position: relative;
 }
 
 #root {
-  min-height: 100%;
+  min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 /* iOS safe-area padding support (notch / home bar) */
@@ -433,26 +436,51 @@ body {
   scrollbar-width: none;
 }
 
-/* ── Mobile Scroll Performance Optimizations ──────────────────────────── */
-@media (max-width: 768px) {
-  /* Disable expensive backdrop-blur filters on repeated product cards & banners while scrolling */
-  .backdrop-blur-xl,
-  .backdrop-blur-2xl,
-  .backdrop-blur-lg,
-  .backdrop-blur-md,
-  .backdrop-blur-xs,
-  .glass-card,
-  .glass-card-interactive,
-  .glass-panel {
+/* ── Mobile Scroll Performance & Fix ──────────────────────────── */
+@media (max-width: 1024px) {
+  /* Kill ALL backdrop-filter on mobile/tablet — biggest scroll-jank culprit */
+  *,
+  *::before,
+  *::after {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
+}
 
-  /* Ensure body and html can freely scroll naturally on mobile */
-  html, body {
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y pinch-zoom;
+@media (max-width: 768px) {
+  /* Force natural scroll on html — the ONLY scrollable container */
+  html {
+    overflow-y: scroll !important;
+    -webkit-overflow-scrolling: touch !important;
+    height: auto !important;
+    min-height: 100% !important;
+  }
+
+  /* Body must NOT be the scroll container — let html handle it */
+  body {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 100% !important;
+    touch-action: pan-y !important;
+  }
+
+  /* Root must not clip scroll */
+  #root {
+    min-height: 100% !important;
+    height: auto !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  /* Prevent any fixed/absolute overlay from stealing touch events */
+  .fixed {
+    touch-action: none;
+  }
+
+  /* But fixed overlays that should scroll internally keep their scroll */
+  .fixed.overflow-y-auto,
+  .fixed.overflow-auto {
+    touch-action: pan-y;
   }
 }
 
