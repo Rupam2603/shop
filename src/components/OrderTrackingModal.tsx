@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { DbOrder, fetchUserOrders, fetchOrderByNumber, subscribeToUserOrdersRealtime, subscribeToOrdersRealtime } from "../lib/orders";
 import { printOrDownloadInvoice, downloadInvoiceFile, InvoiceOrderData } from "../lib/invoiceGenerator";
 import InfinityLoader from "./InfinityLoader";
+import LiveDeliveryMap from "./LiveDeliveryMap";
 
 interface Props {
   isOpen: boolean;
@@ -346,67 +347,78 @@ export default function OrderTrackingModal({
                 </div>
               </div>
 
-              {/* ── Interactive Route Visualizer Simulation ── */}
+              {/* ── Interactive Route Visualizer or Live GPS Map ── */}
               {!isCancelled && (
-                <div className="relative bg-gradient-to-br from-[#f8fafb] to-[#edf7ed] rounded-2xl border border-[#c3dec0] p-5 overflow-hidden">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">🗺️</span>
-                      <h4 className="font-bold text-[#073b4c] text-xs sm:text-sm">
-                        Live Delivery Route Simulation
-                      </h4>
-                    </div>
-                    <span className="text-[11px] font-bold text-[#006a39] bg-white/80 px-2.5 py-1 rounded-full border border-[#c3dec0]">
-                      {currentStatus === "Delivered" ? "Arrived at Destination" : "Estimated Arrival: 30-40 Mins"}
-                    </span>
+                activeOrder.delivery_partner_id && (activeOrder.delivery_status === "accepted" || activeOrder.delivery_status === "picked_up") ? (
+                  <div className="rounded-2xl overflow-hidden border border-[#c3dec0] shadow-xs">
+                    <LiveDeliveryMap
+                      partnerId={activeOrder.delivery_partner_id}
+                      orderId={activeOrder.id}
+                      partnerName={activeOrder.delivery_partner_name || "Express Delivery Partner"}
+                      height="360px"
+                    />
                   </div>
-
-                  {/* Visual Route Line */}
-                  <div className="relative py-4 px-2">
-                    <div className="h-2 bg-[#d1e7d1] rounded-full relative overflow-hidden">
-                      <div
-                        className="h-full bg-[#006a39] transition-all duration-1000 relative"
-                        style={{
-                          width:
-                            currentStatus === "Delivered"
-                              ? "100%"
-                              : currentStatus === "Shipped"
-                              ? "70%"
-                              : "25%",
-                        }}
-                      >
-                        <div className="absolute inset-0 bg-white/30 animate-pulse" />
+                ) : (
+                  <div className="relative bg-gradient-to-br from-[#f8fafb] to-[#edf7ed] rounded-2xl border border-[#c3dec0] p-5 overflow-hidden">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">🗺️</span>
+                        <h4 className="font-bold text-[#073b4c] text-xs sm:text-sm">
+                          Live Delivery Route Simulation
+                        </h4>
                       </div>
+                      <span className="text-[11px] font-bold text-[#006a39] bg-white/80 px-2.5 py-1 rounded-full border border-[#c3dec0]">
+                        {currentStatus === "Delivered" ? "Arrived at Destination" : "Estimated Arrival: 30-40 Mins"}
+                      </span>
                     </div>
 
-                    {/* Nodes on Map */}
-                    <div className="flex items-center justify-between mt-3 text-xs">
-                      <div className="text-left">
-                        <div className="flex items-center gap-1 font-bold text-[#073b4c]">
-                          <span>🏢</span>
-                          <span>Central Hub</span>
+                    {/* Visual Route Line */}
+                    <div className="relative py-4 px-2">
+                      <div className="h-2 bg-[#d1e7d1] rounded-full relative overflow-hidden">
+                        <div
+                          className="h-full bg-[#006a39] transition-all duration-1000 relative"
+                          style={{
+                            width:
+                              currentStatus === "Delivered"
+                                ? "100%"
+                                : currentStatus === "Shipped"
+                                ? "70%"
+                                : "25%",
+                          }}
+                        >
+                          <div className="absolute inset-0 bg-white/30 animate-pulse" />
                         </div>
-                        <p className="text-[10px] text-[#6d7a6f]">Kolkata Dispatch</p>
                       </div>
 
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 font-bold text-[#006a39]">
-                          <span className="animate-bounce">🚚</span>
-                          <span>{isRetailer ? "Freight Transit" : "Express Agent"}</span>
+                      {/* Nodes on Map */}
+                      <div className="flex items-center justify-between mt-3 text-xs">
+                        <div className="text-left">
+                          <div className="flex items-center gap-1 font-bold text-[#073b4c]">
+                            <span>🏢</span>
+                            <span>Central Hub</span>
+                          </div>
+                          <p className="text-[10px] text-[#6d7a6f]">Kolkata Dispatch</p>
                         </div>
-                        <p className="text-[10px] text-[#6d7a6f]">In Transit</p>
-                      </div>
 
-                      <div className="text-right">
-                        <div className="flex items-center justify-end gap-1 font-bold text-[#073b4c]">
-                          <span>📍</span>
-                          <span>{isRetailer ? "Pharmacy Store" : "Your Doorstep"}</span>
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 font-bold text-[#006a39]">
+                            <span className="animate-bounce">🚚</span>
+                            <span>{isRetailer ? "Freight Transit" : "Express Agent"}</span>
+                          </div>
+                          <p className="text-[10px] text-[#6d7a6f]">In Transit</p>
                         </div>
-                        <p className="text-[10px] text-[#6d7a6f]">Final Destination</p>
+
+                        <div className="text-right">
+                          <div className="flex items-center justify-end gap-1 font-bold text-[#073b4c]">
+                            <span>📍</span>
+                            <span>{isRetailer ? "Pharmacy Store" : "Your Doorstep"}</span>
+                          </div>
+                          <p className="text-[10px] text-[#6d7a6f]">Final Destination</p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )
               )}
 
               {/* ── Real-Time Order Timeline ── */}

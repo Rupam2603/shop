@@ -440,11 +440,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (expectedRole === "admin" && u.role !== "admin") {
             setLoading(false); return { error: "Access denied. This account does not have Admin privileges." };
           }
-          if (expectedRole === "customer" && u.role === "retailer") {
-            setLoading(false); return { error: "Access denied. This account is registered as a Retailer." };
+          if (expectedRole === "delivery_partner" && u.role !== "delivery_partner") {
+            setLoading(false); return { error: "Access denied. This account is not a Delivery Partner." };
           }
-          if (expectedRole === "retailer" && u.role === "customer") {
-            setLoading(false); return { error: "Access denied. This account is registered as a Customer." };
+          if (expectedRole === "customer" && (u.role === "retailer" || u.role === "delivery_partner")) {
+            setLoading(false); return { error: `Access denied. This account is registered as a ${u.role === "delivery_partner" ? "Delivery Partner" : "Retailer"}.` };
+          }
+          if (expectedRole === "retailer" && (u.role === "customer" || u.role === "delivery_partner")) {
+            setLoading(false); return { error: `Access denied. This account is registered as a ${u.role === "delivery_partner" ? "Delivery Partner" : "Customer"}.` };
           }
 
           try {

@@ -19,6 +19,12 @@ const ROLES: Record<string, RoleCfg> = {
     accent: "#059669",
     gradient: "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
   },
+  delivery_partner: {
+    label: "Delivery Partner",
+    badge: "Fleet Logistics",
+    accent: "#0284c7",
+    gradient: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
+  },
   admin: {
     label: "Admin",
     badge: "Management",
@@ -296,7 +302,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
   };
 
   const cfg = ROLES[selectedRole] || ROLES["retailer"];
-  const roleList: UserRole[] = mode === "signup" ? ["retailer"] : ["retailer", "admin"];
+  const roleList: UserRole[] = mode === "signup" ? ["retailer"] : ["retailer", "delivery_partner", "admin"];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f2f8f3] via-[#f9faf9] to-[#ebf5ed] flex flex-col justify-center items-center p-4 sm:p-6 text-[#073b4c]">
@@ -367,7 +373,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
             <span className="text-emerald-800 font-extrabold">{cfg.label}</span>
           </div>
 
-          <div className={`grid gap-1.5 p-1 rounded-2xl bg-[#f0f5f2] border border-[#dce7db] ${roleList.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
+          <div className={`grid gap-1.5 p-1 rounded-2xl bg-[#f0f5f2] border border-[#dce7db] ${roleList.length === 3 ? "grid-cols-3" : roleList.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
             {roleList.map((r) => {
               const active = selectedRole === r;
               const roleInfo = ROLES[r] || ROLES["retailer"];
@@ -376,16 +382,16 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                   key={r}
                   type="button"
                   onClick={() => { setSelectedRole(r); setError(""); setSuccess(""); }}
-                  className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`py-2 px-1.5 sm:px-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1 cursor-pointer ${
                     active
                       ? "bg-white text-[#073b4c] shadow-xs font-black border border-white"
                       : "text-[#627765] hover:text-[#073b4c]"
                   }`}
                 >
                   <span className="text-sm">
-                    {r === "retailer" ? "🏪" : "🛡️"}
+                    {r === "retailer" ? "🏪" : r === "delivery_partner" ? "🚚" : "🛡️"}
                   </span>
-                  <span>{roleInfo.label}</span>
+                  <span className="truncate">{roleInfo.label}</span>
                 </button>
               );
             })}

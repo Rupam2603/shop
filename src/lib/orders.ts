@@ -26,6 +26,21 @@ export interface DbOrder {
   order_items?: DbOrderItem[];
   user_role?: "retailer" | "customer" | "admin";
   shop_name?: string | null;
+  delivery_partner_id?: string | null;
+  delivery_accepted_at?: string | null;
+  delivery_status?: "unassigned" | "accepted" | "picked_up" | "delivered" | string | null;
+  delivery_partner_name?: string | null;
+}
+
+export function getDisplayStatus(order: DbOrder, partnerName?: string): string {
+  const effectivePartner = partnerName || order.delivery_partner_name;
+  if (order.delivery_status === "accepted" && effectivePartner) {
+    return `Accepted by ${effectivePartner}`;
+  }
+  if (order.delivery_status === "picked_up" && effectivePartner) {
+    return `Picked up by ${effectivePartner}`;
+  }
+  return order.status;
 }
 
 export interface DbOrderItem {

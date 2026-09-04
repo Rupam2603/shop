@@ -1,6 +1,6 @@
 import { createClient, SupabaseAuthAdapter } from "@neondatabase/neon-js";
 
-export type UserRole = "customer" | "retailer" | "admin";
+export type UserRole = "customer" | "retailer" | "admin" | "delivery_partner";
 
 export interface Profile {
   id: string;

@@ -11,6 +11,7 @@ import OffersPage from "./pages/OffersPage";
 import SearchPage from "./pages/SearchPage";
 import LoginPage from "./pages/LoginPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import DeliveryPartnerDashboard from "./pages/DeliveryPartnerDashboard";
 import ProfilePage from "./pages/ProfilePage";
 import CartDrawer from "./components/CartDrawer";
 import CheckoutModal from "./components/CheckoutModal";
@@ -22,7 +23,7 @@ import { parseHashToState, pushPageState, replacePageState } from "./lib/navigat
 import { supabase } from "./lib/supabase";
 
 export type Page = "home" | "medicines" | "category" | "insurance" | "vaccines" | "lab-tests" | "consult" | "offers" | "profile" | "checkout" | "search";
-export type UserRole = "admin" | "retailer" | "customer";
+export type UserRole = "admin" | "retailer" | "customer" | "delivery_partner";
 
 export interface Address {
   id: string;
@@ -237,6 +238,19 @@ export default function App() {
     return (
       <>
         <AdminDashboard
+          user={currentUser}
+          onLogout={signOut}
+        />
+        <SupportChatbot onTrackOrder={() => openTracking()} />
+      </>
+    );
+  }
+
+  // ── Delivery Partner → redirect to dedicated delivery partner dashboard ───
+  if (currentUser.role === "delivery_partner") {
+    return (
+      <>
+        <DeliveryPartnerDashboard
           user={currentUser}
           onLogout={signOut}
         />

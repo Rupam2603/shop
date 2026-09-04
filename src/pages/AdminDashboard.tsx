@@ -39,13 +39,23 @@ import {
 } from "../lib/settings";
 import { fetchAllUsers, updateUserAccountStatus, ManagedUser, adminChangeUserPassword, adminDeleteUserAccount } from "../lib/users";
 import { fetchLoginLogs, LoginLog } from "../lib/loginLogs";
+import {
+  fetchAllDeliveryPartners,
+  adminCreateDeliveryPartner,
+  fetchDeliveryAttendance,
+  DeliveryPartnerItem,
+  DeliveryAttendanceRecord,
+} from "../lib/deliveryPartners";
+import { fetchOrdersForPartner } from "../lib/deliveryOrders";
+import { fetchAllOnDutyPartnerLocations, DeliveryLocationPing } from "../lib/deliveryLocation";
+import LiveDeliveryMap from "../components/LiveDeliveryMap";
 
 interface Props {
   user: CurrentUser;
   onLogout: () => void;
 }
 
-type AdminTab = "dashboard" | "products" | "inventory" | "orders" | "users" | "lab-tests" | "revenue" | "settings";
+type AdminTab = "dashboard" | "products" | "inventory" | "orders" | "users" | "delivery" | "lab-tests" | "revenue" | "settings";
 
 /* ── Modern Glassmorphism Vector Icons ── */
 const Icons = {
@@ -212,6 +222,14 @@ const Icons = {
       <path d="m4.9 4.9 14.2 14.2" />
     </svg>
   ),
+  Truck: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="3" width="15" height="13" rx="1" />
+      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+      <circle cx="5.5" cy="18.5" r="2.5" />
+      <circle cx="18.5" cy="18.5" r="2.5" />
+    </svg>
+  ),
 };
 
 export type ProductBadge = {
@@ -370,6 +388,7 @@ const TAB_ITEMS: { id: AdminTab; label: string; icon: React.ReactElement }[] = [
   { id: "products", label: "Products", icon: <Icons.Pill className="w-4 h-4" /> },
   { id: "inventory", label: "Inventory", icon: <Icons.Box className="w-4 h-4" /> },
   { id: "orders", label: "Orders", icon: <Icons.Order className="w-4 h-4" /> },
+  { id: "delivery", label: "Delivery", icon: <Icons.Truck className="w-4 h-4" /> },
   { id: "users", label: "User Accounts", icon: <Icons.User className="w-4 h-4" /> },
   { id: "lab-tests", label: "Lab Bookings", icon: <Icons.Lab className="w-4 h-4" /> },
   { id: "revenue", label: "Revenue", icon: <Icons.Revenue className="w-4 h-4" /> },
@@ -1698,6 +1717,10 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               isRefreshing={isRefreshingOrders}
               settings={settings}
             />
+          )}
+
+          {activeTab === "delivery" && (
+            <DeliveryPartnersTab />
           )}
 
           {activeTab === "users" && (
@@ -3712,6 +3735,567 @@ function LoginLogsPanel() {
             className="px-4 py-2 rounded-2xl bg-white border border-[#dce7db] text-xs font-bold text-[#073b4c] hover:bg-emerald-50 transition-all disabled:opacity-40 cursor-pointer">
             Next →
           </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DeliveryPartnersTab() {
+  const [partners, setPartners] = useState<DeliveryPartnerItem[]>([]);
+  const [attendance, setAttendance] = useState<DeliveryAttendanceRecord[]>([]);
+  const [locations, setLocations] = useState<DeliveryLocationPing[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [subTab, setSubTab] = useState<"partners" | "attendance" | "map">("partners");
+
+  // Add Partner Modal
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newPartner, setNewPartner] = useState({ fullName: "", email: "", password: "", phone: "" });
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
+
+  // Inspect Partner Detail Modal
+  const [inspectPartner, setInspectPartner] = useState<DeliveryPartnerItem | null>(null);
+  const [partnerOrders, setPartnerOrders] = useState<DbOrder[]>([]);
+  const [loadingPartnerOrders, setLoadingPartnerOrders] = useState(false);
+
+  // Load Data
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [allPartners, attRecords, locs] = await Promise.all([
+        fetchAllDeliveryPartners(),
+        fetchDeliveryAttendance(),
+        fetchAllOnDutyPartnerLocations(),
+      ]);
+      setPartners(allPartners);
+      setAttendance(attRecords);
+      setLocations(locs);
+    } catch (err) {
+      console.error("Error loading delivery partner tab data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(() => {
+      fetchAllOnDutyPartnerLocations().then((locs) => setLocations(locs)).catch(() => {});
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleInspect = async (p: DeliveryPartnerItem) => {
+    setInspectPartner(p);
+    setLoadingPartnerOrders(true);
+    try {
+      const orders = await fetchOrdersForPartner(p.id);
+      setPartnerOrders(orders);
+    } finally {
+      setLoadingPartnerOrders(false);
+    }
+  };
+
+  const handleCreatePartner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPartner.email.trim() || !newPartner.fullName.trim()) {
+      setCreateError("Name and Email are required.");
+      return;
+    }
+
+    setCreating(true);
+    setCreateError("");
+    try {
+      const res = await adminCreateDeliveryPartner({
+        email: newPartner.email,
+        fullName: newPartner.fullName,
+        password: newPartner.password || "Delivery@2026",
+        phone: newPartner.phone,
+      });
+
+      if (res.success) {
+        setShowAddModal(false);
+        setNewPartner({ fullName: "", email: "", password: "", phone: "" });
+        await loadData();
+      } else {
+        setCreateError(res.error || "Failed to create delivery partner.");
+      }
+    } catch (err: any) {
+      setCreateError(err?.message || "An error occurred.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const onDutyCount = partners.filter((p) => p.isOnDuty).length;
+  const activeDeliveriesTotal = partners.reduce((acc, p) => acc + (p.activeOrdersCount || 0), 0);
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* ── KPI STATS OVERVIEW ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="glass-admin-card rounded-3xl p-5 shadow-xs">
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#657969]">Total Partners</p>
+          <p className="font-['Manrope',sans-serif] font-black text-2xl sm:text-3xl text-[#073b4c] mt-1">
+            {partners.length}
+          </p>
+        </div>
+
+        <div className="glass-admin-card rounded-3xl p-5 shadow-xs">
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800">On Duty Now</p>
+          <p className="font-['Manrope',sans-serif] font-black text-2xl sm:text-3xl text-[#006a39] mt-1 flex items-center gap-2">
+            <span>{onDutyCount}</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+          </p>
+        </div>
+
+        <div className="glass-admin-card rounded-3xl p-5 shadow-xs">
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-sky-800">Active Shipments</p>
+          <p className="font-['Manrope',sans-serif] font-black text-2xl sm:text-3xl text-sky-700 mt-1">
+            {activeDeliveriesTotal}
+          </p>
+        </div>
+
+        <div className="glass-admin-card rounded-3xl p-5 shadow-xs">
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#657969]">GPS Beacons</p>
+          <p className="font-['Manrope',sans-serif] font-black text-2xl sm:text-3xl text-[#073b4c] mt-1">
+            {locations.length} Live
+          </p>
+        </div>
+      </div>
+
+      {/* ── SUB-TABS & ACTION BUTTON ── */}
+      <div className="glass-admin-card rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2 overflow-x-auto">
+          {[
+            { id: "partners", label: `Partners (${partners.length})` },
+            { id: "map", label: `Live Fleet Map (${locations.length})` },
+            { id: "attendance", label: "Attendance Logs" },
+          ].map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setSubTab(t.id as any)}
+              className={`px-4 py-2 rounded-2xl text-xs font-bold font-['Manrope',sans-serif] transition-all cursor-pointer whitespace-nowrap ${
+                subTab === t.id
+                  ? "bg-[#006a39] text-white shadow-md shadow-emerald-950/20"
+                  : "bg-white text-[#073b4c] border border-[#dce7db] hover:bg-emerald-50"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <button
+            onClick={loadData}
+            disabled={loading}
+            className="p-2.5 rounded-2xl bg-white border border-[#dce7db] hover:bg-emerald-50 text-xs font-bold text-[#073b4c] cursor-pointer"
+            title="Refresh Data"
+          >
+            <span className={loading ? "animate-spin" : ""}>🔄</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setCreateError("");
+              setShowAddModal(true);
+            }}
+            className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-emerald-950/15 cursor-pointer active:scale-95"
+          >
+            <span>+</span>
+            <span>Add Delivery Partner</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── SUB-TAB 1: PARTNERS LIST ── */}
+      {subTab === "partners" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {partners.map((p) => (
+            <div
+              key={p.id}
+              className="glass-admin-card rounded-3xl p-5 border border-[#dce7db] shadow-xs hover:shadow-md transition-all flex flex-col justify-between gap-4"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border flex items-center gap-1 ${
+                      p.isOnDuty
+                        ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                        : "bg-slate-100 text-slate-700 border-slate-200"
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${p.isOnDuty ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+                    <span>{p.isOnDuty ? "On Duty" : "Off Duty"}</span>
+                  </span>
+
+                  <span className="text-[11px] text-[#728575] font-semibold">
+                    {p.profileCompleted ? "Profile Complete ✓" : "Incomplete Profile ⚠️"}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3.5">
+                  {p.avatarUrl ? (
+                    <img
+                      src={p.avatarUrl}
+                      alt={p.name}
+                      className="w-13 h-13 rounded-2xl object-cover border-2 border-emerald-600 shadow-md shrink-0"
+                    />
+                  ) : (
+                    <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-[#006a39] to-[#008749] text-white font-black text-xl flex items-center justify-center shadow-md shrink-0">
+                      {(p.name?.[0] || "D").toUpperCase()}
+                    </div>
+                  )}
+
+                  <div className="min-w-0">
+                    <h4 className="font-['Manrope',sans-serif] font-extrabold text-base text-[#073b4c] truncate">
+                      {p.name}
+                    </h4>
+                    <p className="text-xs text-[#657969] font-mono truncate">{p.email}</p>
+                    <p className="text-xs text-[#006a39] font-bold mt-0.5">{p.phone || "No phone yet"}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-[#f0f4f0] grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="bg-[#f8fafb] rounded-xl p-2 text-center">
+                    <span className="text-[#657969] block">Active Orders</span>
+                    <span className="font-black text-[#006a39] text-sm">{p.activeOrdersCount || 0}</span>
+                  </div>
+                  <div className="bg-[#f8fafb] rounded-xl p-2 text-center">
+                    <span className="text-[#657969] block">Delivered</span>
+                    <span className="font-black text-[#073b4c] text-sm">{p.completedOrdersCount || 0}</span>
+                  </div>
+                </div>
+
+                {p.vehicleType && (
+                  <p className="text-xs text-[#657969] mt-2.5 flex items-center gap-1">
+                    <span>🛵</span>
+                    <span>{p.vehicleType}</span>
+                    {p.vehicleNumber && <span className="font-mono font-bold text-[#073b4c]">({p.vehicleNumber})</span>}
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={() => handleInspect(p)}
+                className="w-full py-2.5 rounded-2xl bg-white border border-[#dce7db] hover:bg-[#f0f5f2] text-[#073b4c] font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+              >
+                <span>View Full Details & Orders</span>
+                <span>→</span>
+              </button>
+            </div>
+          ))}
+
+          {partners.length === 0 && (
+            <div className="col-span-full py-16 text-center text-[#728575] glass-admin-card rounded-3xl flex flex-col items-center gap-2">
+              <span className="text-3xl">🛵</span>
+              <p className="font-bold text-[#073b4c]">No delivery partners registered yet</p>
+              <p className="text-xs">Click "+ Add Delivery Partner" above to create an employee account.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── SUB-TAB 2: LIVE FLEET MAP ── */}
+      {subTab === "map" && (
+        <div className="flex flex-col gap-4">
+          <div className="glass-admin-card rounded-3xl p-5 flex items-center justify-between">
+            <div>
+              <h3 className="font-['Manrope',sans-serif] font-black text-lg text-[#073b4c]">
+                City-Wide Live Fleet GPS Tracking
+              </h3>
+              <p className="text-xs text-[#657969]">
+                Showing real-time location pins for all on-duty delivery partners across Kolkata & surrounding areas.
+              </p>
+            </div>
+            <span className="bg-emerald-100 text-emerald-800 text-xs font-black px-3 py-1 rounded-full flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              <span>{locations.length} Online Drivers</span>
+            </span>
+          </div>
+
+          <LiveDeliveryMap mode="admin-all" allLocations={locations} height="520px" />
+        </div>
+      )}
+
+      {/* ── SUB-TAB 3: ATTENDANCE LOGS ── */}
+      {subTab === "attendance" && (
+        <div className="glass-admin-card rounded-3xl overflow-hidden shadow-xs">
+          <div className="p-5 border-b border-[#e4ede2] flex items-center justify-between">
+            <h3 className="font-['Manrope',sans-serif] font-black text-base text-[#073b4c]">
+              Daily Attendance & Shift Records
+            </h3>
+            <span className="text-xs text-[#728575]">Auto-logged upon on-duty toggles</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#f8fafb] border-b border-[#e4ede2] text-[#073b4c] font-black uppercase text-[10px] tracking-wider">
+                <tr>
+                  <th className="p-4">Partner Name</th>
+                  <th className="p-4">Email</th>
+                  <th className="p-4">Date</th>
+                  <th className="p-4">Check-In</th>
+                  <th className="p-4">Check-Out</th>
+                  <th className="p-4">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#f0f4f0]">
+                {attendance.map((rec) => (
+                  <tr key={rec.id} className="hover:bg-[#f8fafb] transition-colors">
+                    <td className="p-4 font-bold text-[#073b4c]">{rec.userName}</td>
+                    <td className="p-4 font-mono text-[#657969]">{rec.userEmail}</td>
+                    <td className="p-4 font-semibold">{rec.workDate}</td>
+                    <td className="p-4 text-emerald-800 font-mono">
+                      {rec.checkInAt ? new Date(rec.checkInAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "—"}
+                    </td>
+                    <td className="p-4 text-[#657969] font-mono">
+                      {rec.checkOutAt ? new Date(rec.checkOutAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "Active / Open"}
+                    </td>
+                    <td className="p-4">
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border ${
+                          rec.status === "present"
+                            ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                            : "bg-rose-100 text-rose-800 border-rose-300"
+                        }`}
+                      >
+                        {rec.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {attendance.length === 0 && (
+            <div className="p-12 text-center text-[#728575] text-xs font-semibold">
+              No attendance records recorded yet.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── MODAL 1: ADD DELIVERY PARTNER ── */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl animate-in zoom-in-95">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-xl shadow-xs">
+                  🛵
+                </div>
+                <div>
+                  <h3 className="font-['Manrope',sans-serif] font-black text-[#073b4c] text-lg">
+                    Create Delivery Partner
+                  </h3>
+                  <p className="text-xs text-[#657969]">Assign login credentials for mobile rider app</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-[#657969] hover:text-[#073b4c] text-xl font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreatePartner} className="flex flex-col gap-4">
+              {createError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold rounded-2xl">
+                  {createError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Ramesh Ghosh"
+                  value={newPartner.fullName}
+                  onChange={(e) => setNewPartner((p) => ({ ...p, fullName: e.target.value }))}
+                  className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1">
+                  Email (Login ID) *
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. ramesh.delivery@subhone.com"
+                  value={newPartner.email}
+                  onChange={(e) => setNewPartner((p) => ({ ...p, email: e.target.value }))}
+                  className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1">
+                  Initial Password (default: Delivery@2026)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Delivery@2026"
+                  value={newPartner.password}
+                  onChange={(e) => setNewPartner((p) => ({ ...p, password: e.target.value }))}
+                  className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1">
+                  Mobile Number (Optional)
+                </label>
+                <input
+                  type="tel"
+                  placeholder="+91 98765 43210"
+                  value={newPartner.phone}
+                  onChange={(e) => setNewPartner((p) => ({ ...p, phone: e.target.value }))}
+                  className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 py-2.5 rounded-2xl border border-[#dce7db] text-[#073b4c] font-bold text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="flex-1 py-2.5 rounded-2xl bg-[#006a39] hover:bg-[#008749] text-white font-bold text-xs shadow-md disabled:opacity-50"
+                >
+                  {creating ? "Creating…" : "Create Account"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 2: INSPECT PARTNER PROFILE & DELIVERIES ── */}
+      {inspectPartner && (
+        <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[#073b4c] to-[#006a39] text-white p-5 sm:p-6 flex items-center justify-between">
+              <div className="flex items-center gap-3.5">
+                {inspectPartner.avatarUrl ? (
+                  <img
+                    src={inspectPartner.avatarUrl}
+                    alt={inspectPartner.name}
+                    className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-md"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-2xl bg-white/20 text-white font-black text-2xl flex items-center justify-center border border-white/30">
+                    {(inspectPartner.name?.[0] || "D").toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-['Manrope',sans-serif] font-black text-lg sm:text-xl">
+                    {inspectPartner.name}
+                  </h3>
+                  <p className="text-xs text-white/80 font-mono">{inspectPartner.email}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setInspectPartner(null)}
+                className="w-9 h-9 rounded-xl bg-white/20 hover:bg-white/30 text-white flex items-center justify-center text-lg font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Profile Content */}
+            <div className="p-6 overflow-y-auto flex flex-col gap-5 text-xs">
+              {/* Partner Details Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-[#f8fafb] rounded-2xl p-4 border border-[#e4ede2]">
+                <div>
+                  <span className="text-[#657969] block">Phone</span>
+                  <span className="font-bold text-[#073b4c]">{inspectPartner.phone || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-[#657969] block">Duty Status</span>
+                  <span className="font-bold text-emerald-700">{inspectPartner.isOnDuty ? "On Duty" : "Off Duty"}</span>
+                </div>
+                <div>
+                  <span className="text-[#657969] block">Today's Attendance</span>
+                  <span className="font-bold uppercase text-[#073b4c]">{inspectPartner.todayAttendanceStatus || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-[#657969] block">Vehicle</span>
+                  <span className="font-bold text-[#073b4c]">{inspectPartner.vehicleType || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-[#657969] block">Vehicle Number</span>
+                  <span className="font-bold font-mono text-[#073b4c]">{inspectPartner.vehicleNumber || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-[#657969] block">Joined</span>
+                  <span className="font-bold text-[#073b4c]">
+                    {new Date(inspectPartner.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  </span>
+                </div>
+              </div>
+
+              {inspectPartner.address && (
+                <div>
+                  <span className="text-[#657969] block mb-1 font-bold">Base Address</span>
+                  <p className="text-xs text-[#073b4c] bg-[#f8fafb] p-3 rounded-xl border border-[#e4ede2]">
+                    {inspectPartner.address}
+                  </p>
+                </div>
+              )}
+
+              {/* Partner Orders */}
+              <div>
+                <h4 className="font-['Manrope',sans-serif] font-black text-sm text-[#073b4c] mb-2">
+                  Assigned Deliveries ({partnerOrders.length})
+                </h4>
+
+                {loadingPartnerOrders ? (
+                  <div className="py-6 text-center text-[#728575]">Loading partner orders…</div>
+                ) : (
+                  <div className="space-y-2 max-h-56 overflow-y-auto">
+                    {partnerOrders.map((ord) => (
+                      <div
+                        key={ord.id}
+                        className="flex items-center justify-between p-3 rounded-xl bg-white border border-[#e4ede2] shadow-2xs"
+                      >
+                        <div>
+                          <span className="font-mono font-bold text-[#006a39]">{ord.order_number}</span>
+                          <span className="text-[#657969] ml-2">({ord.customer_name})</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold">₹{ord.total_amount}</span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            {ord.delivery_status || ord.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+
+                    {partnerOrders.length === 0 && (
+                      <div className="py-6 text-center text-[#728575]">No deliveries recorded yet.</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

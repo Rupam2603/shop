@@ -167,3 +167,20 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Resolved mobile browser scrolling stutter/lag by replacing `background-attachment: fixed` on `body` with `background-attachment: scroll` on mobile viewports (`fixed` forced the mobile GPU to continuously invalidate and re-render full background tiles during scroll).
   - Overrode heavy `backdrop-filter: blur(...)` effects on repeated product cards & badges for mobile screens (`max-width: 768px`).
   - Added `-webkit-overflow-scrolling: touch` and `content-visibility: auto` on offscreen product sections to drastically reduce offscreen paint and achieve silky smooth 60/120fps scrolling.
+- **Full Delivery Partner Module & Live GPS Fleet Tracking (Sep 2026)**:
+  - **Data Model (Neon Postgres)**:
+    - Extended `public.user_role` enum with `'delivery_partner'`.
+    - Created `public.delivery_partner_profiles` (user_id UUID PK, phone, address, avatar_url, vehicle_type, vehicle_number, profile_completed, is_on_duty, created_at, updated_at).
+    - Created `public.delivery_locations` (user_id UUID PK, order_id TEXT, lat, lng, accuracy_m, updated_at) with index `idx_delivery_locations_order`.
+    - Created `public.delivery_attendance` (id UUID PK, user_id UUID, work_date DATE, check_in_at, check_out_at, status, UNIQUE(user_id, work_date)).
+    - Altered `public.orders` with `delivery_partner_id UUID REFERENCES users(id)`, `delivery_accepted_at TIMESTAMPTZ`, and `delivery_status TEXT DEFAULT 'unassigned'`.
+  - **Data Service & API Layers**:
+    - `src/lib/deliveryPartners.ts`: `adminCreateDeliveryPartner`, `fetchAllDeliveryPartners`, `getDeliveryPartnerById`, `completeDeliveryPartnerProfile`, `toggleDeliveryPartnerDuty`, `fetchDeliveryAttendance`.
+    - `src/lib/deliveryOrders.ts`: `fetchAvailableOrdersForPartners`, atomic conditional `acceptOrderForDelivery` (`WHERE delivery_status = 'unassigned'`), `fetchOrdersForPartner`, `markOrderPickedUp`, `markOrderDelivered`.
+    - `src/lib/deliveryLocation.ts` & `api/delivery-location.ts`: High-performance throttled location pushing (10-15s) and order-scoped location reads for retailers.
+  - **UI & Routing**:
+    - `src/pages/DeliveryPartnerDashboard.tsx`: Dedicated delivery partner app view with compulsory first-time profile completion, live on-duty toggle with continuous GPS `watchPosition`, incoming orders feed with race-condition handling, active delivery controls ("Mark Picked Up", "Mark Delivered", "View Map"), past delivery history, and retailer approval verification.
+    - `src/components/LiveDeliveryMap.tsx`: Interactive Leaflet map supporting both single order delivery tracking (with "Order is on the way / Arriving in N mins" banner, partner avatar, vehicle number, and instant phone calling) and Admin fleet view (all active on-duty partners with live pings).
+    - `src/components/OrderTrackingModal.tsx`: Embedded `<LiveDeliveryMap />` whenever an order has been accepted or picked up by a delivery partner, falling back to simulated pipeline for unassigned orders.
+    - `src/pages/AdminDashboard.tsx`: Added "Delivery Partners" navigation tab with KPI stats, new partner creation modal, detailed profile inspection, fleet map, and attendance log table.
+    - `src/pages/LoginPage.tsx` & `src/contexts/AuthContext.tsx`: Streamlined login experience supporting `delivery_partner` role with auto-routing in `App.tsx`.
