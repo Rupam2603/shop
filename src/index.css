@@ -5,11 +5,13 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
-html,
 body {
   overflow-x: hidden;
+  overflow-y: auto;
   -webkit-tap-highlight-color: transparent;
   min-height: 100%;
   min-height: 100dvh;
@@ -446,18 +448,14 @@ body {
     -webkit-backdrop-filter: none !important;
   }
 
-  /* Enhance touch scroll physics and avoid layout thrashing */
-  body, html {
+  /* Ensure body and html can freely scroll naturally on mobile */
+  html, body {
+    overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: none;
-  }
-
-  /* Lazy layout & paint offscreen product sections to keep 60/120fps mobile scroll */
-  section, .snap-start {
-    content-visibility: auto;
-    contain-intrinsic-size: auto 300px;
+    touch-action: pan-y pinch-zoom;
   }
 }
+
 
 
 
