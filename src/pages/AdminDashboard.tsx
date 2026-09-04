@@ -43,9 +43,12 @@ import {
   fetchAllDeliveryPartners,
   adminCreateDeliveryPartner,
   fetchDeliveryAttendance,
+  updateDeliveryPartnerWeeklyOff,
+  fetchAttendanceReport,
   DeliveryPartnerItem,
   DeliveryAttendanceRecord,
 } from "../lib/deliveryPartners";
+import { exportAttendanceReportToExcel } from "../lib/attendanceExcelExport";
 import { fetchOrdersForPartner } from "../lib/deliveryOrders";
 import { fetchAllOnDutyPartnerLocations, DeliveryLocationPing } from "../lib/deliveryLocation";
 import LiveDeliveryMap from "../components/LiveDeliveryMap";
@@ -3746,7 +3749,21 @@ function DeliveryPartnersTab() {
   const [attendance, setAttendance] = useState<DeliveryAttendanceRecord[]>([]);
   const [locations, setLocations] = useState<DeliveryLocationPing[]>([]);
   const [loading, setLoading] = useState(false);
-  const [subTab, setSubTab] = useState<"partners" | "attendance" | "map">("partners");
+  const [subTab, setSubTab] = useState<"partners" | "attendance" | "reports" | "map">("partners");
+
+  // Attendance Reports Sub-Tab State
+  const [reportRangeType, setReportRangeType] = useState<"weekly" | "monthly">("weekly");
+  const [reportWeekDate, setReportWeekDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [reportMonth, setReportMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [reportPartnerId, setReportPartnerId] = useState<string>("all");
+  const [downloadingReport, setDownloadingReport] = useState(false);
+  const [reportMsg, setReportMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Weekly Off Day Update State inside Inspect Modal
+  const [updatingWeeklyOff, setUpdatingWeeklyOff] = useState(false);
 
   // Add Partner Modal
   const [showAddModal, setShowAddModal] = useState(false);
@@ -3872,6 +3889,7 @@ function DeliveryPartnersTab() {
             { id: "partners", label: `Partners (${partners.length})` },
             { id: "map", label: `Live Fleet Map (${locations.length})` },
             { id: "attendance", label: "Attendance Logs" },
+            { id: "reports", label: "📊 Attendance Reports" },
           ].map((t) => (
             <button
               key={t.id}
@@ -4079,6 +4097,285 @@ function DeliveryPartnersTab() {
         </div>
       )}
 
+      {/* ── SUB-TAB 4: ATTENDANCE REPORTS (EXCEL EXPORT) ── */}
+      {subTab === "reports" && (() => {
+        // Calculate weekly start & end dates
+        let weekStartDate = "";
+        let weekEndDate = "";
+        let weekLabelText = "";
+        try {
+          const parts = reportWeekDate.split("-").map(Number);
+          const curr = new Date(parts[0], parts[1] - 1, parts[2]);
+          const day = curr.getDay(); // 0 is Sun, 1 is Mon...
+          const diffToMon = curr.getDate() - day + (day === 0 ? -6 : 1);
+          const monDate = new Date(parts[0], parts[1] - 1, diffToMon);
+          const sunDate = new Date(parts[0], parts[1] - 1, diffToMon + 6);
+          
+          const fmt = (d: Date) => {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, "0");
+            const dayNum = String(d.getDate()).padStart(2, "0");
+            return `${y}-${m}-${dayNum}`;
+          };
+          weekStartDate = fmt(monDate);
+          weekEndDate = fmt(sunDate);
+
+          const monLabel = monDate.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+          const sunLabel = sunDate.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+          weekLabelText = `${monLabel} – ${sunLabel}`;
+        } catch {
+          weekStartDate = reportWeekDate;
+          weekEndDate = reportWeekDate;
+          weekLabelText = reportWeekDate;
+        }
+
+        // Calculate monthly start & end dates
+        let monthStartDate = "";
+        let monthEndDate = "";
+        let monthLabelText = "";
+        try {
+          const [yr, mo] = reportMonth.split("-").map(Number);
+          monthStartDate = `${yr}-${String(mo).padStart(2, "0")}-01`;
+          const lastDay = new Date(yr, mo, 0).getDate();
+          monthEndDate = `${yr}-${String(mo).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+          const mDate = new Date(yr, mo - 1, 1);
+          monthLabelText = mDate.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+        } catch {
+          monthStartDate = `${reportMonth}-01`;
+          monthEndDate = `${reportMonth}-28`;
+          monthLabelText = reportMonth;
+        }
+
+        const activeStartDate = reportRangeType === "weekly" ? weekStartDate : monthStartDate;
+        const activeEndDate = reportRangeType === "weekly" ? weekEndDate : monthEndDate;
+        const activeRangeLabel = reportRangeType === "weekly" ? weekLabelText : monthLabelText;
+
+        const handleDownloadExcel = async () => {
+          setDownloadingReport(true);
+          setReportMsg(null);
+          try {
+            const rows = await fetchAttendanceReport({
+              startDate: activeStartDate,
+              endDate: activeEndDate,
+              partnerId: reportPartnerId === "all" ? undefined : reportPartnerId,
+            });
+
+            if (rows.length === 0) {
+              setReportMsg({ type: "error", text: "No attendance records found for this period." });
+              return;
+            }
+
+            exportAttendanceReportToExcel(rows, {
+              rangeLabel: activeRangeLabel,
+              rangeType: reportRangeType,
+            });
+
+            setReportMsg({
+              type: "success",
+              text: `Attendance report generated & downloaded successfully (${rows.length} records).`,
+            });
+          } catch (err: any) {
+            console.error("Report download failed:", err);
+            setReportMsg({ type: "error", text: err?.message || "Could not generate the report. Please try again." });
+          } finally {
+            setDownloadingReport(false);
+          }
+        };
+
+        const selectedPartnerName = reportPartnerId === "all" 
+          ? "All Delivery Partners" 
+          : partners.find((p) => p.id === reportPartnerId)?.name || "Selected Partner";
+
+        return (
+          <div className="flex flex-col gap-6">
+            {/* Header & Explainer Card */}
+            <div className="glass-admin-card rounded-3xl p-6 sm:p-7 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl">📥</span>
+                    <h3 className="font-['Manrope',sans-serif] font-black text-lg text-[#073b4c]">
+                      Attendance Report Export
+                    </h3>
+                  </div>
+                  <p className="text-xs text-[#657969] mt-1 max-w-2xl">
+                    Download detailed shift attendance as an Excel (<code className="font-mono text-[#006a39]">.xlsx</code>) spreadsheet.
+                    Rows include all calendar days per partner with check-in, check-out, and auto-excused <span className="font-bold text-emerald-800">Week Off</span> detection.
+                  </p>
+                </div>
+
+                <div className="inline-flex rounded-2xl bg-[#eef4ef] p-1 border border-[#dce7db] self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReportRangeType("weekly");
+                      setReportMsg(null);
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      reportRangeType === "weekly"
+                        ? "bg-[#006a39] text-white shadow-xs"
+                        : "text-[#073b4c] hover:text-[#006a39]"
+                    }`}
+                  >
+                    📅 Weekly Report
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReportRangeType("monthly");
+                      setReportMsg(null);
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      reportRangeType === "monthly"
+                        ? "bg-[#006a39] text-white shadow-xs"
+                        : "text-[#073b4c] hover:text-[#006a39]"
+                    }`}
+                  >
+                    🗓️ Monthly Report
+                  </button>
+                </div>
+              </div>
+
+              {/* Form Controls Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6 pt-6 border-t border-[#e4ede2]">
+                {/* 1. Date/Range Selector */}
+                <div>
+                  <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1.5">
+                    {reportRangeType === "weekly" ? "Select Week (Pick Any Day)" : "Select Month & Year"}
+                  </label>
+                  {reportRangeType === "weekly" ? (
+                    <input
+                      type="date"
+                      value={reportWeekDate}
+                      onChange={(e) => {
+                        setReportWeekDate(e.target.value);
+                        setReportMsg(null);
+                      }}
+                      className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                    />
+                  ) : (
+                    <input
+                      type="month"
+                      value={reportMonth}
+                      onChange={(e) => {
+                        setReportMonth(e.target.value);
+                        setReportMsg(null);
+                      }}
+                      className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                    />
+                  )}
+                  <p className="text-[11px] text-[#657969] mt-1">
+                    Resolved Range: <span className="font-bold text-[#073b4c]">{activeRangeLabel}</span>
+                  </p>
+                </div>
+
+                {/* 2. Partner Filter */}
+                <div>
+                  <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1.5">
+                    Target Delivery Partner
+                  </label>
+                  <select
+                    value={reportPartnerId}
+                    onChange={(e) => {
+                      setReportPartnerId(e.target.value);
+                      setReportMsg(null);
+                    }}
+                    className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                  >
+                    <option value="all">👥 All Delivery Partners ({partners.length})</option>
+                    {partners.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} {p.phone ? `(${p.phone})` : ""} {p.weeklyOffDay ? `[Off: ${p.weeklyOffDay}]` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-[#657969] mt-1">
+                    Selected Scope: <span className="font-bold text-[#073b4c]">{selectedPartnerName}</span>
+                  </p>
+                </div>
+
+                {/* 3. Download Action */}
+                <div className="flex flex-col justify-end">
+                  <button
+                    type="button"
+                    onClick={handleDownloadExcel}
+                    disabled={downloadingReport}
+                    className="w-full py-2.5 px-5 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] text-white font-bold text-sm shadow-md shadow-emerald-950/20 hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {downloadingReport ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>Compiling Sheet...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>📊</span>
+                        <span>Download Excel (.xlsx)</span>
+                      </>
+                    )}
+                  </button>
+                  <p className="text-[10px] text-center text-[#657969] mt-1">
+                    Contains 8 columns: Sl. No., Name, Mobile, Date, In/Out, Status, Week Off
+                  </p>
+                </div>
+              </div>
+
+              {/* Status/Error Messages */}
+              {reportMsg && (
+                <div
+                  className={`mt-4 p-3.5 rounded-2xl text-xs font-bold flex items-center gap-2.5 ${
+                    reportMsg.type === "success"
+                      ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                      : "bg-rose-50 border border-rose-200 text-rose-800"
+                  }`}
+                >
+                  <span>{reportMsg.type === "success" ? "✅" : "⚠️"}</span>
+                  <span>{reportMsg.text}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Excel Columns & Rules Specification Preview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="glass-admin-card rounded-3xl p-5 shadow-xs border border-[#e4ede2]">
+                <h4 className="font-['Manrope',sans-serif] font-black text-xs text-[#073b4c] uppercase tracking-wider flex items-center gap-2 mb-3">
+                  <span>📑</span>
+                  <span>Excel Sheet Format & Columns</span>
+                </h4>
+                <div className="space-y-1.5 text-xs text-[#657969]">
+                  <p><b className="text-[#073b4c]">1. Sl. No.:</b> 1, 2, 3... sequence per export row.</p>
+                  <p><b className="text-[#073b4c]">2. Name:</b> Delivery partner's registered full name.</p>
+                  <p><b className="text-[#073b4c]">3. Mobile Number:</b> Partner mobile number or "—".</p>
+                  <p><b className="text-[#073b4c]">4. Date:</b> Calendar day in YYYY-MM-DD format.</p>
+                  <p><b className="text-[#073b4c]">5. Check In:</b> Formatted local check-in time (e.g. 09:15 AM) or "—".</p>
+                  <p><b className="text-[#073b4c]">6. Check Out:</b> Formatted local check-out time or "—".</p>
+                  <p><b className="text-[#073b4c]">7. Status:</b> <span className="text-emerald-700 font-bold">Present</span>, <span className="text-rose-700 font-bold">Absent</span>, or <span className="text-sky-700 font-bold">Week Off</span>.</p>
+                  <p><b className="text-[#073b4c]">8. Week Off:</b> Assigned weekly off day (e.g. "Sunday") or "Not Set".</p>
+                </div>
+              </div>
+
+              <div className="glass-admin-card rounded-3xl p-5 shadow-xs border border-[#e4ede2]">
+                <h4 className="font-['Manrope',sans-serif] font-black text-xs text-[#073b4c] uppercase tracking-wider flex items-center gap-2 mb-3">
+                  <span>💡</span>
+                  <span>HR & Attendance Rules</span>
+                </h4>
+                <div className="space-y-2 text-xs text-[#657969]">
+                  <p>
+                    <b className="text-[#073b4c]">Calendar Integrity:</b> Every single calendar day in the selected week or month is guaranteed to appear for every partner, even if no shift was worked.
+                  </p>
+                  <p>
+                    <b className="text-[#073b4c]">Weekly Off Exemption:</b> Missing shifts on a partner's assigned weekly off day are automatically marked <span className="bg-sky-50 text-sky-800 font-bold px-1.5 py-0.5 rounded-md">Week Off</span> instead of Absent.
+                  </p>
+                  <p>
+                    <b className="text-[#073b4c]">Assigning Off Days:</b> You can set each rider's weekly off day anytime by clicking <em>"View Full Details & Orders"</em> on their card in the Partners tab.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── MODAL 1: ADD DELIVERY PARTNER ── */}
       {showAddModal && (
         <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-in fade-in">
@@ -4248,6 +4545,40 @@ function DeliveryPartnersTab() {
                   <span className="font-bold text-[#073b4c]">
                     {new Date(inspectPartner.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                   </span>
+                </div>
+              </div>
+
+              {/* Weekly Off Day Setting */}
+              <div className="bg-[#f8fafb] rounded-2xl p-4 border border-[#e4ede2] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span className="text-xs font-black text-[#073b4c] block">Assigned Weekly Off Day</span>
+                  <p className="text-[11px] text-[#657969] mt-0.5">Excuses partner from Absent marking on this day in attendance reports.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={inspectPartner.weeklyOffDay || "None"}
+                    onChange={async (e) => {
+                      const val = e.target.value === "None" ? null : e.target.value;
+                      setUpdatingWeeklyOff(true);
+                      try {
+                        const res = await updateDeliveryPartnerWeeklyOff(inspectPartner.id, val);
+                        if (res.success) {
+                          setInspectPartner((prev) => prev ? { ...prev, weeklyOffDay: val } : prev);
+                          setPartners((prev) => prev.map((p) => p.id === inspectPartner.id ? { ...p, weeklyOffDay: val } : p));
+                        }
+                      } finally {
+                        setUpdatingWeeklyOff(false);
+                      }
+                    }}
+                    disabled={updatingWeeklyOff}
+                    className="bg-white border border-[#dce7db] rounded-xl px-3 py-1.5 text-xs font-bold text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                  >
+                    <option value="None">None (Works 7 Days)</option>
+                    {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                  {updatingWeeklyOff && <span className="text-[10px] text-emerald-700 font-bold animate-pulse">Saving…</span>}
                 </div>
               </div>
 

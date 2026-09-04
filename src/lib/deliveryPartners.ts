@@ -8,6 +8,7 @@ export interface DeliveryPartnerProfile {
   avatarUrl: string | null;
   vehicleType: string | null;
   vehicleNumber: string | null;
+  weeklyOffDay?: string | null;
   profileCompleted: boolean;
   isOnDuty: boolean;
   createdAt: string;
@@ -25,6 +26,7 @@ export interface DeliveryPartnerItem {
   avatarUrl: string | null;
   vehicleType: string | null;
   vehicleNumber: string | null;
+  weeklyOffDay?: string | null;
   profileCompleted: boolean;
   isOnDuty: boolean;
   createdAt: string;
@@ -110,10 +112,10 @@ export async function fetchAllDeliveryPartners(): Promise<DeliveryPartnerItem[]>
         u.status,
         u.created_at,
         p.phone,
-        p.address,
         p.avatar_url,
         p.vehicle_type,
         p.vehicle_number,
+        p.weekly_off_day,
         COALESCE(p.profile_completed, false) as profile_completed,
         COALESCE(p.is_on_duty, false) as is_on_duty,
         att.status as today_attendance,
@@ -139,6 +141,7 @@ export async function fetchAllDeliveryPartners(): Promise<DeliveryPartnerItem[]>
       avatarUrl: r.avatar_url,
       vehicleType: r.vehicle_type,
       vehicleNumber: r.vehicle_number,
+      weeklyOffDay: r.weekly_off_day || null,
       profileCompleted: Boolean(r.profile_completed),
       isOnDuty: Boolean(r.is_on_duty),
       createdAt: r.created_at,
@@ -174,6 +177,7 @@ export async function getDeliveryPartnerById(userId: string): Promise<DeliveryPa
         p.avatar_url,
         p.vehicle_type,
         p.vehicle_number,
+        p.weekly_off_day,
         COALESCE(p.profile_completed, false) as profile_completed,
         COALESCE(p.is_on_duty, false) as is_on_duty,
         att.status as today_attendance,
@@ -202,6 +206,7 @@ export async function getDeliveryPartnerById(userId: string): Promise<DeliveryPa
       avatarUrl: r.avatar_url,
       vehicleType: r.vehicle_type,
       vehicleNumber: r.vehicle_number,
+      weeklyOffDay: r.weekly_off_day || null,
       profileCompleted: Boolean(r.profile_completed),
       isOnDuty: Boolean(r.is_on_duty),
       createdAt: r.created_at,
@@ -366,6 +371,148 @@ export async function fetchDeliveryAttendance(filters?: {
     }));
   } catch (err) {
     console.error("Error fetching delivery attendance:", err);
+    return [];
+  }
+}
+
+/**
+ * Admin updates the weekly off day for a delivery partner
+ */
+export async function updateDeliveryPartnerWeeklyOff(
+  userId: string,
+  weeklyOffDay: string | null
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await sql`
+      INSERT INTO public.delivery_partner_profiles (user_id, weekly_off_day, updated_at)
+      VALUES (${userId}, ${weeklyOffDay}, NOW())
+      ON CONFLICT (user_id) DO UPDATE SET
+        weekly_off_day = ${weeklyOffDay},
+        updated_at = NOW()
+    `;
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error updating weekly off day:", err);
+    return { success: false, error: err?.message || "Failed to update weekly off day." };
+  }
+}
+
+export interface AttendanceReportRow {
+  partnerId: string;
+  name: string;
+  mobile: string;
+  date: string;           // YYYY-MM-DD
+  checkInTime: string | null;  // formatted local time, or null
+  checkOutTime: string | null;
+  status: "Present" | "Absent" | "Week Off";
+  weeklyOffDay: string | null; // e.g. "Sunday" or null
+}
+
+const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+/**
+ * Fetch comprehensive attendance report for weekly/monthly export.
+ * Generates every calendar day in the range so missing days show as Absent (or Week Off).
+ */
+export async function fetchAttendanceReport(opts: {
+  startDate: string; // YYYY-MM-DD
+  endDate: string;   // YYYY-MM-DD
+  partnerId?: string; // omit or "all"
+}): Promise<AttendanceReportRow[]> {
+  try {
+    const isSinglePartner = opts.partnerId && opts.partnerId !== "all";
+
+    let rows: any[];
+    if (isSinglePartner) {
+      rows = await sql`
+        SELECT
+          u.id AS partner_id,
+          u.name AS name,
+          COALESCE(dpp.phone, '') AS mobile,
+          d.work_date::text AS date,
+          a.check_in_at,
+          a.check_out_at,
+          dpp.weekly_off_day
+        FROM generate_series(${opts.startDate}::date, ${opts.endDate}::date, interval '1 day') AS d(work_date)
+        CROSS JOIN public.users u
+        LEFT JOIN public.delivery_partner_profiles dpp ON dpp.user_id = u.id
+        LEFT JOIN public.delivery_attendance a
+          ON a.user_id = u.id AND a.work_date = d.work_date::date
+        WHERE u.role = 'delivery_partner'
+          AND u.deleted_at IS NULL
+          AND u.id = ${opts.partnerId}::uuid
+        ORDER BY u.name, d.work_date;
+      `;
+    } else {
+      rows = await sql`
+        SELECT
+          u.id AS partner_id,
+          u.name AS name,
+          COALESCE(dpp.phone, '') AS mobile,
+          d.work_date::text AS date,
+          a.check_in_at,
+          a.check_out_at,
+          dpp.weekly_off_day
+        FROM generate_series(${opts.startDate}::date, ${opts.endDate}::date, interval '1 day') AS d(work_date)
+        CROSS JOIN public.users u
+        LEFT JOIN public.delivery_partner_profiles dpp ON dpp.user_id = u.id
+        LEFT JOIN public.delivery_attendance a
+          ON a.user_id = u.id AND a.work_date = d.work_date::date
+        WHERE u.role = 'delivery_partner'
+          AND u.deleted_at IS NULL
+        ORDER BY u.name, d.work_date;
+      `;
+    }
+
+    return rows.map((row: any) => {
+      // Determine day name in local time
+      const dateParts = row.date.split("-");
+      const year = parseInt(dateParts[0], 10);
+      const month = parseInt(dateParts[1], 10) - 1;
+      const day = parseInt(dateParts[2], 10);
+      const dateObj = new Date(year, month, day);
+      const dayOfWeekName = WEEKDAY_NAMES[dateObj.getDay()];
+
+      const isWeekOff = Boolean(
+        row.weekly_off_day &&
+        row.weekly_off_day.toLowerCase() === dayOfWeekName.toLowerCase()
+      );
+
+      let status: "Present" | "Absent" | "Week Off";
+      if (row.check_in_at) {
+        status = "Present";
+      } else if (isWeekOff) {
+        status = "Week Off";
+      } else {
+        status = "Absent";
+      }
+
+      const formatTime = (iso?: string | null) => {
+        if (!iso) return null;
+        try {
+          return new Date(iso).toLocaleTimeString("en-IN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          });
+        } catch {
+          return null;
+        }
+      };
+
+      return {
+        partnerId: row.partner_id,
+        name: row.name || "Delivery Partner",
+        mobile: row.mobile || "",
+        date: row.date,
+        checkInTime: formatTime(row.check_in_at),
+        checkOutTime: formatTime(row.check_out_at),
+        status,
+        weeklyOffDay: row.weekly_off_day || null,
+      };
+    });
+  } catch (err) {
+    console.error("Error fetching attendance report:", err);
     return [];
   }
 }

@@ -184,3 +184,19 @@ The application reads configuration through `import.meta.env` (defined in `.env`
     - `src/components/OrderTrackingModal.tsx`: Embedded `<LiveDeliveryMap />` whenever an order has been accepted or picked up by a delivery partner, falling back to simulated pipeline for unassigned orders.
     - `src/pages/AdminDashboard.tsx`: Added "Delivery Partners" navigation tab with KPI stats, new partner creation modal, detailed profile inspection, fleet map, and attendance log table.
     - `src/pages/LoginPage.tsx` & `src/contexts/AuthContext.tsx`: Unified Admin and Delivery Partner entry point under a single "Admin / Delivery Partner" tab (`expectedRole="staff"`). Actual account role is resolved strictly from database on authentication, auto-routing to `AdminDashboard` or `DeliveryPartnerDashboard` while preserving strict isolation from Customer and Retailer roles. Remember-role supports `delivery_partner` sessions.
+- **Delivery Partner Attendance Excel Export & Weekly Off Day (Sep 2026)**:
+  - **Data Model**: Added `weekly_off_day TEXT` column to `public.delivery_partner_profiles` (stores e.g. "Sunday", "Monday", ..., or null if no fixed off day).
+  - **Admin Control**: Added weekday dropdown ("None (Works 7 Days)", "Sunday" through "Saturday") in `AdminDashboard.tsx` under the partner inspection details modal, saving immediately to Neon Postgres via `updateDeliveryPartnerWeeklyOff`.
+  - **Full-Range Attendance Query**: Implemented `fetchAttendanceReport({ startDate, endDate, partnerId })` in `src/lib/deliveryPartners.ts`. Uses `generate_series(startDate::date, endDate::date, interval '1 day')` to generate every single calendar day in the requested week/month across partners (including days with zero attendance activity).
+  - **Smart Status Resolution**:
+    - Evaluates calendar day's weekday name in local time.
+    - If partner checked in (`check_in_at`), status is `Present`.
+    - If partner has no check-in and the day matches their assigned `weekly_off_day`, status is automatically excused as `Week Off`.
+    - Otherwise, marked `Absent`.
+    - Historical active partners are retained across ranges; partners with no assigned off-day display `Not Set` in the `Week Off` column.
+  - **Client-Side Excel Generator**: Implemented `src/lib/attendanceExcelExport.ts` using SheetJS (`xlsx`). Generates formatted `.xlsx` files with exact columns: `Sl. No.`, `Name`, `Mobile Number`, `Date`, `Check In`, `Check Out`, `Status`, `Week Off`, with human-readable local times (e.g. `09:14 AM` / `—`) and custom column widths (`worksheet["!cols"]`).
+  - **UI Integration**: Added "📊 Attendance Reports" sub-tab in `DeliveryPartnersTab` (`AdminDashboard.tsx`) with:
+    - Range type toggle: `Weekly Report` vs `Monthly Report`.
+    - Week picker (pick any day to derive Monday–Sunday with resolved human date text) and Month/Year picker.
+    - Scope filter: "All Delivery Partners" or specific partner selection.
+    - Download Excel button with progress spinner and feedback alerts.
