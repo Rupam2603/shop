@@ -160,14 +160,14 @@ export default function CheckoutModal({
     }
 
     const { data: order, error: orderErr } = await placeOrder({
-      customerName: shippingAddress.name || user.name || appUser?.profile?.full_name || "Customer",
+      customerName: shippingAddress.name || user.name || appUser?.profile?.full_name || "Retail Partner",
       customerPhone: shippingAddress.phone || user.phone || appUser?.profile?.phone || "+91 9000000000",
       shippingAddress,
       items,
       totalAmount: finalTotal,
       paymentMethod,
       userId: appUser?.authUser?.id || appUser?.profile?.id,
-      userRole: isRetailer ? "retailer" : "customer",
+      userRole: "retailer",
       shopName: effectiveShopName || null,
       idempotencyKey: orderRequestKey.current || undefined,
     });

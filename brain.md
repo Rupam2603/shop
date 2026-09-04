@@ -157,7 +157,9 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Created `src/lib/productSearch.ts`: Multi-pass tokenization and relevance scoring algorithm. Matches exact and partial substrings in name and brand, splits into words for word-order invariance, and emphasizes similar products from the same brand, matching name tokens, and same categories when exact matches are few or zero.
   - Created `src/pages/SearchPage.tsx`: Dedicated full-featured Search Results Page with real-time query updates, exact vs similar match breakdown badges, smart fallback banner when showing similar products, brand pills, in-stock filter, sort dropdown (Relevance, Price, Discount), customer vs retailer dynamic pricing, and cart quantity steppers.
   - Upgraded global search in `src/components/NavBar.tsx`: Form submission on Enter or search icon click immediately routes to `/search?q=...` (`#search?q=...`), with a live smart dropdown showing top items, brand matches, and a "View all results" button.
-  - Updated `src/lib/navigation.ts` and `src/App.tsx`: Added `"search"` to `Page` route state, supporting both browser query parameters (`/search?q=...`) and hash routes (`#search?q=...`) with seamless browser history popstate handling.
-
-
-
+- **Wholesale Pharmacy Retailer & Admin Storefront Transition (Active)**:
+  - Preserved all backend endpoints, Neon Postgres schemas, order structures, and data layer models (`public.products`, `public.orders`, `api/orders.ts`, etc.) without changes.
+  - Eliminated retail "Customer" role from user registration and login workflows (`LoginPage.tsx`). Registration now defaults strictly to verified Pharmacy Retailers requiring Shop / Pharmacy Name and GST/Drug License numbers.
+  - Converted storefront UI across all pages (`MedicinesPage.tsx`, `HomePage.tsx`, `CategoryPage.tsx`, `SearchPage.tsx`, `NavBar.tsx`, `ProductModal.tsx`) to display wholesale B2B retailer rates (`p.retailer_price || p.customer_price`) with MRP strikethroughs, retailer margin savings, and B2B bulk minimum order policies.
+  - Aligned cart and checkout flows (`CartDrawer.tsx`, `CheckoutModal.tsx`) to default to Retailer B2B order routing (`userRole: "retailer"`, B2B wholesale freight calculations).
+  - Streamlined Admin Directory (`AdminDashboard.tsx`) filter tabs and metrics to focus on Retailers and Admins.

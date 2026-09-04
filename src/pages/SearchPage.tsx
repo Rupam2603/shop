@@ -95,17 +95,9 @@ export default function SearchPage({
 
     const sorted = [...list];
     if (sortBy === "price-asc") {
-      sorted.sort((a, b) => {
-        const priceA = isRetailer ? a.product.retailer_price : a.product.customer_price;
-        const priceB = isRetailer ? b.product.retailer_price : b.product.customer_price;
-        return priceA - priceB;
-      });
+      sorted.sort((a, b) => (a.product.retailer_price || a.product.customer_price) - (b.product.retailer_price || b.product.customer_price));
     } else if (sortBy === "price-desc") {
-      sorted.sort((a, b) => {
-        const priceA = isRetailer ? a.product.retailer_price : a.product.customer_price;
-        const priceB = isRetailer ? b.product.retailer_price : b.product.customer_price;
-        return priceB - priceA;
-      });
+      sorted.sort((a, b) => (b.product.retailer_price || b.product.customer_price) - (a.product.retailer_price || a.product.customer_price));
     } else if (sortBy === "discount") {
       sorted.sort((a, b) => b.product.discount_percent - a.product.discount_percent);
     }
@@ -453,32 +445,26 @@ export default function SearchPage({
 
                     {/* Price & Action Row */}
                     <div className="mt-auto pt-2.5 border-t border-[#f0f5f1]">
-                      {isRetailer ? (
-                        <div className="flex flex-col gap-0.5 mb-2">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-['Manrope',sans-serif] font-black text-sm text-[#006a39]">
-                              ₹{Math.round(p.retailer_price)}
-                            </span>
-                            <span className="text-[10px] text-[#728575] line-through">
-                              ₹{Math.round(p.mrp)}
-                            </span>
-                          </div>
-                          <span className="text-[9px] font-bold text-emerald-700">
-                            Wholesale Margin: ₹{Math.round(p.mrp - p.retailer_price)}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5 mb-2">
+                      <div className="flex flex-col gap-0.5 mb-2">
+                        <div className="flex items-center gap-1.5">
                           <span className="font-['Manrope',sans-serif] font-black text-sm text-[#006a39]">
-                            ₹{Math.round(p.customer_price)}
+                            ₹{Math.round(p.retailer_price || p.customer_price)}
                           </span>
-                          {p.mrp > p.customer_price && (
+                          {p.mrp > (p.retailer_price || p.customer_price) && (
                             <span className="text-[10px] text-[#728575] line-through">
                               ₹{Math.round(p.mrp)}
                             </span>
                           )}
+                          <span className="text-[8px] bg-sky-100 text-sky-800 font-extrabold px-1 rounded uppercase">
+                            B2B
+                          </span>
                         </div>
-                      )}
+                        {p.mrp > (p.retailer_price || p.customer_price) && (
+                          <span className="text-[9px] font-bold text-emerald-700">
+                            Wholesale Margin: ₹{Math.round(p.mrp - (p.retailer_price || p.customer_price))}
+                          </span>
+                        )}
+                      </div>
 
                       {/* Add to Cart Button / Quantity Stepper */}
                       {isOutOfStock ? (

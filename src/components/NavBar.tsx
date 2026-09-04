@@ -213,11 +213,9 @@ export default function NavBar({
       dbId: p.id,
       name: p.name,
       sub: p.details || p.subtitle || p.brand,
-      price: isRetailer
-        ? `₹${Math.round(p.retailer_price)}`
-        : `₹${Math.round(p.customer_price)}`,
-      orig: p.mrp > p.customer_price ? `₹${Math.round(p.mrp)}` : "",
-      disc: p.discount_percent > 0 ? `${p.discount_percent}%` : "",
+      price: `₹${Math.round(p.retailer_price || p.customer_price)}`,
+      orig: p.mrp > (p.retailer_price || p.customer_price) ? `₹${Math.round(p.mrp)}` : "",
+      disc: p.retailer_discount_percent > 0 ? `${p.retailer_discount_percent}%` : (p.discount_percent > 0 ? `${p.discount_percent}%` : ""),
       cat: p.category_name,
       brand: p.brand,
       img: p.image_url,
@@ -383,9 +381,9 @@ export default function NavBar({
                           </div>
                           <div className="text-right shrink-0">
                             <span className="font-bold text-xs text-[#073b4c] block">
-                              ₹{isRetailer ? Math.round(prod.retailer_price) : Math.round(prod.customer_price)}
+                              ₹{Math.round(prod.retailer_price || prod.customer_price)}
                             </span>
-                            {prod.mrp > prod.customer_price && (
+                            {prod.mrp > (prod.retailer_price || prod.customer_price) && (
                               <span className="text-[9px] text-[#8aa08e] line-through">
                                 ₹{Math.round(prod.mrp)}
                               </span>
@@ -570,7 +568,7 @@ export default function NavBar({
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="font-extrabold text-[#073b4c]">₹{Math.round(isRetailer ? p.retailer_price : p.customer_price)}</p>
+                        <p className="font-extrabold text-[#073b4c]">₹{Math.round(p.retailer_price || p.customer_price)}</p>
                         <span className={`text-[8px] font-bold px-1 py-0.2 rounded ${
                           (p.stock ?? 0) <= 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-800"
                         }`}>

@@ -420,9 +420,9 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
         products: prodsForCat.slice(0, 8).map((p) => ({
           name: p.name,
           sub: p.details || p.subtitle || p.brand,
-          price: isRetailer ? `₹${Math.round(p.retailer_price)}` : `₹${Math.round(p.customer_price)}`,
-          orig: p.mrp > p.customer_price ? `₹${Math.round(p.mrp)}` : "",
-          disc: p.discount_percent > 0 ? `${p.discount_percent}%` : "",
+          price: `₹${Math.round(p.retailer_price || p.customer_price)}`,
+          orig: p.mrp > (p.retailer_price || p.customer_price) ? `₹${Math.round(p.mrp)}` : "",
+          disc: p.retailer_discount_percent > 0 ? `${p.retailer_discount_percent}%` : (p.discount_percent > 0 ? `${p.discount_percent}%` : ""),
           img: p.image_url,
           brand: p.brand,
           cat: p.category_name,

@@ -21,7 +21,8 @@ export default function CartDrawer({ onCheckout, onBrowse }: CartDrawerProps) {
   } = useCart();
 
   const { appUser } = useAuth();
-  const isRetailer = appUser?.profile?.role === "retailer";
+  // Dedicated B2B Wholesale / Pharmacy Retailer platform
+  const isRetailer = true;
   const [dbProducts, setDbProducts] = useState<DbProduct[]>([]);
 
   // Listen for Escape key to close cart

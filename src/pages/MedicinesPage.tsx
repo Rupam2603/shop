@@ -156,10 +156,10 @@ export default function MedicinesPage({
       dbId: p.id,
       name: p.name,
       sub: p.details || p.subtitle || "",
-      price: `₹${Math.round(p.customer_price)}`,
-      retailerPrice: `₹${Math.round(p.retailer_price)}`,
-      orig: p.mrp > p.customer_price ? `₹${Math.round(p.mrp)}` : "",
-      disc: p.discount_percent > 0 ? `${p.discount_percent}%` : "",
+      price: `₹${Math.round(p.retailer_price || p.customer_price)}`,
+      retailerPrice: `₹${Math.round(p.retailer_price || p.customer_price)}`,
+      orig: p.mrp > (p.retailer_price || p.customer_price) ? `₹${Math.round(p.mrp)}` : "",
+      disc: p.retailer_discount_percent > 0 ? `${p.retailer_discount_percent}%` : (p.discount_percent > 0 ? `${p.discount_percent}%` : ""),
       cat: p.category_name,
       brand: p.brand,
       img: p.image_url,
@@ -465,33 +465,22 @@ export default function MedicinesPage({
                           </span>
                         )}
                         <div className="mt-auto pt-2.5 border-t border-[#f0f5f1]">
-                          {isRetailer ? (
-                            <div className="flex flex-col gap-0.5">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-['Manrope',sans-serif] font-black text-[#0369a1] text-sm sm:text-base">
-                                  {retailerPrice(p.price)}
-                                </span>
-                                <span className="text-[9px] bg-sky-100/90 text-sky-800 border border-sky-200 px-1.5 py-0.2 rounded-full font-black uppercase">
-                                  Retailer B2B
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className="text-[#8aa08e] text-[9px] font-semibold">Customer: </span>
-                                <span className="text-[#8aa08e] text-[10px] line-through font-semibold">{p.price}</span>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="font-['Manrope',sans-serif] font-black text-[#073b4c] text-sm sm:text-base">
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-['Manrope',sans-serif] font-black text-[#0369a1] text-sm sm:text-base">
                                 {p.price}
                               </span>
-                              {p.orig && (
-                                <span className="text-[#8aa08e] text-[10px] line-through font-semibold">
-                                  MRP {p.orig}
-                                </span>
-                              )}
+                              <span className="text-[9px] bg-sky-100/90 text-sky-800 border border-sky-200 px-1.5 py-0.2 rounded-full font-black uppercase">
+                                Wholesale B2B
+                              </span>
                             </div>
-                          )}
+                            {p.orig && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-[#8aa08e] text-[9px] font-semibold">MRP: </span>
+                                <span className="text-[#8aa08e] text-[10px] line-through font-semibold">{p.orig}</span>
+                              </div>
+                            )}
+                          </div>
                           <div className="flex items-center justify-between text-[9px] mt-1.5">
                             <span className="text-[#8aa08e] font-mono">HSN: {HSN_BY_CAT[p.cat] ?? "—"}</span>
                             {isOutOfStock ? (

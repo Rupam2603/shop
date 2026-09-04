@@ -12,13 +12,7 @@ type RoleCfg = {
   gradient: string;
 };
 
-const ROLES: Record<UserRole, RoleCfg> = {
-  customer: {
-    label: "Customer",
-    badge: "Personal",
-    accent: "#006a39",
-    gradient: "linear-gradient(135deg, #006a39 0%, #047857 100%)",
-  },
+const ROLES: Record<string, RoleCfg> = {
   retailer: {
     label: "Retailer",
     badge: "B2B Wholesale",
@@ -127,7 +121,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
   const { signIn, signUp, resetPassword, pendingApprovalInfo, clearPendingApproval } = useAuth();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
-  const [selectedRole, setSelectedRole] = useState<UserRole>("customer");
+  const [selectedRole, setSelectedRole] = useState<UserRole>("retailer");
 
   // Email / password state
   const [email, setEmail] = useState("");
@@ -147,7 +141,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
       if (savedEmail) {
         setEmail(savedEmail);
         setRememberMe(true);
-        if (savedRole && (savedRole === "admin" || savedRole === "retailer" || savedRole === "customer")) {
+        if (savedRole && (savedRole === "admin" || savedRole === "retailer")) {
           setSelectedRole(savedRole);
         }
       }
@@ -223,7 +217,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
   const switchMode = (m: "login" | "signup") => {
     setMode(m);
     resetForm();
-    if (m === "signup" && selectedRole === "admin") setSelectedRole("customer");
+    if (m === "signup") setSelectedRole("retailer");
   };
 
   // Login handler
@@ -264,25 +258,22 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
 
     if (!signupName.trim()) { setError("Please enter your full name."); return; }
     if (!/\S+@\S+\.\S+/.test(email)) { setError("Please enter a valid email address."); return; }
-    if (selectedRole === "retailer" && !signupShop.trim()) { setError("Please enter your shop or pharmacy name."); return; }
+    if (!signupShop.trim()) { setError("Please enter your shop or pharmacy name."); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     if (password !== signupConfirm) { setError("Passwords do not match."); return; }
 
-    const safeRole: "customer" | "retailer" = selectedRole === "retailer" ? "retailer" : "customer";
     setLoading(true);
 
-    if (safeRole === "retailer") {
-      try {
-        await registerOrUpdateRetailer({
-          fullName: signupName.trim(),
-          email: email.trim(),
-          phone: signupPhone || null,
-          shopName: signupShop.trim() || `${signupName.trim()}'s Store`,
-          approvalStatus: "pending",
-        });
-      } catch (regErr) {
-        console.warn("Notice saving retailer approval request:", regErr);
-      }
+    try {
+      await registerOrUpdateRetailer({
+        fullName: signupName.trim(),
+        email: email.trim(),
+        phone: signupPhone || null,
+        shopName: signupShop.trim() || `${signupName.trim()}'s Store`,
+        approvalStatus: "pending",
+      });
+    } catch (regErr) {
+      console.warn("Notice saving retailer approval request:", regErr);
     }
 
     const { error: authError, emailConfirmationRequired } = await signUp({
@@ -290,8 +281,8 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
       password,
       fullName: signupName.trim(),
       phone: signupPhone || undefined,
-      shopName: selectedRole === "retailer" ? signupShop.trim() : undefined,
-      role: safeRole,
+      shopName: signupShop.trim(),
+      role: "retailer",
     });
     setLoading(false);
 
@@ -300,16 +291,12 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
     } else if (emailConfirmationRequired) {
       setSuccess("Account registered! Please check your email inbox to confirm your address.");
     } else {
-      setSuccess(
-        selectedRole === "retailer"
-          ? "Retailer application submitted! Access will activate once verified by our executive admin."
-          : "Account created successfully! Logging you in..."
-      );
+      setSuccess("Retailer application submitted! Access will activate once verified by our executive admin.");
     }
   };
 
-  const cfg = ROLES[selectedRole];
-  const roleList: UserRole[] = mode === "signup" ? ["customer", "retailer"] : ["customer", "retailer", "admin"];
+  const cfg = ROLES[selectedRole] || ROLES["retailer"];
+  const roleList: UserRole[] = mode === "signup" ? ["retailer"] : ["retailer", "admin"];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f2f8f3] via-[#f9faf9] to-[#ebf5ed] flex flex-col justify-center items-center p-4 sm:p-6 text-[#073b4c]">
@@ -380,10 +367,10 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
             <span className="text-emerald-800 font-extrabold">{cfg.label}</span>
           </div>
 
-          <div className={`grid gap-1.5 p-1 rounded-2xl bg-[#f0f5f2] border border-[#dce7db] ${roleList.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
+          <div className={`grid gap-1.5 p-1 rounded-2xl bg-[#f0f5f2] border border-[#dce7db] ${roleList.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
             {roleList.map((r) => {
               const active = selectedRole === r;
-              const roleInfo = ROLES[r];
+              const roleInfo = ROLES[r] || ROLES["retailer"];
               return (
                 <button
                   key={r}
@@ -396,7 +383,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                   }`}
                 >
                   <span className="text-sm">
-                    {r === "customer" ? "👤" : r === "retailer" ? "🏪" : "🛡️"}
+                    {r === "retailer" ? "🏪" : "🛡️"}
                   </span>
                   <span>{roleInfo.label}</span>
                 </button>
@@ -597,27 +584,25 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
               </div>
             </div>
 
-            {/* Shop Name (if Retailer) */}
-            {selectedRole === "retailer" && (
-              <div>
-                <label className="text-[11px] font-bold text-[#073b4c] block mb-1">
-                  Shop / Pharmacy Name *
-                </label>
-                <div className="relative">
-                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8ea292] pointer-events-none">
-                    <BuildingIcon />
-                  </div>
-                  <input
-                    type="text"
-                    value={signupShop}
-                    onChange={(e) => setSignupShop(e.target.value)}
-                    placeholder="e.g. Apollo Chemist, LifeCare Pharmacy"
-                    required
-                    className="w-full bg-[#fbfdfb] border border-[#d6e4d8] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-[#073b4c] placeholder:text-[#9bb09f] focus:outline-none focus:border-[#006a39] focus:ring-2 focus:ring-emerald-500/20 transition-all"
-                  />
+            {/* Shop / Pharmacy Name */}
+            <div>
+              <label className="text-[11px] font-bold text-[#073b4c] block mb-1">
+                Shop / Pharmacy Name *
+              </label>
+              <div className="relative">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8ea292] pointer-events-none">
+                  <BuildingIcon />
                 </div>
+                <input
+                  type="text"
+                  value={signupShop}
+                  onChange={(e) => setSignupShop(e.target.value)}
+                  placeholder="e.g. Apollo Chemist, LifeCare Pharmacy"
+                  required
+                  className="w-full bg-[#fbfdfb] border border-[#d6e4d8] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-[#073b4c] placeholder:text-[#9bb09f] focus:outline-none focus:border-[#006a39] focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                />
               </div>
-            )}
+            </div>
 
             {/* Password & Confirm Password */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">

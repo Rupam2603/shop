@@ -16,7 +16,7 @@ export default function OrderTrackingModal({
   isOpen,
   onClose,
   initialOrderNumber,
-  userRole = "customer",
+  userRole = "retailer",
   userPhone,
   userName,
 }: Props) {
@@ -317,15 +317,9 @@ export default function OrderTrackingModal({
                     >
                       {activeOrder.status}
                     </span>
-                    {isRetailer ? (
-                      <span className="text-[10px] font-extrabold bg-[#e0f2fe] text-[#0369a1] px-2 py-0.5 rounded-md border border-[#bae6fd]">
-                        🏪 Wholesale Consignment
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-extrabold bg-[#d1fae5] text-[#047857] px-2 py-0.5 rounded-md border border-[#a7f3d0]">
-                        👤 Retail Customer
-                      </span>
-                    )}
+                    <span className="text-[10px] font-extrabold bg-[#e0f2fe] text-[#0369a1] px-2 py-0.5 rounded-md border border-[#bae6fd]">
+                      🏪 Wholesale Consignment
+                    </span>
                   </div>
                   <p className="text-xs text-[#6d7a6f] mt-1">
                     Placed on {new Date(activeOrder.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}

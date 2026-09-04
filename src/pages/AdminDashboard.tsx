@@ -3091,23 +3091,17 @@ function UsersTab({
 
 
       {usersSubTab === "users" && (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 sm:gap-4">
         <div onClick={() => { setRoleFilter("all"); setStatusFilter("all"); }} className="glass-admin-card glass-admin-card-hover rounded-3xl p-4 cursor-pointer border-2 transition-all">
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#657969]">Total Registered</span>
           <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-2xl sm:text-3xl mt-1">{stats.total}</p>
-          <p className="text-[11px] text-[#728575] mt-0.5">All platform accounts</p>
-        </div>
-
-        <div onClick={() => { setRoleFilter("customer"); setStatusFilter("all"); }} className="glass-admin-card glass-admin-card-hover rounded-3xl p-4 cursor-pointer border-2 transition-all">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-800">Customers</span>
-          <p className="font-['Manrope',sans-serif] font-extrabold text-[#0369a1] text-2xl sm:text-3xl mt-1">{stats.customers}</p>
-          <p className="text-[11px] text-[#728575] mt-0.5">Direct retail buyers</p>
+          <p className="text-[11px] text-[#728575] mt-0.5">All accounts</p>
         </div>
 
         <div onClick={() => { setRoleFilter("retailer"); setStatusFilter("all"); }} className="glass-admin-card glass-admin-card-hover rounded-3xl p-4 cursor-pointer border-2 transition-all">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800">Retailers</span>
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800">Retailers & Pharmacies</span>
           <p className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-2xl sm:text-3xl mt-1">{stats.retailers}</p>
-          <p className="text-[11px] text-[#728575] mt-0.5">Pharmacy partners</p>
+          <p className="text-[11px] text-[#728575] mt-0.5">Wholesale B2B partners</p>
         </div>
 
         <div onClick={() => { setStatusFilter("pending"); setRoleFilter("all"); }} className="glass-admin-card glass-admin-card-hover rounded-3xl p-4 cursor-pointer border-2 transition-all">
@@ -3129,7 +3123,7 @@ function UsersTab({
       <div className="glass-admin-card rounded-3xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center bg-[#f0f5f2] rounded-2xl p-1 border border-[#d6e4d8]">
-            {(["all", "customer", "retailer", "admin"] as const).map((r) => (
+            {(["all", "retailer", "admin"] as const).map((r) => (
               <button
                 key={r}
                 onClick={() => setRoleFilter(r)}
@@ -3139,7 +3133,7 @@ function UsersTab({
                     : "text-[#657969] hover:text-[#073b4c]"
                 }`}
               >
-                {r === "all" ? "All Roles" : r}
+                {r === "all" ? "All Roles" : r === "retailer" ? "Retailers" : "Admins"}
               </button>
             ))}
           </div>

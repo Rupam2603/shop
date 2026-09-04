@@ -7,9 +7,9 @@ interface InsurancePageProps {
   onNavigate: (page: Page, category?: string) => void;
 }
 
-export default function InsurancePage({ userRole, onNavigate }: InsurancePageProps) {
-  const isRetailer = userRole === "retailer";
-  const [selectedPlan, setSelectedPlan] = useState<string>(isRetailer ? "retailer" : "family");
+export default function InsurancePage({ userRole = "retailer", onNavigate }: InsurancePageProps) {
+  const isRetailer = userRole !== "admin";
+  const [selectedPlan, setSelectedPlan] = useState<string>("retailer");
   const [claimSubmitted, setClaimSubmitted] = useState(false);
   const [claimName, setClaimName] = useState("");
   const [claimPhone, setClaimPhone] = useState("");

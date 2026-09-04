@@ -159,17 +159,20 @@ const RATING_LABELS: Record<number, string> = {
 
 export default function ProductDetailModal({
   product,
-  isRetailer,
+  isRetailer = true,
   onClose,
 }: {
   product: PopupProduct;
-  isRetailer: boolean;
+  isRetailer?: boolean;
   onClose: () => void;
 }) {
   useModalBackHandler(true, onClose, `product-${product.id}`);
 
   const { addToCart } = useCart();
   const { appUser } = useAuth();
+  
+  const effectiveIsRetailer = appUser?.profile?.role === "admin" ? isRetailer : true;
+
   const [liveStock, setLiveStock] = useState<number>(product.stock ?? 50);
   const [qty, setQty] = useState(1);
   const [dbReviews, setDbReviews] = useState<DbReview[]>([]);
@@ -421,20 +424,20 @@ export default function ProductDetailModal({
 
             {/* Pricing Section */}
             <div className="p-4 rounded-xl bg-[#f8fafb] border border-[#e4ede2]">
-              {isRetailer ? (
+              {effectiveIsRetailer ? (
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-['Manrope',sans-serif] font-extrabold text-[#0369a1]">
                       {retailerPrice(product.price)}
                     </span>
                     <span className="text-xs bg-[#dbeafe] text-[#1d4ed8] font-bold px-2 py-0.5 rounded uppercase">
-                      Retailer Bulk Price
+                      Wholesale B2B Rate
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-[#9aa89b]">
-                    <span>Standard MRP / Customer Price:</span>
-                    <span className="line-through">{product.price}</span>
-                    <span className="text-[#047857] font-semibold">(15% wholesale margin)</span>
+                    <span>Standard MRP:</span>
+                    <span className="line-through">{product.orig || product.price}</span>
+                    <span className="text-[#047857] font-semibold">(15% wholesale pharmacy margin)</span>
                   </div>
                 </div>
               ) : (
@@ -596,6 +599,28 @@ export default function ProductDetailModal({
             </div>
           )}
 
+          {/* ── Header & Write Review Button ── */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 className="font-['Manrope',sans-serif] font-extrabold text-xl text-[#073b4c]">
+                Verified Wholesale & Pharmacy Reviews
+              </h3>
+              <p className="text-xs text-[#6d7a6f] mt-0.5">
+                Direct feedback from licensed pharmacy retailers and healthcare distributors across India.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setShowReviewForm(!showReviewForm);
+                setReviewSuccess(false);
+              }}
+              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#047857] text-white font-bold text-xs shadow-md shadow-emerald-950/15 hover:opacity-95 transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto active:scale-95"
+            >
+              <span>{showReviewForm ? "✕ Close Form" : "✍ Write a Review"}</span>
+            </button>
+          </div>
+
           {/* ── Interactive Review Submission Form ── */}
           {showReviewForm && (
             <form
@@ -610,10 +635,8 @@ export default function ProductDetailModal({
                   <p className="text-[11px] text-[#9aa89b]">Share your experience with this product</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${
-                    isRetailer ? "bg-blue-100 text-blue-800" : "bg-emerald-100 text-emerald-800"
-                  }`}>
-                    {isRetailer ? "📦 Posting as Verified Retailer" : "👤 Posting as Verified Customer"}
+                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                    📦 Posting as Verified Pharmacy Retailer
                   </span>
                   <button
                     type="button"
@@ -801,9 +824,8 @@ export default function ProductDetailModal({
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full" style={{ scrollbarWidth: "none" }}>
               {/* Category tabs */}
               {[
-                { label: `All (${allReviews.length})`, value: "all" },
-                { label: `Customer (${allReviews.filter((r) => r.role === "customer").length})`, value: "customer" },
-                { label: `Retailer (${allReviews.filter((r) => r.role === "retailer").length})`, value: "retailer" },
+                { label: `All Reviews (${allReviews.length})`, value: "all" },
+                { label: `Pharmacy Retailer (${allReviews.filter((r) => r.role === "retailer").length})`, value: "retailer" },
               ].map((tab) => (
                 <button
                   key={tab.value}
@@ -877,11 +899,11 @@ export default function ProductDetailModal({
                             <p className="font-bold text-[#073b4c] text-xs sm:text-sm">{r.name}</p>
                             {isRetailerReview ? (
                               <span className="text-[9px] font-extrabold bg-[#dbeafe] text-[#1d4ed8] border border-[#bfdbfe] px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
-                                <span>📦</span> Verified Retailer / Bulk Buyer
+                                <span>📦</span> Verified Retailer / Pharmacy
                               </span>
                             ) : (
                               <span className="text-[9px] font-bold bg-[#d1fae5] text-[#047857] border border-[#a7f3d0] px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <span>✓</span> Verified Customer
+                                <span>✓</span> Verified Healthcare Partner
                               </span>
                             )}
                           </div>
