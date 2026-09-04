@@ -155,7 +155,7 @@ export async function createNeonUser(opts: {
 export async function authenticateNeonUser(
   email: string,
   password: string,
-  expectedRole?: UserRole
+  expectedRole?: UserRole | "staff"
 ): Promise<{ success: boolean; user?: ManagedUser; error?: string; isBlocked?: boolean; }> {
   const cleanEmail = email.trim().toLowerCase();
   try {

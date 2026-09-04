@@ -33,7 +33,7 @@ interface AuthContextValue {
   loading: boolean;
   pendingApprovalInfo: PendingApprovalInfo | null;
   clearPendingApproval: () => void;
-  signIn: (email: string, password: string, expectedRole?: UserRole) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string, expectedRole?: UserRole | "staff") => Promise<{ error: string | null }>;
   signUp: (opts: SignUpOptions) => Promise<{ error: string | null; emailConfirmationRequired: boolean; isPendingApproval?: boolean }>;
   sendPhoneOtp: (phone: string, role: "customer" | "retailer", meta?: { fullName?: string; shopName?: string }) => Promise<PhoneOtpSendResult>;
   verifyPhoneOtp: (phone: string, otp: string, role: "customer" | "retailer", meta?: { fullName?: string; shopName?: string }) => Promise<PhoneOtpVerifyResult>;
@@ -372,7 +372,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Sign In ──────────────────────────────────────────────────────────────────
   const signIn = useCallback(
-    async (email: string, password: string, expectedRole?: UserRole): Promise<{ error: string | null }> => {
+    async (email: string, password: string, expectedRole?: UserRole | "staff"): Promise<{ error: string | null }> => {
       setLoading(true);
       const cleanEmail = email.trim().toLowerCase();
       const cleanPass = password;
@@ -437,17 +437,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (neonAuthRes.success && neonAuthRes.user) {
           const u = neonAuthRes.user;
 
-          if (expectedRole === "admin" && u.role !== "admin") {
+          if (expectedRole === "staff") {
+            if (u.role !== "admin" && u.role !== "delivery_partner") {
+              setLoading(false);
+              return { error: "Access denied. This login is for Administrator and Delivery Partner accounts only." };
+            }
+          } else if (expectedRole === "admin" && u.role !== "admin") {
             setLoading(false); return { error: "Access denied. This account does not have Admin privileges." };
-          }
-          if (expectedRole === "delivery_partner" && u.role !== "delivery_partner") {
+          } else if (expectedRole === "delivery_partner" && u.role !== "delivery_partner") {
             setLoading(false); return { error: "Access denied. This account is not a Delivery Partner." };
-          }
-          if (expectedRole === "customer" && (u.role === "retailer" || u.role === "delivery_partner")) {
-            setLoading(false); return { error: `Access denied. This account is registered as a ${u.role === "delivery_partner" ? "Delivery Partner" : "Retailer"}.` };
-          }
-          if (expectedRole === "retailer" && (u.role === "customer" || u.role === "delivery_partner")) {
-            setLoading(false); return { error: `Access denied. This account is registered as a ${u.role === "delivery_partner" ? "Delivery Partner" : "Customer"}.` };
+          } else if (expectedRole === "customer" && (u.role === "retailer" || u.role === "delivery_partner" || u.role === "admin")) {
+            setLoading(false); return { error: `Access denied. This account is registered as a ${u.role === "delivery_partner" ? "Delivery Partner" : u.role === "admin" ? "Administrator" : "Retailer"}.` };
+          } else if (expectedRole === "retailer" && (u.role === "customer" || u.role === "delivery_partner" || u.role === "admin")) {
+            setLoading(false); return { error: `Access denied. This account is registered as a ${u.role === "delivery_partner" ? "Delivery Partner" : u.role === "admin" ? "Administrator" : "Customer"}.` };
           }
 
           try {
@@ -534,8 +536,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profile = await fetchProfile(authUser.id);
       const userRole: UserRole = profile?.role || authUser.user_metadata?.role || "customer";
 
-      if (expectedRole === "admin" && userRole !== "admin") {
+      if (expectedRole === "staff") {
+        if (userRole !== "admin" && userRole !== "delivery_partner") {
+          setLoading(false);
+          return { error: "Access denied. This login is for Administrator and Delivery Partner accounts only." };
+        }
+      } else if (expectedRole === "admin" && userRole !== "admin") {
         setLoading(false); return { error: "Access denied. This account does not have Admin privileges." };
+      } else if (expectedRole === "delivery_partner" && userRole !== "delivery_partner") {
+        setLoading(false); return { error: "Access denied. This account is not a Delivery Partner." };
+      } else if (expectedRole === "customer" && (userRole === "retailer" || userRole === "delivery_partner" || userRole === "admin")) {
+        setLoading(false); return { error: `Access denied. This account is registered as a ${userRole === "delivery_partner" ? "Delivery Partner" : userRole === "admin" ? "Administrator" : "Retailer"}.` };
+      } else if (expectedRole === "retailer" && (userRole === "customer" || userRole === "delivery_partner" || userRole === "admin")) {
+        setLoading(false); return { error: `Access denied. This account is registered as a ${userRole === "delivery_partner" ? "Delivery Partner" : userRole === "admin" ? "Administrator" : "Customer"}.` };
       }
 
       try {
