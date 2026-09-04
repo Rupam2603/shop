@@ -256,7 +256,7 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
   {
     id: "vaccines",
     name: "Vaccines & Immunization Services",
-    short: "Vaccines",
+    short: "Vaccine",
     tagline: "Certified Cold-Chain Vaccines & Safe Home Immunization",
     description: "Book adult & pediatric vaccines with 2°C–8°C strict cold-chain tracking and licensed nurse visits for Flu, HPV, Hepatitis B, Tetanus, Typhoid, and Pneumonia.",
     accent: "#0f766e",

@@ -194,7 +194,7 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
   },
   {
     id: "vaccines",
-    name: "Vaccines",
+    name: "Vaccine",
     filterCat: "Vaccines & Medical Disposables",
     route: "vaccines",
     icon: (
@@ -223,13 +223,12 @@ export default function KeyCategoriesBar({
   className = "",
 }: KeyCategoriesBarProps) {
   return (
-    <div className={`w-full bg-white/75 backdrop-blur-xl border-b border-white/60 shadow-2xs ${className}`}>
+    <div className={`w-full bg-white/75 backdrop-blur-xl border-b border-white/60 shadow-2xs relative ${className}`}>
       <div className="w-full px-2 sm:px-4">
         <div
-          className="flex items-center justify-between sm:justify-start gap-1 sm:gap-2.5 lg:gap-3.5 overflow-x-auto py-2 sm:py-2.5 scroll-smooth select-none no-scrollbar"
+          className="flex items-center gap-1 sm:gap-2 lg:gap-3 overflow-x-auto py-2 sm:py-2.5 scroll-smooth select-none scrollbar-thin scrollbar-thumb-emerald-200/60 hover:scrollbar-thumb-emerald-300"
           style={{
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
+            WebkitOverflowScrolling: "touch",
           }}
         >
           {KEY_CATEGORIES.map((cat) => {
