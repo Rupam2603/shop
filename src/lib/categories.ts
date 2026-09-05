@@ -57,9 +57,10 @@ export async function fetchSubCategories(categoryId?: string): Promise<DbSubCate
 export async function createCategory(name: string): Promise<{ data: DbCategory | null; error: string | null }> {
   try {
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const id = crypto.randomUUID();
     const rows = await sql`
-      INSERT INTO categories (name, slug, hsn_code, accent_color, description)
-      VALUES (${name}, ${slug}, '3004', '#006a39', '')
+      INSERT INTO categories (id, name, slug, hsn_code, accent_color, description)
+      VALUES (${id}, ${name}, ${slug}, '3004', '#006a39', '')
       RETURNING *
     `;
     return { data: rows[0] as DbCategory, error: null };
@@ -74,9 +75,10 @@ export async function createCategory(name: string): Promise<{ data: DbCategory |
 export async function createSubCategory(name: string, categoryId: string): Promise<{ data: DbSubCategory | null; error: string | null }> {
   try {
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const id = crypto.randomUUID();
     const rows = await sql`
-      INSERT INTO sub_categories (name, slug, category_id)
-      VALUES (${name}, ${slug}, ${categoryId})
+      INSERT INTO sub_categories (id, name, slug, category_id)
+      VALUES (${id}, ${name}, ${slug}, ${categoryId})
       RETURNING *
     `;
     return { data: rows[0] as DbSubCategory, error: null };
