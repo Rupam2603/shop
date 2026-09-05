@@ -74,14 +74,30 @@ export async function createCategory(name: string): Promise<{ data: DbCategory |
  */
 export async function createSubCategory(name: string, categoryId: string): Promise<{ data: DbSubCategory | null; error: string | null }> {
   try {
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const id = crypto.randomUUID();
-    const rows = await sql`
-      INSERT INTO sub_categories (id, name, slug, category_id)
-      VALUES (${id}, ${name}, ${slug}, ${categoryId})
-      RETURNING *
-    `;
-    return { data: rows[0] as DbSubCategory, error: null };
+
+    try {
+      // Try with slug column (new schema)
+      const rows = await sql`
+        INSERT INTO sub_categories (id, name, slug, category_id)
+        VALUES (${id}, ${name}, ${slug}, ${categoryId})
+        RETURNING *
+      `;
+      return { data: rows[0] as DbSubCategory, error: null };
+    } catch (slugErr: any) {
+      // If slug column doesn't exist, try without it (fallback for old schema)
+      if (slugErr.message?.includes('slug')) {
+        console.warn("⚠️ 'slug' column not found. Inserting without slug column...");
+        const rows = await sql`
+          INSERT INTO sub_categories (id, name, category_id)
+          VALUES (${id}, ${name}, ${categoryId})
+          RETURNING *
+        `;
+        return { data: rows[0] as DbSubCategory, error: null };
+      }
+      throw slugErr;
+    }
   } catch (err: any) {
     return { data: null, error: err.message || "Failed to create sub-category" };
   }
