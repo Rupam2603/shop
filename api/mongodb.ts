@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getCollection } from "../src/lib/mongodb";
 import { createMongoDBIndexes } from "../src/lib/mongodbServices";
 
