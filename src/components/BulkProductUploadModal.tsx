@@ -38,7 +38,10 @@ export default function BulkProductUploadModal({ supabase, onClose, onImported }
   const [importOutcome, setImportOutcome] = useState<{
     insertedCount: number;
     failedCount: number;
+    imagesDownloaded: number;
+    imagesFailed: number;
   } | null>(null);
+  const [progressMsg, setProgressMsg] = useState('');
 
   const handleFile = useCallback(async (file: File) => {
     setParseError('');
@@ -71,12 +74,78 @@ export default function BulkProductUploadModal({ supabase, onClose, onImported }
   const validRows = rows.filter((r) => r.isValid);
   const invalidRows = rows.filter((r) => !r.isValid);
 
+  const fetchAndUploadImage = async (url: string): Promise<string | null> => {
+    try {
+      const res = await fetch('/api/upload-from-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, folder: 'products' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.url) return data.url;
+      return null;
+    } catch (e) {
+      return null;
+    }
+  };
+
   const handleConfirmImport = async () => {
     setStep('importing');
-    const outcome = await bulkInsertProducts(supabase, validRows);
+    setProgressMsg('Preparing import...');
+    
+    let imagesDownloaded = 0;
+    let imagesFailed = 0;
+
+    // We will process the validRows in chunks of 5 for image downloading to avoid overwhelming the network
+    const concurrency = 5;
+    let processed = 0;
+    
+    // We modify a copy of validRows to have the uploaded Vercel Blob URL
+    const updatedRows = [...validRows];
+    
+    const downloadImageQueue = [];
+    for (let i = 0; i < updatedRows.length; i++) {
+      const row = updatedRows[i];
+      // Only process if there's at least one image URL. We use the first valid URL
+      const firstUrl = row.imageUrls?.[0];
+      if (firstUrl) {
+        downloadImageQueue.push(async () => {
+          try {
+            const newUrl = await fetchAndUploadImage(firstUrl);
+            if (newUrl) {
+              row.productImage = newUrl;
+              imagesDownloaded++;
+            } else {
+              imagesFailed++;
+              row.warnings.push('Failed to download image from URL');
+            }
+          } catch (e) {
+            imagesFailed++;
+            row.warnings.push('Failed to download image from URL');
+          }
+          processed++;
+          setProgressMsg(`Processing ${processed}/${validRows.length} products, downloading images...`);
+        });
+      } else {
+        processed++;
+        setProgressMsg(`Processing ${processed}/${validRows.length} products...`);
+      }
+    }
+
+    // Process the queue with concurrency limit
+    for (let i = 0; i < downloadImageQueue.length; i += concurrency) {
+      const batch = downloadImageQueue.slice(i, i + concurrency);
+      await Promise.all(batch.map(fn => fn()));
+    }
+
+    setProgressMsg('Inserting records into database...');
+    const outcome = await bulkInsertProducts(supabase, updatedRows);
+    
     setImportOutcome({
       insertedCount: outcome.insertedCount,
       failedCount: validRows.length - outcome.insertedCount,
+      imagesDownloaded,
+      imagesFailed,
     });
     setStep('done');
   };
@@ -221,7 +290,7 @@ export default function BulkProductUploadModal({ supabase, onClose, onImported }
             <div className="flex flex-col items-center justify-center py-16">
               <Loader2 className="w-10 h-10 text-[#006a39] animate-spin mb-3" />
               <p className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base">
-                Importing {validRows.length} products…
+                {progressMsg || `Importing ${validRows.length} products…`}
               </p>
               <p className="text-xs text-gray-500 mt-1">Updating catalog and inventory tables in real-time</p>
             </div>
@@ -235,13 +304,25 @@ export default function BulkProductUploadModal({ supabase, onClose, onImported }
               <p className="text-xl font-['Manrope',sans-serif] font-black text-[#073b4c]">
                 {importOutcome.insertedCount} product{importOutcome.insertedCount !== 1 ? 's' : ''} successfully imported
               </p>
+              
+              <div className="flex gap-4 mt-4 text-sm bg-emerald-50 border border-emerald-100 rounded-xl px-5 py-3">
+                <div className="text-emerald-800">
+                  <span className="font-bold">{importOutcome.imagesDownloaded}</span> image(s) uploaded
+                </div>
+                {importOutcome.imagesFailed > 0 && (
+                  <div className="text-amber-700">
+                    <span className="font-bold">{importOutcome.imagesFailed}</span> image(s) failed
+                  </div>
+                )}
+              </div>
+
               {importOutcome.failedCount > 0 && (
-                <p className="text-sm text-rose-600 mt-2 bg-rose-50 px-4 py-1.5 rounded-xl border border-rose-200">
+                <p className="text-sm text-rose-600 mt-3 bg-rose-50 px-4 py-1.5 rounded-xl border border-rose-200">
                   {importOutcome.failedCount} row(s) encountered an error during database write.
                 </p>
               )}
               {invalidRows.length > 0 && (
-                <p className="text-xs text-amber-700 mt-1">
+                <p className="text-xs text-amber-700 mt-2">
                   {invalidRows.length} invalid row(s) with missing required fields were skipped.
                 </p>
               )}

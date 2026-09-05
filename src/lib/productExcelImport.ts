@@ -11,9 +11,8 @@
 import * as XLSX from 'xlsx';
 import { calculatePricing, getPricingWarnings } from './pricing';
 
-// Exact header text from the master sheet template.
 const HEADER_MAP = {
-  productImage: 'Product Image',
+  productImage: 'Product Image', // Also matches 'Product Image URL' due to loose matching
   productName: 'Product Name*',
   packSize: 'Pack Size / Dosage Details',
   category: 'Category*',
@@ -38,6 +37,7 @@ const HEADER_MAP = {
 export interface ParsedProductRow {
   rowNumber: number; // 1-based row number in the sheet, for error messages
   productImage: string;
+  imageUrls: string[]; // Parsed URLs from the productImage field
   productName: string;
   packSize: string;
   category: string;
@@ -173,9 +173,25 @@ export function parseProductExcel(fileBuffer: ArrayBuffer): ImportResult {
 
     const warnings = errors.length === 0 ? getPricingWarnings(pricingInput) : [];
 
+    const rawProductImage = String(get('productImage') ?? '').trim();
+    const imageUrls = rawProductImage
+      .split(',')
+      .map(url => url.trim())
+      .filter(url => url.length > 0);
+      
+    // Validate URLs
+    imageUrls.forEach(url => {
+      try {
+        new URL(url);
+      } catch (e) {
+        errors.push(`Invalid image URL format: ${url}`);
+      }
+    });
+
     rows.push({
       rowNumber,
-      productImage: String(get('productImage') ?? '').trim(),
+      productImage: rawProductImage,
+      imageUrls,
       productName,
       packSize: String(get('packSize') ?? '').trim(),
       category,
