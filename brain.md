@@ -233,6 +233,10 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - **Single Stock Count Enforcement**:
     - Removed duplicate stock count display across storefront product cards.
     - Cards previously showed a top-right corner image badge (`📦 {stock} units` / `{stock} in stock`) AND a second indicator below the title/subtitle (`● {stock} in stock` or `{stock} available`).
-    - Standardized to a single, high-contrast, position-consistent stock badge on the top-right corner of each product image across all catalog and listing pages.
+- **Admin Product Search Bar Full-Width Layout (Sep 2026)**:
+  - Re-architected the `Filter Bar` in `ProductsTab` (`src/pages/AdminDashboard.tsx`) from a cramped single flex row into a clean two-tier layout.
+  - The search input now enjoys dedicated full width (`w-full`), preventing flexbox from compressing it into a narrow pill when sibling dropdowns and action buttons wrap.
+  - Added quick clear button (`✕`) when search text is entered.
+  - Expanded search filtering logic to match across product name, brand, SKU, HSN, details, and sub-category.
 
 
