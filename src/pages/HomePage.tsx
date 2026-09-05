@@ -58,6 +58,7 @@ export interface HomeCategoryProduct {
   numeric_id?: number;
   name: string;
   sub: string;
+  subCat?: string;
   price: string;
   orig?: string;
   disc?: string;
@@ -140,21 +141,11 @@ function ProductCard({
         <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[34px] group-hover:text-[#006a39] transition-colors">
           {p.name}
         </p>
-        <p className="text-[#8aa08e] text-[10px] sm:text-[11px] truncate font-medium">{p.sub}</p>
-
-        {/* Real-time stock status indicator */}
-        <div className="text-[9px] mt-0.5">
-          {isOutOfStock ? (
-            <span className="text-rose-600 font-bold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Out of stock
-            </span>
-          ) : isLowStock ? (
-            <span className="text-amber-700 font-semibold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" /> {p.stock} units left
-            </span>
-          ) : (
-            <span className="text-emerald-700 font-medium flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {p.stock} in stock
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <p className="text-[#8aa08e] text-[10px] sm:text-[11px] truncate font-medium">{p.sub}</p>
+          {p.subCat && (
+            <span className="text-[9px] font-bold text-[#0f766e] bg-teal-50 border border-teal-200/70 px-1.5 py-0.2 rounded-full">
+              {p.subCat}
             </span>
           )}
         </div>
@@ -252,6 +243,7 @@ function CategorySection({
               dbId: p.dbId,
               name: p.name,
               sub: p.sub,
+              subCat: p.subCat,
               price: p.price,
               orig: p.orig || "",
               disc: p.disc || "",
@@ -383,6 +375,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
           img: p.image_url,
           brand: p.brand,
           cat: p.category_name,
+          subCat: p.sub_category_name || "",
           stock: p.stock ?? 50,
           customer_price: p.customer_price,
           retailer_price: p.retailer_price,
@@ -603,6 +596,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
                         orig: p.orig || "",
                         disc: p.disc,
                         cat: p.cat,
+                        subCat: (p as any).subCat || (p as any).sub_category_name || "",
                         brand: p.brand,
                         img: p.img,
                         stock: pStock,
@@ -630,16 +624,12 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
                       </div>
                       <div className="p-3 sm:p-4 flex flex-col gap-1 flex-1">
                         <p className="font-bold text-[#073b4c] text-xs sm:text-sm leading-5 line-clamp-2">{p.name}</p>
-                        <p className="text-[#3e4a3f] text-[10px] sm:text-xs">{p.sub}</p>
-
-                        {/* Stock status indicator */}
-                        <div className="text-[10px] mt-0.5">
-                          {isOutOfStock ? (
-                            <span className="text-[#dc2626] font-bold">🔴 Out of stock</span>
-                          ) : isLowStock ? (
-                            <span className="text-[#d97706] font-semibold">⚠️ {pStock} units remaining</span>
-                          ) : (
-                            <span className="text-[#059669] font-medium">🟢 {pStock} in stock</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-[#3e4a3f] text-[10px] sm:text-xs">{p.sub}</p>
+                          {((p as any).subCat || (p as any).sub_category_name) && (
+                            <span className="text-[9px] font-bold text-[#0f766e] bg-teal-50 border border-teal-200/70 px-1.5 py-0.2 rounded-full">
+                              {(p as any).subCat || (p as any).sub_category_name}
+                            </span>
                           )}
                         </div>
 

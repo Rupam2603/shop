@@ -124,6 +124,7 @@ export default function SearchPage({
       orig: p.mrp > p.customer_price ? `₹${Math.round(p.mrp)}` : "",
       disc: p.discount_percent > 0 ? `${p.discount_percent}%` : "",
       cat: p.category_name,
+      subCat: p.sub_category_name || "",
       brand: p.brand,
       img: p.image_url,
       stock: p.stock ?? 50,
@@ -439,11 +440,18 @@ export default function SearchPage({
                     <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[34px] group-hover:text-[#006a39] transition-colors">
                       {p.name}
                     </p>
-                    {(p.details || p.subtitle) && (
-                      <span className="inline-block text-[9px] font-bold bg-emerald-50/80 text-[#006a39] border border-emerald-200/80 px-2 py-0.5 rounded-full leading-none mt-0.5 w-fit truncate max-w-full">
-                        {p.details || p.subtitle}
-                      </span>
-                    )}
+                    <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                      {p.sub_category_name && (
+                        <span className="inline-block text-[9px] font-bold bg-teal-50 text-teal-700 border border-teal-200/80 px-2 py-0.5 rounded-full leading-none w-fit">
+                          {p.sub_category_name}
+                        </span>
+                      )}
+                      {(p.details || p.subtitle) && (
+                        <span className="inline-block text-[9px] font-bold bg-emerald-50/80 text-[#006a39] border border-emerald-200/80 px-2 py-0.5 rounded-full leading-none mt-0.5 w-fit truncate max-w-full">
+                          {p.details || p.subtitle}
+                        </span>
+                      )}
+                    </div>
 
                     {/* Price & Action Row */}
                     <div className="mt-auto pt-2.5 border-t border-[#f0f5f1]">

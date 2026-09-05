@@ -133,6 +133,7 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
       orig: p.mrp > p.customer_price ? `₹${Math.round(p.mrp)}` : "",
       disc: p.discount_percent > 0 ? `${p.discount_percent}%` : "",
       cat: p.category_name,
+      subCat: p.sub_category_name || "",
       stock: p.stock ?? 50,
       customer_price: p.customer_price,
       retailer_price: p.retailer_price,
@@ -150,6 +151,7 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
       name: product.name,
       brand: product.brand,
       cat: product.cat || "Supplements",
+      subCat: product.subCat,
       sub: product.sub || product.brand,
       orig: product.orig || product.price,
       price: product.price,
@@ -331,6 +333,11 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
                     <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xs sm:text-sm line-clamp-2 leading-snug min-h-[36px] group-hover:text-[#006a39] transition-colors">
                       {p.name}
                     </p>
+                    {p.subCat && (
+                      <span className="inline-block text-[9px] font-bold bg-teal-50 text-teal-700 border border-teal-200/80 px-2 py-0.5 rounded-full leading-none w-fit">
+                        {p.subCat}
+                      </span>
+                    )}
                     <div className="flex items-center gap-1.5 text-xs text-[#6d7a6f]">
                       <StarIcon />
                       <span className="font-extrabold text-[#073b4c] text-xs">{p.rating}</span>

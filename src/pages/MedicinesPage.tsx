@@ -161,6 +161,7 @@ export default function MedicinesPage({
       orig: p.mrp > (p.retailer_price || p.customer_price) ? `₹${Math.round(p.mrp)}` : "",
       disc: p.retailer_discount_percent > 0 ? `${p.retailer_discount_percent}%` : (p.discount_percent > 0 ? `${p.discount_percent}%` : ""),
       cat: p.category_name,
+      subCat: p.sub_category_name || "",
       brand: p.brand,
       img: p.image_url,
       stock: p.stock ?? 50,
@@ -394,11 +395,18 @@ export default function MedicinesPage({
                         <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[34px] group-hover:text-[#006a39] transition-colors">
                           {p.name}
                         </p>
-                        {p.sub && (
-                          <span className="inline-block text-[9px] font-bold bg-emerald-50/80 text-[#006a39] border border-emerald-200/80 px-2 py-0.5 rounded-full leading-none mt-0.5 w-fit">
-                            {p.sub}
-                          </span>
-                        )}
+                        <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                          {p.subCat && (
+                            <span className="inline-block text-[9px] font-bold bg-teal-50 text-teal-700 border border-teal-200/80 px-2 py-0.5 rounded-full leading-none w-fit">
+                              {p.subCat}
+                            </span>
+                          )}
+                          {p.sub && (
+                            <span className="inline-block text-[9px] font-bold bg-emerald-50/80 text-[#006a39] border border-emerald-200/80 px-2 py-0.5 rounded-full leading-none w-fit">
+                              {p.sub}
+                            </span>
+                          )}
+                        </div>
                         <div className="mt-auto pt-2.5 border-t border-[#f0f5f1]">
                           <div className="flex flex-col gap-0.5">
                             <div className="flex items-center gap-1.5">
@@ -418,13 +426,6 @@ export default function MedicinesPage({
                           </div>
                           <div className="flex items-center justify-between text-[9px] mt-1.5">
                             <span className="text-[#8aa08e] font-mono">HSN: {HSN_BY_CAT[p.cat] ?? "—"}</span>
-                            {isOutOfStock ? (
-                              <span className="text-rose-600 font-bold">Out of stock</span>
-                            ) : isLowStock ? (
-                              <span className="text-amber-700 font-semibold">{p.stock} left</span>
-                            ) : (
-                              <span className="text-emerald-700 font-medium">{p.stock} available</span>
-                            )}
                           </div>
                         </div>
                         {isOutOfStock ? (

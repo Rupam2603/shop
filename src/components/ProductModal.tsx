@@ -16,6 +16,7 @@ export interface PopupProduct {
   dbId?: string;
   name: string;
   sub: string;
+  subCat?: string;
   price: string;
   orig: string;
   disc: string;
@@ -391,6 +392,14 @@ export default function ProductDetailModal({
                   {product.cat}
                 </span>
               </div>
+              {product.subCat && (
+                <div>
+                  <p className="text-[9px] font-extrabold uppercase tracking-[0.7px] text-[#8aa08e] mb-1">Sub-Category</p>
+                  <span className="inline-block text-xs font-bold px-3 py-1 rounded-xl text-[#006a39] bg-emerald-50 border border-emerald-200/80 shadow-xs">
+                    {product.subCat}
+                  </span>
+                </div>
+              )}
               <div>
                 <p className="text-[9px] font-extrabold uppercase tracking-[0.7px] text-[#8aa08e] mb-1">Brand</p>
                 <p className="text-xs font-extrabold text-[#073b4c]">{product.brand}</p>
@@ -492,8 +501,24 @@ export default function ProductDetailModal({
 
             {/* Description */}
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#073b4c] mb-1.5">Description</h4>
+              <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#073b4c]">Description</h4>
+                {product.subCat && (
+                  <span className="text-[11px] font-bold text-[#006a39] bg-[#e8f5ee] border border-[#bbf7d0] px-2.5 py-0.5 rounded-full shadow-2xs">
+                    Sub-Category: {product.subCat}
+                  </span>
+                )}
+              </div>
               <p className="text-[#6d7a6f] text-xs sm:text-sm leading-relaxed">{description}</p>
+              {product.subCat && (
+                <div className="mt-2 flex items-center gap-2 text-xs bg-[#f4fbf6] border border-[#d2edd9] px-3 py-1.5 rounded-xl">
+                  <span className="text-[#073b4c] font-bold">Category:</span>
+                  <span className="text-[#4b5563]">{product.cat}</span>
+                  <span className="text-[#9ca3af]">•</span>
+                  <span className="text-[#073b4c] font-bold">Sub-Category:</span>
+                  <span className="text-[#006a39] font-extrabold">{product.subCat}</span>
+                </div>
+              )}
             </div>
 
             {/* Key Features */}

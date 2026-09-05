@@ -223,6 +223,16 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Replaced overly broad keyword regex matching (`/oil/`, `/gel/`, `/powder/`, `/balm/`, `/spray/`, etc.) in `src/lib/keyCategories.ts` with `isProductInCategory(productCat, targetCatIdOrName)`.
   - Products now strictly belong to their assigned category without false-positive keyword matching (e.g., shaving gel no longer leaks into Skin Care, face wash containing "oil" no longer leaks into Hair Care or Pain Relief, pain relief gels/sprays no longer leak into Men's Health).
   - Synchronized `src/pages/HomePage.tsx`, `src/pages/MedicinesPage.tsx`, and `src/pages/CategoryPage.tsx` with `isProductInCategory`.
-  - Added dynamic sub-category filtering chips to `CategoryPage.tsx` (e.g. for Men's Health: All, Deodorant, Face Wash, Shaving Foam, Shaving Gel).
-  - Added "Medical Supplies" to `KEY_CATEGORIES` in `src/components/KeyCategoriesBar.tsx`.
+- **Sub-Category Visibility in Product Description & Single Stock Count Fix (Sep 2026)**:
+  - **Sub-Category Visibility**:
+    - Extended `PopupProduct` in `src/components/ProductModal.tsx` with `subCat?: string`.
+    - Added a `Sub-Category` pill in the product modal sidebar metadata grid under Category.
+    - Added a `Sub-Category: {product.subCat}` badge in the Description section header as well as an explicit `Category: {product.cat} • Sub-Category: {product.subCat}` strip within the description block.
+    - Added sub-category pill tags alongside subtitle (`sub`) on product cards across `HomePage.tsx`, `CategoryPage.tsx`, `MedicinesPage.tsx`, `SearchPage.tsx`, and `OffersPage.tsx`.
+    - Mapped `subCat: p.sub_category_name || ""` across database query pipelines and search result payloads so sub-category is accurately populated from Neon Postgres `products` and `inventory_products`.
+  - **Single Stock Count Enforcement**:
+    - Removed duplicate stock count display across storefront product cards.
+    - Cards previously showed a top-right corner image badge (`📦 {stock} units` / `{stock} in stock`) AND a second indicator below the title/subtitle (`● {stock} in stock` or `{stock} available`).
+    - Standardized to a single, high-contrast, position-consistent stock badge on the top-right corner of each product image across all catalog and listing pages.
+
 
