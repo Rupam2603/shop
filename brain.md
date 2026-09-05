@@ -219,4 +219,10 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Normalized all products across `products` and `inventory_products` tables, migrating similar/redundant category strings (e.g. "Skin Care, Powders & Ointments" → "Skin Care & Ointments", "Pain Relief & Balms" → "Pain Relief & Muscle Care", "Energy, Hydration & Supplements" → "Daily Wellness & Immunity", "First Aid & Antiseptics" → "Monsoon Health & Antiseptics", "Antacids, Digestion & Laxatives" → "Diet & Digestive Health", "Baby Care" → "Baby Care & Infant Nutrition", "Medical Supplies & General" → "Medical Supplies & Devices", and "Personal Care > Men's Care > *" → "Men's Health & Vitality").
   - Linked products to corresponding `category_id` and structured sub-categories ("Deodorant", "Face Wash", "Shaving Foam", "Shaving Gel").
   - Cleaned up `INITIAL_CATEGORIES` in `AdminDashboard.tsx`, `CATEGORY_FEATURES` and `CATEGORY_DESCRIPTIONS` in `ProductModal.tsx`, and removed legacy category artifacts.
+- **Strict Category Matching & Cross-Category Leakage Elimination (Sep 2026)**:
+  - Replaced overly broad keyword regex matching (`/oil/`, `/gel/`, `/powder/`, `/balm/`, `/spray/`, etc.) in `src/lib/keyCategories.ts` with `isProductInCategory(productCat, targetCatIdOrName)`.
+  - Products now strictly belong to their assigned category without false-positive keyword matching (e.g., shaving gel no longer leaks into Skin Care, face wash containing "oil" no longer leaks into Hair Care or Pain Relief, pain relief gels/sprays no longer leak into Men's Health).
+  - Synchronized `src/pages/HomePage.tsx`, `src/pages/MedicinesPage.tsx`, and `src/pages/CategoryPage.tsx` with `isProductInCategory`.
+  - Added dynamic sub-category filtering chips to `CategoryPage.tsx` (e.g. for Men's Health: All, Deodorant, Face Wash, Shaving Foam, Shaving Gel).
+  - Added "Medical Supplies" to `KEY_CATEGORIES` in `src/components/KeyCategoriesBar.tsx`.
 

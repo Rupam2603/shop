@@ -33,6 +33,82 @@ export const KEY_PRODUCT_CATEGORIES = [
 
 export type KeyProductCategory = typeof KEY_PRODUCT_CATEGORIES[number];
 
+/**
+ * Mapping from category ID to canonical Category Name
+ */
+export const KEY_CATEGORY_MAP: Record<string, string> = {
+  skin: "Skin Care & Ointments",
+  "pain-relief": "Pain Relief & Muscle Care",
+  "weight-loss": "Weight Loss & Metabolism",
+  wellness: "Daily Wellness & Immunity",
+  monsoon: "Monsoon Health & Antiseptics",
+  baby: "Baby Care & Infant Nutrition",
+  women: "Women's Health & Hygiene",
+  men: "Men's Health & Vitality",
+  diet: "Diet & Digestive Health",
+  hair: "Hair Care & Scalp Therapy",
+  vaccines: "Vaccines & Medical Disposables",
+  "medical-supplies": "Medical Supplies & Devices",
+};
+
+/**
+ * Robust check to see if a product belongs strictly to the targeted key category.
+ * Prevents products from leaking into other categories due to arbitrary keywords in names/descriptions.
+ */
+export function isProductInCategory(productCat?: string, targetCatIdOrName?: string): boolean {
+  if (!productCat || !targetCatIdOrName) return false;
+  const pCat = productCat.trim().toLowerCase();
+  const target = targetCatIdOrName.trim().toLowerCase();
+
+  // "all" matches every product
+  if (target === "all") return true;
+
+  const canonicalName = (KEY_CATEGORY_MAP[target] || targetCatIdOrName).trim().toLowerCase();
+
+  // 1. Exact matches (either to the ID or canonical name)
+  if (pCat === canonicalName || pCat === target) return true;
+
+  // 2. Strict prefix/component checks to allow legacy slight variations while preventing cross-leakage
+  if (target === "skin" || canonicalName.startsWith("skin")) {
+    return pCat.startsWith("skin");
+  }
+  if (target === "pain-relief" || canonicalName.startsWith("pain")) {
+    return pCat.startsWith("pain");
+  }
+  if (target === "weight-loss" || canonicalName.startsWith("weight")) {
+    return pCat.startsWith("weight");
+  }
+  if (target === "wellness" || canonicalName.includes("wellness") || canonicalName.includes("immunity")) {
+    return pCat.includes("wellness") || pCat.includes("immunity") || pCat === "energy, hydration & supplements";
+  }
+  if (target === "monsoon" || canonicalName.startsWith("monsoon")) {
+    return pCat.startsWith("monsoon");
+  }
+  if (target === "baby" || canonicalName.startsWith("baby")) {
+    return pCat.startsWith("baby");
+  }
+  if (target === "women" || canonicalName.startsWith("women")) {
+    return pCat.startsWith("women");
+  }
+  if (target === "men" || canonicalName.startsWith("men")) {
+    return pCat.startsWith("men");
+  }
+  if (target === "diet" || canonicalName.startsWith("diet") || canonicalName.includes("digest")) {
+    return pCat.startsWith("diet") || pCat.includes("digest");
+  }
+  if (target === "hair" || canonicalName.startsWith("hair")) {
+    return pCat.startsWith("hair");
+  }
+  if (target === "vaccines" || canonicalName.startsWith("vaccine")) {
+    return pCat.startsWith("vaccine");
+  }
+  if (target === "medical-supplies" || canonicalName.startsWith("medical supplies")) {
+    return pCat.startsWith("medical supplies") || pCat.includes("devices");
+  }
+
+  return false;
+}
+
 export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
   {
     id: "all",
@@ -54,11 +130,7 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     accent: "#7c3aed",
     lightBg: "#f5f3ff",
     iconBg: "#ddd6fe",
-    filterFn: (p) =>
-      p.cat.includes("Skin") ||
-      /cream|powder|ointment|antifungal|gel|boroline|salical|b-tex|ring guard|itch guard|nycil|candid/i.test(
-        p.name + " " + (p.sub || "")
-      ),
+    filterFn: (p) => isProductInCategory(p.cat, "skin"),
   },
   {
     id: "pain-relief",
@@ -69,11 +141,7 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     accent: "#c0392b",
     lightBg: "#fff0ee",
     iconBg: "#ffd5cf",
-    filterFn: (p) =>
-      p.cat.includes("Pain") ||
-      /pain|balm|volini|amrutanjan|spray|gel|sprain|muscle|joint|ache|moov|fast relief/i.test(
-        p.name + " " + (p.sub || "") + " " + p.cat
-      ),
+    filterFn: (p) => isProductInCategory(p.cat, "pain-relief"),
   },
   {
     id: "weight-loss",
@@ -84,10 +152,7 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     accent: "#ea580c",
     lightBg: "#fff7ed",
     iconBg: "#fed7aa",
-    filterFn: (p) =>
-      /sugar free|isabgol|softovac|weight|slimming|supplement|diet|chyawanprash|fiber|fitness/i.test(
-        p.name + " " + (p.sub || "") + " " + p.cat
-      ),
+    filterFn: (p) => isProductInCategory(p.cat, "weight-loss"),
   },
   {
     id: "wellness",
@@ -98,13 +163,7 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     accent: "#d97706",
     lightBg: "#fffbeb",
     iconBg: "#fde68a",
-    filterFn: (p) =>
-      p.cat.includes("Wellness") ||
-      p.cat.includes("Immunity") ||
-      p.cat.includes("Energy") ||
-      /wellness|chyawanprash|honey|ors|glucon|tonic|ayurvedic|immunity|glucose/i.test(
-        p.name + " " + (p.sub || "")
-      ),
+    filterFn: (p) => isProductInCategory(p.cat, "wellness"),
   },
   {
     id: "monsoon",
@@ -115,13 +174,7 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     accent: "#0891b2",
     lightBg: "#ecfeff",
     iconBg: "#a5f3fc",
-    filterFn: (p) =>
-      p.cat.includes("Monsoon") ||
-      p.cat.includes("Antiseptic") ||
-      p.cat.includes("First Aid") ||
-      /dettol|antiseptic|hansaplast|suthol|dusting|candid|cough|vicks|boroline|bandage|washproof/i.test(
-        p.name + " " + (p.sub || "") + " " + p.cat
-      ),
+    filterFn: (p) => isProductInCategory(p.cat, "monsoon"),
   },
   {
     id: "baby",
@@ -132,8 +185,7 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     accent: "#0284c7",
     lightBg: "#f0f9ff",
     iconBg: "#bae6fd",
-    filterFn: (p) =>
-      p.cat.includes("Baby") || /baby|nipple|bottle|infant|dexolac/i.test(p.name + " " + (p.sub || "")),
+    filterFn: (p) => isProductInCategory(p.cat, "baby"),
   },
   {
     id: "women",
@@ -144,13 +196,7 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     accent: "#db2777",
     lightBg: "#fdf2f8",
     iconBg: "#fbcfe8",
-    filterFn: (p) =>
-      p.cat.includes("Women") ||
-      p.cat.includes("Personal Care") ||
-      p.cat.includes("Hygiene") ||
-      /v wash|veet|hair remover|body oil|intimate|women|hygiene|skincare|boroline|moistur/i.test(
-        p.name + " " + (p.sub || "") + " " + p.cat
-      ),
+    filterFn: (p) => isProductInCategory(p.cat, "women"),
   },
   {
     id: "men",
@@ -161,11 +207,7 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     accent: "#0f766e",
     lightBg: "#f0fdfa",
     iconBg: "#99f6e4",
-    filterFn: (p) =>
-      p.cat.includes("Men") ||
-      /balm|volini|amrutanjan|energy|glucon|pain relief|oil|soap|sanitizer|spray|moov/i.test(
-        p.name + " " + (p.sub || "") + " " + p.cat
-      ),
+    filterFn: (p) => isProductInCategory(p.cat, "men"),
   },
   {
     id: "diet",
@@ -176,14 +218,7 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     accent: "#16a34a",
     lightBg: "#f0fdf4",
     iconBg: "#bbf7d0",
-    filterFn: (p) =>
-      p.cat.includes("Diet") ||
-      p.cat.includes("Digest") ||
-      p.cat.includes("Antacid") ||
-      p.cat.includes("Laxative") ||
-      /eno|sugar free|isabgol|softovac|pet safa|honey|ors|laxative|churna|nityam/i.test(
-        p.name + " " + (p.sub || "")
-      ),
+    filterFn: (p) => isProductInCategory(p.cat, "diet"),
   },
   {
     id: "hair",
@@ -194,11 +229,7 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     accent: "#9333ea",
     lightBg: "#faf5ff",
     iconBg: "#e9d5ff",
-    filterFn: (p) =>
-      p.cat.includes("Hair") ||
-      /hair|oil|love nature|scalp|shampoo|dandruff|body oil|jac/i.test(
-        p.name + " " + (p.sub || "") + " " + p.cat
-      ),
+    filterFn: (p) => isProductInCategory(p.cat, "hair"),
   },
   {
     id: "medical-supplies",
@@ -209,13 +240,7 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     accent: "#374151",
     lightBg: "#f8fafc",
     iconBg: "#e2e8f0",
-    filterFn: (p) =>
-      p.cat.includes("Medical") ||
-      p.cat.includes("Supplies") ||
-      p.cat.includes("Device") ||
-      /thermometer|oximeter|monitor|cuff|glove|mask|disposable|bandage|syringe|needle|device/i.test(
-        p.name + " " + (p.sub || "") + " " + p.cat
-      ),
+    filterFn: (p) => isProductInCategory(p.cat, "medical-supplies"),
   },
   {
     id: "insurance",
@@ -263,8 +288,6 @@ export const KEY_CATEGORIES_CONFIG: KeyCategoryMeta[] = [
     lightBg: "#f0fdfa",
     iconBg: "#99f6e4",
     route: "vaccines",
-    filterFn: (p) =>
-      p.cat.includes("Vaccine") ||
-      /vaccine|immuniz|injection|syringe|needle/i.test(p.name + " " + (p.sub || "") + " " + p.cat),
+    filterFn: (p) => isProductInCategory(p.cat, "vaccines"),
   },
 ];

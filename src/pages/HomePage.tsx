@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import type { Page } from "../App";
 import ProductDetailModal, { nameToId, type PopupProduct } from "../components/ProductModal";
 import KeyCategoriesBar, { KEY_CATEGORIES, KeyCategoryItem } from "../components/KeyCategoriesBar";
-import { KEY_CATEGORIES_CONFIG } from "../lib/keyCategories";
+import { KEY_CATEGORIES_CONFIG, isProductInCategory } from "../lib/keyCategories";
 import InsuranceModal from "../components/InsuranceModal";
 import { useCart } from "../contexts/CartContext";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
@@ -342,19 +342,15 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
     const sections = eligibleConfigs.map((catConfig) => {
       const prodsForCat = dbProducts.filter((p) => {
         if (catConfig.filterFn) {
-          const match = catConfig.filterFn({
+          return catConfig.filterFn({
             name: p.name,
             sub: p.details || p.subtitle || "",
             cat: p.category_name,
             disc: p.discount_percent > 0 ? `${p.discount_percent}%` : "",
             price: String(p.customer_price),
           });
-          if (match) return true;
         }
-        return (
-          p.category_name.toLowerCase().includes(catConfig.short.toLowerCase()) ||
-          p.category_name.toLowerCase().includes(catConfig.id.toLowerCase())
-        );
+        return isProductInCategory(p.category_name, catConfig.id);
       });
 
       if (prodsForCat.length === 0) return null;

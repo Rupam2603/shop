@@ -3,7 +3,7 @@ import type { Page } from "../App";
 import KeyCategoriesBar, { KEY_CATEGORIES, KeyCategoryItem } from "../components/KeyCategoriesBar";
 import InsuranceModal from "../components/InsuranceModal";
 import ProductDetailModal, { retailerPrice, PopupProduct } from "../components/ProductModal";
-import { KEY_CATEGORIES_CONFIG, KeyCategoryMeta } from "../lib/keyCategories";
+import { KEY_CATEGORIES_CONFIG, KeyCategoryMeta, isProductInCategory } from "../lib/keyCategories";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
 import { useCart } from "../contexts/CartContext";
 
@@ -31,6 +31,11 @@ export default function CategoryPage({
   const [dbProducts, setDbProducts] = useState<DbProduct[] | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("featured");
+  const [selectedSubCat, setSelectedSubCat] = useState<string>("All");
+
+  useEffect(() => {
+    setSelectedSubCat("All");
+  }, [categoryId]);
 
   // Lookup current Category Configuration
   const categoryMeta: KeyCategoryMeta = useMemo(() => {
@@ -47,7 +52,7 @@ export default function CategoryPage({
         accent: "#006a39",
         lightBg: "#eef7f0",
         iconBg: "#bbf7d0",
-        filterFn: () => true,
+        filterFn: (p: any) => isProductInCategory(p.cat, categoryId),
       }
     );
   }, [categoryId]);
@@ -95,6 +100,7 @@ export default function CategoryPage({
       orig: p.mrp > (p.retailer_price || p.customer_price) ? `₹${Math.round(p.mrp)}` : "",
       disc: p.retailer_discount_percent > 0 ? `${p.retailer_discount_percent}%` : (p.discount_percent > 0 ? `${p.discount_percent}%` : ""),
       cat: p.category_name,
+      subCat: p.sub_category_name || "",
       brand: p.brand,
       img: p.image_url,
       stock: p.stock ?? 50,
@@ -103,12 +109,28 @@ export default function CategoryPage({
     }));
   }, [dbProducts]);
 
+  const availableSubCategories = useMemo(() => {
+    if (!productList || productList.length === 0) return [];
+    const inCat = productList.filter((p) =>
+      categoryMeta.filterFn ? categoryMeta.filterFn(p) : isProductInCategory(p.cat, categoryMeta.id)
+    );
+    const subs = Array.from(new Set(inCat.map((p) => p.subCat).filter(Boolean))) as string[];
+    return subs.sort();
+  }, [productList, categoryMeta]);
+
   const filteredProducts = useMemo(() => {
     let list = productList;
 
     // Filter by specific Category's logic
     if (categoryMeta.filterFn) {
       list = list.filter(categoryMeta.filterFn);
+    } else {
+      list = list.filter((p) => isProductInCategory(p.cat, categoryMeta.id));
+    }
+
+    // Filter by Sub-Category if selected
+    if (selectedSubCat !== "All") {
+      list = list.filter((p) => p.subCat === selectedSubCat);
     }
 
     if (searchQuery.trim()) {
@@ -130,7 +152,7 @@ export default function CategoryPage({
     }
 
     return list;
-  }, [productList, categoryMeta, searchQuery, sortBy, isRetailer]);
+  }, [productList, categoryMeta, selectedSubCat, searchQuery, sortBy, isRetailer]);
 
   const handleSelectKeyCategory = (cat: KeyCategoryItem) => {
     if (cat.id === "insurance") {
@@ -246,6 +268,36 @@ export default function CategoryPage({
             <p className="text-xs font-medium">
               Viewing <span className="font-bold text-[#7dd3fc]">wholesale distributor prices</span> for verified pharmacies & retailers.
             </p>
+          </div>
+        )}
+
+        {/* ── Sub-Category Filters (if available) ── */}
+        {availableSubCategories.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
+            <span className="text-xs font-bold text-[#073b4c] shrink-0 pl-1 mr-1">Sub-categories:</span>
+            <button
+              onClick={() => setSelectedSubCat("All")}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                selectedSubCat === "All"
+                  ? "bg-[#006a39] text-white shadow-xs"
+                  : "bg-white text-[#4a5568] border border-[#e2e8f0] hover:bg-emerald-50"
+              }`}
+            >
+              All
+            </button>
+            {availableSubCategories.map((sub) => (
+              <button
+                key={sub}
+                onClick={() => setSelectedSubCat(sub)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  selectedSubCat === sub
+                    ? "bg-[#006a39] text-white shadow-xs"
+                    : "bg-white text-[#4a5568] border border-[#e2e8f0] hover:bg-emerald-50"
+                }`}
+              >
+                {sub}
+              </button>
+            ))}
           </div>
         )}
 
