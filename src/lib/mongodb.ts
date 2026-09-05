@@ -3,14 +3,23 @@ import { MongoClient, Db, Collection } from "mongodb";
 let cachedClient: MongoClient | null = null;
 let cachedDb: Db | null = null;
 
-const MONGODB_URI = import.meta.env.VITE_MONGODB_URI ||
-  "mongodb+srv://subhonehealthgroup_db_user:njrc4zTmwUKB7hHb@cluster0.m528hq0.mongodb.net/";
+// ⚠️ CRITICAL: MongoDB URI must be set via environment variables only
+// Never hardcode credentials in source code - it exposes secrets in the bundle
+const MONGODB_URI = import.meta.env.VITE_MONGODB_URI;
 const DB_NAME = import.meta.env.VITE_MONGODB_DB || "subhone_store";
+
+if (!MONGODB_URI) {
+  console.warn("⚠️ VITE_MONGODB_URI not set - MongoDB features will not work. Add it to your .env file.");
+}
 
 /**
  * Connect to MongoDB
  */
 export async function connectMongoDB(): Promise<Db> {
+  if (!MONGODB_URI) {
+    throw new Error("VITE_MONGODB_URI environment variable is not set. MongoDB features are disabled.");
+  }
+
   if (cachedDb) {
     return cachedDb;
   }

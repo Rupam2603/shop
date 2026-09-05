@@ -21,6 +21,7 @@ import SupportChatbot from "./components/SupportChatbot";
 import { useAuth, toLegacyUser } from "./contexts/AuthContext";
 import { parseHashToState, pushPageState, replacePageState } from "./lib/navigation";
 import { supabase } from "./lib/supabase";
+import { runMigrationsOnStartup } from "./lib/migrations";
 
 export type Page = "home" | "medicines" | "category" | "insurance" | "vaccines" | "lab-tests" | "consult" | "offers" | "profile" | "checkout" | "search";
 export type UserRole = "admin" | "retailer" | "customer" | "delivery_partner";
@@ -173,6 +174,11 @@ export default function App() {
   });
 
   useEffect(() => {
+    // Run database migrations on app startup
+    runMigrationsOnStartup().catch(err =>
+      console.error("Migration error during startup:", err)
+    );
+
     const current = parseHashToState();
     replacePageState(current.page, current.category, current.query);
 
