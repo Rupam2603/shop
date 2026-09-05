@@ -52,6 +52,16 @@ import { exportAttendanceReportToExcel } from "../lib/attendanceExcelExport";
 import { fetchOrdersForPartner } from "../lib/deliveryOrders";
 import { fetchAllOnDutyPartnerLocations, DeliveryLocationPing } from "../lib/deliveryLocation";
 import LiveDeliveryMap from "../components/LiveDeliveryMap";
+import {
+  fetchCategories,
+  fetchSubCategories,
+  createCategory as dbCreateCategory,
+  createSubCategory as dbCreateSubCategory,
+  deleteCategory as dbDeleteCategory,
+  deleteSubCategory as dbDeleteSubCategory,
+  DbCategory,
+  DbSubCategory,
+} from "../lib/categories";
 
 interface Props {
   user: CurrentUser;
@@ -447,11 +457,18 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 /* ─── Product Modal (Glassmorphic Studio) ─── */
 function ProductModal({
   open, mode, form, setForm, categories,
-  onAddCategory, onSave, onClose, isSaving, saveError,
+  dbCategories, dbSubCategories,
+  onAddCategory, onDeleteCategory, onAddSubCategory, onDeleteSubCategory,
+  onSave, onClose, isSaving, saveError,
 }: {
   open: boolean; mode: "add" | "edit";
   form: ProductFormState; setForm: React.Dispatch<React.SetStateAction<ProductFormState>>;
-  categories: string[]; onAddCategory: (name: string) => void;
+  categories: string[]; 
+  dbCategories: DbCategory[]; dbSubCategories: DbSubCategory[];
+  onAddCategory: (name: string) => Promise<boolean>;
+  onDeleteCategory: (id: string) => Promise<boolean>;
+  onAddSubCategory: (name: string, categoryId: string) => Promise<boolean>;
+  onDeleteSubCategory: (id: string) => Promise<boolean>;
   onSave: () => void; onClose: () => void;
   isSaving?: boolean; saveError?: string;
 }) {
@@ -459,9 +476,14 @@ function ProductModal({
   const cameraRef = useRef<HTMLInputElement>(null);
   const [showAddCat, setShowAddCat] = useState(false);
   const [newCatName, setNewCatName] = useState("");
+  const [showAddSubCat, setShowAddSubCat] = useState(false);
+  const [newSubCatName, setNewSubCatName] = useState("");
 
   useEffect(() => {
-    if (open) { setShowAddCat(false); setNewCatName(""); }
+    if (open) { 
+      setShowAddCat(false); setNewCatName(""); 
+      setShowAddSubCat(false); setNewSubCatName("");
+    }
   }, [open]);
 
   useEffect(() => {
@@ -480,14 +502,34 @@ function ProductModal({
     e.target.value = "";
   };
 
-  const submitNewCat = () => {
+  const submitNewCat = async () => {
     const trimmed = newCatName.trim();
-    if (trimmed && !categories.includes(trimmed)) {
-      onAddCategory(trimmed);
-      setForm((p) => ({ ...p, category: trimmed, hsn: "" }));
+    if (trimmed && !dbCategories.some(c => c.name.toLowerCase() === trimmed.toLowerCase())) {
+      const success = await onAddCategory(trimmed);
+      if (success) {
+        // Will be updated via props, but we can't reliably select it immediately without the new ID.
+        // For now just close.
+        setShowAddCat(false);
+        setNewCatName("");
+      }
+    } else {
+      setShowAddCat(false);
+      setNewCatName("");
     }
-    setShowAddCat(false);
-    setNewCatName("");
+  };
+
+  const submitNewSubCat = async () => {
+    const trimmed = newSubCatName.trim();
+    if (trimmed && form.category_id && !dbSubCategories.some(sc => sc.name.toLowerCase() === trimmed.toLowerCase() && sc.category_id === form.category_id)) {
+      const success = await onAddSubCategory(trimmed, form.category_id);
+      if (success) {
+        setShowAddSubCat(false);
+        setNewSubCatName("");
+      }
+    } else {
+      setShowAddSubCat(false);
+      setNewSubCatName("");
+    }
   };
 
   const currentBadges = form.badges || DEFAULT_PRODUCT_BADGES;
@@ -620,43 +662,115 @@ function ProductModal({
               className={INPUT_CLS} />
           </Field>
 
-          {/* Category + Add Category */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px]">Category *</label>
-              <button type="button" onClick={() => setShowAddCat(!showAddCat)}
-                className="text-[11px] font-bold text-[#006a39] hover:underline flex items-center gap-1 cursor-pointer">
-                <span>+</span>
-                <span>Add Category</span>
-              </button>
+          {/* Category Section */}
+          <div className="flex flex-col gap-4">
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px]">Category *</label>
+                <button type="button" onClick={() => setShowAddCat(!showAddCat)}
+                  className="text-[11px] font-bold text-[#006a39] hover:underline flex items-center gap-1 cursor-pointer">
+                  <span>+</span>
+                  <span>Add Category</span>
+                </button>
+              </div>
+              <div className="flex gap-2 items-center">
+                <select
+                  value={form.category_id || ""}
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    const cat = dbCategories.find(c => c.id === selectedId);
+                    setForm((p) => ({
+                      ...p,
+                      category_id: selectedId,
+                      category: cat?.name || "",
+                      hsn: cat?.hsn_code || p.hsn || "3004",
+                      sub_category_id: "",
+                      sub_category_name: ""
+                    }));
+                  }}
+                  className={`${INPUT_CLS} flex-1`}>
+                  <option value="">Select Category</option>
+                  {dbCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                {form.category_id && (
+                  <button type="button" onClick={() => {
+                    if(confirm("Are you sure you want to delete this category?")) onDeleteCategory(form.category_id!);
+                  }} className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                )}
+              </div>
+              {showAddCat && (
+                <div className="flex gap-2 mt-2.5 animate-in fade-in duration-150">
+                  <input type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)}
+                    placeholder="Enter new category name"
+                    onKeyDown={(e) => e.key === "Enter" && submitNewCat()}
+                    className={`${INPUT_CLS} flex-1`} />
+                  <button type="button" onClick={submitNewCat}
+                    className="px-4 py-2 rounded-xl bg-[#006a39] text-white text-xs font-bold hover:opacity-90 shrink-0 cursor-pointer shadow-xs">
+                    Add
+                  </button>
+                  <button type="button" onClick={() => { setShowAddCat(false); setNewCatName(""); }}
+                    className="px-3 py-2 rounded-xl border border-[#dce7db] text-xs font-semibold text-[#073b4c] hover:bg-white shrink-0 cursor-pointer">
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
-            <select
-              value={form.category}
-              onChange={(e) => {
-                const selected = e.target.value;
-                setForm((p) => ({
-                  ...p,
-                  category: selected,
-                  hsn: CAT_HSN[selected] || p.hsn || "3004",
-                }));
-              }}
-              className={INPUT_CLS}>
-              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            {showAddCat && (
-              <div className="flex gap-2 mt-2.5 animate-in fade-in duration-150">
-                <input type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)}
-                  placeholder="Enter new category name"
-                  onKeyDown={(e) => e.key === "Enter" && submitNewCat()}
-                  className={`${INPUT_CLS} flex-1`} />
-                <button type="button" onClick={submitNewCat}
-                  className="px-4 py-2 rounded-xl bg-[#006a39] text-white text-xs font-bold hover:opacity-90 shrink-0 cursor-pointer shadow-xs">
-                  Add
-                </button>
-                <button type="button" onClick={() => { setShowAddCat(false); setNewCatName(""); }}
-                  className="px-3 py-2 rounded-xl border border-[#dce7db] text-xs font-semibold text-[#073b4c] hover:bg-white shrink-0 cursor-pointer">
-                  Cancel
-                </button>
+
+            {/* Sub-Category Section */}
+            {form.category_id && (
+              <div className="animate-in fade-in duration-300">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px]">Sub-Category</label>
+                  <button type="button" onClick={() => setShowAddSubCat(!showAddSubCat)}
+                    className="text-[11px] font-bold text-[#006a39] hover:underline flex items-center gap-1 cursor-pointer">
+                    <span>+</span>
+                    <span>Add Sub-Category</span>
+                  </button>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <select
+                    value={form.sub_category_id || ""}
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      const scat = dbSubCategories.find(s => s.id === selectedId);
+                      setForm((p) => ({
+                        ...p,
+                        sub_category_id: selectedId,
+                        sub_category_name: scat?.name || ""
+                      }));
+                    }}
+                    className={`${INPUT_CLS} flex-1`}>
+                    <option value="">No Sub-Category</option>
+                    {dbSubCategories
+                      .filter(sc => sc.category_id === form.category_id)
+                      .map((sc) => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
+                  </select>
+                  {form.sub_category_id && (
+                    <button type="button" onClick={() => {
+                      if(confirm("Are you sure you want to delete this sub-category?")) onDeleteSubCategory(form.sub_category_id!);
+                    }} className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                  )}
+                </div>
+                {showAddSubCat && (
+                  <div className="flex gap-2 mt-2.5 animate-in fade-in duration-150">
+                    <input type="text" value={newSubCatName} onChange={(e) => setNewSubCatName(e.target.value)}
+                      placeholder="Enter new sub-category name"
+                      onKeyDown={(e) => e.key === "Enter" && submitNewSubCat()}
+                      className={`${INPUT_CLS} flex-1`} />
+                    <button type="button" onClick={submitNewSubCat}
+                      className="px-4 py-2 rounded-xl bg-[#006a39] text-white text-xs font-bold hover:opacity-90 shrink-0 cursor-pointer shadow-xs">
+                      Add
+                    </button>
+                    <button type="button" onClick={() => { setShowAddSubCat(false); setNewSubCatName(""); }}
+                      className="px-3 py-2 rounded-xl border border-[#dce7db] text-xs font-semibold text-[#073b4c] hover:bg-white shrink-0 cursor-pointer">
+                      Cancel
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -836,6 +950,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(INITIAL_CATEGORIES);
+  const [dbCategories, setDbCategories] = useState<DbCategory[]>([]);
+  const [dbSubCategories, setDbSubCategories] = useState<DbSubCategory[]>([]);
 
   // Admin profile state
   const [adminAvatar, setAdminAvatar] = useState<string>(user?.profileImage || "");
@@ -933,6 +1049,14 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
   useEffect(() => {
     let mounted = true;
+
+    // Fetch categories and sub-categories
+    fetchCategories().then(cats => {
+      if (mounted) setDbCategories(cats || []);
+    });
+    fetchSubCategories().then(subCats => {
+      if (mounted) setDbSubCategories(subCats || []);
+    });
 
     // 1. Fetch store settings permanently from Supabase database
     fetchStoreSettings().then((loadedSettings) => {
@@ -1234,8 +1358,49 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   };
   const closeModal = () => setModal({ open: false, mode: "add" });
 
-  const addCategory = (name: string) => {
-    setCategories((prev) => [...prev, name]);
+  const addCategory = async (name: string) => {
+    const { data, error } = await dbCreateCategory(name);
+    if (data) {
+      setDbCategories((prev) => [...prev, data]);
+      setCategories((prev) => [...prev, data.name]);
+      return true;
+    } else {
+      alert("Error adding category: " + error);
+      return false;
+    }
+  };
+
+  const deleteCategory = async (id: string) => {
+    const { success, error } = await dbDeleteCategory(id);
+    if (success) {
+      setDbCategories((prev) => prev.filter(c => c.id !== id));
+      return true;
+    } else {
+      alert("Error deleting category: " + error);
+      return false;
+    }
+  };
+
+  const addSubCategory = async (name: string, categoryId: string) => {
+    const { data, error } = await dbCreateSubCategory(name, categoryId);
+    if (data) {
+      setDbSubCategories((prev) => [...prev, data]);
+      return true;
+    } else {
+      alert("Error adding sub-category: " + error);
+      return false;
+    }
+  };
+
+  const deleteSubCategory = async (id: string) => {
+    const { success, error } = await dbDeleteSubCategory(id);
+    if (success) {
+      setDbSubCategories((prev) => prev.filter(sc => sc.id !== id));
+      return true;
+    } else {
+      alert("Error deleting sub-category: " + error);
+      return false;
+    }
   };
 
   const [isSavingProduct, setIsSavingProduct] = useState(false);
@@ -1757,7 +1922,12 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       <ProductModal
         open={modal.open} mode={modal.mode}
         form={form} setForm={setForm}
-        categories={categories} onAddCategory={addCategory}
+        categories={categories} 
+        dbCategories={dbCategories} dbSubCategories={dbSubCategories}
+        onAddCategory={addCategory}
+        onDeleteCategory={deleteCategory}
+        onAddSubCategory={addSubCategory}
+        onDeleteSubCategory={deleteSubCategory}
         onSave={saveProduct} onClose={closeModal}
         isSaving={isSavingProduct} saveError={productSaveError}
       />
