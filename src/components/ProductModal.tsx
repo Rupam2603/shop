@@ -108,6 +108,19 @@ export function getProductReviews(productId: number) {
 }
 
 const CATEGORY_FEATURES: Record<string, string[]> = {
+  "Skin Care & Ointments":          ["Dermatologically tested and clinically proven", "Suitable for sensitive and normal skin types", "Free from parabens, sulfates, and harsh dyes", "Provides 12-hour protection with regular use"],
+  "Pain Relief & Muscle Care":       ["Fast-acting formula with targeted deep relief", "Proven for back pain, joint aches, and sprains", "Non-greasy; absorbs quickly into skin", "Safe for daily use on adults"],
+  "Weight Loss & Metabolism":       ["Natural dietary fiber and metabolism boosters", "Sugar-free formulation supporting healthy weight goals", "Supports digestive balance and gut microbiome", "Safe for daily dietary supplementation"],
+  "Daily Wellness & Immunity":      ["Enriched with electrolytes and essential vitamins", "Instant glucose replenishment after activity", "Pleasant taste; dissolves easily in water", "Safe for adults and children above 2 years"],
+  "Monsoon Health & Antiseptics":    ["Kills 99.9% of bacteria and germs on contact", "Non-stinging formula safe for all skin types", "Promotes faster healing of minor wounds", "Suitable for cuts, burns, and abrasions"],
+  "Baby Care & Infant Nutrition":   ["Clinically tested for infant skin safety", "Hypoallergenic and paediatrician recommended", "No harmful dyes, parabens, or fragrances", "Approved for daily use from birth onwards"],
+  "Women's Health & Hygiene":       ["pH-balanced formula preserving natural intimate microflora", "Hypoallergenic and gynecologist tested", "Gentle everyday hygiene with long-lasting freshness", "Cruelty-free and responsibly manufactured"],
+  "Men's Health & Vitality":        ["Formulated specifically for active men's wellness", "Long-lasting protection against odor and irritation", "Energizing ingredients supporting physical stamina", "Dermatologically tested for daily grooming"],
+  "Diet & Digestive Health":        ["Provides acid relief within 3–5 minutes", "Balances stomach pH safely and effectively", "No artificial preservatives or harsh chemicals", "Safe for regular use; non-habit forming"],
+  "Hair Care & Scalp Therapy":      ["Pure herbal nourishment for strong hair roots", "Controls dandruff and soothes itchy scalp", "Non-sticky formula with cold-pressed natural oils", "Promotes natural thickness and healthy shine"],
+  "Vaccines & Medical Disposables": ["Hospital-grade sterile disposal standards", "Meets strict national clinical certifications", "Certified safe for diagnostic and clinical use", "Latex-free and biocompatible materials"],
+  "Medical Supplies & Devices":      ["Medical-grade quality with ISO certification", "Sterile packaging for safe hygienic use", "Meets national and international safety standards", "Suitable for both home and clinical settings"],
+  // Backward compatibility
   "Pain Relief & Balms":             ["Fast-acting formula with targeted deep relief", "Proven for back pain, joint aches, and sprains", "Non-greasy; absorbs quickly into skin", "Safe for daily use on adults"],
   "Energy, Hydration & Supplements": ["Enriched with electrolytes and essential vitamins", "Instant glucose replenishment after activity", "Pleasant taste; dissolves easily in water", "Safe for adults and children above 2 years"],
   "First Aid & Antiseptics":         ["Kills 99.9% of bacteria and germs on contact", "Non-stinging formula safe for all skin types", "Promotes faster healing of minor wounds", "Suitable for cuts, burns, and abrasions"],
@@ -119,6 +132,19 @@ const CATEGORY_FEATURES: Record<string, string[]> = {
 };
 
 const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+  "Skin Care & Ointments":          "Dermatologically tested formula designed to soothe, protect, and nourish skin. Free from harsh chemicals and suitable for daily use. Provides lasting relief from common skin concerns while maintaining the skin's natural barrier.",
+  "Pain Relief & Muscle Care":       "Targeted pain relief formulated with proven analgesic and anti-inflammatory agents. Penetrates fast to provide sustained relief from muscle soreness, joint pain, and stiffness. Ideal for back pain, neck aches, sports injuries, and post-workout recovery.",
+  "Weight Loss & Metabolism":       "Scientifically formulated nutritional supplements designed to support healthy metabolic function and energy levels. Enriched with natural dietary fibers and calorie-control active extracts.",
+  "Daily Wellness & Immunity":      "A trusted nutritional formulation enriched with essential glucose, electrolytes, and micronutrients. Replenishes energy reserves, restores hydration balance, and supports active wellness throughout the day. Suitable for all age groups.",
+  "Monsoon Health & Antiseptics":    "Clinically proven antiseptic formulation that eliminates pathogens on contact. Safe for use on cuts, abrasions, minor burns, and skin injuries. Promotes healing while protecting against secondary infections.",
+  "Baby Care & Infant Nutrition":   "Specially formulated for the delicate needs of infant skin. Hypoallergenic, paediatrician-recommended, and free from harmful chemicals. Provides safe, gentle care that parents can trust for everyday use.",
+  "Women's Health & Hygiene":       "Gentle pH-balanced personal care formulation designed for everyday intimate hygiene. Prevents discomfort, maintains natural microbiome balance, and keeps skin feeling clean and confident.",
+  "Men's Health & Vitality":        "Specialized grooming and vitality formulation engineered for modern men. Delivers fast, effective relief, deep cleansing, and reliable freshness throughout intense physical activity.",
+  "Diet & Digestive Health":        "Fast-acting digestive relief formulation that neutralises excess gastric acid within minutes. Alleviates heartburn, acid reflux, bloating, and indigestion discomfort. Gentle on the stomach lining with no harsh side effects.",
+  "Hair Care & Scalp Therapy":      "Therapeutic hair and scalp formulation enriched with herbal botanicals and essential micronutrients. Strengthens folicles from root to tip, relieves scalp dryness, and restores vibrant texture.",
+  "Vaccines & Medical Disposables": "Certified clinical disposables and immunization supplies manufactured under stringent cold-chain and sterilization protocols. Trusted by healthcare professionals for patient care.",
+  "Medical Supplies & Devices":      "Medical-grade quality product manufactured to international safety standards. Designed for reliable, consistent performance across clinical and home use. Rigorous quality control ensures every unit meets strict safety requirements.",
+  // Backward compatibility
   "Pain Relief & Balms":             "Targeted pain relief formulated with proven analgesic and anti-inflammatory agents. Penetrates fast to provide sustained relief from muscle soreness, joint pain, and stiffness. Ideal for back pain, neck aches, sports injuries, and post-workout recovery.",
   "Energy, Hydration & Supplements": "A trusted nutritional formulation enriched with essential glucose, electrolytes, and micronutrients. Replenishes energy reserves, restores hydration balance, and supports active wellness throughout the day. Suitable for all age groups.",
   "First Aid & Antiseptics":         "Clinically proven antiseptic formulation that eliminates pathogens on contact. Safe for use on cuts, abrasions, minor burns, and skin injuries. Promotes healing while protecting against secondary infections.",

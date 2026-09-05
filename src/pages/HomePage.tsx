@@ -82,57 +82,7 @@ export interface HomeCategorySectionItem {
   products: HomeCategoryProduct[];
 }
 
-/* ─── 8 real store categories metadata ─── */
-const CATEGORY_CONFIGS = [
-  {
-    cat: "Pain Relief & Balms",
-    short: "Pain Relief",
-    accent: "#c0392b", lightBg: "#fff0ee", iconBg: "#ffd5cf",
-    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M19 3H5c-1.1 0-2 .9-2 2v3.01h.01L3 8c0 1.65 1.19 3.02 2.76 3.28L9 11.72V19c0 1.1.89 2 2 2h2c1.11 0 2-.9 2-2v-7.28l3.24-.44C19.81 11.02 21 9.65 21 8V5c0-1.1-.9-2-2-2z" fill="#c0392b"/></svg>,
-  },
-  {
-    cat: "Energy, Hydration & Supplements",
-    short: "Energy & Supplements",
-    accent: "#d97706", lightBg: "#fffbeb", iconBg: "#fde68a",
-    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="#d97706"/></svg>,
-  },
-  {
-    cat: "First Aid & Antiseptics",
-    short: "First Aid",
-    accent: "#047857", lightBg: "#ecfdf5", iconBg: "#a7f3d0",
-    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" fill="#047857"/></svg>,
-  },
-  {
-    cat: "Antacids, Digestion & Laxatives",
-    short: "Digestion",
-    accent: "#1d4ed8", lightBg: "#eff6ff", iconBg: "#bfdbfe",
-    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="#1d4ed8"/></svg>,
-  },
-  {
-    cat: "Skin Care, Powders & Ointments",
-    short: "Skin Care",
-    accent: "#7c3aed", lightBg: "#f5f3ff", iconBg: "#ddd6fe",
-    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#7c3aed"/></svg>,
-  },
-  {
-    cat: "Personal Care, Hygiene & Others",
-    short: "Personal Care",
-    accent: "#0e7490", lightBg: "#ecfeff", iconBg: "#a5f3fc",
-    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#0e7490"/></svg>,
-  },
-  {
-    cat: "Baby Care",
-    short: "Baby Care",
-    accent: "#0369a1", lightBg: "#f0f9ff", iconBg: "#bae6fd",
-    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 13H9v-2h2v2zm0-4H9V7h2v4zm4 4h-2v-2h2v2zm0-4h-2V7h2v4z" fill="#0369a1"/></svg>,
-  },
-  {
-    cat: "Medical Supplies & General",
-    short: "Medical Supplies",
-    accent: "#374151", lightBg: "#f9fafb", iconBg: "#e5e7eb",
-    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" fill="#374151"/></svg>,
-  },
-];
+
 
 function ProductCard({
   p,

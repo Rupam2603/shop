@@ -96,6 +96,8 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
     if (!dbProducts || dbProducts.length === 0) return [];
 
     const suppProducts = dbProducts.filter((p) =>
+      p.category_name === "Daily Wellness & Immunity" ||
+      p.category_name === "Skin Care & Ointments" ||
       p.category_name === "Energy, Hydration & Supplements" ||
       p.category_name === "Skin Care, Powders & Ointments" ||
       p.discount_percent >= 15
