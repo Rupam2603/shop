@@ -18,6 +18,8 @@ export interface DbProduct {
   subtitle: string | null;
   category_id: string | null;
   category_name: string;
+  sub_category_id?: string | null;
+  sub_category_name?: string | null;
   brand: string;
   sku: string | null;
   hsn: string;
@@ -25,6 +27,7 @@ export interface DbProduct {
   customer_price: number;
   retailer_price: number;
   discount_percent: number;
+  retailer_discount_percent: number;
   stock: number;
   image_url: string;
   web_image_url?: string;
@@ -45,6 +48,8 @@ export interface DbInventoryProduct {
   subtitle?: string | null;
   category_id?: string | null;
   category_name: string;
+  sub_category_id?: string | null;
+  sub_category_name?: string | null;
   brand: string;
   sku?: string | null;
   batch_no?: string | null;
@@ -54,6 +59,7 @@ export interface DbInventoryProduct {
   retailer_price: number;
   purchase_price?: number;
   discount_percent: number;
+  retailer_discount_percent: number;
   stock: number;
   min_stock_level?: number;
   unit?: string;
@@ -119,6 +125,7 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<DbPro
       customer_price: Number(r.customer_price) || 0,
       retailer_price: Number(r.retailer_price) || 0,
       discount_percent: Number(r.discount_percent) || 0,
+      retailer_discount_percent: Number(r.retailer_discount_percent) || 0,
       stock: Number(r.stock) || 0,
       is_flash_sale: Boolean(r.is_flash_sale),
       is_featured: Boolean(r.is_featured),
@@ -185,6 +192,7 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<DbPro
           customer_price: Number(r.customer_price) || 0,
           retailer_price: Number(r.retailer_price) || 0,
           discount_percent: Number(r.discount_percent) || 0,
+          retailer_discount_percent: Number(r.retailer_discount_percent) || 0,
           stock: Number(r.stock) || 0,
           is_listed: r.is_listed !== false,
         })) as DbProduct[];
@@ -235,6 +243,8 @@ export async function createProduct(
     const pSubtitle = product.subtitle || product.details || null;
     const pCatId = catId;
     const pCatName = product.category_name;
+    const pSubCatId = product.sub_category_id || null;
+    const pSubCatName = product.sub_category_name || null;
     const pBrand = product.brand;
     const pSku = product.sku || `SKU-${numId}`;
     const pHsn = product.hsn || "3004";
@@ -252,11 +262,11 @@ export async function createProduct(
 
     const insertedProd = await sql`
       INSERT INTO products (
-        numeric_id, name, subtitle, category_id, category_name, brand, sku, hsn, mrp,
+        numeric_id, name, subtitle, category_id, category_name, sub_category_id, sub_category_name, brand, sku, hsn, mrp,
         customer_price, retailer_price, discount_percent, stock, image_url, details,
         is_flash_sale, is_featured, is_listed, badges, updated_at
       ) VALUES (
-        ${numId}, ${pName}, ${pSubtitle}, ${pCatId}, ${pCatName}, ${pBrand}, ${pSku}, ${pHsn}, ${pMrp},
+        ${numId}, ${pName}, ${pSubtitle}, ${pCatId}, ${pCatName}, ${pSubCatId}, ${pSubCatName}, ${pBrand}, ${pSku}, ${pHsn}, ${pMrp},
         ${pCustPrice}, ${pRetPrice}, ${pDisc}, ${pStock}, ${pImage}, ${pDetails},
         ${pFlash}, ${pFeat}, ${pIsListed}, ${pBadges}::jsonb, now()
       ) RETURNING *
@@ -343,6 +353,8 @@ export async function updateProduct(
     const pSubtitle = updates.subtitle !== undefined ? updates.subtitle : existing.subtitle;
     const pCatId = catId !== undefined ? catId : existing.category_id;
     const pCatName = updates.category_name !== undefined ? updates.category_name : existing.category_name;
+    const pSubCatId = updates.sub_category_id !== undefined ? updates.sub_category_id : existing.sub_category_id;
+    const pSubCatName = updates.sub_category_name !== undefined ? updates.sub_category_name : existing.sub_category_name;
     const pBrand = updates.brand !== undefined ? updates.brand : existing.brand;
     const pSku = updates.sku !== undefined ? updates.sku : existing.sku;
     const pHsn = updates.hsn !== undefined ? updates.hsn : existing.hsn;
@@ -364,6 +376,8 @@ export async function updateProduct(
         subtitle = ${pSubtitle},
         category_id = ${pCatId},
         category_name = ${pCatName},
+        sub_category_id = ${pSubCatId},
+        sub_category_name = ${pSubCatName},
         brand = ${pBrand},
         sku = ${pSku},
         hsn = ${pHsn},

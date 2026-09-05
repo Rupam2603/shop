@@ -425,7 +425,7 @@ function safeDiscountPercent(base: number, price: number): number {
   return Math.round(pct);
 }
 
-type ProductFormState = Omit<Product, "id"> & { id?: number };
+type ProductFormState = Omit<Product, "id"> & { id?: number; category_id?: string; sub_category_id?: string; sub_category_name?: string; };
 const emptyForm = (category = INITIAL_CATEGORIES[0]): ProductFormState => ({
   name: "", category, brand: "", sku: "", hsn: CAT_HSN[category] ?? "", mrp: 0,
   customerPrice: 0, retailerPrice: 0, stock: 0, image: undefined, details: "",
@@ -1262,8 +1262,10 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         const { data, error } = await dbCreateProduct({
           name: form.name.trim(),
           subtitle: form.details?.trim() || null,
-          category_id: null,
+          category_id: form.category_id || null,
           category_name: form.category,
+          sub_category_id: form.sub_category_id || null,
+          sub_category_name: form.sub_category_name || null,
           brand: form.brand.trim() || "Generic",
           sku: form.sku.trim() || null,
           hsn: form.hsn.trim() || "3004",
@@ -1271,6 +1273,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           customer_price: Number(form.mrp),
           retailer_price: Number(form.retailerPrice) || Math.round(Number(form.mrp) * 0.85),
           discount_percent: 0,
+          retailer_discount_percent: 0,
           stock: Number(form.stock) || 0,
           image_url: form.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80",
           details: form.details?.trim() || null,
@@ -1303,7 +1306,10 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
         const { data, error } = await dbUpdateProduct(dbId, {
           name: form.name.trim(),
+          category_id: form.category_id || null,
           category_name: form.category,
+          sub_category_id: form.sub_category_id || null,
+          sub_category_name: form.sub_category_name || null,
           brand: form.brand.trim() || "Generic",
           sku: form.sku.trim() || undefined,
           hsn: form.hsn.trim() || "3004",
@@ -1311,6 +1317,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           customer_price: Number(form.mrp),
           retailer_price: Number(form.retailerPrice) || Math.round(Number(form.mrp) * 0.85),
           discount_percent: 0,
+          retailer_discount_percent: 0,
           stock: Number(form.stock) || 0,
           image_url: form.image,
           details: form.details?.trim() || null,

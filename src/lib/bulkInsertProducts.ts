@@ -6,7 +6,6 @@
  * -----------------------------------------------------------------------
  */
 
-import { SupabaseClient } from '@supabase/supabase-js';
 import { ParsedProductRow } from './productExcelImport';
 import { createProduct, DbProduct } from './products';
 
@@ -27,7 +26,7 @@ const DEFAULT_IMG =
   'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80';
 
 export async function bulkInsertProducts(
-  _supabase?: SupabaseClient | any,
+  _supabase?: any,
   validRows: ParsedProductRow[] = []
 ): Promise<BulkInsertOutcome> {
   const batches = chunk(validRows, 10);
@@ -59,6 +58,7 @@ export async function bulkInsertProducts(
             customer_price: row.mrp,
             retailer_price: row.retailerPrice,
             discount_percent: 0,
+            retailer_discount_percent: 0,
             stock: row.inventoryStock || 0,
             image_url: row.productImage || DEFAULT_IMG,
             details: row.packSize || null,
