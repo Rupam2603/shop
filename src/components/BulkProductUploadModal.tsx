@@ -37,7 +37,7 @@ export default function BulkProductUploadModal({ supabase, onClose, onImported }
   const [parseError, setParseError] = useState('');
   const [importOutcome, setImportOutcome] = useState<{
     insertedCount: number;
-    failedCount: number;
+    failedRows: { rowNumber: number; productName: string; error: string }[];
     imagesDownloaded: number;
     imagesFailed: number;
   } | null>(null);
@@ -143,7 +143,7 @@ export default function BulkProductUploadModal({ supabase, onClose, onImported }
     
     setImportOutcome({
       insertedCount: outcome.insertedCount,
-      failedCount: validRows.length - outcome.insertedCount,
+      failedRows: outcome.failedRows,
       imagesDownloaded,
       imagesFailed,
     });
@@ -310,10 +310,25 @@ export default function BulkProductUploadModal({ supabase, onClose, onImported }
                 )}
               </div>
 
-              {importOutcome.failedCount > 0 && (
-                <p className="text-sm text-rose-600 mt-3 bg-rose-50 px-4 py-1.5 rounded-xl border border-rose-200">
-                  {importOutcome.failedCount} row(s) encountered an error during database write.
-                </p>
+              {importOutcome.failedRows.length > 0 && (
+                <div className="w-full text-left mt-3 bg-rose-50 rounded-xl border border-rose-200 overflow-hidden">
+                  <div className="px-4 py-2 bg-rose-100/50 border-b border-rose-200 text-sm font-bold text-rose-800">
+                    {importOutcome.failedRows.length} row(s) encountered an error during database write
+                  </div>
+                  <div className="max-h-40 overflow-y-auto">
+                    <table className="w-full text-xs text-rose-700">
+                      <tbody>
+                        {importOutcome.failedRows.map((fr, idx) => (
+                          <tr key={idx} className="border-b border-rose-100 last:border-0">
+                            <td className="py-2 px-4 whitespace-nowrap font-mono font-bold w-20">Row {fr.rowNumber}</td>
+                            <td className="py-2 px-4 font-semibold">{fr.productName || 'Unnamed'}</td>
+                            <td className="py-2 px-4 opacity-90">{fr.error}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               )}
               {invalidRows.length > 0 && (
                 <p className="text-xs text-amber-700 mt-2">

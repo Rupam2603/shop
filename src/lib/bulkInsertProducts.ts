@@ -11,15 +11,7 @@ import { createProduct, DbProduct } from './products';
 
 export interface BulkInsertOutcome {
   insertedCount: number;
-  failedBatches: { rows: ParsedProductRow[]; error: string }[];
-}
-
-function chunk<T>(items: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < items.length; i += size) {
-    out.push(items.slice(i, i + size));
-  }
-  return out;
+  failedRows: { rowNumber: number; productName: string; error: string }[];
 }
 
 const DEFAULT_IMG =
@@ -29,64 +21,59 @@ export async function bulkInsertProducts(
   _supabase?: any,
   validRows: ParsedProductRow[] = []
 ): Promise<BulkInsertOutcome> {
-  const batches = chunk(validRows, 10);
   let insertedCount = 0;
-  const failedBatches: BulkInsertOutcome['failedBatches'] = [];
+  const failedRows: BulkInsertOutcome['failedRows'] = [];
 
-  for (const batch of batches) {
+  for (const row of validRows) {
     try {
-      const results = await Promise.all(
-        batch.map(async (row) => {
-          const badges = [
-            { id: 'rx', label: 'Rx Required', active: Boolean(row.badges.prescriptionRequired) },
-            { id: 'cold_chain', label: 'Cold Chain (2°C-8°C)', active: Boolean(row.badges.coldChain) },
-            { id: 'fast_delivery', label: '30-Min Fast Delivery', active: Boolean(row.badges.fastDelivery) },
-            { id: 'genuine', label: '100% Genuine', active: Boolean(row.badges.genuineGuaranteed) },
-            { id: 'best_seller', label: 'Best Seller', active: Boolean(row.badges.bestSeller) },
-            { id: 'wholesale', label: 'Wholesale Pack', active: Boolean(row.badges.wholesaleBulkPack) },
-          ];
+      const badges = [
+        { id: 'rx', label: 'Rx Required', active: Boolean(row.badges.prescriptionRequired) },
+        { id: 'cold_chain', label: 'Cold Chain (2°C-8°C)', active: Boolean(row.badges.coldChain) },
+        { id: 'fast_delivery', label: '30-Min Fast Delivery', active: Boolean(row.badges.fastDelivery) },
+        { id: 'genuine', label: '100% Genuine', active: Boolean(row.badges.genuineGuaranteed) },
+        { id: 'best_seller', label: 'Best Seller', active: Boolean(row.badges.bestSeller) },
+        { id: 'wholesale', label: 'Wholesale Pack', active: Boolean(row.badges.wholesaleBulkPack) },
+      ];
 
-          return createProduct({
-            name: row.productName,
-            subtitle: row.packSize || null,
-            category_id: null, // createProduct resolves this by category_name
-            category_name: row.category,
-            brand: row.brand || 'Generic',
-            sku: row.sku || null,
-            hsn: row.hsnCode || '3004',
-            mrp: row.mrp,
-            customer_price: row.mrp,
-            retailer_price: row.retailerPrice,
-            discount_percent: 0,
-            retailer_discount_percent: 0,
-            stock: row.inventoryStock || 0,
-            image_url: row.productImage || DEFAULT_IMG,
-            details: row.packSize || null,
-            is_flash_sale: Boolean(row.badges.flashSale),
-            is_featured: Boolean(row.badges.featured),
-            is_listed: row.listed !== false,
-            badges,
-          });
-        })
-      );
+      const { data, error } = await createProduct({
+        name: row.productName,
+        subtitle: row.packSize || null,
+        category_id: null,
+        category_name: row.category,
+        brand: row.brand || 'Generic',
+        sku: row.sku || null,
+        hsn: row.hsnCode || '3004',
+        mrp: row.mrp,
+        customer_price: row.mrp,
+        retailer_price: row.retailerPrice,
+        discount_percent: 0,
+        retailer_discount_percent: 0,
+        stock: row.inventoryStock || 0,
+        image_url: row.productImage || DEFAULT_IMG,
+        details: row.packSize || null,
+        is_flash_sale: Boolean(row.badges.flashSale),
+        is_featured: Boolean(row.badges.featured),
+        is_listed: row.listed !== false,
+        badges,
+      });
 
-      const batchErrors = results.filter((r) => r.error);
-      if (batchErrors.length > 0) {
-        failedBatches.push({
-          rows: batch,
-          error: batchErrors.map((e) => e.error).join('; '),
+      if (error || !data) {
+        failedRows.push({
+          rowNumber: row.rowNumber,
+          productName: row.productName,
+          error: error || 'Unknown database error',
         });
-        insertedCount += batch.length - batchErrors.length;
       } else {
-        insertedCount += batch.length;
+        insertedCount++;
       }
     } catch (err: any) {
-      failedBatches.push({
-        rows: batch,
-        error: err?.message || 'Failed to insert batch',
+      failedRows.push({
+        rowNumber: row.rowNumber,
+        productName: row.productName,
+        error: err?.message || 'Failed to insert row',
       });
     }
   }
 
-  return { insertedCount, failedBatches };
+  return { insertedCount, failedRows };
 }
