@@ -1,12 +1,12 @@
 import { neon } from "@neondatabase/serverless";
+import { NEON_CONNECTION_STRING } from "./neon";
 
-// Retrieve neon DB URL from environment variables
 const dbUrl =
   import.meta.env.VITE_NEON_DATABASE_URL ||
   import.meta.env.DATABASE_URL ||
-  "";
+  NEON_CONNECTION_STRING;
 
-const sql = neon(dbUrl);
+const sql = neon(dbUrl as string);
 
 export interface LoginLog {
   id: string;
