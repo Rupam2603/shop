@@ -1010,8 +1010,12 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((p) =>
-        p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) ||
-        p.sku.toLowerCase().includes(q) || p.hsn.includes(q)
+        p.name.toLowerCase().includes(q) ||
+        p.brand.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q) ||
+        p.hsn.includes(q) ||
+        (p.details && p.details.toLowerCase().includes(q)) ||
+        ((p as any).sub_category_name && String((p as any).sub_category_name).toLowerCase().includes(q))
       );
     }
     return list;
@@ -2141,9 +2145,10 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
   return (
     <div className="flex flex-col gap-5">
       {/* Filter Bar */}
-      <div className="glass-admin-card rounded-3xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
-        <div className="relative flex-1">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8fa092]">
+      <div className="glass-admin-card rounded-3xl p-4 sm:p-5 flex flex-col gap-3.5 shadow-xs">
+        {/* Row 1: Dedicated Prominent Wide Search Bar */}
+        <div className="relative w-full">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8fa092]">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
@@ -2151,45 +2156,61 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search pharmaceutical products by name, brand, SKU or HSN…"
-            className="w-full pl-11 pr-4 py-2.5 text-xs sm:text-sm bg-white/80 border border-[#dce7db] rounded-2xl focus:outline-none focus:border-[#006a39] font-medium transition-all"
+            placeholder="Search pharmaceutical products by name, brand, SKU, sub-category or HSN…"
+            className="w-full pl-12 pr-10 py-3 text-xs sm:text-sm bg-white/90 border border-[#dce7db] rounded-2xl focus:outline-none focus:border-[#006a39] focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all shadow-2xs placeholder:text-[#8fa092]"
           />
-        </div>
-
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="bg-white/80 border border-[#dce7db] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-[#073b4c] focus:outline-none focus:border-[#006a39] transition-all cursor-pointer"
-          >
-            <option value="All">All Visibility</option>
-            <option value="listed">● Listed on Storefront</option>
-            <option value="unlisted">○ Draft / Unlisted</option>
-          </select>
-
-          <select
-            value={catFilter}
-            onChange={(e) => setCatFilter(e.target.value)}
-            className="bg-white/80 border border-[#dce7db] rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold text-[#073b4c] focus:outline-none focus:border-[#006a39] transition-all cursor-pointer"
-          >
-            <option value="All">All Categories ({allProductCount})</option>
-            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <span className="text-xs font-bold text-[#657969] px-3 py-1 rounded-xl bg-white/70 border border-[#dce7db]">
-            {displayedProducts.length} Items
-          </span>
-
-          {onOpenBulkUpload && (
+          {search && (
             <button
               type="button"
-              onClick={onOpenBulkUpload}
-              className="flex items-center gap-1.5 bg-white/90 hover:bg-emerald-50 text-[#006a39] border border-emerald-300/80 text-xs font-bold px-3.5 py-2.5 rounded-2xl transition-all shadow-xs hover:scale-102 cursor-pointer ml-auto sm:ml-0"
-              title="Bulk import products via Excel spreadsheet"
+              onClick={() => setSearch("")}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+              title="Clear search"
             >
-              <Upload className="w-3.5 h-3.5 text-[#006a39]" />
-              <span>Import Excel</span>
+              ✕
             </button>
           )}
+        </div>
+
+        {/* Row 2: Filters & Actions */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-[#edf3ee]">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="bg-white/90 border border-[#dce7db] rounded-2xl px-3.5 py-2 text-xs sm:text-sm font-bold text-[#073b4c] focus:outline-none focus:border-[#006a39] transition-all cursor-pointer shadow-2xs"
+            >
+              <option value="All">All Visibility</option>
+              <option value="listed">● Listed on Storefront</option>
+              <option value="unlisted">○ Draft / Unlisted</option>
+            </select>
+
+            <select
+              value={catFilter}
+              onChange={(e) => setCatFilter(e.target.value)}
+              className="bg-white/90 border border-[#dce7db] rounded-2xl px-4 py-2 text-xs sm:text-sm font-bold text-[#073b4c] focus:outline-none focus:border-[#006a39] transition-all cursor-pointer shadow-2xs max-w-[280px] truncate"
+            >
+              <option value="All">All Categories ({allProductCount})</option>
+              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+
+            <span className="text-xs font-extrabold text-[#006a39] px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 shadow-2xs">
+              {displayedProducts.length} Items
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 ml-auto sm:ml-0">
+            {onOpenBulkUpload && (
+              <button
+                type="button"
+                onClick={onOpenBulkUpload}
+                className="flex items-center gap-1.5 bg-white/95 hover:bg-emerald-50 text-[#006a39] border border-emerald-300/80 text-xs font-bold px-3.5 py-2 rounded-2xl transition-all shadow-2xs hover:scale-102 cursor-pointer"
+                title="Bulk import products via Excel spreadsheet"
+              >
+                <Upload className="w-3.5 h-3.5 text-[#006a39]" />
+                <span>Import Excel</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
