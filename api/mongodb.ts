@@ -1,5 +1,5 @@
-import { getCollection } from "../lib/mongodb";
-import { createMongoDBIndexes } from "../lib/mongodbServices";
+import { getCollection } from "../src/lib/mongodb";
+import { createMongoDBIndexes } from "../src/lib/mongodbServices";
 
 export default async function handler(req, res) {
   // Enable CORS
