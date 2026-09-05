@@ -233,10 +233,12 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - **Single Stock Count Enforcement**:
     - Removed duplicate stock count display across storefront product cards.
     - Cards previously showed a top-right corner image badge (`📦 {stock} units` / `{stock} in stock`) AND a second indicator below the title/subtitle (`● {stock} in stock` or `{stock} available`).
-- **Admin Product Search Bar Full-Width Layout (Sep 2026)**:
-  - Re-architected the `Filter Bar` in `ProductsTab` (`src/pages/AdminDashboard.tsx`) from a cramped single flex row into a clean two-tier layout.
-  - The search input now enjoys dedicated full width (`w-full`), preventing flexbox from compressing it into a narrow pill when sibling dropdowns and action buttons wrap.
-  - Added quick clear button (`✕`) when search text is entered.
-  - Expanded search filtering logic to match across product name, brand, SKU, HSN, details, and sub-category.
+- **Admin Category Taxonomy Cleanse & Safe Deletion Workflow (Sep 2026)**:
+  - Removed all legacy existing categories from the Neon Postgres database (`categories` and `sub_categories` tables).
+  - Unlinked products safely from old `category_id` and `sub_category_id` foreign references without deleting the products themselves.
+  - Enhanced `deleteCategory` and `deleteSubCategory` in `src/lib/categories.ts` to automatically unlink products before deleting, preventing foreign key constraint errors.
+  - Replaced static `INITIAL_CATEGORIES` with fully dynamic database-driven categories in `AdminDashboard.tsx`, allowing admins to create, select, and delete categories on demand.
+  - Added delete buttons (`✕`) directly on category tags in `SettingsTab` and inside the `ProductModal` category picker.
+
 
 

@@ -104,22 +104,17 @@ export async function createSubCategory(name: string, categoryId: string): Promi
 }
 
 /**
- * Delete a category (fails if sub-categories or products exist)
+ * Delete a category (safely unlinks products and deletes sub-categories)
  */
 export async function deleteCategory(id: string): Promise<{ success: boolean; error: string | null }> {
   try {
-    // Check if sub-categories exist
-    const subCats = await sql`SELECT id FROM sub_categories WHERE category_id = ${id} LIMIT 1`;
-    if (subCats.length > 0) {
-      return { success: false, error: "Cannot delete category: it has sub-categories." };
-    }
+    // Unlink products that were assigned to this category
+    await sql`UPDATE products SET category_id = NULL, sub_category_id = NULL WHERE category_id = ${id}`;
     
-    // Check if products exist
-    const prods = await sql`SELECT id FROM products WHERE category_id = ${id} LIMIT 1`;
-    if (prods.length > 0) {
-      return { success: false, error: "Cannot delete category: products are assigned to it." };
-    }
+    // Delete any sub-categories belonging to this category
+    await sql`DELETE FROM sub_categories WHERE category_id = ${id}`;
     
+    // Delete the category itself
     await sql`DELETE FROM categories WHERE id = ${id}`;
     return { success: true, error: null };
   } catch (err: any) {
@@ -128,16 +123,11 @@ export async function deleteCategory(id: string): Promise<{ success: boolean; er
 }
 
 /**
- * Delete a sub-category (fails if products exist)
+ * Delete a sub-category (safely unlinks products)
  */
 export async function deleteSubCategory(id: string): Promise<{ success: boolean; error: string | null }> {
   try {
-    // Check if products exist
-    const prods = await sql`SELECT id FROM products WHERE sub_category_id = ${id} LIMIT 1`;
-    if (prods.length > 0) {
-      return { success: false, error: "Cannot delete sub-category: products are assigned to it." };
-    }
-    
+    await sql`UPDATE products SET sub_category_id = NULL WHERE sub_category_id = ${id}`;
     await sql`DELETE FROM sub_categories WHERE id = ${id}`;
     return { success: true, error: null };
   } catch (err: any) {

@@ -292,9 +292,7 @@ type Settings = {
   autoReorder: boolean;
 };
 
-const INITIAL_CATEGORIES: string[] = [
-  ...KEY_PRODUCT_CATEGORIES,
-];
+const INITIAL_CATEGORIES: string[] = [];
 
 const CAT_HSN: Record<string, string> = {
   "Skin Care & Ointments": "3304",
@@ -426,7 +424,7 @@ function safeDiscountPercent(base: number, price: number): number {
 }
 
 type ProductFormState = Omit<Product, "id"> & { id?: number; category_id?: string; sub_category_id?: string; sub_category_name?: string; };
-const emptyForm = (category = INITIAL_CATEGORIES[0]): ProductFormState => ({
+const emptyForm = (category = ""): ProductFormState => ({
   name: "", category, brand: "", sku: "", hsn: CAT_HSN[category] ?? "", mrp: 0,
   customerPrice: 0, retailerPrice: 0, stock: 0, image: undefined, details: "",
   badges: DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
@@ -679,13 +677,19 @@ function ProductModal({
                     }));
                   }}
                   className={`${INPUT_CLS} flex-1`}>
-                  <option value="">Select Category</option>
+                  <option value="">{dbCategories.length === 0 ? "No categories available (Click + Add Category)" : "Select Category"}</option>
                   {dbCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
                 {form.category_id && (
-                  <button type="button" onClick={() => {
-                    if(confirm("Are you sure you want to delete this category?")) onDeleteCategory(form.category_id!);
-                  }} className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
+                  <button type="button" onClick={async () => {
+                    const catName = dbCategories.find(c => c.id === form.category_id)?.name;
+                    if(confirm(`Are you sure you want to delete the category "${catName || ""}"?`)) {
+                      const success = await onDeleteCategory(form.category_id!);
+                      if (success) {
+                        setForm((p) => ({ ...p, category_id: "", category: "", sub_category_id: "", sub_category_name: "" }));
+                      }
+                    }
+                  }} className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors" title="Delete selected category">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
                 )}
@@ -939,7 +943,7 @@ function ProductModal({
 export default function AdminDashboard({ user, onLogout }: Props) {
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<string[]>(INITIAL_CATEGORIES);
+  const [categories, setCategories] = useState<string[]>([]);
   const [dbCategories, setDbCategories] = useState<DbCategory[]>([]);
   const [dbSubCategories, setDbSubCategories] = useState<DbSubCategory[]>([]);
 
@@ -978,10 +982,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           badges: Array.isArray(p.badges) && p.badges.length > 0 ? p.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
         }))
       );
-      setCategories((prev) => {
-        const productCats = dbProds.map((p) => p.category_name).filter(Boolean);
-        return Array.from(new Set([...INITIAL_CATEGORIES, ...prev, ...productCats]));
-      });
+      // Categories are dynamically managed by dbCategories
     });
   }, []);
 
@@ -1046,7 +1047,11 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
     // Fetch categories and sub-categories
     fetchCategories().then(cats => {
-      if (mounted) setDbCategories(cats || []);
+      if (mounted) {
+        const list = cats || [];
+        setDbCategories(list);
+        setCategories(list.map(c => c.name));
+      }
     });
     fetchSubCategories().then(subCats => {
       if (mounted) setDbSubCategories(subCats || []);
@@ -1355,8 +1360,11 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const addCategory = async (name: string) => {
     const { data, error } = await dbCreateCategory(name);
     if (data) {
-      setDbCategories((prev) => [...prev, data]);
-      setCategories((prev) => [...prev, data.name]);
+      setDbCategories((prev) => {
+        const next = [...prev, data];
+        setCategories(next.map(c => c.name));
+        return next;
+      });
       return true;
     } else {
       alert("Error adding category: " + error);
@@ -1367,7 +1375,11 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const deleteCategory = async (id: string) => {
     const { success, error } = await dbDeleteCategory(id);
     if (success) {
-      setDbCategories((prev) => prev.filter(c => c.id !== id));
+      setDbCategories((prev) => {
+        const next = prev.filter(c => c.id !== id);
+        setCategories(next.map(c => c.name));
+        return next;
+      });
       return true;
     } else {
       alert("Error deleting category: " + error);
@@ -5512,11 +5524,31 @@ function SettingsTab({
           {categories.map((c) => (
             <span
               key={c}
-              className="px-3 py-1.5 rounded-xl bg-white/80 border border-[#dce7db] text-xs font-bold text-[#073b4c] shadow-2xs"
+              className="px-3 py-1.5 rounded-xl bg-white/80 border border-[#dce7db] text-xs font-bold text-[#073b4c] shadow-2xs flex items-center gap-2"
             >
-              {c}
+              <span>{c}</span>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (confirm(`Are you sure you want to remove the category "${c}"?`)) {
+                    const catObj = dbCategories.find(dc => dc.name === c);
+                    if (catObj) {
+                      await deleteCategory(catObj.id);
+                    } else {
+                      setCategories(prev => prev.filter(x => x !== c));
+                    }
+                  }
+                }}
+                className="text-slate-400 hover:text-red-600 transition-colors p-0.5 rounded cursor-pointer text-xs"
+                title={`Remove ${c}`}
+              >
+                ✕
+              </button>
             </span>
           ))}
+          {categories.length === 0 && (
+            <p className="text-xs text-[#8aa08e] italic py-2">No categories present. Add a new category above.</p>
+          )}
         </div>
       </div>
 
