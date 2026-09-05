@@ -232,9 +232,7 @@ export default function BulkProductUploadModal({ supabase, onClose, onImported }
                       <th className="p-2.5 min-w-[160px]">Product Name</th>
                       <th className="p-2.5 whitespace-nowrap">Category</th>
                       <th className="p-2.5 text-right whitespace-nowrap">MRP</th>
-                      <th className="p-2.5 text-right whitespace-nowrap">Customer</th>
                       <th className="p-2.5 text-right whitespace-nowrap">Retailer</th>
-                      <th className="p-2.5 text-right whitespace-nowrap">Cust. Off%</th>
                       <th className="p-2.5 text-right whitespace-nowrap">Retailer Off%</th>
                       <th className="p-2.5 whitespace-nowrap">Status</th>
                     </tr>
@@ -249,11 +247,7 @@ export default function BulkProductUploadModal({ supabase, onClose, onImported }
                         </td>
                         <td className="p-2.5 whitespace-nowrap text-gray-700">{r.category || '—'}</td>
                         <td className="p-2.5 text-right whitespace-nowrap font-mono font-semibold">₹{r.mrp || 0}</td>
-                        <td className="p-2.5 text-right whitespace-nowrap font-mono font-bold text-emerald-800">₹{r.customerPrice || 0}</td>
                         <td className="p-2.5 text-right whitespace-nowrap font-mono font-bold text-sky-800">₹{r.retailerPrice || 0}</td>
-                        <td className="p-2.5 text-right whitespace-nowrap font-semibold text-emerald-700">
-                          {r.customerOfferPercent !== null ? `${r.customerOfferPercent}%` : '—'}
-                        </td>
                         <td className="p-2.5 text-right whitespace-nowrap font-semibold text-sky-700">
                           {r.retailerOfferPercent !== null ? `${r.retailerOfferPercent}%` : '—'}
                         </td>

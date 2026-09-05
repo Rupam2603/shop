@@ -20,7 +20,6 @@ const HEADER_MAP = {
   sku: 'SKU Identifier',
   hsnCode: 'HSN Code (GST)',
   mrp: 'MRP (₹)',
-  customerPrice: 'Customer Price (₹)',
   retailerPrice: 'Retailer Price (₹)',
   inventoryStock: 'Inventory Stock (Available Units)',
   listed: 'Listed on Storefront (Active)',
@@ -45,9 +44,7 @@ export interface ParsedProductRow {
   sku: string;
   hsnCode: string;
   mrp: number;
-  customerPrice: number;
   retailerPrice: number;
-  customerOfferPercent: number | null;
   retailerOfferPercent: number | null;
   retailerMarginPercent: number | null;
   inventoryStock: number;
@@ -151,7 +148,6 @@ export function parseProductExcel(fileBuffer: ArrayBuffer): ImportResult {
     const productName = String(get('productName') ?? '').trim();
     const category = String(get('category') ?? '').trim();
     const mrp = toNumber(get('mrp'));
-    const customerPrice = toNumber(get('customerPrice'));
     const retailerPrice = toNumber(get('retailerPrice'));
     const inventoryStock = toNumber(get('inventoryStock')) || 0;
 
@@ -159,16 +155,15 @@ export function parseProductExcel(fileBuffer: ArrayBuffer): ImportResult {
     if (!productName) errors.push('Product Name is required');
     if (!category) errors.push('Category is required');
     if (Number.isNaN(mrp)) errors.push('MRP is missing or not a number');
-    if (Number.isNaN(customerPrice)) errors.push('Customer Price is missing or not a number');
     if (Number.isNaN(retailerPrice)) errors.push('Retailer Price is missing or not a number');
 
     const pricingInput = {
       mrp: Number.isNaN(mrp) ? 0 : mrp,
-      customerPrice: Number.isNaN(customerPrice) ? 0 : customerPrice,
+      customerPrice: Number.isNaN(mrp) ? 0 : mrp, // customer price is now same as mrp
       retailerPrice: Number.isNaN(retailerPrice) ? 0 : retailerPrice,
     };
 
-    const { customerOfferPercent, retailerOfferPercent, retailerMarginPercent } =
+    const { retailerOfferPercent, retailerMarginPercent } =
       calculatePricing(pricingInput);
 
     const warnings = errors.length === 0 ? getPricingWarnings(pricingInput) : [];
@@ -199,9 +194,7 @@ export function parseProductExcel(fileBuffer: ArrayBuffer): ImportResult {
       sku: String(get('sku') ?? '').trim(),
       hsnCode: String(get('hsnCode') ?? '').trim(),
       mrp: pricingInput.mrp,
-      customerPrice: pricingInput.customerPrice,
       retailerPrice: pricingInput.retailerPrice,
-      customerOfferPercent,
       retailerOfferPercent,
       retailerMarginPercent,
       inventoryStock,
