@@ -40,7 +40,10 @@ export default function CategoryPage({
   // Lookup current Category Configuration
   const categoryMeta: KeyCategoryMeta = useMemo(() => {
     const found = KEY_CATEGORIES_CONFIG.find(
-      (c) => c.id.toLowerCase() === categoryId.toLowerCase() || c.short.toLowerCase() === categoryId.toLowerCase()
+      (c) =>
+        c.id.toLowerCase() === categoryId.toLowerCase() ||
+        c.short.toLowerCase() === categoryId.toLowerCase() ||
+        c.name.toLowerCase() === categoryId.toLowerCase()
     );
     return (
       found || {

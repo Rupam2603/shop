@@ -239,6 +239,22 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - Enhanced `deleteCategory` and `deleteSubCategory` in `src/lib/categories.ts` to automatically unlink products before deleting, preventing foreign key constraint errors.
   - Replaced static `INITIAL_CATEGORIES` with fully dynamic database-driven categories in `AdminDashboard.tsx`, allowing admins to create, select, and delete categories on demand.
   - Added delete buttons (`✕`) directly on category tags in `SettingsTab` and inside the `ProductModal` category picker.
+- **Storefront Category Normalization & Miscellaneous Placement Fix (Sep 2026)**:
+  - **Database Category & Sub-Category Normalization (Neon Postgres)**:
+    - Synchronized all 12 canonical Key Categories into `public.categories` and created active sub-categories in `public.sub_categories`.
+    - Removed obsolete and abbreviated category records (`Monsoon`, `Pain Relief`).
+    - Normalized all 49 products across both `public.products` and `public.inventory_products` tables with canonical `category_name`, `sub_category_name`, `category_id`, and `sub_category_id`:
+      - Replaced abbreviated `"Men's"` with canonical `"Men's Health & Vitality"` across 27 Park Avenue products.
+      - Populated structured sub-categories for all 27 Park Avenue products (`Deodorant`, `Perfume`, `Shaving Foam`, `Soap`, `Grooming Kit`), resolving missing sub-category tags and enabling full sub-category filtering on `CategoryPage.tsx`.
+      - Moved `Park Avenue Damage Free Beer Shampoo` from `"Men's"` to `"Hair Care & Scalp Therapy"` (sub-category `"Shampoo & Scalp Care"`), giving the Hair Care category genuine live catalog representation.
+      - Moved `Bengal Cotton 400 gm` from `"Skin Care & Ointments"` to `"Medical Supplies & Devices"` (sub-category `"Surgical Cotton & Dressings"`), eliminating cotton appearing under skincare creams/powders.
+      - Moved `surgical mask` from `"Vaccines & Medical Disposables"` to `"Medical Supplies & Devices"` (sub-category `"Surgical Masks & Disposables"`), ensuring medical protective supplies are visible in product listings rather than hidden behind vaccine appointment flows.
+      - Updated `Dettol Antiseptic Liquid 250ml` category from `"Monsoon"` to `"Monsoon Health & Antiseptics"` and sub-category from `"Monsoon Health"` to `"Antiseptic Liquid"`.
+      - Updated `Amrutanjan Strong Pain Balm 44g` category to `"Pain Relief & Muscle Care"` and sub-category from `"Gel"` to `"Pain Relief Balm"`.
+      - Updated `Volini Pain Relief Gel 15g` category to `"Pain Relief & Muscle Care"` and sub-category to `"Pain Relief Gel"`.
+      - Populated sub-categories for Daily Wellness items (`Ayurvedic & Immunity`, `Energy & Electrolytes`, `Nutrition & Health Drink`, `Nutrition & Protein`) and Diet items (`Antacids & Digestion`).
+  - **Storefront Category Alignment (`CategoryPage.tsx`)**:
+    - Enhanced `categoryMeta` lookup in `src/pages/CategoryPage.tsx` to match against `c.name` in addition to `c.id` and `c.short`, ensuring that routing by canonical name or ID accurately resolves colors, taglines, sub-categories, and filtering rules.
 
 
 
