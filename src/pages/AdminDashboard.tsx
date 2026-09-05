@@ -685,16 +685,11 @@ function ProductModal({
               className={INPUT_CLS} maxLength={8} />
           </div>
 
-          {/* MRP / Customer Price / Retailer Price */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* MRP / Retailer Price */}
+          <div className="grid grid-cols-2 gap-3">
             <Field label="MRP (₹)">
               <input type="number" min="0" value={form.mrp || ""}
                 onChange={(e) => setForm((p) => ({ ...p, mrp: Number(e.target.value) }))}
-                placeholder="0" className={INPUT_CLS} />
-            </Field>
-            <Field label="Customer Price (₹)">
-              <input type="number" min="0" value={form.customerPrice || ""}
-                onChange={(e) => setForm((p) => ({ ...p, customerPrice: Number(e.target.value) }))}
                 placeholder="0" className={INPUT_CLS} />
             </Field>
             <Field label="Retailer Price (₹)">
@@ -705,23 +700,14 @@ function ProductModal({
           </div>
 
           {/* Pricing Preview Glass Cards */}
-          {(form.customerPrice > 0 && form.retailerPrice > 0) && (() => {
+          {(form.mrp > 0 && form.retailerPrice > 0) && (() => {
             const pricing = calculatePricing({
               mrp: form.mrp || 0,
-              customerPrice: form.customerPrice || 0,
+              customerPrice: form.mrp || 0,
               retailerPrice: form.retailerPrice || 0,
             });
             return (
-              <div className="grid grid-cols-2 gap-3 animate-in fade-in">
-                <div className="bg-sky-50/80 backdrop-blur-md rounded-2xl p-3.5 text-center border border-sky-200 flex flex-col justify-center">
-                  <p className="text-[10px] text-sky-800 font-extrabold uppercase tracking-wide">Customer Retail View</p>
-                  <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xl sm:text-2xl mt-0.5">₹{form.customerPrice}</p>
-                  {pricing.customerOfferPercent !== null && (
-                    <p className="text-[10px] font-bold text-emerald-700 mt-0.5">
-                      {pricing.customerOfferPercent}% off MRP
-                    </p>
-                  )}
-                </div>
+              <div className="grid grid-cols-1 gap-3 animate-in fade-in">
                 <div className="bg-emerald-50/80 backdrop-blur-md rounded-2xl p-3.5 text-center border border-emerald-200 flex flex-col justify-center">
                   <p className="text-[10px] text-emerald-800 font-extrabold uppercase tracking-wide">Retailer Wholesale View</p>
                   <p className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-xl sm:text-2xl mt-0.5">₹{form.retailerPrice}</p>
@@ -1265,10 +1251,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       setProductSaveError("Category is required.");
       return;
     }
-    if (form.customerPrice <= 0) {
-      setProductSaveError("Customer price must be greater than 0.");
-      return;
-    }
+
 
     setIsSavingProduct(true);
     const isFeatured = form.badges?.some((b) => b.id === "featured" && b.checked) ?? false;
@@ -1284,10 +1267,10 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           brand: form.brand.trim() || "Generic",
           sku: form.sku.trim() || null,
           hsn: form.hsn.trim() || "3004",
-          mrp: Number(form.mrp) || Number(form.customerPrice),
-          customer_price: Number(form.customerPrice),
-          retailer_price: Number(form.retailerPrice) || Math.round(Number(form.customerPrice) * 0.85),
-          discount_percent: Number(form.mrp) > Number(form.customerPrice) ? Math.round(((Number(form.mrp) - Number(form.customerPrice)) / Number(form.mrp)) * 100) : 0,
+          mrp: Number(form.mrp),
+          customer_price: Number(form.mrp),
+          retailer_price: Number(form.retailerPrice) || Math.round(Number(form.mrp) * 0.85),
+          discount_percent: 0,
           stock: Number(form.stock) || 0,
           image_url: form.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80",
           details: form.details?.trim() || null,
@@ -1324,10 +1307,10 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           brand: form.brand.trim() || "Generic",
           sku: form.sku.trim() || undefined,
           hsn: form.hsn.trim() || "3004",
-          mrp: Number(form.mrp) || Number(form.customerPrice),
-          customer_price: Number(form.customerPrice),
-          retailer_price: Number(form.retailerPrice) || Math.round(Number(form.customerPrice) * 0.85),
-          discount_percent: Number(form.mrp) > Number(form.customerPrice) ? Math.round(((Number(form.mrp) - Number(form.customerPrice)) / Number(form.mrp)) * 100) : 0,
+          mrp: Number(form.mrp),
+          customer_price: Number(form.mrp),
+          retailer_price: Number(form.retailerPrice) || Math.round(Number(form.mrp) * 0.85),
+          discount_percent: 0,
           stock: Number(form.stock) || 0,
           image_url: form.image,
           details: form.details?.trim() || null,
