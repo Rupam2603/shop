@@ -293,7 +293,14 @@ export default function DeliveryPartnerDashboard({ user, onLogout }: Props) {
                 Delivery Partner
               </span>
             </div>
-            <p className="text-[#657969] text-xs font-semibold">{partnerProfile?.name || user.name}</p>
+            <p className="text-[#657969] text-xs font-semibold flex items-center gap-2">
+              <span>{partnerProfile?.name || user.name}</span>
+              {partnerProfile?.partnerCode && (
+                <span className="font-mono text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200 tracking-wider">
+                  {partnerProfile.partnerCode}
+                </span>
+              )}
+            </p>
           </div>
         </div>
 
@@ -801,8 +808,13 @@ export default function DeliveryPartnerDashboard({ user, onLogout }: Props) {
             {/* ── TAB 5: MY PROFILE ── */}
             {activeTab === "profile" && (
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#dce7db] shadow-xs max-w-2xl">
-                <h3 className="font-['Manrope',sans-serif] font-black text-lg text-[#073b4c] mb-4">
+                <h3 className="font-['Manrope',sans-serif] font-black text-lg text-[#073b4c] mb-4 flex items-center gap-2">
                   Delivery Partner Profile
+                  {partnerProfile?.partnerCode && (
+                    <span className="font-mono text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 tracking-wider">
+                      {partnerProfile.partnerCode}
+                    </span>
+                  )}
                 </h3>
 
                 <form onSubmit={handleSaveProfile} className="flex flex-col gap-4">

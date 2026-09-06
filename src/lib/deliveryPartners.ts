@@ -21,6 +21,7 @@ export interface DeliveryPartnerItem {
   email: string;
   role: string;
   status: string;
+  partnerCode?: string;
   phone: string | null;
   address: string | null;
   avatarUrl: string | null;
@@ -111,6 +112,7 @@ export async function fetchAllDeliveryPartners(): Promise<DeliveryPartnerItem[]>
         u.role,
         u.status,
         u.created_at,
+        p.partner_code,
         p.phone,
         p.avatar_url,
         p.vehicle_type,
@@ -136,6 +138,7 @@ export async function fetchAllDeliveryPartners(): Promise<DeliveryPartnerItem[]>
       email: r.email,
       role: r.role,
       status: r.status,
+      partnerCode: r.partner_code,
       phone: r.phone,
       address: r.address,
       avatarUrl: r.avatar_url,
@@ -172,6 +175,7 @@ export async function getDeliveryPartnerById(userId: string): Promise<DeliveryPa
         u.role,
         u.status,
         u.created_at,
+        p.partner_code,
         p.phone,
         p.address,
         p.avatar_url,
@@ -201,6 +205,7 @@ export async function getDeliveryPartnerById(userId: string): Promise<DeliveryPa
       email: r.email,
       role: r.role,
       status: r.status,
+      partnerCode: r.partner_code,
       phone: r.phone,
       address: r.address,
       avatarUrl: r.avatar_url,

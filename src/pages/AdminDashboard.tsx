@@ -4169,6 +4169,11 @@ function DeliveryPartnersTab() {
                   <div className="min-w-0">
                     <h4 className="font-['Manrope',sans-serif] font-extrabold text-base text-[#073b4c] truncate">
                       {p.name}
+                      {p.partnerCode && (
+                        <span className="ml-2 text-xs text-[#006a39] font-mono bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200">
+                          {p.partnerCode}
+                        </span>
+                      )}
                     </h4>
                     <p className="text-xs text-[#657969] font-mono truncate">{p.email}</p>
                     <p className="text-xs text-[#006a39] font-bold mt-0.5">{p.phone || "No phone yet"}</p>
@@ -4756,8 +4761,13 @@ function DeliveryPartnersTab() {
                   </div>
                 )}
                 <div>
-                  <h3 className="font-['Manrope',sans-serif] font-black text-lg sm:text-xl">
+                  <h3 className="font-['Manrope',sans-serif] font-black text-lg sm:text-xl flex items-center gap-2">
                     {inspectPartner.name}
+                    {inspectPartner.partnerCode && (
+                      <span className="text-[10px] font-mono bg-white/20 px-2 py-0.5 rounded-full border border-white/30 tracking-wider">
+                        {inspectPartner.partnerCode}
+                      </span>
+                    )}
                   </h3>
                   <p className="text-xs text-white/80 font-mono">{inspectPartner.email}</p>
                 </div>
