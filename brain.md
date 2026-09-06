@@ -332,5 +332,18 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - **User Profile & Order Tracking Synchronization (`ProfilePage.tsx` & `OrderTrackingModal.tsx`)**:
     - `ProfilePage.tsx`: Added 5s polling loop, `visibilitychange`/`window.focus` triggers, and `subscribeToOrderEvents` listener for instant order status progression.
     - `OrderTrackingModal.tsx`: Polling optimized to 3.5s with tab focus listeners and real-time live pulse badge.
+- **Invoice Bill Customizations: Authorized Signature, Delivery Address & Payment Method Visibility (Sep 2026)**:
+  - **Authorized Signatory Signature**:
+    - Integrated the user-provided official signature image (`Jennie Chakraborty`) into `src/assets/signature.png`, `public/signature.png`, and generated `src/lib/invoiceSignature.ts` with `SUBHONE_SIGNATURE_DATA_URL` for standalone, offline-capable base64 rendering.
+    - Placed directly above the official title:
+      `Authorized Signatory`
+      `SubhOne Health Group`
+  - **Removed Statutory Placeholders**:
+    - Completely removed `GSTIN: 19AABCS8821Q1Z8 | Drug Licence No.: DL-WB-KOL-2024-98421` from the invoice header.
+  - **Delivery Address & Payment Method Prominence**:
+    - Implemented `formatOrderAddress(raw: any)` in `src/lib/invoiceGenerator.ts` to parse and format object, stringified JSON, or raw address fields into a clean postal address string.
+    - Added dedicated **Recipient & Delivery Details** card in invoice HTML showcasing Customer Name, Phone, Delivery Address with pin icon (`📍 Delivery Address`), Payment Method (e.g. `Cash on Delivery (COD)`, `UPI / Online Payment`, `Credit / Debit Card`), Payment Status, and Order Status.
+    - Updated payment checkboxes and breakdown in bottom summary.
+    - Updated `AdminDashboard.tsx` (`liveOrders`, `OrdersTab`, `previewInvoice`), `ProfilePage.tsx`, and `OrderTrackingModal.tsx` to pass parsed delivery addresses and display delivery address in the admin invoice preview modal.
 
 

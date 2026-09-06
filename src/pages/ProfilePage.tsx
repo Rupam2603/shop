@@ -13,7 +13,7 @@ import { fetchUserLabBookings, DbLabBooking } from "../lib/labTests";
 import { fetchUserReviews, submitReview, type DbReview } from "../lib/reviews";
 import { useModalBackHandler } from "../lib/navigation";
 import { StarRow } from "../components/ProductModal";
-import { printOrDownloadInvoice, InvoiceOrderData } from "../lib/invoiceGenerator";
+import { printOrDownloadInvoice, InvoiceOrderData, formatOrderAddress } from "../lib/invoiceGenerator";
 import { supabase } from "../lib/supabase";
 import { subscribeToOrderEvents } from "../lib/orderEvents";
 
@@ -809,9 +809,7 @@ export default function ProfilePage({
                                       phone: dbOrder.customer_phone || user.phone || "+91 98765 00000",
                                       role: dbOrder.user_role === "retailer" ? "retailer" : "customer",
                                       shopName: dbOrder.shop_name || (user.role === "retailer" ? user.shopName : undefined),
-                                      address: typeof dbOrder.shipping_address === "object"
-                                        ? `${dbOrder.shipping_address?.line1 || ""}, ${dbOrder.shipping_address?.city || ""}, ${dbOrder.shipping_address?.state || ""} - ${dbOrder.shipping_address?.pincode || ""}`
-                                        : "Delivery Address",
+                                      address: formatOrderAddress(dbOrder.shipping_address),
                                       items: dbOrder.order_items?.length || 0,
                                       amount: Number(dbOrder.total_amount),
                                       status: dbOrder.status,

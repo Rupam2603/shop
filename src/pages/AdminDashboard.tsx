@@ -30,6 +30,7 @@ import {
   type InvoiceOrderData,
   printOrDownloadDailyReport,
   downloadDailyReportFile,
+  formatOrderAddress,
 } from "../lib/invoiceGenerator";
 import {
   fetchStoreSettings,
@@ -1310,6 +1311,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             payment: o.payment_method,
             role: finalRole,
             shopName: finalShopName,
+            address: formatOrderAddress(o.shipping_address),
             orderItems: (o.order_items || []).map((oi: any) => ({
               name: oi.product_name || "Unknown Product",
               quantity: Number(oi.quantity || 0),
@@ -2657,6 +2659,7 @@ function OrdersTab({
     payment: string;
     role?: "retailer" | "customer";
     shopName?: string;
+    address?: string;
     orderItems?: InvoiceOrderData["orderItems"];
     paymentStatus?: string;
   }[];
@@ -2706,6 +2709,7 @@ function OrdersTab({
     dbId?: string;
     customer: string;
     phone: string;
+    address?: string;
     items: number;
     amount: number;
     status: string;
@@ -3164,6 +3168,15 @@ function OrdersTab({
                   <p className="text-[10px] font-extrabold text-[#728575] uppercase tracking-wider">Payment & Status</p>
                   <p className="font-bold text-[#073b4c] text-sm mt-1">₹{previewInvoice.amount.toLocaleString()} ({previewInvoice.payment})</p>
                   <p className="text-xs text-emerald-800 font-bold mt-0.5">{previewInvoice.status} · {previewInvoice.paymentStatus || "Paid"}</p>
+                </div>
+                <div className="p-4 bg-white rounded-2xl border border-[#dce7db] sm:col-span-2">
+                  <p className="text-[10px] font-extrabold text-[#006a39] uppercase tracking-wider flex items-center gap-1.5">
+                    <span>📍</span>
+                    <span>Delivery Address</span>
+                  </p>
+                  <p className="font-semibold text-[#171d18] text-xs sm:text-sm mt-1 leading-relaxed">
+                    {previewInvoice.address || "Registered Delivery Address"}
+                  </p>
                 </div>
               </div>
 

@@ -1,3 +1,5 @@
+import { SUBHONE_SIGNATURE_DATA_URL } from "./invoiceSignature";
+
 export interface InvoiceOrderItem {
   name: string;
   quantity: number;
@@ -16,7 +18,7 @@ export interface InvoiceOrderData {
   phone: string;
   role?: "retailer" | "customer";
   shopName?: string;
-  address?: string;
+  address?: any;
   items: number;
   amount: number;
   status: string;
@@ -36,6 +38,37 @@ export interface StoreSettings {
   emailAlerts?: boolean;
   smsAlerts?: boolean;
   autoReorder?: boolean;
+}
+
+/**
+ * Format any raw shipping address representation (object, stringified JSON, text)
+ * into a complete, clean human-readable delivery address.
+ */
+export function formatOrderAddress(raw: any): string {
+  if (!raw) return "Customer Delivery Address";
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed === "object" && parsed !== null) {
+        return formatOrderAddress(parsed);
+      }
+    } catch {
+      const clean = raw.trim();
+      return clean && clean !== "{}" ? clean : "Customer Delivery Address";
+    }
+  }
+  if (typeof raw === "object" && raw !== null) {
+    const parts = [
+      raw.name && !raw.name.includes("undefined") ? `Recipient: ${raw.name}` : null,
+      raw.phone && !raw.phone.includes("undefined") ? `Ph: ${raw.phone}` : null,
+      raw.line1,
+      raw.line2,
+      raw.city,
+      raw.state ? `${raw.state}${raw.pincode ? ` - ${raw.pincode}` : ""}` : raw.pincode,
+    ].filter(Boolean);
+    if (parts.length > 0) return parts.join(", ");
+  }
+  return "Customer Delivery Address";
 }
 
 /**
@@ -80,8 +113,6 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
   const storePhone = settings?.phone || "+91 98765 43210";
   const storeEmail = settings?.email || "support@subhone.com";
   const storeAddress = settings?.address || "14/B Central Avenue, Kolkata, West Bengal 700012";
-  const gstin = "19AABCS8821Q1Z8";
-  const drugLicence = "DL-WB-KOL-2024-98421";
 
   const billNo = order.id.startsWith("ORD-") ? `INV-${order.id.replace("ORD-", "")}` : `INV-${order.id}`;
   const dateFormatted = formatToDateString(order.date);
@@ -93,6 +124,8 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
     : isRetailer
     ? `${order.customer} (Wholesale Retailer)`
     : `${order.customer} (Customer)`;
+
+  const deliveryAddress = formatOrderAddress(order.address);
 
   // Generate item rows
   // Never invent products, quantities, batches, prices or dates. The invoice
@@ -138,11 +171,23 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
   // difference between item totals and the stored final total.
   const deliveryCharge = Math.max(0, Math.round((grandTotal - subtotal) * 100) / 100);
 
-  const paymentMode = (order.payment || "UPI").toUpperCase();
-  const isCash = paymentMode.includes("CASH");
-  const isUPI = paymentMode.includes("UPI");
-  const isCard = paymentMode.includes("CARD");
-  const isCOD = paymentMode.includes("COD");
+  const rawPayment = (order.payment || "UPI").trim();
+  const paymentMode = rawPayment.toUpperCase();
+  const isCOD = paymentMode === "COD" || paymentMode.includes("CASH ON DELIVERY") || paymentMode.includes("DELIVERY");
+  const isCash = isCOD || paymentMode.includes("CASH");
+  const isUPI = paymentMode.includes("UPI") || paymentMode.includes("ONLINE") || paymentMode.includes("GPAY") || paymentMode.includes("PHONEPE") || paymentMode.includes("PAYTM");
+  const isCard = paymentMode.includes("CARD") || paymentMode.includes("DEBIT") || paymentMode.includes("CREDIT");
+
+  let paymentMethodDisplay = rawPayment;
+  if (isCOD) {
+    paymentMethodDisplay = "Cash on Delivery (COD)";
+  } else if (isUPI) {
+    paymentMethodDisplay = "UPI / Online Payment";
+  } else if (isCard) {
+    paymentMethodDisplay = "Credit / Debit Card";
+  } else if (isCash) {
+    paymentMethodDisplay = "Cash Payment";
+  }
 
   const amountInWords = numberToWords(grandTotal);
 
@@ -155,8 +200,7 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
         ${storeName}
       </div>
       <div style="text-align: center; font-size: 10.5px; color: #444; margin-bottom: 12px; border-bottom: 1.5px solid #222; padding-bottom: 8px;">
-        ${storeAddress} | Phone: ${storePhone} | Email: ${storeEmail}<br/>
-        GSTIN: ${gstin} | Drug Licence No.: ${drugLicence}
+        ${storeAddress} | Phone: ${storePhone} | Email: ${storeEmail}
       </div>
 
       <div style="text-align: center; font-size: 14px; font-weight: 800; letter-spacing: 1px; margin: 10px 0 12px 0; text-decoration: underline;">
@@ -180,10 +224,37 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
         </tbody>
       </table>
 
-      <div style="margin-bottom: 12px; padding: 8px 10px; background: #fbfdfb; border: 1px solid #ddd; border-radius: 4px;">
-        <div style="margin-bottom: 4px; font-size: 11.5px;"><strong>Customer:</strong> ${customerDisplay}</div>
-        <div style="margin-bottom: 4px; font-size: 11.5px;"><strong>Mobile:</strong> ${order.phone || "+91 98765 00000"}</div>
-        <div style="font-size: 11.5px;"><strong>Address:</strong> ${order.address || "Customer Delivery Address"}</div>
+      <div style="margin-bottom: 12px; border: 1.5px solid #222; border-radius: 4px; overflow: hidden; background: #fff;">
+        <div style="background: #f2f5f3; border-bottom: 1px solid #333; padding: 6px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #073b4c; display: flex; justify-content: space-between; align-items: center;">
+          <span>Recipient & Delivery Details</span>
+          <span>Payment: <strong style="color: #006a39;">${paymentMethodDisplay}</strong></span>
+        </div>
+        <div style="padding: 10px 12px; display: flex; justify-content: space-between; gap: 16px; font-size: 11.5px;">
+          <div style="flex: 1.35;">
+            <div style="margin-bottom: 4px;"><strong>Customer:</strong> ${customerDisplay}</div>
+            <div style="margin-bottom: 4px;"><strong>Mobile:</strong> ${order.phone || "+91 98765 00000"}</div>
+            <div style="margin-top: 6px; line-height: 1.45; background: #fbfdfb; padding: 6px 10px; border-radius: 4px; border: 1px solid #dce7db;">
+              <strong style="color: #006a39; display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px;">📍 Delivery Address:</strong>
+              <span style="color: #111; font-weight: 600;">${deliveryAddress}</span>
+            </div>
+          </div>
+          <div style="flex: 0.75; border-left: 1px dashed #ccc; padding-left: 14px; font-size: 11px; display: flex; flex-direction: column; justify-content: center; gap: 5px;">
+            <div>
+              <span style="color: #555; display: block; font-size: 10px; text-transform: uppercase; font-weight: 700;">Payment Method</span>
+              <strong style="font-size: 12px; color: #073b4c;">${paymentMethodDisplay}</strong>
+            </div>
+            <div>
+              <span style="color: #555; display: block; font-size: 10px; text-transform: uppercase; font-weight: 700;">Payment Status</span>
+              <strong style="font-size: 11.5px; color: ${order.paymentStatus === 'Pending' ? '#b45309' : '#006a39'};">
+                ${order.paymentStatus || (isCOD ? "Pending on Delivery" : "Paid / Confirmed")}
+              </strong>
+            </div>
+            <div>
+              <span style="color: #555; display: block; font-size: 10px; text-transform: uppercase; font-weight: 700;">Order Status</span>
+              <strong style="font-size: 11px; color: #333;">${order.status}</strong>
+            </div>
+          </div>
+        </div>
       </div>
 
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
@@ -213,9 +284,15 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
             <span style="display: inline-block; margin-right: 12px; font-weight: 600;">${isCard ? "☑" : "☐"} Card</span>
             <span style="display: inline-block; margin-right: 12px; font-weight: 600;">${isCOD ? "☑" : "☐"} COD</span>
           </div>
+          <div style="margin-bottom: 4px;">
+            <strong>Payment Method Used:</strong>
+            <span style="display: inline-block; margin-left: 6px; font-weight: 700; color: #073b4c;">${paymentMethodDisplay}</span>
+          </div>
           <div>
             <strong>Payment Status:</strong>
-            <span style="display: inline-block; margin-left: 6px; font-weight: 600;">${order.paymentStatus || "Unknown"}</span>
+            <span style="display: inline-block; margin-left: 6px; font-weight: 700; color: ${order.paymentStatus === 'Pending' ? '#b45309' : '#006a39'};">
+              ${order.paymentStatus || (isCOD ? "Pending on Delivery" : "Paid")}
+            </span>
           </div>
         </div>
 
@@ -244,12 +321,21 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
       </div>
 
       <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; padding-top: 8px;">
-        <div style="text-align: center; width: 180px; border-top: 1px solid #333; padding-top: 4px; font-size: 10.5px; font-weight: 600;">
-          Customer Signature
+        <div style="text-align: center; width: 190px;">
+          <div style="height: 54px;"></div>
+          <div style="border-top: 1.5px solid #222; padding-top: 4px; font-size: 10.5px; font-weight: 600; color: #333;">
+            Customer Signature<br/>
+            <span style="font-size: 9px; color: #666; font-weight: normal;">Received in good condition</span>
+          </div>
         </div>
-        <div style="text-align: center; width: 180px; border-top: 1px solid #333; padding-top: 4px; font-size: 10.5px; font-weight: 600;">
-          Authorized Signatory<br/>
-          <span style="font-size: 9px; color: #555; font-weight: normal;">SubhOne Health Group</span>
+        <div style="text-align: center; width: 220px;">
+          <div style="height: 54px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 2px;">
+            <img src="${SUBHONE_SIGNATURE_DATA_URL}" alt="Authorized Signatory" style="max-height: 52px; max-width: 200px; object-fit: contain;" />
+          </div>
+          <div style="border-top: 1.5px solid #222; padding-top: 4px; font-size: 10.5px; font-weight: 700; color: #073b4c; line-height: 1.35;">
+            Authorized Signatory<br/>
+            <span style="font-size: 9.5px; color: #006a39; font-weight: 700;">SubhOne Health Group</span>
+          </div>
         </div>
       </div>
 

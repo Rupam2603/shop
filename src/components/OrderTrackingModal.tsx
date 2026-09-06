@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { DbOrder, fetchUserOrders, fetchOrderByNumber, subscribeToUserOrdersRealtime, subscribeToOrdersRealtime } from "../lib/orders";
-import { printOrDownloadInvoice, downloadInvoiceFile, InvoiceOrderData } from "../lib/invoiceGenerator";
+import { printOrDownloadInvoice, downloadInvoiceFile, InvoiceOrderData, formatOrderAddress } from "../lib/invoiceGenerator";
 import InfinityLoader from "./InfinityLoader";
 import LiveDeliveryMap from "./LiveDeliveryMap";
 
@@ -208,9 +208,7 @@ export default function OrderTrackingModal({
         phone: activeOrder.customer_phone || userPhone || "+91 98765 00000",
         role: isRetailer ? "retailer" : "customer",
         shopName: activeOrder.shop_name || (isRetailer ? "Retailer Pharmacy Store" : undefined),
-        address: typeof activeOrder.shipping_address === "object"
-          ? `${activeOrder.shipping_address?.line1 || ""}, ${activeOrder.shipping_address?.city || ""}, ${activeOrder.shipping_address?.state || ""} - ${activeOrder.shipping_address?.pincode || ""}`
-          : "Delivery Address Provided",
+        address: formatOrderAddress(activeOrder.shipping_address),
         items: activeOrder.order_items?.length || 1,
         amount: Number(activeOrder.total_amount),
         status: activeOrder.status,
