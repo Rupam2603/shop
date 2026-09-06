@@ -274,3 +274,25 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - **Session & Local Cache Synchronization (`AuthContext.tsx` & `AdminDashboard.tsx`)**:
     - Updated `getStoredUser` and `signIn` in `AuthContext.tsx` to read persisted avatar, phone, and name from `sessionStorage` and `localStorage` (`subhone_admin_profile`) rather than resetting avatar to `null` or using hardcoded placeholder strings on refresh.
     - Added global event listener `subhone_admin_profile_updated` in `AuthContext.tsx` and dispatched upon clicking "Save All Changes Forever", reactively updating header avatars and user metadata in real time without requiring a manual page refresh.
+- **Retailer & Customer Delivery Address & Personal Details Forever Persistence (Sep 2026)**:
+  - **Root Cause Resolution**:
+    - There was no `public.addresses` table in the active Neon Lakebase Postgres database cluster.
+    - `src/lib/addresses.ts` was attempting to query Supabase PostgREST, silently failing on missing tables and falling back to temporary in-memory objects (`addr_${Date.now()}`) that disappeared on refresh.
+    - Personal detail updates in `AuthContext.tsx` (`updateProfile`) executed PostgREST `.update()` calls that were blocked by missing session JWTs / RLS, and never touched the authoritative Neon SQL database or updated `public.auth_users`, `public.retailer_approvals`, or `public.users`.
+  - **Authoritative Database Schema (`public.addresses` in Neon Postgres)**:
+    - Created `public.addresses` table: `id TEXT PRIMARY KEY`, `user_id TEXT NOT NULL`, `label TEXT`, `name TEXT`, `phone TEXT`, `line1 TEXT NOT NULL`, `line2 TEXT`, `city TEXT NOT NULL`, `state TEXT NOT NULL`, `pincode TEXT NOT NULL`, `is_default BOOLEAN DEFAULT false`, `created_at TIMESTAMPTZ DEFAULT NOW()`, `updated_at TIMESTAMPTZ DEFAULT NOW()`.
+    - Added index `idx_addresses_user_id` on `public.addresses(user_id)`.
+    - Added auto-migration `migrateCreateAddressesTable()` to `src/lib/migrations.ts` and wired into startup migrations to ensure all database branches maintain this schema.
+  - **Direct Neon SQL Address Service (`src/lib/addresses.ts`)**:
+    - Re-implemented `fetchUserAddresses`, `createAddress`, `updateAddress`, `deleteAddress`, and `setDefaultAddress` using direct Neon `sql` template queries with transaction-like default switching.
+    - Added robust multi-source user ID resolution (`getEffectiveUserId`) that checks `explicitUserId`, `localStorage["subhone_active_user_session"]`, `sessionStorage["subhone_active_admin_session"]`, and local caches.
+  - **Multi-Table User Profile Persistence (`src/lib/users.ts`)**:
+    - Implemented `saveUserProfileToDb({ userId, email, fullName, phone, shopName, avatarUrl })`.
+    - Updates `public.profiles` via upsert, `public.auth_users` by ID or email, `public.retailer_approvals` by phone or shop name, and `public.users` safely via `LOWER(email)` avoiding UUID syntax errors on custom text IDs.
+    - Synchronizes `localStorage["subhone_active_user_session"]`.
+  - **AuthContext & Profile UI Hardening (`AuthContext.tsx` & `ProfilePage.tsx`)**:
+    - `updateProfile` in `AuthContext.tsx` now calls `saveUserProfileToDb` to guarantee database persistence before mutating React state.
+    - Added image canvas resizing (max 360x360, 0.88 JPEG) in `ProfilePage.tsx` for photo uploads.
+    - Added async database saving status (`savingProfile`), status feedback message, and loading spinners on "Save Changes" button.
+    - Added address modal validation, inline error alerts (`addrError`), and loading indicator (`addrSaving ? "Saving to Database…" : "Save Changes"`).
+

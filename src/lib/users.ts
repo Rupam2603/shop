@@ -353,3 +353,190 @@ export async function adminDeleteUserAccount(userId: string) {
     return { success: false, error: err.message };
   }
 }
+
+/**
+ * Saves user profile and personal details permanently to Neon database
+ * Synchronizes across public.profiles, public.auth_users, public.retailer_approvals, and public.users
+ */
+export async function saveUserProfileToDb(
+  userId: string,
+  email?: string,
+  updates: {
+    fullName?: string;
+    phone?: string | null;
+    shopName?: string | null;
+    avatarUrl?: string | null;
+  } = {}
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const cleanEmail = (email || "").trim().toLowerCase();
+    const now = new Date().toISOString();
+    const fullName = updates.fullName !== undefined ? updates.fullName.trim() : undefined;
+    const phone = updates.phone !== undefined ? (updates.phone ? updates.phone.trim() : null) : undefined;
+    const shopName = updates.shopName !== undefined ? (updates.shopName ? updates.shopName.trim() : null) : undefined;
+    const avatarUrl = updates.avatarUrl !== undefined ? updates.avatarUrl : undefined;
+
+    const isUuid = userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+
+    // 1. Update public.profiles
+    try {
+      let updated: any[] = [];
+      if (cleanEmail && userId) {
+        updated = await sql`
+          UPDATE public.profiles
+          SET 
+            full_name = CASE WHEN ${fullName !== undefined} THEN ${fullName} ELSE full_name END,
+            phone = CASE WHEN ${phone !== undefined} THEN ${phone} ELSE phone END,
+            shop_name = CASE WHEN ${shopName !== undefined} THEN ${shopName} ELSE shop_name END,
+            avatar_url = CASE WHEN ${avatarUrl !== undefined} THEN ${avatarUrl} ELSE avatar_url END,
+            updated_at = ${now}
+          WHERE id = ${userId} OR LOWER(email) = ${cleanEmail}
+          RETURNING id
+        `;
+      } else if (cleanEmail) {
+        updated = await sql`
+          UPDATE public.profiles
+          SET 
+            full_name = CASE WHEN ${fullName !== undefined} THEN ${fullName} ELSE full_name END,
+            phone = CASE WHEN ${phone !== undefined} THEN ${phone} ELSE phone END,
+            shop_name = CASE WHEN ${shopName !== undefined} THEN ${shopName} ELSE shop_name END,
+            avatar_url = CASE WHEN ${avatarUrl !== undefined} THEN ${avatarUrl} ELSE avatar_url END,
+            updated_at = ${now}
+          WHERE LOWER(email) = ${cleanEmail}
+          RETURNING id
+        `;
+      } else if (userId) {
+        updated = await sql`
+          UPDATE public.profiles
+          SET 
+            full_name = CASE WHEN ${fullName !== undefined} THEN ${fullName} ELSE full_name END,
+            phone = CASE WHEN ${phone !== undefined} THEN ${phone} ELSE phone END,
+            shop_name = CASE WHEN ${shopName !== undefined} THEN ${shopName} ELSE shop_name END,
+            avatar_url = CASE WHEN ${avatarUrl !== undefined} THEN ${avatarUrl} ELSE avatar_url END,
+            updated_at = ${now}
+          WHERE id = ${userId}
+          RETURNING id
+        `;
+      }
+
+      // If no profile existed, insert a new record
+      if (!updated || updated.length === 0) {
+        const newId = userId || `user_${Date.now()}`;
+        await sql`
+          INSERT INTO public.profiles (
+            id, email, full_name, role, phone, shop_name, avatar_url, approval_status, created_at, updated_at
+          ) VALUES (
+            ${newId}, ${cleanEmail || null}, ${fullName || 'User'}, 'customer', ${phone ?? null}, ${shopName ?? null}, ${avatarUrl ?? null}, 'approved', ${now}, ${now}
+          )
+          ON CONFLICT (id) DO UPDATE SET
+            full_name = EXCLUDED.full_name,
+            phone = EXCLUDED.phone,
+            shop_name = EXCLUDED.shop_name,
+            avatar_url = EXCLUDED.avatar_url,
+            updated_at = EXCLUDED.updated_at
+        `;
+      }
+    } catch (profErr) {
+      console.warn("Notice updating profiles:", profErr);
+    }
+
+    // 2. Update public.auth_users
+    try {
+      if (cleanEmail && userId) {
+        await sql`
+          UPDATE public.auth_users
+          SET 
+            full_name = CASE WHEN ${fullName !== undefined} THEN ${fullName} ELSE full_name END,
+            phone = CASE WHEN ${phone !== undefined} THEN ${phone} ELSE phone END,
+            shop_name = CASE WHEN ${shopName !== undefined} THEN ${shopName} ELSE shop_name END,
+            updated_at = ${now}
+          WHERE id = ${userId} OR LOWER(email) = ${cleanEmail}
+        `;
+      } else if (cleanEmail) {
+        await sql`
+          UPDATE public.auth_users
+          SET 
+            full_name = CASE WHEN ${fullName !== undefined} THEN ${fullName} ELSE full_name END,
+            phone = CASE WHEN ${phone !== undefined} THEN ${phone} ELSE phone END,
+            shop_name = CASE WHEN ${shopName !== undefined} THEN ${shopName} ELSE shop_name END,
+            updated_at = ${now}
+          WHERE LOWER(email) = ${cleanEmail}
+        `;
+      }
+    } catch (authErr) {
+      console.warn("Notice updating auth_users:", authErr);
+    }
+
+    // 3. Update public.retailer_approvals
+    try {
+      if (cleanEmail && userId) {
+        await sql`
+          UPDATE public.retailer_approvals
+          SET 
+            full_name = CASE WHEN ${fullName !== undefined} THEN ${fullName} ELSE full_name END,
+            phone = CASE WHEN ${phone !== undefined} THEN ${phone} ELSE phone END,
+            shop_name = CASE WHEN ${shopName !== undefined} THEN ${shopName} ELSE shop_name END,
+            updated_at = ${now}
+          WHERE user_id = ${userId} OR LOWER(email) = ${cleanEmail}
+        `;
+      } else if (cleanEmail) {
+        await sql`
+          UPDATE public.retailer_approvals
+          SET 
+            full_name = CASE WHEN ${fullName !== undefined} THEN ${fullName} ELSE full_name END,
+            phone = CASE WHEN ${phone !== undefined} THEN ${phone} ELSE phone END,
+            shop_name = CASE WHEN ${shopName !== undefined} THEN ${shopName} ELSE shop_name END,
+            updated_at = ${now}
+          WHERE LOWER(email) = ${cleanEmail}
+        `;
+      }
+    } catch (retErr) {
+      console.warn("Notice updating retailer_approvals:", retErr);
+    }
+
+    // 4. Update public.users (careful with UUID matching)
+    try {
+      if (cleanEmail) {
+        await sql`
+          UPDATE public.users
+          SET 
+            name = CASE WHEN ${fullName !== undefined} THEN ${fullName} ELSE name END,
+            business_name = CASE WHEN ${shopName !== undefined} THEN ${shopName} ELSE business_name END,
+            updated_at = ${now}
+          WHERE LOWER(email) = ${cleanEmail}
+        `;
+      } else if (isUuid) {
+        await sql`
+          UPDATE public.users
+          SET 
+            name = CASE WHEN ${fullName !== undefined} THEN ${fullName} ELSE name END,
+            business_name = CASE WHEN ${shopName !== undefined} THEN ${shopName} ELSE business_name END,
+            updated_at = ${now}
+          WHERE id = ${userId}
+        `;
+      }
+    } catch (userErr) {
+      console.warn("Notice updating users table:", userErr);
+    }
+
+    // 5. Update local session cache
+    try {
+      const raw = localStorage.getItem("subhone_active_user_session");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        localStorage.setItem("subhone_active_user_session", JSON.stringify({
+          ...parsed,
+          fullName: fullName !== undefined ? fullName : parsed.fullName,
+          phone: phone !== undefined ? phone : parsed.phone,
+          businessName: shopName !== undefined ? shopName : parsed.businessName,
+          avatarUrl: avatarUrl !== undefined ? avatarUrl : parsed.avatarUrl,
+        }));
+      }
+    } catch {}
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to save user profile in DB:", err);
+    return { success: false, error: err?.message || "Failed to update profile." };
+  }
+}

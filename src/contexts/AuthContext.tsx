@@ -10,7 +10,7 @@ import { checkRetailerApprovalStatus } from "../lib/retailers";
 import { neonSignInWithPassword, neonSignUp, neonSignOut } from "../lib/neonAuth";
 import { sendPhoneOTP, verifyPhoneOTP } from "../lib/phoneAuth";
 import type { PhoneOtpSendResult, PhoneOtpVerifyResult } from "../lib/phoneAuth";
-import { authenticateNeonUser, createNeonUser } from "../lib/users";
+import { authenticateNeonUser, createNeonUser, saveUserProfileToDb } from "../lib/users";
 
 export interface AppUser {
   authUser: {
@@ -782,8 +782,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateProfile = useCallback(async (updates: Partial<Pick<Profile, "full_name" | "phone" | "shop_name" | "avatar_url">>): Promise<{ error: string | null }> => {
     if (!appUser) return { error: "Not authenticated." };
-    try { await supabase.from("profiles").update(updates).eq("id", appUser.authUser.id); } catch { }
-    setAppUser((prev) => prev ? { ...prev, profile: { ...prev.profile, ...updates } } : prev);
+
+    try {
+      // 1. Authoritative Neon PostgreSQL update
+      await saveUserProfileToDb(
+        appUser.authUser.id,
+        appUser.authUser.email,
+        {
+          fullName: updates.full_name,
+          phone: updates.phone,
+          shopName: updates.shop_name,
+          avatarUrl: updates.avatar_url,
+        }
+      );
+    } catch (err: any) {
+      console.warn("Notice saving profile to DB:", err);
+    }
+
+    // 2. Best-effort Supabase client update
+    try {
+      await supabase.from("profiles").update(updates).eq("id", appUser.authUser.id);
+    } catch {}
+
+    // 3. Update React AppUser state
+    setAppUser((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        authUser: {
+          ...prev.authUser,
+          user_metadata: {
+            ...prev.authUser.user_metadata,
+            full_name: updates.full_name !== undefined ? updates.full_name : prev.authUser.user_metadata?.full_name,
+            phone: updates.phone !== undefined ? (updates.phone || undefined) : prev.authUser.user_metadata?.phone,
+            shop_name: updates.shop_name !== undefined ? (updates.shop_name || undefined) : prev.authUser.user_metadata?.shop_name,
+            avatar_url: updates.avatar_url !== undefined ? (updates.avatar_url || undefined) : prev.authUser.user_metadata?.avatar_url,
+          },
+        },
+        profile: {
+          ...prev.profile,
+          ...updates,
+        },
+      };
+    });
+
     return { error: null };
   }, [appUser]);
 

@@ -144,77 +144,167 @@ export default function ProfilePage({
   const [editPhone, setEditPhone] = useState(user.phone ?? "");
   const [editShop, setEditShop] = useState(user.shopName ?? "");
   const [saved, setSaved] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileMsg, setProfileMsg] = useState("");
   const imageRef = useRef<HTMLInputElement>(null);
 
   const handleProfileImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     const reader = new FileReader();
-    reader.onload = (ev) => onUpdateUser({ profileImage: ev.target?.result as string });
+    reader.onload = (ev) => {
+      const rawDataUrl = ev.target?.result as string;
+      if (!rawDataUrl) return;
+
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          const MAX_SIZE = 360;
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height = Math.round((height * MAX_SIZE) / width);
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width = Math.round((width * MAX_SIZE) / height);
+              height = MAX_SIZE;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const optimized = canvas.toDataURL("image/jpeg", 0.88);
+            onUpdateUser({ profileImage: optimized });
+            return;
+          }
+        } catch {}
+        onUpdateUser({ profileImage: rawDataUrl });
+      };
+      img.onerror = () => onUpdateUser({ profileImage: rawDataUrl });
+      img.src = rawDataUrl;
+    };
     reader.readAsDataURL(file);
     e.target.value = "";
   };
 
-  const handleSaveProfile = () => {
-    onUpdateUser({
-      name: editName.trim() || user.name,
-      phone: editPhone,
-      shopName: user.role === "retailer" ? editShop : undefined,
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    setProfileMsg("");
+    try {
+      await onUpdateUser({
+        name: editName.trim() || user.name,
+        phone: editPhone,
+        shopName: user.role === "retailer" ? editShop : undefined,
+      });
+      setSaved(true);
+      setProfileMsg("Profile updated successfully in database!");
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err: any) {
+      console.error("Failed to save profile:", err);
+      setProfileMsg(err?.message || "Failed to update profile.");
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   // ── Addresses tab state ──
   const [addrModal, setAddrModal] = useState<{
     open: boolean; mode: "add" | "edit"; idx: number | null; form: Partial<Address>;
   }>({ open: false, mode: "add", idx: null, form: emptyAddr() });
+  const [addrSaving, setAddrSaving] = useState(false);
+  const [addrError, setAddrError] = useState("");
 
-  const openAddAddr  = () => setAddrModal({ open: true, mode: "add",  idx: null, form: emptyAddr() });
-  const openEditAddr = (idx: number) => setAddrModal({ open: true, mode: "edit", idx, form: { ...addresses[idx] } });
-  const closeAddrModal = () => setAddrModal((p) => ({ ...p, open: false }));
+  const openAddAddr  = () => {
+    setAddrError("");
+    setAddrModal({ open: true, mode: "add",  idx: null, form: emptyAddr() });
+  };
+  const openEditAddr = (idx: number) => {
+    setAddrError("");
+    setAddrModal({ open: true, mode: "edit", idx, form: { ...addresses[idx] } });
+  };
+  const closeAddrModal = () => {
+    setAddrError("");
+    setAddrSaving(false);
+    setAddrModal((p) => ({ ...p, open: false }));
+  };
 
   useModalBackHandler(addrModal.open, closeAddrModal, "profile-address");
 
   const saveAddress = async () => {
     const f = addrModal.form as Address;
-    if (!f.name?.trim() || !f.line1?.trim() || !f.city?.trim() || !f.pincode?.trim()) return;
+    if (!f.name?.trim() || !f.line1?.trim() || !f.city?.trim() || !f.pincode?.trim()) {
+      setAddrError("Please fill in all required fields (Name, Street Address, City, PIN code).");
+      return;
+    }
 
-    if (addrModal.mode === "add") {
-      const { data } = await dbCreateAddress({
-        label: f.label || "Home",
-        name: f.name,
-        phone: f.phone || "",
-        line1: f.line1,
-        line2: f.line2 || null,
-        city: f.city,
-        state: f.state,
-        pincode: f.pincode,
-        is_default: addresses.length === 0 || !!f.isDefault,
-      }, user.id);
-      if (data) {
-        setDbAddresses((prev) => [...prev, data]);
-      }
-    } else if (addrModal.idx !== null) {
-      const target = addresses[addrModal.idx];
-      if (target?.id) {
-        const { data } = await dbUpdateAddress(target.id, {
-          label: f.label,
-          name: f.name,
-          phone: f.phone,
-          line1: f.line1,
-          line2: f.line2 || null,
-          city: f.city,
-          state: f.state,
-          pincode: f.pincode,
-          is_default: f.isDefault,
+    setAddrSaving(true);
+    setAddrError("");
+    try {
+      if (addrModal.mode === "add") {
+        const { data, error } = await dbCreateAddress({
+          label: f.label || "Home",
+          name: f.name.trim(),
+          phone: f.phone?.trim() || "",
+          line1: f.line1.trim(),
+          line2: f.line2 ? f.line2.trim() : null,
+          city: f.city.trim(),
+          state: f.state.trim(),
+          pincode: f.pincode.trim(),
+          is_default: addresses.length === 0 || !!f.isDefault,
         }, user.id);
+
+        if (error && !data) {
+          throw new Error(error);
+        }
         if (data) {
-          setDbAddresses((prev) => prev.map((a) => a.id === target.id ? data : a));
+          setDbAddresses((prev) => {
+            const next = data.is_default ? prev.map(a => ({ ...a, is_default: false })) : [...prev];
+            return [...next, data];
+          });
+        }
+      } else if (addrModal.idx !== null) {
+        const target = addresses[addrModal.idx];
+        if (target?.id) {
+          const { data, error } = await dbUpdateAddress(target.id, {
+            label: f.label,
+            name: f.name.trim(),
+            phone: f.phone?.trim() || "",
+            line1: f.line1.trim(),
+            line2: f.line2 ? f.line2.trim() : null,
+            city: f.city.trim(),
+            state: f.state.trim(),
+            pincode: f.pincode.trim(),
+            is_default: f.isDefault,
+          }, user.id);
+
+          if (error && !data) {
+            throw new Error(error);
+          }
+          if (data) {
+            setDbAddresses((prev) =>
+              prev.map((a) => {
+                if (a.id === target.id) return data;
+                if (data.is_default) return { ...a, is_default: false };
+                return a;
+              })
+            );
+          }
         }
       }
+      closeAddrModal();
+    } catch (err: any) {
+      console.error("Failed to save address:", err);
+      setAddrError(err?.message || "Failed to save address to database. Please check your network.");
+    } finally {
+      setAddrSaving(false);
     }
-    closeAddrModal();
   };
 
   const deleteAddress = async (idx: number) => {
@@ -462,9 +552,27 @@ export default function ProfilePage({
                 )}
               </div>
 
-              <div className="mt-6 pt-5 border-t border-[#f0f4f0] flex justify-end">
-                <button onClick={handleSaveProfile} className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-white text-xs sm:text-sm font-bold hover:opacity-90 transition-opacity" style={{ backgroundColor: accent }}>
-                  Save Changes
+              <div className="mt-6 pt-5 border-t border-[#f0f4f0] flex flex-col sm:flex-row items-center justify-between gap-3">
+                {profileMsg ? (
+                  <p className={`text-xs font-semibold ${saved ? "text-green-600" : "text-red-500"}`}>
+                    {profileMsg}
+                  </p>
+                ) : <span />}
+                <button
+                  type="button"
+                  onClick={handleSaveProfile}
+                  disabled={savingProfile}
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-white text-xs sm:text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                  style={{ backgroundColor: accent }}
+                >
+                  {savingProfile ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Saving to Database…</span>
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
                 </button>
               </div>
             </div>
@@ -1055,12 +1163,36 @@ export default function ProfilePage({
               </label>
             </div>
 
+            {addrError && (
+              <div className="mx-4 sm:mx-7 mb-3 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium">
+                {addrError}
+              </div>
+            )}
+
             <div className="flex gap-3 px-4 sm:px-7 pb-4 sm:pb-7 pt-2">
-              <button onClick={closeAddrModal} className="flex-1 py-3 rounded-xl border-2 border-[#e4ede2] text-[#073b4c] text-sm font-bold hover:bg-[#f0f4f0] transition-colors">
+              <button
+                type="button"
+                disabled={addrSaving}
+                onClick={closeAddrModal}
+                className="flex-1 py-3 rounded-xl border-2 border-[#e4ede2] text-[#073b4c] text-sm font-bold hover:bg-[#f0f4f0] transition-colors disabled:opacity-50"
+              >
                 Cancel
               </button>
-              <button onClick={saveAddress} className="flex-1 py-3 rounded-xl text-white text-sm font-bold hover:opacity-90 transition-opacity" style={{ backgroundColor: accent }}>
-                {addrModal.mode === "add" ? "Add Address" : "Save Changes"}
+              <button
+                type="button"
+                disabled={addrSaving}
+                onClick={saveAddress}
+                className="flex-1 py-3 rounded-xl text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ backgroundColor: accent }}
+              >
+                {addrSaving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Saving to Database…</span>
+                  </>
+                ) : (
+                  addrModal.mode === "add" ? "Add Address" : "Save Changes"
+                )}
               </button>
             </div>
           </div>

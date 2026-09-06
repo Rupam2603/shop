@@ -85,6 +85,51 @@ export async function migrateSubCategoriesAddSlug(): Promise<{
   }
 }
 
+/**
+ * Migration: Ensures public.addresses table exists with indexes
+ */
+export async function migrateCreateAddressesTable(): Promise<{
+  success: boolean;
+  message: string;
+  error?: string;
+}> {
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS public.addresses (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        label TEXT NOT NULL DEFAULT 'Home',
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        line1 TEXT NOT NULL,
+        line2 TEXT,
+        city TEXT NOT NULL,
+        state TEXT NOT NULL,
+        pincode TEXT NOT NULL,
+        is_default BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `;
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_addresses_user_id ON public.addresses (user_id);
+    `;
+
+    return {
+      success: true,
+      message: "Addresses table and indexes verified successfully.",
+    };
+  } catch (error: any) {
+    console.error("Addresses migration error:", error);
+    return {
+      success: false,
+      message: "Addresses migration failed",
+      error: error.message,
+    };
+  }
+}
+
 // Run migration on startup
 export async function runMigrationsOnStartup(): Promise<void> {
   try {
@@ -93,6 +138,15 @@ export async function runMigrationsOnStartup(): Promise<void> {
       console.error("Migration warning:", result.error);
     }
   } catch (error) {
-    console.error("Failed to run migrations:", error);
+    console.error("Failed to run sub-categories migration:", error);
+  }
+
+  try {
+    const addrResult = await migrateCreateAddressesTable();
+    if (!addrResult.success) {
+      console.error("Addresses migration warning:", addrResult.error);
+    }
+  } catch (error) {
+    console.error("Failed to run addresses migration:", error);
   }
 }
