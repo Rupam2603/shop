@@ -4,6 +4,7 @@ import { getDeliveryPartnerById, completeDeliveryPartnerProfile, toggleDeliveryP
 import { fetchAvailableOrdersForPartners, acceptOrderForDelivery, fetchOrdersForPartner, markOrderPickedUp, markOrderDelivered } from "../lib/deliveryOrders";
 import { pushDeliveryLocation } from "../lib/deliveryLocation";
 import { DbOrder } from "../lib/orders";
+import { subscribeToOrderEvents } from "../lib/orderEvents";
 import { uploadImageToSupabase } from "../lib/storage";
 import LiveDeliveryMap from "../components/LiveDeliveryMap";
 import RetailerApprovalsManager from "../components/RetailerApprovalsManager";
@@ -70,30 +71,57 @@ export default function DeliveryPartnerDashboard({ user, onLogout }: Props) {
     }
   };
 
-  // Load Orders
-  const loadOrders = async () => {
-    setLoadingOrders(true);
+  // Load Orders (with silent background auto-refresh)
+  const loadOrders = async (isSilent = false) => {
+    if (!isSilent) setLoadingOrders(true);
     try {
       const [avail, active, done] = await Promise.all([
         fetchAvailableOrdersForPartners(),
         fetchOrdersForPartner(user.id || "", { activeOnly: true }),
         fetchOrdersForPartner(user.id || "", { completedOnly: true }),
       ]);
-      setAvailableOrders(avail);
-      setActiveDeliveries(active);
-      setCompletedDeliveries(done);
+      if (Array.isArray(avail)) setAvailableOrders(avail);
+      if (Array.isArray(active)) setActiveDeliveries(active);
+      if (Array.isArray(done)) setCompletedDeliveries(done);
     } catch (err) {
       console.error("Error loading delivery orders:", err);
     } finally {
-      setLoadingOrders(false);
+      if (!isSilent) setLoadingOrders(false);
     }
   };
 
   useEffect(() => {
     loadProfile();
-    loadOrders();
-    const interval = setInterval(loadOrders, 10000);
-    return () => clearInterval(interval);
+    loadOrders(false);
+
+    // High-frequency 3.5s live orders polling
+    const interval = setInterval(() => {
+      loadOrders(true);
+    }, 3500);
+
+    // Instant synchronization as soon as the rider opens the screen or changes tab
+    const handleVisibility = () => {
+      if (!document.hidden) {
+        loadOrders(true);
+      }
+    };
+    const handleFocus = () => {
+      loadOrders(true);
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleFocus);
+
+    // Instant 0ms refresh on new orders, status changes, assignments
+    const unsubscribeOrderEvents = subscribeToOrderEvents(() => {
+      loadOrders(true);
+    });
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleFocus);
+      unsubscribeOrderEvents();
+    };
   }, [user.id]);
 
   // GPS Geolocation loop management
@@ -304,8 +332,32 @@ export default function DeliveryPartnerDashboard({ user, onLogout }: Props) {
           </div>
         </div>
 
-        {/* Right Section: Duty Switch & Profile & Sign Out */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        {/* Right Section: Live Sync, Duty Switch & Profile & Sign Out */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Live Auto-Refresh Indicator & Refresh Button */}
+          <button
+            type="button"
+            onClick={() => loadOrders(false)}
+            className="p-2 sm:px-3 sm:py-2 rounded-2xl bg-white border border-[#dce7db] text-xs font-bold text-[#073b4c] hover:bg-emerald-50 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs flex items-center gap-1.5"
+            title="Live order auto-sync active (click to refresh immediately)"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="hidden sm:inline text-[#006a39]">Live Sync</span>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={loadingOrders ? "animate-spin text-[#006a39]" : "text-[#006a39]"}
+            >
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+            </svg>
+          </button>
+
           {/* Duty Switch */}
           <button
             onClick={handleToggleDuty}

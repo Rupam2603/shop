@@ -301,5 +301,36 @@ The application reads configuration through `import.meta.env` (defined in `.env`
     - Updated `addToCart` with an optional `autoOpen?: boolean` parameter defaulting to `false`.
     - Added floating bottom-right toast notification (`cartToast`) displaying "Added to cart: {name}" with a quick "View Cart" CTA button, auto-dismissing after 2.5 seconds.
     - Allows retailers and customers to continuously browse and add multiple items without interruption, while the top bar cart counter updates in real time.
+- **Platform-Wide Real-Time Order & Dashboard Auto-Refresh System (Sep 2026)**:
+  - **The Problem**:
+    - Previously, both Administrators and Delivery Partners (as well as Retailers/Customers) had to manually reload the page (F5 / browser refresh) to see newly placed orders, status updates, partner assignments, and delivery completions.
+    - Serverless API endpoints (`/api/orders`, `/api/create-order`) lacked strict no-cache headers, causing browsers and CDNs to serve stale or 304 Not Modified responses even during automated polling.
+    - Order retrieval functions lacked cache-busting timestamps.
+    - `DeliveryPartnerDashboard.tsx` had a slow 10-second interval that flickered the UI with `setLoadingOrders(true)` on every tick and lacked focus/visibility triggers.
+    - `ProfilePage.tsx` fetched orders only once upon component mount.
+  - **Real-Time Cross-Tab & In-App Event Bus (`src/lib/orderEvents.ts`)**:
+    - Built a robust event distribution bus utilizing `BroadcastChannel("subhone_orders_channel")`, window `CustomEvent("subhone_order_event")`, and `localStorage` storage pulse fallback.
+    - Dispatches typed notifications: `"created"`, `"status_changed"`, `"assigned"`, `"picked_up"`, `"delivered"`, `"deleted"`.
+    - Offers `notifyOrderEvent(type, { orderId, orderNumber, status, partnerId })` and `subscribeToOrderEvents(callback)` with automatic teardown.
+  - **API & Client-Side Cache Elimination**:
+    - `api/orders.ts` & `api/create-order.ts`: Enforced strict HTTP headers: `Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0`, `Pragma: no-cache`, `Expires: 0`, and `Surrogate-Control: no-store`.
+    - `src/lib/orders.ts`: Attached unique cache-busting parameter `&_t=${Date.now()}` and `{ cache: "no-store" }` to `fetchAllOrders()`, `fetchUserOrders()`, and `fetchOrderByNumber()`.
+    - Dispatched `notifyOrderEvent` inside `placeOrder()`, `updateOrderStatus()`, and `deleteOrder()`.
+    - Connected `subscribeToOrdersRealtime()` and `subscribeToUserOrdersRealtime()` directly to the event bus.
+  - **Delivery Partner Order Management Hardening (`src/lib/deliveryOrders.ts`)**:
+    - Added `notifyOrderEvent` triggers to `acceptOrderForDelivery`, `markOrderPickedUp`, and `markOrderDelivered`.
+    - Fixed PostgreSQL casting bugs by comparing `o.delivery_partner_id::text = ${cleanId}` instead of unsafe `${partnerId}::uuid` casts.
+  - **Admin Dashboard Real-Time Synchronization (`src/pages/AdminDashboard.tsx`)**:
+    - High-frequency 3.5s silent background polling loop (slows to 12s when browser tab is inactive to preserve resources).
+    - Instant refresh triggers on `visibilitychange` (when tab becomes active) and `window.focus`.
+    - Zero-latency (0ms) instant updates via `subscribeToOrderEvents`.
+  - **Delivery Partner Dashboard Live Sync (`src/pages/DeliveryPartnerDashboard.tsx`)**:
+    - Silent background polling loop every 3.5s without disruptive loading flickers (`loadOrders(isSilent = true)`).
+    - Instant updates on window focus and tab visibility.
+    - Real-time `subscribeToOrderEvents` subscription.
+    - Visual "Live Sync" pulsing status badge and 1-click immediate manual refresh button in header.
+  - **User Profile & Order Tracking Synchronization (`ProfilePage.tsx` & `OrderTrackingModal.tsx`)**:
+    - `ProfilePage.tsx`: Added 5s polling loop, `visibilitychange`/`window.focus` triggers, and `subscribeToOrderEvents` listener for instant order status progression.
+    - `OrderTrackingModal.tsx`: Polling optimized to 3.5s with tab focus listeners and real-time live pulse badge.
 
 

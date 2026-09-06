@@ -1,5 +1,11 @@
 import { sql } from "./neon";
 import type { DbOrder } from "./orders";
+import { notifyOrderEvent } from "./orderEvents";
+
+function isUuidString(str?: string | null): boolean {
+  if (!str) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(str).trim());
+}
 
 /**
  * Fetch available orders waiting to be accepted by delivery partners.
@@ -70,10 +76,11 @@ export async function acceptOrderForDelivery(
   partnerName?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const partnerUuid = isUuidString(partnerId) ? partnerId : null;
     const res = await sql`
       UPDATE public.orders
       SET 
-        delivery_partner_id = ${partnerId}::uuid,
+        delivery_partner_id = ${partnerUuid}::uuid,
         delivery_status = 'accepted',
         delivery_accepted_at = NOW(),
         status = CASE WHEN status = 'Processing' THEN 'Dispatched' ELSE status END,
@@ -90,6 +97,7 @@ export async function acceptOrderForDelivery(
       };
     }
 
+    notifyOrderEvent("assigned", { orderId, partnerId });
     return { success: true };
   } catch (err: any) {
     console.error("Error accepting order for delivery:", err);
@@ -105,6 +113,9 @@ export async function fetchOrdersForPartner(
   opts?: { activeOnly?: boolean; completedOnly?: boolean }
 ): Promise<DbOrder[]> {
   try {
+    const cleanId = String(partnerId || "").trim();
+    if (!cleanId) return [];
+
     let rows;
     if (opts?.activeOnly) {
       rows = await sql`
@@ -129,7 +140,7 @@ export async function fetchOrdersForPartner(
           u.name as delivery_partner_name
         FROM public.orders o
         LEFT JOIN public.users u ON u.id = o.delivery_partner_id
-        WHERE o.delivery_partner_id = ${partnerId}::uuid
+        WHERE o.delivery_partner_id::text = ${cleanId}
           AND o.delivery_status IN ('accepted', 'picked_up')
         ORDER BY o.delivery_accepted_at DESC NULLS LAST
       `;
@@ -156,7 +167,7 @@ export async function fetchOrdersForPartner(
           u.name as delivery_partner_name
         FROM public.orders o
         LEFT JOIN public.users u ON u.id = o.delivery_partner_id
-        WHERE o.delivery_partner_id = ${partnerId}::uuid
+        WHERE o.delivery_partner_id::text = ${cleanId}
           AND (o.delivery_status = 'delivered' OR o.status = 'Delivered')
         ORDER BY o.updated_at DESC
         LIMIT 50
@@ -184,7 +195,7 @@ export async function fetchOrdersForPartner(
           u.name as delivery_partner_name
         FROM public.orders o
         LEFT JOIN public.users u ON u.id = o.delivery_partner_id
-        WHERE o.delivery_partner_id = ${partnerId}::uuid
+        WHERE o.delivery_partner_id::text = ${cleanId}
         ORDER BY o.created_at DESC
         LIMIT 60
       `;
@@ -232,7 +243,7 @@ export async function markOrderPickedUp(
         status = 'Out for Delivery',
         updated_at = NOW()
       WHERE (id = ${orderId} OR order_number = ${orderId})
-        AND delivery_partner_id = ${partnerId}::uuid
+        AND delivery_partner_id::text = ${partnerId}
       RETURNING id
     `;
 
@@ -240,6 +251,7 @@ export async function markOrderPickedUp(
       return { success: false, error: "Order not found or not assigned to you." };
     }
 
+    notifyOrderEvent("picked_up", { orderId, partnerId, status: "Out for Delivery" });
     return { success: true };
   } catch (err: any) {
     console.error("Error marking order as picked up:", err);
@@ -263,7 +275,7 @@ export async function markOrderDelivered(
         payment_status = 'Paid',
         updated_at = NOW()
       WHERE (id = ${orderId} OR order_number = ${orderId})
-        AND delivery_partner_id = ${partnerId}::uuid
+        AND delivery_partner_id::text = ${partnerId}
       RETURNING id
     `;
 
@@ -275,9 +287,10 @@ export async function markOrderDelivered(
     await sql`
       UPDATE public.delivery_locations
       SET order_id = NULL, updated_at = NOW()
-      WHERE user_id = ${partnerId}::uuid AND order_id = ${orderId}
+      WHERE user_id::text = ${partnerId} AND order_id = ${orderId}
     `.catch(() => {});
 
+    notifyOrderEvent("delivered", { orderId, partnerId, status: "Delivered" });
     return { success: true };
   } catch (err: any) {
     console.error("Error marking order as delivered:", err);

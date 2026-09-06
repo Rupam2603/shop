@@ -15,6 +15,7 @@ import { useModalBackHandler } from "../lib/navigation";
 import { StarRow } from "../components/ProductModal";
 import { printOrDownloadInvoice, InvoiceOrderData } from "../lib/invoiceGenerator";
 import { supabase } from "../lib/supabase";
+import { subscribeToOrderEvents } from "../lib/orderEvents";
 
 type ProfileSection = "profile" | "addresses" | "orders" | "lab-tests" | "reviews" | "security";
 
@@ -88,19 +89,61 @@ export default function ProfilePage({
 
   useEffect(() => {
     let mounted = true;
-    fetchUserAddresses(user.id).then((data) => {
-      if (mounted) setDbAddresses(data);
-    });
-    fetchUserOrders(user.id).then((data) => {
-      if (mounted) setDbOrders(data);
-    });
+
+    const loadOrders = () => {
+      fetchUserOrders(user.id).then((data) => {
+        if (mounted) setDbOrders(data);
+      }).catch((err) => {
+        console.error("Failed to load user orders:", err);
+      });
+    };
+
+    const loadAddresses = () => {
+      fetchUserAddresses(user.id).then((data) => {
+        if (mounted) setDbAddresses(data);
+      }).catch((err) => {
+        console.error("Failed to load user addresses:", err);
+      });
+    };
+
+    loadAddresses();
+    loadOrders();
+
     fetchUserLabBookings().then((data) => {
       if (mounted) setDbLabBookings(data);
     });
     fetchUserReviews(user.id).then((data) => {
       if (mounted) setDbReviews(data);
     });
-    return () => { mounted = false; };
+
+    // Real-time event subscription for immediate order updates (created, assigned, status changes)
+    const unsubEvents = subscribeToOrderEvents(() => {
+      loadOrders();
+    });
+
+    // Auto-refresh interval (5s when tab is active, 15s in background)
+    const pollInterval = setInterval(() => {
+      if (!mounted) return;
+      if (document.hidden) return;
+      loadOrders();
+    }, 5000);
+
+    // Refresh immediately when returning to tab
+    const handleVisibility = () => {
+      if (!document.hidden && mounted) {
+        loadOrders();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleVisibility);
+
+    return () => {
+      mounted = false;
+      unsubEvents();
+      clearInterval(pollInterval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleVisibility);
+    };
   }, [user.id]);
 
   const accent = user.role === "retailer" ? "#006a39" : "#0369a1";

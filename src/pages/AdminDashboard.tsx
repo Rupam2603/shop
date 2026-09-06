@@ -22,6 +22,7 @@ import {
   markOrderAsDeletedLocally,
   DbOrder,
 } from "../lib/orders";
+import { subscribeToOrderEvents } from "../lib/orderEvents";
 import { fetchAllLabBookings, updateLabBookingStatus as dbUpdateLabBookingStatus, DbLabBooking } from "../lib/labTests";
 import {
   printOrDownloadInvoice,
@@ -1118,18 +1119,22 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
     refetchProducts();
 
-    fetchAllOrders().then((data) => {
-      if (mounted) setDbOrders(data);
-    });
-
-    // Neon Data API has no realtime channel. Poll the authoritative orders table
-    // so orders placed in another browser appear automatically in the admin panel.
-    const orderPoll = window.setInterval(() => {
-      if (!mounted || document.hidden) return;
+    const refreshLiveOrders = () => {
+      if (!mounted) return;
       fetchAllOrders().then((data) => {
-        if (mounted) setDbOrders(data);
-      }).catch((err) => console.error("Order polling failed:", err));
-    }, 5000);
+        if (mounted && Array.isArray(data)) setDbOrders(data);
+      }).catch((err) => console.error("Order live refresh failed:", err));
+    };
+
+    const refreshLiveUsers = () => {
+      if (!mounted) return;
+      fetchAllUsers().then((data) => {
+        if (mounted && data) setManagedUsers(data);
+      }).catch(() => {});
+    };
+
+    // Immediate initial fetches
+    refreshLiveOrders();
 
     fetchAllLabBookings().then((data) => {
       if (mounted && data) setDbLabBookings(data);
@@ -1137,6 +1142,43 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
     fetchAllUsers().then((data) => {
       if (mounted && data) setManagedUsers(data);
+    });
+
+    // High-frequency 3.5-second live order polling (slows down to 12s when backgrounded)
+    const orderPoll = window.setInterval(() => {
+      if (!mounted) return;
+      if (!document.hidden || Math.random() < 0.25) {
+        refreshLiveOrders();
+      }
+    }, 3500);
+
+    // Periodic users & retailer approvals refresh
+    const userPoll = window.setInterval(() => {
+      if (!mounted || document.hidden) return;
+      refreshLiveUsers();
+    }, 8000);
+
+    // Instant synchronization as soon as tab/window receives focus
+    const handleVisibility = () => {
+      if (!document.hidden && mounted) {
+        refreshLiveOrders();
+        refreshLiveUsers();
+      }
+    };
+    const handleFocus = () => {
+      if (mounted) {
+        refreshLiveOrders();
+        refreshLiveUsers();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleFocus);
+
+    // Instant 0ms refresh upon order creation, status update, assignment, or deletion
+    const unsubscribeOrderEvents = subscribeToOrderEvents(() => {
+      if (mounted) {
+        refreshLiveOrders();
+      }
     });
 
     const unsubscribeProducts = subscribeToProductsRealtime((payload) => {
@@ -1198,6 +1240,10 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     return () => {
       mounted = false;
       window.clearInterval(orderPoll);
+      window.clearInterval(userPoll);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleFocus);
+      unsubscribeOrderEvents();
       unsubscribeProducts();
       unsubscribeSettings();
     };

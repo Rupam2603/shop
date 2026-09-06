@@ -91,22 +91,35 @@ export default function OrderTrackingModal({
       setLivePulse(true);
     });
 
-    // Poll active order every 10 seconds to detect partner assignments, status progression, and reassignments
-    const pollTimer = setInterval(() => {
+    // Poll active order every 3.5 seconds to detect partner assignments, status progression, and reassignments
+    const refreshActive = () => {
       if (!mounted) return;
       if (searchInput.trim()) {
         fetchOrderByNumber(searchInput.trim()).then((fresh) => {
           if (mounted && fresh) {
             setActiveOrder(fresh);
+            setLivePulse(true);
           }
         });
       }
-    }, 10000);
+    };
+
+    const pollTimer = setInterval(refreshActive, 3500);
+
+    const handleVisibility = () => {
+      if (!document.hidden && mounted) {
+        refreshActive();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleVisibility);
 
     return () => {
       mounted = false;
       unsub();
       clearInterval(pollTimer);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleVisibility);
     };
   }, [isOpen, initialOrderNumber, searchInput]);
 

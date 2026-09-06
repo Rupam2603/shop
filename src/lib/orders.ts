@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import { DbAddress, getEffectiveUserId } from "./addresses";
 import { CartItem } from "../contexts/CartContext";
+import { notifyOrderEvent, subscribeToOrderEvents } from "./orderEvents";
 
 export type OrderStatus =
   | "Processing"
@@ -214,6 +215,13 @@ export async function placeOrder(params: {
     // Save to local cache so user always sees their order immediately
     saveLocalOrder(fullOrder);
 
+    // Broadcast live event across all tabs and components
+    notifyOrderEvent("created", {
+      orderId: fullOrder.id,
+      orderNumber: fullOrder.order_number,
+      status: fullOrder.status,
+    });
+
     return { data: fullOrder, error: null };
   } catch (err: any) {
     console.error("placeOrder fatal catch:", err);
@@ -229,10 +237,11 @@ export async function fetchUserOrders(explicitUserId?: string): Promise<DbOrder[
     const userId = await getEffectiveUserId(explicitUserId);
     let dbOrders: DbOrder[] = [];
 
-    // 1. Primary: Serverless Orders API
+    // 1. Primary: Serverless Orders API with cache-busting
     try {
-      const resp = await fetch(`/api/orders?userId=${encodeURIComponent(userId)}`, {
-        headers: { Accept: "application/json" },
+      const resp = await fetch(`/api/orders?userId=${encodeURIComponent(userId)}&_t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { Accept: "application/json", "Cache-Control": "no-cache" },
       });
       if (resp.ok) {
         const json = await resp.json();
@@ -315,10 +324,11 @@ export async function fetchAllOrders(): Promise<DbOrder[]> {
   try {
     let orders: any[] | null = null;
 
-    // 1. Primary: Query the authoritative Serverless Orders API (/api/orders)
+    // 1. Primary: Query the authoritative Serverless Orders API (/api/orders) with cache-busting
     try {
-      const resp = await fetch("/api/orders", {
-        headers: { Accept: "application/json" },
+      const resp = await fetch(`/api/orders?_t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { Accept: "application/json", "Cache-Control": "no-cache" },
       });
       if (resp.ok) {
         const json = await resp.json();
@@ -417,6 +427,7 @@ export async function updateOrderStatus(
       body: JSON.stringify({ orderId, status }),
     });
     if (resp.ok) {
+      notifyOrderEvent("status_changed", { orderId, status });
       return { error: null };
     }
   } catch (apiErr) {
@@ -459,6 +470,7 @@ export async function updateOrderStatus(
   if (error) {
     return { error: error.message };
   }
+  notifyOrderEvent("status_changed", { orderId, status });
   return { error: null };
 }
 
@@ -507,10 +519,11 @@ export async function deleteOrder(orderId: string): Promise<{ error: string | nu
       await supabase.from("orders").delete().eq("order_number", trimmed);
     }
 
+    notifyOrderEvent("deleted", { orderId: trimmed });
     return { error: null };
   } catch (err: any) {
-    console.error("deleteOrder failed:", err);
-    return { error: err?.message || "Failed to delete order." };
+    console.error("Error in deleteOrder:", err);
+    return { error: err?.message || "Failed to delete order" };
   }
 }
 
@@ -521,11 +534,12 @@ export async function fetchOrderByNumber(orderNumberOrId: string): Promise<DbOrd
   try {
     const trimmed = orderNumberOrId.trim();
 
-    // 1. Primary: Serverless Orders API
+    // 1. Primary: Serverless Orders API with cache-busting
     try {
       const paramKey = trimmed.startsWith("ORD-") ? "orderNumber" : "orderId";
-      const resp = await fetch(`/api/orders?${paramKey}=${encodeURIComponent(trimmed)}`, {
-        headers: { Accept: "application/json" },
+      const resp = await fetch(`/api/orders?${paramKey}=${encodeURIComponent(trimmed)}&_t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { Accept: "application/json", "Cache-Control": "no-cache" },
       });
       if (resp.ok) {
         const json = await resp.json();
@@ -592,17 +606,17 @@ export async function fetchOrderByNumber(orderNumberOrId: string): Promise<DbOrd
 }
 
 /**
- * Realtime subscriptions are not offered by the Neon Data API. These are kept
- * as no-ops (matching prior behavior, since the old Supabase-shim "realtime"
- * never actually fired either) so call sites that expect an unsubscribe
- * function keep working; use the explicit refresh handlers instead.
+ * Live Realtime subscriptions powered by orderEvents bus.
+ * Automatically notifies callers when any order is created, modified, or deleted.
  */
-export function subscribeToUserOrdersRealtime(_userId: string, _onUpdate: () => void) {
-  return () => {};
+export function subscribeToUserOrdersRealtime(_userId: string, onUpdate: () => void) {
+  return subscribeToOrderEvents(() => {
+    onUpdate();
+  });
 }
 
-export function subscribeToOrdersRealtime(_onUpdate: (payload: any) => void) {
-  // Neon Data API does not provide the Supabase realtime channel used by the
-  // legacy UI. The admin dashboard uses polling instead (see AdminDashboard).
-  return () => {};
+export function subscribeToOrdersRealtime(onUpdate: (payload: any) => void) {
+  return subscribeToOrderEvents((payload) => {
+    onUpdate(payload);
+  });
 }
