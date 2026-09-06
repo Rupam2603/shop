@@ -427,11 +427,26 @@ The application reads configuration through `import.meta.env` (defined in `.env`
     - Review submission in `src/components/ProductModal.tsx` requires authentication as a genuine customer account (`role === 'customer'`), with real customer names (`appUser.profile.full_name`) or `"Verified Customer"`.
     - Unauthenticated users are prompted to sign in with their customer account before reviewing.
     - Real customers can also submit verified reviews from their delivered orders in `src/pages/ProfilePage.tsx` under "My Reviews".
-- **Key Categories Bar Scrollbar Removal & Dynamic Side Arrows (Sep 2026)**:
-  - Completely removed native/browser grey scrollbars using `.no-scrollbar` and `scrollbarWidth: "none"`, `msOverflowStyle: "none"`, and `::-webkit-scrollbar { display: none !important }` across all browsers in `src/index.css` and `src/components/KeyCategoriesBar.tsx`.
-  - Added dynamic floating left and right navigation chevron buttons with smooth gradient backdrops in `KeyCategoriesBar.tsx`.
-  - Arrows dynamically appear strictly when scrolling is needed (left arrow when `scrollLeft > 4`, right arrow when `scrollLeft < maxScroll - 4`, and both hidden when all categories fit comfortably on screen).
-  - Smooth programmatic scrolling on arrow click (`handleScroll`) with responsive width observation via `ResizeObserver` and window resize listeners.
+- **Admin Dashboard Luxury Glassmorphic UI/UX Redesign (Sep 2026)**:
+  - **Design System & Visual Theme**:
+    - Replaced the dark cyan/teal canvas with an ultra-light, luxury glassmorphic healthcare OS theme matching the reference mockups (`#f8fafc` background with soft rose and cyan atmospheric gradients).
+    - Preserved the official SubhOne brand logo (`/logo.png`) with clean dark typography (`font-['Manrope'] font-black text-slate-900`) and soft rose badge `ADMIN`.
+    - Integrated luxury typography using `Plus Jakarta Sans` and `Manrope`.
+  - **Glassmorphic Left Sidebar**:
+    - Transformed into pure white glassmorphism (`bg-white/97 backdrop-blur-2xl border-r border-slate-200/85`).
+    - Active navigation tab styled with soft rose card (`bg-rose-50 text-rose-600 font-extrabold border border-rose-100/80 shadow-2xs`).
+    - Added floating "Need Help?" 24/7 support card (`bg-gradient-to-b from-rose-50/80 to-pink-50/40 border border-rose-100`) with quick contact button.
+    - Added bottom Store Administrator profile card matching the reference mockup.
+  - **Top Navigation & Controls**:
+    - Added dynamic "Live Management" pill badge (`bg-rose-50 text-rose-500 border border-rose-100`).
+    - Breadcrumb navigation: `SubhOne Central Command › {TAB}`.
+    - Right-aligned actions: `Upload Excel` pill button, vibrant gradient `+ Add Product` button (`from-rose-500 to-pink-500`), Store Administrator status pill with shield icon, and dynamic calendar date card (`e.g. 5 Sept 2026 / Friday`).
+  - **Products Tab Overhaul**:
+    - Prominent search input with rose magnifying glass and "Filters" trigger button.
+    - Secondary filter row with "All Visibility", "All Categories ({count})", rose count pill, and "Import Excel" button.
+    - Grid/table header row (`PRODUCT`, `PRICING`, `STOCK & STATUS`, `ACTIONS`).
+    - Floating white glass cards per product with square image container, status indicator (`● Listed on Store` / `○ Draft`), HSN badge, SKU, category & brand pills, return policy tags, 3-column pricing (`MRP`, `CUSTOMER`, `RETAILER B2B`), stock count with status badge, and circular action buttons (`View`, `Edit`, `Delete`).
+    - Interactive pagination controls with page buttons (`< 1 2 3 4 5 >`) and page size selector (`10 per page`).
 
 
 

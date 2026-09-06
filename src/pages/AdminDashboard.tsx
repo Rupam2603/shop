@@ -239,6 +239,19 @@ const Icons = {
       <path d="m4.9 4.9 14.2 14.2" />
     </svg>
   ),
+  Filter: ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="4" y1="21" x2="4" y2="14" />
+      <line x1="4" y1="10" x2="4" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12" y2="3" />
+      <line x1="20" y1="21" x2="20" y2="16" />
+      <line x1="20" y1="12" x2="20" y2="3" />
+      <line x1="1" y1="14" x2="7" y2="14" />
+      <line x1="9" y1="8" x2="15" y2="8" />
+      <line x1="17" y1="16" x2="23" y2="16" />
+    </svg>
+  ),
   Truck: ({ className = "w-4 h-4" }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="1" y="3" width="15" height="13" rx="1" />
@@ -1820,23 +1833,23 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden flex bg-[#051e27] text-[#171d18]" style={{ fontFamily: "'Hanken Grotesk', sans-serif" }}>
+    <div className="min-h-screen relative overflow-x-hidden flex bg-[#f8fafc] text-slate-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       {/* ── AMBIENT GLASS BACKDROP ── */}
       <div 
         className="fixed inset-0 pointer-events-none z-0"
         style={{
-          background: "radial-gradient(ellipse 70% 60% at 30% -10%, rgba(0, 106, 57, 0.35), rgba(5, 30, 39, 0.95) 70%), linear-gradient(180deg, #04171f 0%, #06232d 50%, #031219 100%)",
+          background: "radial-gradient(ellipse 65% 55% at 25% 0%, rgba(255, 51, 102, 0.04), transparent 70%), radial-gradient(ellipse 60% 50% at 85% 100%, rgba(56, 189, 248, 0.04), transparent 70%), linear-gradient(180deg, #f8fafc 0%, #fbfcfd 50%, #f8fafc 100%)",
         }}
       />
-      <div className="fixed top-10 left-64 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none animate-float-slow z-0" />
-      <div className="fixed bottom-10 right-20 w-[420px] h-[420px] rounded-full bg-teal-500/10 blur-3xl pointer-events-none animate-float-reverse z-0" />
-      <div className="fixed top-1/2 right-1/3 w-80 h-80 rounded-full bg-cyan-400/8 blur-2xl pointer-events-none animate-pulse-soft z-0" />
+      <div className="fixed top-10 left-64 w-96 h-96 rounded-full bg-rose-500/4 blur-3xl pointer-events-none animate-float-slow z-0" />
+      <div className="fixed bottom-10 right-20 w-[420px] h-[420px] rounded-full bg-pink-500/3 blur-3xl pointer-events-none animate-float-reverse z-0" />
+      <div className="fixed top-1/2 right-1/3 w-80 h-80 rounded-full bg-sky-400/4 blur-2xl pointer-events-none animate-pulse-soft z-0" />
 
       {/* Subtle geometric dot grid */}
       <div 
-        className="fixed inset-0 opacity-[0.03] pointer-events-none z-0"
+        className="fixed inset-0 opacity-[0.025] pointer-events-none z-0"
         style={{
-          backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.8) 1px, transparent 0)`,
+          backgroundImage: `radial-gradient(rgba(15, 23, 42, 0.6) 1px, transparent 0)`,
           backgroundSize: "28px 28px",
         }}
       />
@@ -1845,7 +1858,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 md:hidden animate-in fade-in"
+          className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 md:hidden animate-in fade-in"
         />
       )}
 
@@ -1856,26 +1869,26 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         }`}
       >
         {/* Brand Header */}
-        <div className="px-6 py-5 border-b border-white/10 flex items-center justify-between">
+        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
               src="/logo.png"
               alt="SubhOne Logo"
-              className="w-10 h-10 rounded-2xl object-contain bg-white shadow-lg p-0.5 border border-white/30 shrink-0"
+              className="w-10 h-10 rounded-2xl object-contain bg-white shadow-xs p-0.5 border border-slate-100 shrink-0"
             />
             <div>
               <div className="flex items-center gap-2">
-                <p className="font-['Manrope',sans-serif] font-extrabold text-white text-xl tracking-tight">SubhOne</p>
-                <span className="bg-emerald-500/25 text-emerald-300 border border-emerald-400/30 text-[9px] font-black px-1.5 py-0.2 rounded-full tracking-wider uppercase">
-                  Admin
+                <p className="font-['Manrope',sans-serif] font-black text-slate-900 text-xl tracking-tight">SubhOne</p>
+                <span className="bg-rose-50 text-rose-500 border border-rose-100 text-[10px] font-extrabold px-2 py-0.5 rounded-full tracking-wider uppercase">
+                  ADMIN
                 </span>
               </div>
-              <p className="text-white/50 text-[10px] uppercase font-bold tracking-wider mt-0.5">Healthcare OS</p>
+              <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mt-0.5">Healthcare OS</p>
             </div>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="md:hidden text-white/70 hover:text-white p-1"
+            className="md:hidden text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
@@ -1891,17 +1904,17 @@ export default function AdminDashboard({ user, onLogout }: Props) {
                 onClick={() => { setActiveTab(t.id); setSidebarOpen(false); }}
                 className={`group flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold font-['Manrope',sans-serif] transition-all w-full text-left cursor-pointer ${
                   active
-                    ? "bg-gradient-to-r from-[#006a39] to-[#008749] text-white shadow-lg shadow-emerald-950/30 border border-emerald-400/30"
-                    : "text-white/70 hover:text-white hover:bg-white/10"
+                    ? "bg-rose-50 text-rose-600 font-extrabold border border-rose-100/80 shadow-2xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                 }`}
               >
-                <span className={`transition-transform group-hover:scale-110 ${active ? "text-emerald-200" : "text-white/50"}`}>
+                <span className={`transition-transform group-hover:scale-110 ${active ? "text-rose-500" : "text-slate-400 group-hover:text-slate-600"}`}>
                   {t.icon}
                 </span>
                 <span className="flex-1">{t.label}</span>
 
                 {t.id === "inventory" && (lowStockCount + outOfStockCount > 0) && (
-                  <span className="bg-red-500 text-white text-[10px] font-black rounded-full px-1.5 py-0.2 min-w-[20px] text-center shadow-xs">
+                  <span className="bg-rose-500 text-white text-[10px] font-black rounded-full px-1.5 py-0.2 min-w-[20px] text-center shadow-xs">
                     {lowStockCount + outOfStockCount}
                   </span>
                 )}
@@ -1914,35 +1927,51 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             );
           })}
 
-          {/* Database Heartbeat Beacon & User Profile in Sidebar */}
-          <div className="mt-auto pt-4 border-t border-white/10 flex flex-col gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/75 text-[11px]">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Real-time Cloud Sync Active</span>
+          {/* Need Help? Card & Admin Profile at Bottom */}
+          <div className="mt-auto pt-4 flex flex-col gap-3">
+            {/* Need Help Card */}
+            <div className="bg-gradient-to-b from-rose-50/80 to-pink-50/40 border border-rose-100 rounded-3xl p-4 flex flex-col gap-2.5 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-xl bg-white text-rose-500 border border-rose-100 flex items-center justify-center text-sm shadow-2xs">
+                  🎧
+                </div>
+                <p className="text-xs font-extrabold text-slate-900">Need Help?</p>
+              </div>
+              <p className="text-[11px] text-slate-500 leading-snug font-medium">
+                Our support team is available 24/7 to help you.
+              </p>
+              <button
+                type="button"
+                onClick={() => alert("SubhOne Support: support@subhone.com | Hotline: +91 1800-SUBH-ONE")}
+                className="w-full bg-[#ff3366] hover:bg-[#e62e5c] text-white text-xs font-bold py-2 rounded-xl shadow-xs transition-all text-center cursor-pointer active:scale-98"
+              >
+                Contact Support
+              </button>
             </div>
 
-            <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-between gap-3">
+            {/* Profile Bar */}
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 px-1">
               <div className="flex items-center gap-2.5 min-w-0">
                 {adminAvatar ? (
                   <img
                     src={adminAvatar}
                     alt="Admin Avatar"
-                    className="w-9 h-9 rounded-xl object-cover shrink-0 shadow-xs border border-white/20"
+                    className="w-9 h-9 rounded-xl object-cover shrink-0 shadow-2xs border border-slate-200"
                   />
                 ) : (
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white font-extrabold text-sm shrink-0 shadow-xs border border-white/20">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white font-extrabold text-sm shrink-0 shadow-2xs">
                     {(adminName?.[0] || user?.email?.[0] || "A").toUpperCase()}
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="text-white text-xs font-bold leading-none truncate">{adminName || "SubhOne Admin"}</p>
-                  <p className="text-white/50 text-[10px] mt-0.5 truncate font-mono">{user?.email || "admin@subhone.com"}</p>
+                  <p className="text-slate-900 text-xs font-bold leading-tight truncate">{adminName || "Store Administrator"}</p>
+                  <p className="text-slate-400 text-[10px] truncate font-medium">Admin</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={onLogout}
-                className="w-8 h-8 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-400/30 flex items-center justify-center text-xs transition-colors cursor-pointer shrink-0"
+                className="w-7 h-7 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center text-xs transition-colors cursor-pointer shrink-0"
                 title="Sign Out"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1964,21 +1993,22 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           <div className="flex items-center gap-3.5">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-xl bg-white/80 border border-[#d5dcd3] text-[#073b4c] hover:bg-white cursor-pointer active:scale-95"
+              className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer active:scale-95"
               aria-label="Open navigation menu"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg sm:text-2xl capitalize">
+                <h1 className="font-['Manrope',sans-serif] font-black text-slate-900 text-xl sm:text-2xl capitalize tracking-tight">
                   {activeTab === "lab-tests" ? "Lab Bookings" : activeTab}
                 </h1>
-                <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100/80 text-[#006a39] border border-emerald-200">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-rose-50 text-rose-500 border border-rose-100">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
                   Live Management
                 </span>
               </div>
-              <p className="text-[#657969] text-xs hidden sm:block">SubhOne Central Command › {activeTab.toUpperCase()}</p>
+              <p className="text-slate-400 text-xs font-semibold hidden sm:block">SubhOne Central Command › {activeTab === "lab-tests" ? "LAB BOOKINGS" : activeTab.toUpperCase()}</p>
             </div>
           </div>
 
@@ -1988,41 +2018,43 @@ export default function AdminDashboard({ user, onLogout }: Props) {
                 <button
                   type="button"
                   onClick={() => setShowBulkUpload(true)}
-                  className="flex items-center gap-1.5 sm:gap-2 bg-white/95 hover:bg-emerald-50 text-[#006a39] border border-emerald-300/90 text-xs sm:text-sm font-extrabold px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl transition-all shadow-xs hover:scale-102 active:scale-95 cursor-pointer"
+                  className="flex items-center gap-1.5 sm:gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl transition-all shadow-2xs hover:scale-102 active:scale-95 cursor-pointer"
                   title="Upload products in bulk using Excel template"
                 >
-                  <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#006a39]" />
+                  <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-600" />
                   <span>Upload Excel</span>
                 </button>
 
-                <button onClick={openAdd} className="flex items-center gap-2 bg-gradient-to-r from-[#006a39] to-[#008749] text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-2xl hover:opacity-95 transition-all shadow-md shadow-emerald-950/15 cursor-pointer active:scale-95">
-                  <span>+</span>
+                <button
+                  onClick={openAdd}
+                  className="flex items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white text-xs sm:text-sm font-extrabold px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl transition-all shadow-sm shadow-rose-500/25 cursor-pointer active:scale-95"
+                >
+                  <span className="text-base leading-none">+</span>
                   <span>Add Product</span>
                 </button>
               </>
             )}
 
-            <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-white/70 backdrop-blur-md border border-[#dce7db] shadow-xs">
-              {adminAvatar ? (
-                <img
-                  src={adminAvatar}
-                  alt="Admin Profile"
-                  className="w-7 h-7 rounded-xl object-cover shadow-xs border border-emerald-600/30"
-                />
-              ) : (
-                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#006a39] to-[#008749] text-white flex items-center justify-center text-xs font-black">
-                  {(adminName?.[0] || "A").toUpperCase()}
-                </div>
-              )}
+            <div className="hidden sm:flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
+              <div className="w-7 h-7 rounded-xl bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center text-xs font-bold">
+                🛡️
+              </div>
               <div className="text-left leading-tight hidden md:block">
-                <p className="text-xs font-extrabold text-[#073b4c] truncate max-w-[120px]">{adminName}</p>
-                <p className="text-[10px] text-emerald-700 font-bold">Admin</p>
+                <p className="text-xs font-extrabold text-slate-900 truncate max-w-[120px]">{adminName || "Store Administrator"}</p>
+                <p className="text-[10px] text-slate-400 font-medium">Admin</p>
               </div>
             </div>
 
-            <div className="hidden lg:flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/70 border border-[#dce7db] text-xs font-semibold text-[#073b4c]">
-              <Icons.Calendar className="w-3.5 h-3.5 text-[#006a39]" />
-              <span>{new Date().toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}</span>
+            <div className="hidden lg:flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-white border border-slate-200/80 shadow-2xs text-xs font-semibold text-slate-800">
+              <Icons.Calendar className="w-4 h-4 text-rose-500" />
+              <div className="flex flex-col text-left leading-none">
+                <span className="text-xs font-bold text-slate-800">
+                  {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+                <span className="text-[10px] text-slate-400 font-medium mt-0.5">
+                  {new Date().toLocaleDateString("en-IN", { weekday: "long" })}
+                </span>
+              </div>
             </div>
           </div>
         </header>
@@ -2143,16 +2175,16 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
       {/* Delete Confirmation Modal */}
       {deleteId !== null && (
-        <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-sm w-full p-7 text-center shadow-2xl animate-in zoom-in-95">
-            <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4 text-2xl shadow-xs">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white/95 backdrop-blur-2xl border border-slate-200/80 rounded-3xl max-w-sm w-full p-7 text-center shadow-2xl animate-in zoom-in-95">
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4 text-2xl shadow-xs">
               <Icons.Trash className="w-7 h-7 text-rose-600" />
             </div>
-            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg mb-1">Delete Product Entry</h3>
-            <p className="text-[#657969] text-xs mb-6 leading-relaxed">Are you sure you want to delete this pharmaceutical product from database and inventory? This action is permanent.</p>
+            <h3 className="font-['Manrope',sans-serif] font-black text-slate-900 text-lg mb-1">Delete Product Entry</h3>
+            <p className="text-slate-500 text-xs mb-6 leading-relaxed">Are you sure you want to delete this pharmaceutical product from database and inventory? This action is permanent.</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-2xl border border-[#dce7db] text-[#657969] font-bold text-xs hover:bg-white cursor-pointer">Cancel</button>
-              <button onClick={() => deleteProduct(deleteId)} className="flex-1 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-md shadow-rose-950/20">Confirm Delete</button>
+              <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 cursor-pointer transition-all">Cancel</button>
+              <button onClick={() => deleteProduct(deleteId)} className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-bold text-xs transition-all cursor-pointer shadow-md shadow-rose-500/25">Confirm Delete</button>
             </div>
           </div>
         </div>
@@ -2339,12 +2371,23 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
   missingPurchasePriceCount?: number;
 }) {
   const [statusFilter, setStatusFilter] = useState<"All" | "listed" | "unlisted">("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const displayedProducts = useMemo(() => {
     if (statusFilter === "listed") return products.filter((p) => p.isListed !== false);
     if (statusFilter === "unlisted") return products.filter((p) => p.isListed === false);
     return products;
   }, [products, statusFilter]);
+
+  const totalItems = displayedProducts.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+
+  const paginatedProducts = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return displayedProducts.slice(start, start + pageSize);
+  }, [displayedProducts, safePage, pageSize]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -2362,40 +2405,51 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
           </div>
         </div>
       )}
-      {/* Filter Bar */}
-      <div className="glass-admin-card rounded-3xl p-4 sm:p-5 flex flex-col gap-3.5 shadow-xs">
-        {/* Row 1: Dedicated Prominent Wide Search Bar */}
-        <div className="relative w-full">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8fa092]">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search pharmaceutical products by name, brand, SKU, sub-category or HSN…"
-            className="w-full pl-12 pr-10 py-3 text-xs sm:text-sm bg-white/90 border border-[#dce7db] rounded-2xl focus:outline-none focus:border-[#006a39] focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all shadow-2xs placeholder:text-[#8fa092]"
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch("")}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
-              title="Clear search"
-            >
-              ✕
-            </button>
-          )}
+
+      {/* Filter Bar Card */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col gap-3.5 shadow-xs">
+        {/* Row 1: Search Bar & Filters Trigger */}
+        <div className="flex items-center gap-3 w-full">
+          <div className="relative flex-1">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-4 top-1/2 -translate-y-1/2 text-rose-500">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+              placeholder="Search pharmaceutical products by name, brand, SKU, sub-category or HSN..."
+              className="w-full pl-12 pr-10 py-3 text-xs sm:text-sm bg-slate-50/50 hover:bg-slate-50 border border-slate-200/80 rounded-2xl focus:outline-none focus:bg-white focus:border-rose-300 focus:ring-4 focus:ring-rose-500/10 font-medium transition-all shadow-2xs placeholder:text-slate-400"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => { setSearch(""); setCurrentPage(1); }}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs sm:text-sm font-bold shadow-2xs cursor-pointer transition-all shrink-0"
+          >
+            <Icons.Filter className="w-4 h-4 text-slate-500" />
+            <span>Filters</span>
+          </button>
         </div>
 
-        {/* Row 2: Filters & Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-[#edf3ee]">
+        {/* Row 2: Select Filters & Secondary Actions */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-slate-100">
           <div className="flex items-center gap-2.5 flex-wrap">
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="bg-white/90 border border-[#dce7db] rounded-2xl px-3.5 py-2 text-xs sm:text-sm font-bold text-[#073b4c] focus:outline-none focus:border-[#006a39] transition-all cursor-pointer shadow-2xs"
+              onChange={(e) => { setStatusFilter(e.target.value as any); setCurrentPage(1); }}
+              className="bg-white border border-slate-200 rounded-2xl px-3.5 py-2 text-xs sm:text-sm font-bold text-slate-700 focus:outline-none focus:border-rose-300 transition-all cursor-pointer shadow-2xs"
             >
               <option value="All">All Visibility</option>
               <option value="listed">● Listed on Storefront</option>
@@ -2404,14 +2458,14 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
 
             <select
               value={catFilter}
-              onChange={(e) => setCatFilter(e.target.value)}
-              className="bg-white/90 border border-[#dce7db] rounded-2xl px-4 py-2 text-xs sm:text-sm font-bold text-[#073b4c] focus:outline-none focus:border-[#006a39] transition-all cursor-pointer shadow-2xs max-w-[280px] truncate"
+              onChange={(e) => { setCatFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-white border border-slate-200 rounded-2xl px-4 py-2 text-xs sm:text-sm font-bold text-slate-700 focus:outline-none focus:border-rose-300 transition-all cursor-pointer shadow-2xs max-w-[280px] truncate"
             >
               <option value="All">All Categories ({allProductCount})</option>
               {categories.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
 
-            <span className="text-xs font-extrabold text-[#006a39] px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 shadow-2xs">
+            <span className="text-xs font-extrabold text-rose-600 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-100 shadow-2xs">
               {displayedProducts.length} Items
             </span>
           </div>
@@ -2421,10 +2475,10 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
               <button
                 type="button"
                 onClick={onOpenBulkUpload}
-                className="flex items-center gap-1.5 bg-white/95 hover:bg-emerald-50 text-[#006a39] border border-emerald-300/80 text-xs font-bold px-3.5 py-2 rounded-2xl transition-all shadow-2xs hover:scale-102 cursor-pointer"
+                className="flex items-center gap-1.5 bg-rose-50/50 hover:bg-rose-100/80 text-rose-600 border border-rose-200 font-bold text-xs px-3.5 py-2 rounded-2xl transition-all shadow-2xs hover:scale-102 cursor-pointer"
                 title="Bulk import products via Excel spreadsheet"
               >
-                <Upload className="w-3.5 h-3.5 text-[#006a39]" />
+                <Upload className="w-3.5 h-3.5 text-rose-600" />
                 <span>Import Excel</span>
               </button>
             )}
@@ -2432,155 +2486,224 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
         </div>
       </div>
 
-      {/* Product List */}
-      <div className="glass-admin-card rounded-3xl overflow-hidden shadow-xs">
-        <div className="divide-y divide-[#e4ede2]">
-          {displayedProducts.map((p) => {
-            const st = stockStatus(p.stock);
-            const catColor = CAT_ACCENT[p.category] ?? "#006a39";
+      {/* Product List Header Row */}
+      <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-1 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+        <div className="col-span-5">PRODUCT</div>
+        <div className="col-span-3 text-center">PRICING</div>
+        <div className="col-span-2 text-center">STOCK & STATUS</div>
+        <div className="col-span-2 text-right pr-2">ACTIONS</div>
+      </div>
 
-            return (
-              <div
-                key={p.id}
-                className="p-4 sm:p-5 hover:bg-white/80 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
-              >
-                {/* Left */}
-                <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                  <div className="w-14 h-14 rounded-2xl border border-[#dce7db] overflow-hidden shrink-0 bg-white flex items-center justify-center p-1.5 shadow-2xs">
-                    {p.image ? (
-                      <img src={p.image} alt={p.name} className="h-full max-w-full object-contain" />
-                    ) : (
-                      <div className="w-full h-full rounded-xl flex items-center justify-center font-black text-base" style={{ backgroundColor: catColor + "18", color: catColor }}>
-                        {p.name[0]}
-                      </div>
-                    )}
-                  </div>
+      {/* Product Cards Stack */}
+      <div className="flex flex-col gap-3">
+        {paginatedProducts.map((p) => {
+          const st = stockStatus(p.stock);
+          const catColor = CAT_ACCENT[p.category] ?? "#e11d48";
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base truncate">{p.name}</p>
-                      <span className={`font-mono text-[10px] px-2 py-0.5 rounded-full font-bold border ${p.isListed !== false ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-amber-50 text-amber-800 border-amber-200"}`}>
-                        {p.isListed !== false ? "● Listed on Store" : "○ Draft (Hidden)"}
-                      </span>
-                      <span className="font-mono text-[10px] bg-sky-50 text-sky-800 border border-sky-200 px-2 py-0.5 rounded-full font-bold">
-                        HSN: {p.hsn}
-                      </span>
-                      <span className="font-mono text-[10px] text-[#728575] font-semibold">
-                        {p.sku}
-                      </span>
+          return (
+            <div
+              key={p.id}
+              className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-rose-200/80 transition-all flex flex-col lg:grid lg:grid-cols-12 gap-4 items-start lg:items-center"
+            >
+              {/* Product Info (Col 1-5) */}
+              <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 w-full lg:col-span-5">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border border-slate-100 overflow-hidden shrink-0 bg-slate-50/80 flex items-center justify-center p-2 shadow-2xs">
+                  {p.image ? (
+                    <img src={p.image} alt={p.name} className="h-full max-w-full object-contain" />
+                  ) : (
+                    <div className="w-full h-full rounded-xl flex items-center justify-center font-black text-base" style={{ backgroundColor: catColor + "18", color: catColor }}>
+                      {p.name[0]}
                     </div>
-
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <span
-                        className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full"
-                        style={{ color: catColor, backgroundColor: catColor + "18" }}
-                      >
-                        {p.category.split(",")[0].split(" & ")[0]}
-                      </span>
-                      <span className="text-xs text-[#596b5e] font-semibold">{p.brand}</span>
-                      {p.details && (
-                        <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full">
-                          {p.details}
-                        </span>
-                      )}
-                      {p.return_policy && (
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                          p.return_policy.includes("Returnable")
-                            ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                            : p.return_policy.includes("Replacement")
-                            ? "bg-sky-50 text-sky-800 border-sky-200"
-                            : "bg-slate-50 text-slate-700 border-slate-200"
-                        }`}>
-                          {p.return_policy.includes("Returnable") && p.return_policy.includes("Replacement")
-                            ? "🔄🔁 7d Return & Replace"
-                            : p.return_policy.includes("Returnable")
-                            ? "🔄 7d Returnable"
-                            : p.return_policy.includes("Replacement")
-                            ? "🔁 7d Replacement"
-                            : "🚫 Non-Returnable"}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </div>
 
-                {/* Middle: Pricing & Margins */}
-                <div className="flex items-center gap-5 text-left md:text-right shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-[#e4ede2] flex-wrap justify-between md:justify-end">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-extrabold text-[#728575] uppercase">MRP</span>
-                    <span className="text-xs text-[#8a9d8d] line-through font-semibold">₹{p.mrp}</span>
-                  </div>
-
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-extrabold text-[#006a39] uppercase">Customer</span>
-                    <span className="text-sm sm:text-base font-extrabold text-[#073b4c]">₹{p.customerPrice}</span>
-                  </div>
-
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-extrabold text-[#0369a1] uppercase">Retailer B2B</span>
-                    <span className="text-sm sm:text-base font-extrabold text-[#0369a1]">₹{p.retailerPrice}</span>
-                  </div>
-
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-extrabold text-amber-700 uppercase">Purchase</span>
-                    {p.purchasePrice ? (
-                      <span className="text-sm sm:text-base font-extrabold text-amber-700">₹{p.purchasePrice}</span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-rose-500 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-md">⚠ Missing</span>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col items-start md:items-end">
-                    <span className="text-xs font-black text-[#073b4c]">{p.stock} units</span>
-                    <span
-                      className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full mt-1 border"
-                      style={{ color: st.color, backgroundColor: st.bg, borderColor: st.border }}
-                    >
-                      {st.label}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-['Manrope',sans-serif] font-black text-slate-900 text-sm sm:text-base leading-tight truncate">{p.name}</p>
+                    <span className={`font-sans text-[10px] px-2 py-0.5 rounded-full font-bold border ${p.isListed !== false ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
+                      {p.isListed !== false ? "● Listed on Store" : "○ Draft (Hidden)"}
+                    </span>
+                    <span className="font-mono text-[10px] bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-md font-bold">
+                      HSN: {p.hsn}
                     </span>
                   </div>
-                </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 shrink-0 justify-end">
-                  <button
-                    type="button"
-                    onClick={() => onToggleListing?.(p)}
-                    className={`p-2.5 rounded-xl border transition-colors cursor-pointer shadow-2xs ${p.isListed !== false ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200" : "bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200"}`}
-                    title={p.isListed !== false ? "Click to unlist (hide from storefront)" : "Click to publish (show on storefront)"}
-                  >
-                    {p.isListed !== false ? <Icons.Eye className="w-4 h-4 text-emerald-700" /> : <Icons.Ban className="w-4 h-4 text-amber-700" />}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onEdit(p)}
-                    className="p-2.5 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 transition-colors cursor-pointer border border-sky-200 shadow-2xs"
-                    title="Edit Product"
-                  >
-                    <Icons.Edit className="w-4 h-4 text-sky-700" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDelete(p.id)}
-                    className="p-2.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer border border-rose-200 shadow-2xs"
-                    title="Delete Product"
-                  >
-                    <Icons.Trash className="w-4 h-4 text-rose-700" />
-                  </button>
+                  <p className="text-[11px] font-semibold text-slate-400 mt-0.5 font-mono">{p.sku}</p>
+
+                  <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-600 border border-rose-100">
+                      {p.category.split(",")[0].split(" & ")[0]}
+                    </span>
+                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                      {p.brand}
+                    </span>
+                    {p.details && (
+                      <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100 px-2.5 py-0.5 rounded-full">
+                        {p.details}
+                      </span>
+                    )}
+                    {p.return_policy && (
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200">
+                        {p.return_policy.includes("Returnable") && p.return_policy.includes("Replacement")
+                          ? "🔄 7d Return & Replace"
+                          : p.return_policy.includes("Returnable")
+                          ? "🔄 7d Returnable"
+                          : p.return_policy.includes("Replacement")
+                          ? "🔁 7d Replacement"
+                          : "🚫 Non-Returnable"}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
+
+              {/* Pricing (Col 6-8) */}
+              <div className="flex items-center gap-5 sm:gap-7 justify-between lg:justify-center w-full lg:col-span-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                <div className="flex flex-col text-left">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">MRP</span>
+                  <span className="text-xs text-slate-400 line-through font-semibold">₹{p.mrp}</span>
+                </div>
+
+                <div className="flex flex-col text-left">
+                  <span className="text-[10px] font-black text-rose-500 uppercase tracking-wider">CUSTOMER</span>
+                  <span className="text-base sm:text-lg font-black text-slate-900 leading-none mt-0.5">₹{p.customerPrice}</span>
+                </div>
+
+                <div className="flex flex-col text-left">
+                  <span className="text-[10px] font-black text-rose-600 uppercase tracking-wider">RETAILER B2B</span>
+                  <span className="text-base sm:text-lg font-black text-rose-600 leading-none mt-0.5">₹{p.retailerPrice}</span>
+                </div>
+
+                {p.purchasePrice !== undefined && (
+                  <div className="hidden sm:flex flex-col text-left">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">PURCHASE</span>
+                    <span className="text-xs font-bold text-slate-600 mt-0.5">₹{p.purchasePrice}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Stock & Status (Col 9-10) */}
+              <div className="flex flex-col items-start lg:items-center w-full lg:col-span-2">
+                <span className="text-sm sm:text-base font-black text-slate-900">{p.stock} units</span>
+                <span
+                  className="text-[11px] font-bold px-2.5 py-0.5 rounded-full mt-1 border"
+                  style={{ color: st.color, backgroundColor: st.bg, borderColor: st.border }}
+                >
+                  {st.label}
+                </span>
+              </div>
+
+              {/* Actions (Col 11-12) */}
+              <div className="flex items-center gap-2 shrink-0 justify-end w-full lg:col-span-2">
+                <button
+                  type="button"
+                  onClick={() => onToggleListing?.(p)}
+                  className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer shadow-2xs ${
+                    p.isListed !== false
+                      ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border-emerald-200"
+                      : "bg-amber-50 hover:bg-amber-100 text-amber-600 border-amber-200"
+                  }`}
+                  title={p.isListed !== false ? "Click to unlist (hide from storefront)" : "Click to publish (show on storefront)"}
+                >
+                  {p.isListed !== false ? <Icons.Eye className="w-4 h-4 text-emerald-600" /> : <Icons.Ban className="w-4 h-4 text-amber-600" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onEdit(p)}
+                  className="w-9 h-9 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-200 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                  title="Edit Product"
+                >
+                  <Icons.Edit className="w-4 h-4 text-sky-600" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDelete(p.id)}
+                  className="w-9 h-9 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                  title="Delete Product"
+                >
+                  <Icons.Trash className="w-4 h-4 text-rose-600" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
 
         {displayedProducts.length === 0 && (
-          <div className="py-16 text-center text-[#728575] text-sm flex flex-col items-center gap-2">
-            <Icons.Pill className="w-10 h-10 text-[#728575] stroke-1" />
-            <p className="font-bold text-[#073b4c]">No products found</p>
+          <div className="py-16 text-center text-slate-400 text-sm flex flex-col items-center gap-2 bg-white rounded-3xl border border-slate-200/80">
+            <Icons.Pill className="w-10 h-10 text-slate-300 stroke-1" />
+            <p className="font-bold text-slate-700">No products found</p>
             <p className="text-xs">Try adjusting your visibility filter, category filter or search terms.</p>
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {displayedProducts.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 px-2">
+          <p className="text-xs font-medium text-slate-400">
+            Showing {totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1} to {Math.min(safePage * pageSize, totalItems)} of {totalItems} items
+          </p>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              disabled={safePage <= 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-xs font-bold cursor-pointer shadow-2xs"
+            >
+              ‹
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((page) => page === 1 || page === totalPages || Math.abs(page - safePage) <= 1)
+              .map((page, idx, arr) => {
+                const prev = arr[idx - 1];
+                return (
+                  <React.Fragment key={page}>
+                    {prev && page - prev > 1 && (
+                      <span className="text-slate-400 text-xs px-1">…</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                        safePage === page
+                          ? "bg-rose-500 text-white shadow-xs"
+                          : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-2xs"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  </React.Fragment>
+                );
+              })}
+
+            <button
+              type="button"
+              disabled={safePage >= totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-xs font-bold cursor-pointer shadow-2xs"
+            >
+              ›
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-600 focus:outline-none focus:border-rose-300 cursor-pointer shadow-2xs"
+            >
+              <option value={10}>10 per page</option>
+              <option value={25}>25 per page</option>
+              <option value={50}>50 per page</option>
+            </select>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
