@@ -90,37 +90,37 @@ export const TOP_CATEGORIES = [
     id: "monsoon",
     name: "Monsoon Care",
     cat: "Monsoon Health & Antiseptics",
-    img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80",
+    img: "/categories/monsoon-care.png",
   },
   {
     id: "immunity",
     name: "Immunity Boosters",
     cat: "Daily Wellness & Immunity",
-    img: "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=300&q=80",
+    img: "/categories/immunity-boosters.png",
   },
   {
     id: "pain-relief",
     name: "Pain Relief",
     cat: "Pain Relief & Muscle Care",
-    img: "https://images.unsplash.com/photo-1550572017-ed20015ade08?w=300&q=80",
+    img: "/categories/pain-relief.png",
   },
   {
     id: "baby",
     name: "Baby Care",
     cat: "Baby Care & Infant Nutrition",
-    img: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=300&q=80",
+    img: "/categories/baby-care.png",
   },
   {
     id: "personal-care",
     name: "Personal Care",
     cat: "Skin Care & Ointments",
-    img: "https://images.unsplash.com/photo-1608248597359-54845511b8be?w=300&q=80",
+    img: "/categories/personal-care.png",
   },
   {
     id: "devices",
     name: "Health Devices",
     cat: "Medical Supplies & Devices",
-    img: "https://images.unsplash.com/photo-1583912267670-6575ad472688?w=300&q=80",
+    img: "/categories/health-devices.png",
   },
 ];
 
@@ -668,21 +668,21 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-2.5">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 sm:gap-3">
               {TOP_CATEGORIES.map((c) => (
                 <div
                   key={c.id}
                   onClick={() => onNavigate("category" as any, c.cat)}
-                  className="group bg-slate-50/70 hover:bg-white rounded-2xl border border-slate-200/75 hover:border-rose-200/90 p-2.5 flex flex-col items-center justify-between text-center transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer min-h-[120px]"
+                  className="group bg-white hover:bg-slate-50/50 rounded-2xl sm:rounded-3xl border border-sky-100/90 hover:border-rose-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center transition-all duration-300 hover:shadow-md hover:-translate-y-1 cursor-pointer min-h-[136px] sm:min-h-[156px]"
                 >
-                  <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center p-1 bg-white/80">
+                  <div className="w-full aspect-square max-w-[116px] rounded-xl sm:rounded-2xl overflow-hidden flex items-center justify-center bg-sky-50/50 shadow-2xs">
                     <img
                       src={c.img}
                       alt={c.name}
-                      className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                      className="w-full h-full object-cover rounded-xl sm:rounded-2xl group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
-                  <span className="text-[11px] sm:text-xs font-bold text-slate-800 group-hover:text-[#ff3366] leading-tight line-clamp-2 mt-1">
+                  <span className="text-[11px] sm:text-xs font-black text-[#003b6d] group-hover:text-[#ff3366] leading-tight line-clamp-2 mt-1.5 transition-colors">
                     {c.name}
                   </span>
                 </div>

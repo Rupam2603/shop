@@ -483,7 +483,7 @@ The application reads configuration through `import.meta.env` (defined in `.env`
       3. *Licensed Pharmacists* | *Expert advice*
       4. *Secure Payments* | *Safe & hassle-free*
   - **Top Categories & Deals of the Day (Side-by-Side as in Reference)**:
-    - **Top Categories**: 6 luxury cards (*Monsoon Care*, *Immunity Boosters*, *Pain Relief*, *Baby Care*, *Personal Care*, *Health Devices*) with clean image thumbnails and rose `View All →` link.
+    - **Top Categories**: 6 luxury cards (*Monsoon Care*, *Immunity Boosters*, *Pain Relief*, *Baby Care*, *Personal Care*, *Health Devices*) using high-resolution cropped category artwork extracted directly from the user's reference (`/categories/monsoon-care.png`, `/categories/immunity-boosters.png`, `/categories/pain-relief.png`, `/categories/baby-care.png`, `/categories/personal-care.png`, `/categories/health-devices.png`) with crisp square aspect ratios and rose `View All →` link.
     - **Deals of the Day**: 4 product cards (*Dettol Liquid 250ml 29% OFF*, *Crocin Advance 25% OFF*, *Accu-Chek 50 Strips 12% OFF*, *Dolo-650 Tablet 10% OFF*) with green discount badges, strike-through MRP pricing, and real database product connectivity.
   - **Footer (`src/components/Footer.tsx`)**:
     - Refreshed footer with clean glassmorphism, slate typography, and upgraded 24/7 Support Bot banner to luxury dark slate with rose accents and glowing status badge.
