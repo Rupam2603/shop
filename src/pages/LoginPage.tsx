@@ -348,7 +348,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
 
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-[#dbeafe] via-[#eff6ff] to-[#e0f2fe] flex items-center justify-center p-3 sm:p-6 lg:p-10 overflow-hidden font-['Plus_Jakarta_Sans',sans-serif]">
-      
+
       {/* ── Ambient Background Glow & Floating Medical Cross Elements ── */}
       <div className="absolute -top-32 -left-32 w-96 h-96 bg-blue-300/30 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/3 -right-32 w-96 h-96 bg-cyan-200/40 rounded-full blur-3xl pointer-events-none" />
@@ -370,7 +370,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
 
       {/* ── Main Canvas Wrapper ── */}
       <div className="w-full max-w-[1240px] relative z-10 flex flex-col gap-4 sm:gap-6 my-auto">
-        
+
         {/* Top Navigation Row */}
         {onBackToStore && (
           <div className="w-full flex items-center justify-between px-2 sm:px-4">
@@ -393,10 +393,10 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
 
         {/* ── Split Screen Card Container ── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          
+
           {/* ════════ LEFT COLUMN: Brand Hero & Value Proposition ════════ */}
           <div className="lg:col-span-6 xl:col-span-6 flex flex-col justify-between h-full px-2 sm:px-6 lg:px-4">
-            
+
             {/* Top Brand Logo - PRESERVED EXISTING LOGO */}
             <div className="flex items-center gap-3 mb-6 sm:mb-8">
               <img
@@ -511,7 +511,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
           {/* ════════ RIGHT COLUMN: Luxury Glassmorphic Form Card ════════ */}
           <div className="lg:col-span-6 xl:col-span-6 flex justify-center w-full">
             <div className="w-full max-w-[490px] bg-white/95 backdrop-blur-2xl border border-white/90 rounded-[32px] sm:rounded-[38px] shadow-2xl shadow-blue-950/10 p-6 sm:p-10 flex flex-col gap-5 relative transition-all">
-              
+
               {/* Card Top Brand Header - PRESERVED EXISTING LOGO */}
               <div className="text-center flex flex-col items-center">
                 <img
@@ -549,22 +549,20 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                 <button
                   type="button"
                   onClick={() => switchMode("login")}
-                  className={`py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
-                    mode === "login"
-                      ? "bg-white text-[#0f172a] shadow-sm font-black"
-                      : "text-slate-500 hover:text-slate-900"
-                  }`}
+                  className={`py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${mode === "login"
+                    ? "bg-white text-[#0f172a] shadow-sm font-black"
+                    : "text-slate-500 hover:text-slate-900"
+                    }`}
                 >
                   Sign In
                 </button>
                 <button
                   type="button"
                   onClick={() => switchMode("signup")}
-                  className={`py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
-                    mode === "signup"
-                      ? "bg-white text-[#0f172a] shadow-sm font-black"
-                      : "text-slate-500 hover:text-slate-900"
-                  }`}
+                  className={`py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${mode === "signup"
+                    ? "bg-white text-[#0f172a] shadow-sm font-black"
+                    : "text-slate-500 hover:text-slate-900"
+                    }`}
                 >
                   Create Account
                 </button>
@@ -586,11 +584,10 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                         key={r}
                         type="button"
                         onClick={() => { setSelectedRole(r); setError(""); setSuccess(""); }}
-                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center cursor-pointer ${
-                          active
-                            ? "bg-white text-[#0f172a] shadow-sm font-black border border-white"
-                            : "text-slate-500 hover:text-slate-900"
-                        }`}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center cursor-pointer ${active
+                          ? "bg-white text-[#0f172a] shadow-sm font-black border border-white"
+                          : "text-slate-500 hover:text-slate-900"
+                          }`}
                       >
                         <span>{roleInfo.label}</span>
                       </button>
@@ -603,12 +600,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
               {pendingApprovalInfo && (
                 <div className="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 text-xs text-amber-950 flex flex-col gap-2 shadow-xs">
                   <div className="flex items-center justify-between font-bold">
-                    <span className="flex items-center gap-1.5">
-                      <svg className="w-4 h-4 text-amber-800" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M5 2H4v2h1v1c0 2.46 1.32 4.77 3.43 6.02.35.21.57.55.57.9v.16c0 .35-.21.69-.57.9A7.01 7.01 0 0 0 5 19v1H4v2h16v-2h-1v-1c0-2.46-1.32-4.77-3.43-6.02-.36-.21-.57-.55-.57-.9v-.16c0-.35.21-.69.57-.9A7.01 7.01 0 0 0 19 5V4h1V2zm12 3c0 1.76-.94 3.41-2.45 4.3-.97.57-1.55 1.55-1.55 2.62v.16c0 1.07.58 2.05 1.55 2.62 1.51.89 2.45 2.54 2.45 4.3v1H7v-1c0-1.76.94-3.41 2.45-4.3.97-.57 1.55-1.55 1.55-2.62v-.16c0-1.07-.58-2.05-1.55-2.62A5.01 5.01 0 0 1 7 5V4h10z" />
-                      </svg>
-                      <span>Retailer Application In Review</span>
-                    </span>
+                    <span> Retailer Application In Review</span>
                     <span className="text-[10px] uppercase bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-extrabold">
                       Pending
                     </span>
@@ -1042,20 +1034,19 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                 {statusResult.found && statusResult.retailer ? (
                   <div className="flex flex-col gap-3">
                     <div
-                      className={`p-3.5 rounded-2xl border flex items-center justify-between text-xs font-bold ${
-                        statusResult.retailer.approvalStatus === "approved"
-                          ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-                          : statusResult.retailer.approvalStatus === "pending"
+                      className={`p-3.5 rounded-2xl border flex items-center justify-between text-xs font-bold ${statusResult.retailer.approvalStatus === "approved"
+                        ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                        : statusResult.retailer.approvalStatus === "pending"
                           ? "bg-amber-50 border-amber-200 text-amber-900"
                           : "bg-red-50 border-red-200 text-red-900"
-                      }`}
+                        }`}
                     >
                       <span>
                         {statusResult.retailer.approvalStatus === "approved"
                           ? "🎉 Wholesale Account Approved"
                           : statusResult.retailer.approvalStatus === "pending"
-                          ? "⏳ Application Under Review"
-                          : "❌ Application Declined"}
+                            ? "⏳ Application Under Review"
+                            : "❌ Application Declined"}
                       </span>
                       <span className="uppercase text-[10px] px-2 py-0.5 rounded-full bg-white/80 font-black">
                         {statusResult.retailer.approvalStatus}

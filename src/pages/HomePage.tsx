@@ -84,7 +84,44 @@ export interface HomeCategorySectionItem {
   products: HomeCategoryProduct[];
 }
 
-
+export const TOP_CATEGORIES = [
+  {
+    id: "monsoon",
+    name: "Monsoon Care",
+    cat: "Monsoon Health & Antiseptics",
+    img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80",
+  },
+  {
+    id: "immunity",
+    name: "Immunity Boosters",
+    cat: "Daily Wellness & Immunity",
+    img: "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=300&q=80",
+  },
+  {
+    id: "pain-relief",
+    name: "Pain Relief",
+    cat: "Pain Relief & Muscle Care",
+    img: "https://images.unsplash.com/photo-1550572017-ed20015ade08?w=300&q=80",
+  },
+  {
+    id: "baby",
+    name: "Baby Care",
+    cat: "Baby Care & Infant Nutrition",
+    img: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=300&q=80",
+  },
+  {
+    id: "personal-care",
+    name: "Personal Care",
+    cat: "Skin Care & Ointments",
+    img: "https://images.unsplash.com/photo-1608248597359-54845511b8be?w=300&q=80",
+  },
+  {
+    id: "devices",
+    name: "Health Devices",
+    cat: "Medical Supplies & Devices",
+    img: "https://images.unsplash.com/photo-1583912267670-6575ad472688?w=300&q=80",
+  },
+];
 
 function ProductCard({
   p,
@@ -105,29 +142,28 @@ function ProductCard({
   return (
     <div
       onClick={onClick}
-      className={`w-[155px] sm:w-[195px] lg:w-auto shrink-0 lg:shrink snap-start bg-white/85 backdrop-blur-xl rounded-3xl border ${
-        isOutOfStock ? "border-rose-200/80 opacity-75" : "border-white/90 hover:border-emerald-300/80"
-      } shadow-xs hover:shadow-xl hover:shadow-emerald-950/8 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer`}
+      className={`w-[155px] sm:w-[195px] lg:w-auto shrink-0 lg:shrink snap-start bg-white/90 backdrop-blur-xl rounded-3xl border ${
+        isOutOfStock ? "border-rose-200/80 opacity-75" : "border-slate-200/85 hover:border-[#ff3366]/40"
+      } shadow-2xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer`}
     >
-      <div className="bg-gradient-to-b from-white/90 to-slate-50/50 h-28 sm:h-36 relative overflow-hidden flex items-center justify-center p-2.5">
+      <div className="bg-slate-50/70 h-28 sm:h-36 relative overflow-hidden flex items-center justify-center p-2.5">
         {p.disc && (
           <span
-            className="absolute top-2.5 left-2.5 z-10 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase shadow-xs border border-white/30 backdrop-blur-md"
-            style={{ backgroundColor: accent }}
+            className="absolute top-2.5 left-2.5 z-10 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase shadow-xs bg-[#ff3366]"
           >
             {p.disc} OFF
           </span>
         )}
         {isOutOfStock ? (
-          <span className="absolute top-2.5 right-2.5 z-10 bg-rose-50/90 text-rose-700 border border-rose-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase shadow-2xs backdrop-blur-md">
+          <span className="absolute top-2.5 right-2.5 z-10 bg-rose-50 text-rose-700 border border-rose-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase shadow-2xs backdrop-blur-md">
             {isRetailer ? "Stock Out" : "Out of Stock"}
           </span>
         ) : isLowStock ? (
-          <span className="absolute top-2.5 right-2.5 z-10 bg-amber-50/90 text-amber-800 border border-amber-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase animate-pulse shadow-2xs backdrop-blur-md">
+          <span className="absolute top-2.5 right-2.5 z-10 bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase animate-pulse shadow-2xs backdrop-blur-md">
             {isRetailer ? `Low (${p.stock})` : `Only ${p.stock} Left`}
           </span>
         ) : (
-          <span className="absolute top-2.5 right-2.5 z-10 bg-emerald-50/90 text-emerald-800 border border-emerald-200 text-[8px] font-bold px-2 py-0.5 rounded-full shadow-2xs backdrop-blur-md">
+          <span className="absolute top-2.5 right-2.5 z-10 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[8px] font-bold px-2 py-0.5 rounded-full shadow-2xs backdrop-blur-md">
             {isRetailer ? `📦 ${p.stock} units` : `${p.stock} in stock`}
           </span>
         )}
@@ -138,26 +174,26 @@ function ProductCard({
           onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.15"; }}
         />
       </div>
-      <div className="p-3 sm:p-3.5 flex flex-col gap-1 flex-1 bg-white/70 backdrop-blur-md">
-        <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[34px] group-hover:text-[#006a39] transition-colors">
+      <div className="p-3 sm:p-3.5 flex flex-col gap-1 flex-1 bg-white">
+        <p className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[34px] group-hover:text-[#ff3366] transition-colors">
           {p.name}
         </p>
         <div className="flex items-center gap-1.5 flex-wrap">
-          <p className="text-[#8aa08e] text-[10px] sm:text-[11px] truncate font-medium">{p.sub}</p>
+          <p className="text-slate-400 text-[10px] sm:text-[11px] truncate font-medium">{p.sub}</p>
           {p.subCat && (
-            <span className="text-[9px] font-bold text-[#0f766e] bg-teal-50 border border-teal-200/70 px-1.5 py-0.2 rounded-full">
+            <span className="text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.2 rounded-full">
               {p.subCat}
             </span>
           )}
         </div>
 
-        <div className="flex items-center justify-between mt-auto pt-2.5 border-t border-[#f0f5f1]">
+        <div className="flex items-center justify-between mt-auto pt-2.5 border-t border-slate-100">
           <div>
-            <span className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base">
+            <span className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-sm sm:text-base">
               {p.price}
             </span>
             {p.orig && (
-              <span className="text-[#9aa89b] text-[10px] sm:text-xs line-through ml-1 font-semibold">
+              <span className="text-slate-400 text-[10px] sm:text-xs line-through ml-1 font-semibold">
                 MRP {p.orig}
               </span>
             )}
@@ -172,8 +208,7 @@ function ProductCard({
                 e.stopPropagation();
                 onAddToCart?.();
               }}
-              className="w-8 h-8 rounded-2xl flex items-center justify-center text-white shrink-0 hover:scale-110 active:scale-95 transition-all shadow-md shadow-emerald-950/15 cursor-pointer border border-white/40"
-              style={{ backgroundColor: accent }}
+              className="w-8 h-8 rounded-2xl flex items-center justify-center text-white shrink-0 hover:scale-110 active:scale-95 transition-all shadow-md bg-[#ff3366] hover:bg-[#e02958] cursor-pointer"
               title="Add to cart"
             >
               <PlusIcon />
@@ -201,31 +236,26 @@ function CategorySection({
   return (
     <section className="flex flex-col gap-3 sm:gap-4">
       <div
-        className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3.5 sm:py-4.5 rounded-3xl backdrop-blur-xl border border-white/80 shadow-xs"
-        style={{
-          background: `linear-gradient(135deg, ${item.lightBg}cc 0%, rgba(255, 255, 255, 0.9) 100%)`,
-        }}
+        className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3.5 sm:py-4.5 rounded-3xl bg-white/95 backdrop-blur-xl border border-slate-200/80 shadow-2xs"
       >
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <div
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-xs border border-white/40 group-hover:scale-105 transition-transform"
-            style={{ backgroundColor: item.iconBg, color: item.accent }}
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-xs border border-rose-100 bg-rose-50 text-[#ff3366] group-hover:scale-105 transition-transform"
           >
             {item.icon}
           </div>
           <div className="min-w-0">
-            <h2 className="font-['Manrope',sans-serif] font-extrabold text-base sm:text-xl truncate" style={{ color: item.accent }}>
+            <h2 className="font-['Manrope',sans-serif] font-extrabold text-base sm:text-xl text-slate-900 truncate">
               {item.cat}
             </h2>
-            <p className="text-[#657969] text-[11px] sm:text-xs mt-0.5 font-medium truncate">
+            <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 font-medium truncate">
               {item.tagline ? item.tagline : `${item.count} certified medicines · Express Dispatch`}
             </p>
           </div>
         </div>
         <button
           onClick={onViewAll}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white/80 hover:bg-white text-xs sm:text-sm font-extrabold shadow-2xs hover:shadow-xs border border-white transition-all cursor-pointer shrink-0 whitespace-nowrap active:scale-95"
-          style={{ color: item.accent }}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-rose-50 hover:bg-rose-100 text-[#ff3366] text-xs sm:text-sm font-extrabold shadow-2xs hover:shadow-xs border border-rose-200/80 transition-all cursor-pointer shrink-0 whitespace-nowrap active:scale-95"
         >
           <span>View All</span>
           <ArrowRight />
@@ -421,6 +451,113 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
     }));
   }, [dbProducts, isRetailer]);
 
+  const dealsOfTheDayList = useMemo(() => {
+    const defaultDeals = [
+      {
+        name: "Dettol Liquid 250ml",
+        sub: "Antiseptic Disinfectant Liquid",
+        price: 110,
+        origPrice: 155,
+        disc: "29% OFF",
+        img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80",
+        brand: "Dettol",
+        cat: "Monsoon Health & Antiseptics",
+      },
+      {
+        name: "Crocin Advance",
+        sub: "Fast Relief Paracetamol 500mg",
+        price: 45,
+        origPrice: 60,
+        disc: "25% OFF",
+        img: "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=300&q=80",
+        brand: "Crocin",
+        cat: "Pain Relief & Muscle Care",
+      },
+      {
+        name: "Accu-Chek 50 Strips",
+        sub: "Active Blood Glucose Test Strips",
+        price: 849,
+        origPrice: 965,
+        disc: "12% OFF",
+        img: "https://images.unsplash.com/photo-1583912267670-6575ad472688?w=300&q=80",
+        brand: "Accu-Chek",
+        cat: "Medical Supplies & Devices",
+      },
+      {
+        name: "Dolo-650 Tablet",
+        sub: "Paracetamol 650mg Antipyretic",
+        price: 18,
+        origPrice: 20,
+        disc: "10% OFF",
+        img: "https://images.unsplash.com/photo-1550572017-ed20015ade08?w=300&q=80",
+        brand: "Micro Labs",
+        cat: "Pain Relief & Muscle Care",
+      },
+    ];
+
+    if (!dbProducts || dbProducts.length === 0) {
+      return defaultDeals.map((d, idx) => ({
+        id: idx + 101,
+        numeric_id: idx + 101,
+        dbId: `deal-${idx}`,
+        name: d.name,
+        sub: d.sub,
+        price: `₹${d.price}`,
+        orig: `₹${d.origPrice}`,
+        disc: d.disc,
+        rawPrice: d.price,
+        rawOrig: d.origPrice,
+        brand: d.brand,
+        cat: d.cat,
+        img: d.img,
+        stock: 50,
+      }));
+    }
+
+    return defaultDeals.map((d, idx) => {
+      const match = dbProducts.find((p) => p.name.toLowerCase().includes(d.name.split(" ")[0].toLowerCase()));
+      if (match) {
+        const pPrice = Math.round(match.retailer_price || match.customer_price || d.price);
+        const pMrp = Math.round(match.mrp || d.origPrice);
+        return {
+          id: match.numeric_id || idx + 101,
+          numeric_id: match.numeric_id || idx + 101,
+          dbId: match.id,
+          name: match.name,
+          sub: match.details || match.subtitle || d.sub,
+          price: `₹${pPrice}`,
+          orig: pMrp > pPrice ? `₹${pMrp}` : `₹${d.origPrice}`,
+          disc: match.discount_percent ? `${match.discount_percent}% OFF` : d.disc,
+          rawPrice: pPrice,
+          rawOrig: pMrp,
+          brand: match.brand || d.brand,
+          cat: match.category_name || d.cat,
+          img: match.image_url || d.img,
+          stock: match.stock ?? 50,
+          customer_price: match.customer_price,
+          retailer_price: match.retailer_price,
+          return_policy: match.return_policy || "Non-Returnable",
+        };
+      }
+      return {
+        id: idx + 101,
+        numeric_id: idx + 101,
+        dbId: `deal-${idx}`,
+        name: d.name,
+        sub: d.sub,
+        price: `₹${d.price}`,
+        orig: `₹${d.origPrice}`,
+        disc: d.disc,
+        rawPrice: d.price,
+        rawOrig: d.origPrice,
+        brand: d.brand,
+        cat: d.cat,
+        img: d.img,
+        stock: 50,
+      };
+    });
+  }, [dbProducts]);
+
   const handleAddToCartFromCategory = (p: HomeCategoryProduct, cat: string) => {
     addToCart({
       id: p.numeric_id || p.id || nameToId(p.name),
@@ -439,84 +576,252 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
   };
 
   return (
-    <div className="bg-[#f5fbf2] min-h-screen">
-      <div className="max-w-[1280px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 flex flex-col gap-3.5 sm:gap-6">
+    <div className="bg-transparent min-h-screen">
+      <div className="max-w-[1280px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 flex flex-col gap-4 sm:gap-6">
 
-        {/* ── Key Categories Bar (ABOVE BANNER IMAGE - SLEEK COMPACT PROFILE) ── */}
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#e4ede2] shadow-xs overflow-hidden">
+        {/* ── Key Categories Bar ── */}
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
           <KeyCategoriesBar
             selectedId={activeKeyCat}
             onSelectCategory={handleSelectKeyCategory}
           />
         </div>
 
-        {/* Hero Banner */}
-        <div className="relative rounded-3xl overflow-hidden min-h-[300px] sm:min-h-[360px] md:h-[400px] shadow-lg border border-[#e4ede2]/60 flex items-center bg-[#073b4c]">
-          {/* High-res background image with progressive gradient overlay */}
-          <div className="absolute inset-0 w-full h-full">
-            <img
-              src={imgHeroBg}
-              alt="SubhOne Pharmacy & Healthcare"
-              className="w-full h-full object-cover object-right sm:object-center"
-            />
-            {/* Multi-stage progressive gradient overlay for ultra-crisp text readability & ambient glow */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#073b4c]/95 via-[#073b4c]/85 sm:via-[#073b4c]/70 md:via-[#073b4c]/40 to-transparent" />
-            <div className="absolute inset-0 bg-radial at-top-left from-[#006a39]/30 to-transparent" />
-          </div>
+        {/* ── Hero Banner (Blush Pink Luxury Gradient with Delivery Hero & 30-Min Badge) ── */}
+        <div className="relative rounded-3xl overflow-hidden min-h-[340px] sm:min-h-[380px] lg:h-[400px] shadow-sm border border-rose-100/90 bg-gradient-to-r from-rose-50/95 via-pink-50/85 to-rose-100/70 flex flex-col md:flex-row items-center justify-between p-6 sm:p-10 lg:px-14 lg:py-8">
+          {/* Ambient soft blurs */}
+          <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-rose-200/40 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-20 right-1/4 w-80 h-80 rounded-full bg-pink-200/40 blur-3xl pointer-events-none" />
 
-          {/* Hero Content */}
-          <div className="relative z-10 flex flex-col gap-3 sm:gap-4 p-6 sm:p-10 lg:p-14 max-w-[620px] justify-center h-full">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 bg-[#ba1a1a] text-white text-[10px] sm:text-xs px-3 py-1 rounded-full uppercase tracking-wider font-bold shadow-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                Limited Time Offer
+          {/* Left Text & Actions */}
+          <div className="relative z-10 flex flex-col gap-3.5 sm:gap-4 max-w-xl justify-center text-left">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 bg-rose-100/90 text-[#ff3366] text-[10px] sm:text-xs px-3.5 py-1 rounded-full uppercase tracking-wider font-extrabold shadow-2xs">
+                LIMITED TIME OFFER
               </span>
-              <span className="hidden sm:inline-flex items-center gap-1 bg-white/20 backdrop-blur-md text-white text-xs px-3 py-1 rounded-full font-medium border border-white/20">
-                ✨ 100% Genuine Pharmacy
+              <span className="inline-flex items-center gap-1 text-slate-700 text-xs px-2.5 py-1 rounded-full font-semibold">
+                <span className="text-[#ff3366]">🛡️</span> 100% Genuine Pharmacy
               </span>
             </div>
 
-            <h1 className="font-['Manrope',sans-serif] font-extrabold text-white text-3xl sm:text-4xl lg:text-5xl leading-tight sm:leading-[1.15] tracking-tight">
-              Flat <span className="text-[#82fde6] underline decoration-[#006a39] underline-offset-4">20% Off</span> on First Order
+            <h1 className="font-['Manrope',sans-serif] font-black text-slate-900 text-3xl sm:text-4xl lg:text-5xl leading-tight sm:leading-[1.15] tracking-tight">
+              Flat <span className="text-[#ff3366]">20% Off</span> on First Order
             </h1>
 
-            <p className="text-white/90 text-xs sm:text-base leading-relaxed font-normal max-w-lg drop-shadow-xs">
-              Genuine medicines, certified wellness supplements, baby care & emergency essentials — delivered to your doorstep in 30 mins.
+            <p className="text-slate-600 text-xs sm:text-base leading-relaxed font-medium max-w-lg">
+              Genuine medicines, certified wellness supplements, baby care & emergency essentials – delivered to your doorstep in 30 mins.
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <button
+                type="button"
                 onClick={() => onNavigate("medicines")}
-                className="bg-[#006a39] hover:bg-[#005a30] text-white text-xs sm:text-sm font-bold px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl shadow-lg hover:shadow-emerald-900/30 active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer"
+                className="bg-[#ff3366] hover:bg-[#e62657] text-white text-xs sm:text-sm font-extrabold px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl shadow-md hover:shadow-rose-500/25 active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer"
               >
                 <span>Shop Medicines</span>
                 <ArrowRight />
               </button>
 
               <button
+                type="button"
                 onClick={() => onNavigate("offers")}
-                className="bg-white/15 hover:bg-white/25 text-white backdrop-blur-md text-xs sm:text-sm font-semibold px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl border border-white/30 hover:border-white transition-all cursor-pointer"
+                className="bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-bold px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all cursor-pointer"
               >
-                Explore Deals & Offers
+                Explore Deals
               </button>
             </div>
+          </div>
 
-            {/* Micro Trust badges */}
-            <div className="flex items-center gap-4 sm:gap-6 pt-2 border-t border-white/15 text-white/85 text-[11px] sm:text-xs">
-              <div className="flex items-center gap-1.5">
-                <span className="text-emerald-400 font-bold">⚡</span>
-                <span>30-Min Fast Delivery</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-emerald-400 font-bold">🛡️</span>
-                <span>Batch Verified</span>
-              </div>
-              <div className="hidden sm:flex items-center gap-1.5">
-                <span className="text-emerald-400 font-bold">🩺</span>
-                <span>Licensed Pharmacists</span>
+          {/* Right Hero Image & 30-Min Badge */}
+          <div className="relative z-10 mt-6 md:mt-0 flex items-center justify-center shrink-0 w-full md:w-auto">
+            <div className="relative flex items-center justify-center">
+              <img
+                src="/delivery_hero.jpg"
+                alt="SubhOne Delivery Partner"
+                className="h-[250px] sm:h-[300px] lg:h-[340px] w-auto object-contain drop-shadow-xl"
+              />
+
+              {/* Floating 30 MIN Delivery Badge */}
+              <div className="absolute right-2 sm:right-4 top-1/4 bg-white/95 backdrop-blur-md rounded-full w-20 h-20 sm:w-24 sm:h-24 flex flex-col items-center justify-center border border-rose-100 shadow-xl text-center">
+                <span className="text-xl sm:text-2xl font-black text-[#ff3366] leading-none">30</span>
+                <span className="text-[10px] sm:text-xs font-black text-[#ff3366] tracking-wider leading-tight">MIN</span>
+                <span className="text-[9px] sm:text-[10px] font-semibold text-slate-500 leading-tight">Delivery</span>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* ── Trust Badges Bar ── */}
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl border border-slate-200/85 p-4 sm:p-5 shadow-2xs grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-[#ff3366] shrink-0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+              </svg>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs sm:text-sm font-bold text-slate-900">30-Min Fast Delivery</span>
+              <span className="text-[11px] sm:text-xs text-slate-500">At your doorstep</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-[#ff3366] shrink-0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs sm:text-sm font-bold text-slate-900">Batch Verified</span>
+              <span className="text-[11px] sm:text-xs text-slate-500">100% genuine products</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-[#ff3366] shrink-0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <line x1="19" y1="8" x2="19" y2="14"></line>
+                <line x1="22" y1="11" x2="16" y2="11"></line>
+              </svg>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs sm:text-sm font-bold text-slate-900">Licensed Pharmacists</span>
+              <span className="text-[11px] sm:text-xs text-slate-500">Expert advice</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-[#ff3366] shrink-0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+              </svg>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs sm:text-sm font-bold text-slate-900">Secure Payments</span>
+              <span className="text-[11px] sm:text-xs text-slate-500">Safe & hassle-free</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Top Categories & Deals of the Day (Side-by-Side as in Reference) ── */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+          {/* Top Categories */}
+          <section className="xl:col-span-6 bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/85 p-4 sm:p-5 shadow-2xs flex flex-col gap-3.5">
+            <div className="flex items-center justify-between">
+              <h2 className="font-['Manrope',sans-serif] font-black text-slate-900 text-lg sm:text-xl">
+                Top Categories
+              </h2>
+              <button
+                type="button"
+                onClick={() => onNavigate("category" as any, "all")}
+                className="text-xs sm:text-sm font-bold text-[#ff3366] hover:text-[#e62657] hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>View All</span>
+                <span>→</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-2.5">
+              {TOP_CATEGORIES.map((c) => (
+                <div
+                  key={c.id}
+                  onClick={() => onNavigate("category" as any, c.cat)}
+                  className="group bg-slate-50/70 hover:bg-white rounded-2xl border border-slate-200/75 hover:border-rose-200/90 p-2.5 flex flex-col items-center justify-between text-center transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer min-h-[120px]"
+                >
+                  <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center p-1 bg-white/80">
+                    <img
+                      src={c.img}
+                      alt={c.name}
+                      className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+                  <span className="text-[11px] sm:text-xs font-bold text-slate-800 group-hover:text-[#ff3366] leading-tight line-clamp-2 mt-1">
+                    {c.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Deals of the Day */}
+          <section className="xl:col-span-6 bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/85 p-4 sm:p-5 shadow-2xs flex flex-col gap-3.5">
+            <div className="flex items-center justify-between">
+              <h2 className="font-['Manrope',sans-serif] font-black text-slate-900 text-lg sm:text-xl">
+                Deals of the Day
+              </h2>
+              <button
+                type="button"
+                onClick={() => onNavigate("offers")}
+                className="text-xs sm:text-sm font-bold text-[#ff3366] hover:text-[#e62657] hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>View All</span>
+                <span>→</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+              {dealsOfTheDayList.map((deal) => (
+                <div
+                  key={deal.name}
+                  onClick={() => setSelectedProduct({
+                    id: deal.numeric_id || deal.id,
+                    dbId: deal.dbId,
+                    name: deal.name,
+                    sub: deal.sub,
+                    brand: deal.brand,
+                    cat: deal.cat,
+                    price: deal.price,
+                    customer_price: (deal as any).customer_price || deal.rawPrice,
+                    retailer_price: (deal as any).retailer_price,
+                    orig: deal.orig,
+                    disc: deal.disc,
+                    img: deal.img,
+                    stock: deal.stock,
+                    return_policy: (deal as any).return_policy || "Non-Returnable",
+                  })}
+                  className="group bg-white rounded-2xl border border-slate-200/80 hover:border-rose-300/80 p-2.5 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer relative overflow-hidden"
+                >
+                  {/* Discount Badge */}
+                  <div className="absolute top-2 left-2 z-10">
+                    <span className="bg-emerald-600 text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded shadow-2xs">
+                      {deal.disc}
+                    </span>
+                  </div>
+
+                  <div className="w-full h-24 sm:h-28 flex items-center justify-center p-1 bg-slate-50/50 rounded-xl overflow-hidden mt-3 mb-2">
+                    <img
+                      src={deal.img}
+                      alt={deal.name}
+                      className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-0.5">
+                    <h3 className="text-xs sm:text-[13px] font-bold text-slate-900 group-hover:text-[#ff3366] line-clamp-1 transition-colors">
+                      {deal.name}
+                    </h3>
+                    <div className="flex items-baseline gap-1.5 mt-0.5">
+                      <span className="text-xs sm:text-sm font-extrabold text-slate-900">
+                        {deal.price}
+                      </span>
+                      {deal.orig && (
+                        <span className="text-[10px] sm:text-xs text-slate-400 line-through">
+                          {deal.orig}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
 
         {/* Active Key Category Filter Indicator */}

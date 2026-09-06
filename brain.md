@@ -448,7 +448,38 @@ The application reads configuration through `import.meta.env` (defined in `.env`
     - Floating white glass cards per product with square image container, status indicator (`● Listed on Store` / `○ Draft`), HSN badge, SKU, category & brand pills, return policy tags, 3-column pricing (`MRP`, `CUSTOMER`, `RETAILER B2B`), stock count with status badge, and circular action buttons (`View`, `Edit`, `Delete`).
   - **Elimination of Deep Green Accents**:
     - Completely replaced legacy `#006a39` and `#008749` deep green buttons, borders, highlights, gradients, and icons across all tabs and modals with the luxury rose/pink (`from-rose-500 to-pink-500`, `rose-600`, `rose-50`) and dark slate (`text-slate-900`, `border-slate-200`) palette to match the reference design.
-    - Preserved standard emerald indicator pills strictly for positive status indicators (`In Stock`, `● Listed on Store`, `Delivered`).
-
+- **Storefront Luxury Glassmorphic UI/UX Redesign (Sep 2026)**:
+  - **Design System & Aesthetics**:
+    - Overhauled entire storefront layout to match the luxury white glass and rose aesthetic of the reference design (`media_1788718535088.png`).
+    - Configured luxury typography with `Plus Jakarta Sans` as primary body and `Manrope` for bold headers and accents in `src/index.css`.
+    - Preserved official SubhOne brand logo (`/logo.png`) untouched.
+  - **Navigation Bar (`src/components/NavBar.tsx`)**:
+    - Added luxury Delivery Location pill ("Deliver to \n Serampore, 712250 ⌵") with soft rose map pin container.
+    - Integrated wide rounded search bar with placeholder *"Search medicines, brands, salts, FMCG..."* and a vibrant rose square submit button (`bg-[#ff3366]`).
+    - Styled Cart button with soft rounded rectangle, rose shopping bag icon, and vibrant red/rose notification counter badge.
+    - Styled User Account pill with pink circular avatar, user name, role ("Retailer" / "Customer"), and dropdown chevron.
+    - Added prominent rose `Logout` button (`bg-[#ff3366] text-white font-extrabold px-5 py-2.5 rounded-xl`).
+  - **Key Categories Bar (`src/components/KeyCategoriesBar.tsx`)**:
+    - Floating white glass bar (`bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-2xl shadow-2xs`).
+    - Standardized categories to match reference: *All* (active soft rose card with 4-square grid icon), *Skin*, *Pain Relief*, *Weight Loss*, *Wellness*, *Baby Care*, *Women*, *Men*, *Diet*, *Hair Care*, *Medical Supplies*, *Insurance*, *Health Checkups*.
+    - Smooth horizontal scroll container with scroll navigation arrows that appear conditionally only when overflowing.
+  - **Hero Banner (`src/pages/HomePage.tsx`)**:
+    - Soft luxury blush pink gradient canvas (`from-rose-50/95 via-pink-50/85 to-rose-100/70`) with subtle ambient rose glows.
+    - Top badges: `LIMITED TIME OFFER` in soft rose pill + `🛡️ 100% Genuine Pharmacy`.
+    - Headline: **Flat <span className="text-[#ff3366]">20% Off</span> on First Order**.
+    - Description: *"Genuine medicines, certified wellness supplements, baby care & emergency essentials – delivered to your doorstep in 30 mins."*
+    - Actions: `Shop Medicines` (vibrant rose button) and `Explore Deals` (clean white glass button).
+    - Delivery partner illustration with SubhOne branded delivery box (`/delivery_hero.jpg`) and a floating circular badge: **30 \n MIN \n Delivery**.
+  - **Trust Badges Bar**:
+    - 4 glass pill cards with soft rose circular icons:
+      1. *30-Min Fast Delivery* | *At your doorstep*
+      2. *Batch Verified* | *100% genuine products*
+      3. *Licensed Pharmacists* | *Expert advice*
+      4. *Secure Payments* | *Safe & hassle-free*
+  - **Top Categories & Deals of the Day (Side-by-Side as in Reference)**:
+    - **Top Categories**: 6 luxury cards (*Monsoon Care*, *Immunity Boosters*, *Pain Relief*, *Baby Care*, *Personal Care*, *Health Devices*) with clean image thumbnails and rose `View All →` link.
+    - **Deals of the Day**: 4 product cards (*Dettol Liquid 250ml 29% OFF*, *Crocin Advance 25% OFF*, *Accu-Chek 50 Strips 12% OFF*, *Dolo-650 Tablet 10% OFF*) with green discount badges, strike-through MRP pricing, and real database product connectivity.
+  - **Footer (`src/components/Footer.tsx`)**:
+    - Refreshed footer with clean glassmorphism, slate typography, and upgraded 24/7 Support Bot banner to luxury dark slate with rose accents and glowing status badge.
 
 

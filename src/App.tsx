@@ -53,18 +53,18 @@ export interface CurrentUser {
 
 function ConsultPage() {
   return (
-    <div className="min-h-[60vh] flex items-center justify-center bg-[#f5fbf2] px-4 sm:px-6">
+    <div className="min-h-[60vh] flex items-center justify-center bg-[#fbfcfd] px-4 sm:px-6">
       <div className="text-center flex flex-col items-center gap-4 w-full">
-        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[rgba(0,134,73,0.15)] rounded-full flex items-center justify-center">
-          <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8 sm:w-10 sm:h-10">
-            <path d="M20 4C11.16 4 4 11.16 4 20C4 28.84 11.16 36 20 36C28.84 36 36 28.84 36 20C36 11.16 28.84 4 20 4ZM22 28H18V18H22V28ZM22 14H18V10H22V14Z" fill="#006A39" />
+        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-rose-50 rounded-full flex items-center justify-center border border-rose-100">
+          <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8 sm:w-10 sm:h-10 text-[#ff3366]">
+            <path d="M20 4C11.16 4 4 11.16 4 20C4 28.84 11.16 36 20 36C28.84 36 36 28.84 36 20C36 11.16 28.84 4 20 4ZM22 28H18V18H22V28ZM22 14H18V10H22V14Z" fill="currentColor" />
           </svg>
         </div>
-        <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-2xl sm:text-3xl lg:text-4xl px-2">Consult a Doctor</h2>
-        <p className="text-[#3e4a3f] text-base sm:text-lg max-w-md leading-relaxed">
+        <h2 className="font-['Manrope',sans-serif] font-black text-slate-900 text-2xl sm:text-3xl lg:text-4xl px-2">Consult a Doctor</h2>
+        <p className="text-slate-600 text-base sm:text-lg max-w-md leading-relaxed">
           Connect with certified healthcare professionals for expert advice and online consultations.
         </p>
-        <button className="bg-[#006a39] text-white font-bold text-sm tracking-[0.7px] px-6 sm:px-8 py-3 rounded-lg hover:bg-[#005a30] transition-colors mt-2 w-full sm:w-auto max-w-xs">
+        <button className="bg-[#ff3366] hover:bg-[#e02958] text-white font-bold text-sm tracking-[0.7px] px-6 sm:px-8 py-3 rounded-2xl transition-colors mt-2 w-full sm:w-auto max-w-xs shadow-md shadow-rose-500/20">
           Book Consultation
         </button>
       </div>
@@ -77,7 +77,7 @@ function ConsultPage() {
  */
 function LoadingScreen() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f5fbf2]">
+    <div className="min-h-screen flex items-center justify-center bg-[#fbfcfd]">
       <InfinityLoader size={130} text="Loading SubhOne…" />
     </div>
   );
@@ -305,7 +305,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f5fbf2]">
+    <div className="min-h-screen flex flex-col bg-transparent">
       <NavBar
         activePage={activePage}
         onNavigate={navigateTo}
