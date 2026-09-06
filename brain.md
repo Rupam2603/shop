@@ -295,4 +295,11 @@ The application reads configuration through `import.meta.env` (defined in `.env`
     - Added image canvas resizing (max 360x360, 0.88 JPEG) in `ProfilePage.tsx` for photo uploads.
     - Added async database saving status (`savingProfile`), status feedback message, and loading spinners on "Save Changes" button.
     - Added address modal validation, inline error alerts (`addrError`), and loading indicator (`addrSaving ? "Saving to Database…" : "Save Changes"`).
+- **Streamlined Add to Cart (No Auto-Opening Cart Drawer) (Sep 2026)**:
+  - **Cart Context Update (`src/contexts/CartContext.tsx`)**:
+    - Removed intrusive automatic opening of the cart drawer (`setIsCartOpen(true)`) upon adding new products.
+    - Updated `addToCart` with an optional `autoOpen?: boolean` parameter defaulting to `false`.
+    - Added floating bottom-right toast notification (`cartToast`) displaying "Added to cart: {name}" with a quick "View Cart" CTA button, auto-dismissing after 2.5 seconds.
+    - Allows retailers and customers to continuously browse and add multiple items without interruption, while the top bar cart counter updates in real time.
+
 

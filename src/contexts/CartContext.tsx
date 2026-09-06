@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { DbProduct, fetchProducts } from "../lib/products";
 import { useAuth } from "./AuthContext";
@@ -45,7 +45,7 @@ interface CartContextValue {
   isCartOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  addToCart: (product: AddToCartPayload, qty?: number) => Promise<void>;
+  addToCart: (product: AddToCartPayload, qty?: number, autoOpen?: boolean) => Promise<void>;
   updateQuantity: (identifier: string | number, qty: number) => Promise<void>;
   removeFromCart: (identifier: string | number) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -85,6 +85,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<"customer" | "retailer" | "admin">("retailer");
+  const [cartToast, setCartToast] = useState<{ message: string; name: string } | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, []);
 
   // Sync to localStorage whenever items change
   useEffect(() => {
@@ -162,7 +170,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const closeCart = useCallback(() => setIsCartOpen(false), []);
 
   const addToCart = useCallback(
-    async (product: AddToCartPayload, qty = 1) => {
+    async (product: AddToCartPayload, qty = 1, autoOpen = false) => {
       const quantityToAdd = Math.max(1, qty);
       const name = (product.name || "Product").trim();
       const numId =
@@ -233,7 +241,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return [...prev, newItem];
       });
 
-      if (isNew) {
+      // Show non-intrusive toast feedback instead of forcing the cart drawer open
+      setCartToast({
+        message: isNew ? "Added to cart" : "Cart updated",
+        name,
+      });
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+      toastTimeoutRef.current = setTimeout(() => {
+        setCartToast(null);
+      }, 2500);
+
+      if (autoOpen && isNew) {
         setIsCartOpen(true);
       }
 
@@ -398,6 +418,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
+      {cartToast && (
+        <div className="fixed bottom-5 right-5 z-[9999] bg-[#073b4c] text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/20 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <div className="w-7 h-7 rounded-full bg-[#006a39] flex items-center justify-center text-white shrink-0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs font-bold">{cartToast.message}</p>
+            <p className="text-[11px] text-white/70 truncate max-w-[200px]">{cartToast.name}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setIsCartOpen(true);
+              setCartToast(null);
+            }}
+            className="ml-2 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-emerald-300 hover:text-white transition-colors cursor-pointer shrink-0"
+          >
+            View Cart
+          </button>
+        </div>
+      )}
     </CartContext.Provider>
   );
 }
