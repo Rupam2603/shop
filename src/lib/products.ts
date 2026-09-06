@@ -117,9 +117,20 @@ export async function fetchCategories(): Promise<DbCategory[]> {
 export async function fetchProducts(filters: ProductFilters = {}): Promise<DbProduct[]> {
   const safeCols = "id, numeric_id, name, subtitle, category_id, category_name, sub_category_id, sub_category_name, brand, sku, hsn, mrp, customer_price, retailer_price, discount_percent, retailer_discount_percent, stock, image_url, web_image_url, details, is_flash_sale, is_featured, is_listed, badges, created_at, updated_at";
   try {
-    const rows = filters.includeUnlisted
-      ? (filters.isAdmin ? await sql`SELECT * FROM products ORDER BY numeric_id ASC` : await sql(`SELECT ${safeCols} FROM products ORDER BY numeric_id ASC`))
-      : (filters.isAdmin ? await sql`SELECT * FROM products WHERE is_listed = true ORDER BY numeric_id ASC` : await sql(`SELECT ${safeCols} FROM products WHERE is_listed = true ORDER BY numeric_id ASC`));
+    let rows: any[];
+    if (filters.includeUnlisted) {
+      if (filters.isAdmin) {
+        rows = await sql`SELECT * FROM products ORDER BY numeric_id ASC`;
+      } else {
+        rows = await sql`SELECT id, numeric_id, name, subtitle, category_id, category_name, sub_category_id, sub_category_name, brand, sku, hsn, mrp, customer_price, retailer_price, discount_percent, retailer_discount_percent, stock, image_url, web_image_url, details, is_flash_sale, is_featured, is_listed, badges, created_at, updated_at FROM products ORDER BY numeric_id ASC`;
+      }
+    } else {
+      if (filters.isAdmin) {
+        rows = await sql`SELECT * FROM products WHERE is_listed = true ORDER BY numeric_id ASC`;
+      } else {
+        rows = await sql`SELECT id, numeric_id, name, subtitle, category_id, category_name, sub_category_id, sub_category_name, brand, sku, hsn, mrp, customer_price, retailer_price, discount_percent, retailer_discount_percent, stock, image_url, web_image_url, details, is_flash_sale, is_featured, is_listed, badges, created_at, updated_at FROM products WHERE is_listed = true ORDER BY numeric_id ASC`;
+      }
+    }
 
     let prods: DbProduct[] = (rows as any[]).map((r) => ({
       ...r,
