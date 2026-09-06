@@ -255,13 +255,13 @@ export default function NavBar({
             <button
               type="button"
               onClick={() => handleNavClick("home")}
-              className="flex items-center gap-1.5 sm:gap-2.5 cursor-pointer focus:outline-none group shrink-0"
+              className="flex items-center gap-2 sm:gap-3 cursor-pointer focus:outline-none group shrink-0"
             >
-              <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#006a39] to-[#047857] flex items-center justify-center shadow-md sm:shadow-lg shadow-emerald-900/15 group-hover:scale-105 transition-transform shrink-0 border border-white/30">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="sm:w-[22px] sm:h-[22px]">
-                  <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" fill="white" />
-                </svg>
-              </div>
+              <img
+                src="/logo.png"
+                alt="SubhOne Health Group"
+                className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl object-contain bg-white shadow-md sm:shadow-lg shadow-emerald-950/10 p-0.5 border border-[#dce7db] group-hover:scale-105 transition-transform shrink-0"
+              />
               <div className="flex flex-col text-left leading-none">
                 <span className="font-['Manrope',sans-serif] font-black text-[#006a39] text-[11px] min-[360px]:text-xs min-[410px]:text-sm sm:text-2xl tracking-tight drop-shadow-2xs whitespace-nowrap">
                   {settings.storeName || "SubhOne Health Group"}

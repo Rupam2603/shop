@@ -1775,12 +1775,11 @@ export default function AdminDashboard({ user, onLogout }: Props) {
         {/* Brand Header */}
         <div className="px-6 py-5 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-lg shadow-emerald-950/30">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L3 6.5V12C3 17.5 6.8 22.2 12 23.5C17.2 22.2 21 17.5 21 12V6.5L12 2Z" fill="#10b981" />
-                <path d="M12 7V17M7 12H17" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-              </svg>
-            </div>
+            <img
+              src="/logo.png"
+              alt="SubhOne Logo"
+              className="w-10 h-10 rounded-2xl object-contain bg-white shadow-lg p-0.5 border border-white/30 shrink-0"
+            />
             <div>
               <div className="flex items-center gap-2">
                 <p className="font-['Manrope',sans-serif] font-extrabold text-white text-xl tracking-tight">SubhOne</p>

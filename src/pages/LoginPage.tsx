@@ -324,11 +324,11 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
         
         {/* Brand Header */}
         <div className="text-center flex flex-col items-center">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#006a39] to-[#047857] flex items-center justify-center text-white shadow-md shadow-emerald-900/15 mb-3 border border-white/40">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" fill="white" />
-            </svg>
-          </div>
+          <img
+            src="/logo.png"
+            alt="SubhOne Health Group"
+            className="w-16 h-16 rounded-2xl object-contain bg-white shadow-md p-1 mb-3 border border-[#dce7db]"
+          />
           <h1 className="font-['Manrope',sans-serif] font-black text-xl sm:text-2xl text-[#073b4c] tracking-tight">
             SubhOne Health Group
           </h1>

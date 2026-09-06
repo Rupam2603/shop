@@ -1,4 +1,5 @@
 import { SUBHONE_SIGNATURE_DATA_URL } from "./invoiceSignature";
+import { SUBHONE_LOGO_DATA_URL } from "./logoImage";
 
 export interface InvoiceOrderItem {
   name: string;
@@ -246,6 +247,9 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
 
   return `
     <div class="invoice-box" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #111; max-width: 780px; margin: 0 auto; border: 2px solid #222; padding: 18px 22px; background: #fff; font-size: 12px; line-height: 1.35;">
+      <div style="text-align: center; margin-bottom: 6px;">
+        <img src="${SUBHONE_LOGO_DATA_URL}" alt="SubhOne Logo" style="width: 58px; height: 58px; object-fit: contain; margin: 0 auto 4px auto; display: block;" />
+      </div>
       <div style="text-align: center; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin: 0 0 2px 0; color: #073b4c;">
         SubhOne INVOICE BILL
       </div>

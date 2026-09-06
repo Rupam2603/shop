@@ -367,7 +367,22 @@ The application reads configuration through `import.meta.env` (defined in `.env`
     - Rendered explicit `Order Date & Time` in the Recipient & Delivery card.
   - **Removed Website Links & Print URL Footer**:
     - Removed any store email / URL text from the invoice template header and footer.
-    - Updated `wrapInPrintableDocument` print styling with `@page { margin: 0; }` and `@media print { html, body { margin: 0 !important; padding: 6mm 8mm !important; } }`. Setting `@page { margin: 0; }` instructs browsers (Chrome, Edge, Safari, Firefox) to suppress browser-generated headers (title/date) and footers (website URL).
-    - Updated `AdminDashboard.tsx`, `ProfilePage.tsx`, and `OrderTrackingModal.tsx` to pass `invoiceNumber` and `createdAt` into invoice generation and display `invoiceNumber` in modal titles and exported filenames.
+- **Official SubhOne Brand Logo Rollout Across Entire Website (Sep 2026)**:
+  - **Asset Provisioning**:
+    - Uploaded official brand logo image (custom healthcare "S" monogram with medical cross pulse, human health celebratory figure, and pink leaf/petal) stored in:
+      - `public/logo.png`
+      - `public/favicon.png`
+      - `src/assets/logo.png`
+    - Created `src/lib/logoImage.ts` exporting `SUBHONE_LOGO_DATA_URL` for standalone, zero-network invoice printing/rendering.
+  - **Component Integration**:
+    - `index.html`: Configured `<link rel="icon" type="image/png" href="/favicon.png" />` and `<link rel="apple-touch-icon" href="/logo.png" />` for browser tabs and mobile shortcuts.
+    - `src/components/NavBar.tsx`: Main store navigation bar brand header now features the official logo with responsive scaling (`w-8 h-8 sm:w-11 sm:h-11`).
+    - `src/components/Footer.tsx`: Footer brand section displays the official logo alongside store title.
+    - `src/pages/LoginPage.tsx`: Authentication screen prominently displays the official brand logo.
+    - `src/pages/AdminDashboard.tsx`: Glass admin sidebar header renders the official logo in a 40x40 container with soft shadow and border.
+    - `src/pages/DeliveryPartnerDashboard.tsx`: Delivery partner dashboard header renders the official brand logo.
+    - `src/components/OrderTrackingModal.tsx`: Real-time order tracking modal header showcases the official logo.
+    - `src/lib/invoiceGenerator.ts`: Printed invoice bill now displays the official logo at the top center above the store name.
+
 
 

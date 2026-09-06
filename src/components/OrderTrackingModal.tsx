@@ -236,9 +236,11 @@ export default function OrderTrackingModal({
         {/* ── Modal Header ── */}
         <div className="bg-gradient-to-r from-[#073b4c] via-[#005f32] to-[#006a39] text-white p-5 sm:p-6 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center text-xl shadow-inner border border-white/20">
-              🚚
-            </div>
+            <img
+              src="/logo.png"
+              alt="SubhOne Logo"
+              className="w-11 h-11 rounded-2xl object-contain bg-white shadow-inner p-0.5 border border-white/20 shrink-0"
+            />
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-['Manrope',sans-serif] font-extrabold text-lg sm:text-xl text-white">

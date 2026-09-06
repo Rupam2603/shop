@@ -68,12 +68,14 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#006a39] to-[#00aa5b] flex items-center justify-center text-white font-extrabold text-sm shadow-md">
-                +
-              </div>
+            <div className="flex items-center gap-3 mb-2">
+              <img
+                src="/logo.png"
+                alt="SubhOne Health Group"
+                className="w-9 h-9 rounded-xl object-contain bg-white shadow-md p-0.5 shrink-0 border border-[#dce7db]"
+              />
               <p className="font-['Manrope',sans-serif] font-black text-[#073b4c] text-2xl">
-                {settings.storeName || "SubhOne"}
+                {settings.storeName || "SubhOne Health Group"}
               </p>
             </div>
             <p className="text-[#596b5e] text-xs sm:text-sm leading-relaxed max-w-sm font-medium">

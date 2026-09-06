@@ -311,9 +311,11 @@ export default function DeliveryPartnerDashboard({ user, onLogout }: Props) {
       {/* ── TOP NAV BAR ── */}
       <header className="safe-top bg-white/95 backdrop-blur-xl border-b border-[#dce7db] sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#006a39] to-[#008749] text-white flex items-center justify-center text-xl shadow-md">
-            🛵
-          </div>
+          <img
+            src="/logo.png"
+            alt="SubhOne Logo"
+            className="w-10 h-10 rounded-2xl object-contain bg-white shadow-md p-0.5 border border-[#dce7db] shrink-0"
+          />
           <div>
             <div className="flex items-center gap-2">
               <span className="font-['Manrope',sans-serif] font-black text-[#073b4c] text-lg sm:text-xl tracking-tight">SubhOne</span>
