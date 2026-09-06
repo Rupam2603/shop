@@ -284,3 +284,79 @@ export async function markOrderDelivered(
     return { success: false, error: err.message || "Failed to mark as delivered." };
   }
 }
+
+/**
+ * Fetch delivered orders for a partner in a specific month for reporting
+ */
+export async function fetchDeliveryPartnerOrdersByMonth(
+  partnerId: string,
+  monthYYYYMM: string
+): Promise<DbOrder[]> {
+  try {
+    const parts = monthYYYYMM.split("-");
+    if (parts.length !== 2) return [];
+    
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    
+    // Start of month
+    const startDate = new Date(year, month - 1, 1).toISOString();
+    // Start of next month
+    const endDate = new Date(year, month, 1).toISOString();
+
+    const rows = await sql`
+      SELECT 
+        o.id,
+        o.order_number,
+        o.user_id,
+        o.customer_name,
+        o.customer_phone,
+        o.shipping_address,
+        o.total_amount,
+        o.payment_method,
+        o.payment_status,
+        o.status,
+        o.created_at,
+        o.updated_at,
+        o.user_role,
+        o.shop_name,
+        o.delivery_partner_id,
+        o.delivery_accepted_at,
+        o.delivery_status,
+        u.name as delivery_partner_name
+      FROM public.orders o
+      LEFT JOIN public.users u ON u.id = o.delivery_partner_id
+      WHERE o.delivery_partner_id = ${partnerId}::uuid
+        AND (o.delivery_status = 'delivered' OR o.status = 'Delivered')
+        AND o.updated_at >= ${startDate}
+        AND o.updated_at < ${endDate}
+      ORDER BY o.updated_at ASC
+    `;
+
+    if (!rows || rows.length === 0) return [];
+
+    const orderIds = rows.map((r: any) => r.id);
+    const itemRows = await sql`
+      SELECT id, order_id, product_id, product_name, sku, variant, quantity, unit_price, total_price, image_url, mrp, purchase_price_at_order, batch_no, expiry_date
+      FROM public.order_items
+      WHERE order_id = ANY(${orderIds}::text[])
+    `;
+
+    const itemsMap = new Map<string, any[]>();
+    for (const it of itemRows) {
+      const list = itemsMap.get(it.order_id) || [];
+      list.push(it);
+      itemsMap.set(it.order_id, list);
+    }
+
+    return rows.map((o: any) => ({
+      ...o,
+      total_amount: Number(o.total_amount || 0),
+      order_items: itemsMap.get(o.id) || [],
+    }));
+  } catch (err) {
+    console.error("Error fetching partner monthly orders:", err);
+    return [];
+  }
+}
+

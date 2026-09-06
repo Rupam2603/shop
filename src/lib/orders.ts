@@ -56,6 +56,7 @@ export interface DbOrderItem {
   total_price: number;
   image_url: string | null;
   mrp?: number | null;
+  purchase_price_at_order?: number | null;
   batch_no?: string | null;
   expiry_date?: string | null;
 }

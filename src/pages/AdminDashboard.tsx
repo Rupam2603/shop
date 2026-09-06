@@ -49,7 +49,8 @@ import {
   DeliveryAttendanceRecord,
 } from "../lib/deliveryPartners";
 import { exportAttendanceReportToExcel } from "../lib/attendanceExcelExport";
-import { fetchOrdersForPartner } from "../lib/deliveryOrders";
+import { fetchOrdersForPartner, fetchDeliveryPartnerOrdersByMonth } from "../lib/deliveryOrders";
+import { exportDeliveryRecordToExcel } from "../lib/deliveryRecordExcelExport";
 import { fetchAllOnDutyPartnerLocations, DeliveryLocationPing } from "../lib/deliveryLocation";
 import LiveDeliveryMap from "../components/LiveDeliveryMap";
 import {
@@ -3947,7 +3948,8 @@ function DeliveryPartnersTab() {
   const [loading, setLoading] = useState(false);
   const [subTab, setSubTab] = useState<"partners" | "attendance" | "reports" | "map">("partners");
 
-  // Attendance Reports Sub-Tab State
+  // Reports Sub-Tab State
+  const [reportCategory, setReportCategory] = useState<"attendance" | "delivery">("attendance");
   const [reportRangeType, setReportRangeType] = useState<"weekly" | "monthly">("weekly");
   const [reportWeekDate, setReportWeekDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [reportMonth, setReportMonth] = useState(() => {
@@ -3957,6 +3959,7 @@ function DeliveryPartnersTab() {
   const [reportPartnerId, setReportPartnerId] = useState<string>("all");
   const [downloadingReport, setDownloadingReport] = useState(false);
   const [reportMsg, setReportMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
 
   // Weekly Off Day Update State inside Inspect Modal
   const [updatingWeeklyOff, setUpdatingWeeklyOff] = useState(false);
@@ -4350,6 +4353,28 @@ function DeliveryPartnersTab() {
           setDownloadingReport(true);
           setReportMsg(null);
           try {
+            if (reportCategory === "delivery") {
+              if (reportPartnerId === "all") {
+                setReportMsg({ type: "error", text: "Please select a specific partner for the Delivery Record." });
+                setDownloadingReport(false);
+                return;
+              }
+              const partner = partners.find(p => p.id === reportPartnerId);
+              if (!partner) throw new Error("Partner not found");
+              
+              const orders = await fetchDeliveryPartnerOrdersByMonth(partner.id, reportMonth);
+              if (orders.length === 0) {
+                setReportMsg({ type: "error", text: "No deliveries found for this period." });
+                setDownloadingReport(false);
+                return;
+              }
+              
+              exportDeliveryRecordToExcel(orders, { partnerName: partner.name, monthLabel: reportMonth });
+              setReportMsg({ type: "success", text: `Delivery report generated successfully (${orders.length} orders).` });
+              setDownloadingReport(false);
+              return;
+            }
+
             const rows = await fetchAttendanceReport({
               startDate: activeStartDate,
               endDate: activeEndDate,
@@ -4391,16 +4416,49 @@ function DeliveryPartnersTab() {
                   <div className="flex items-center gap-2.5">
                     <span className="text-2xl">📥</span>
                     <h3 className="font-['Manrope',sans-serif] font-black text-lg text-[#073b4c]">
-                      Attendance Report Export
+                      Partner Reports Export
                     </h3>
                   </div>
                   <p className="text-xs text-[#657969] mt-1 max-w-2xl">
-                    Download detailed shift attendance as an Excel (<code className="font-mono text-[#006a39]">.xlsx</code>) spreadsheet.
-                    Rows include all calendar days per partner with check-in, check-out, and auto-excused <span className="font-bold text-emerald-800">Week Off</span> detection.
+                    Download detailed reports for your delivery partners. Attendance reports show check-in/out and week off data, while Delivery Records show completed deliveries with profit metrics.
                   </p>
                 </div>
 
-                <div className="inline-flex rounded-2xl bg-[#eef4ef] p-1 border border-[#dce7db] self-start sm:self-auto">
+                <div className="flex flex-wrap gap-2 items-center">
+                  <div className="inline-flex rounded-2xl bg-[#eef4ef] p-1 border border-[#dce7db] self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReportCategory("attendance");
+                        setReportMsg(null);
+                      }}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        reportCategory === "attendance"
+                          ? "bg-[#006a39] text-white shadow-xs"
+                          : "text-[#073b4c] hover:text-[#006a39]"
+                      }`}
+                    >
+                      Attendance
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReportCategory("delivery");
+                        setReportRangeType("monthly");
+                        setReportMsg(null);
+                      }}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        reportCategory === "delivery"
+                          ? "bg-[#006a39] text-white shadow-xs"
+                          : "text-[#073b4c] hover:text-[#006a39]"
+                      }`}
+                    >
+                      Deliveries
+                    </button>
+                  </div>
+
+                  {reportCategory === "attendance" && (
+                    <div className="inline-flex rounded-2xl bg-[#eef4ef] p-1 border border-[#dce7db] self-start sm:self-auto">
                   <button
                     type="button"
                     onClick={() => {
@@ -4427,8 +4485,9 @@ function DeliveryPartnersTab() {
                         : "text-[#073b4c] hover:text-[#006a39]"
                     }`}
                   >
-                    🗓️ Monthly Report
                   </button>
+                </div>
+                )}
                 </div>
               </div>
 
