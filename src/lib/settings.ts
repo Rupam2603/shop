@@ -121,71 +121,186 @@ export async function saveStoreSettingsToDb(settings: StoreSettings): Promise<{ 
 }
 
 /**
- * Updates admin profile picture and details permanently in Supabase
+ * Fetches admin profile permanently from Neon database with fallback to localStorage
+ */
+export async function fetchAdminProfileFromDb(
+  email?: string,
+  userId?: string
+): Promise<{ fullName: string; phone: string; avatarUrl: string } | null> {
+  const cleanEmail = (email || "").trim().toLowerCase();
+  try {
+    let rows: any[] = [];
+    if (cleanEmail) {
+      rows = await sql`
+        SELECT full_name, phone, avatar_url, role 
+        FROM profiles 
+        WHERE LOWER(email) = ${cleanEmail} 
+        LIMIT 1
+      `;
+    }
+    if ((!rows || rows.length === 0) && userId && !userId.includes("00000000")) {
+      rows = await sql`
+        SELECT full_name, phone, avatar_url, role 
+        FROM profiles 
+        WHERE id = ${userId} 
+        LIMIT 1
+      `;
+    }
+    if (!rows || rows.length === 0) {
+      rows = await sql`
+        SELECT full_name, phone, avatar_url, role 
+        FROM profiles 
+        WHERE role = 'admin' 
+        ORDER BY updated_at DESC NULLS LAST 
+        LIMIT 1
+      `;
+    }
+
+    if (rows && rows.length > 0) {
+      const p = rows[0];
+      const result = {
+        fullName: p.full_name || "Store Administrator",
+        phone: p.phone || "+91 98765 43210",
+        avatarUrl: p.avatar_url || "",
+      };
+      try {
+        localStorage.setItem("subhone_admin_profile", JSON.stringify(result));
+      } catch {}
+      return result;
+    }
+  } catch (err) {
+    console.warn("Notice loading admin profile from Neon DB:", err);
+  }
+
+  // Fallback to localStorage
+  try {
+    const saved = localStorage.getItem("subhone_admin_profile");
+    if (saved) return JSON.parse(saved);
+  } catch {}
+
+  return null;
+}
+
+/**
+ * Updates admin profile picture and details permanently in Neon database
  */
 export async function updateAdminProfileInDb(
   userId: string,
   email: string,
   updates: { fullName?: string; phone?: string; avatarUrl?: string }
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; avatarUrl?: string; error?: string }> {
   try {
+    const cleanEmail = (email || "subhonehealthgroup@gmail.com").trim().toLowerCase();
     let finalAvatarUrl = updates.avatarUrl;
+
     if (finalAvatarUrl && finalAvatarUrl.startsWith("data:")) {
-      const { uploadImageToSupabase } = await import("./storage");
-      const { url: uploadedUrl } = await uploadImageToSupabase(finalAvatarUrl, "avatars");
-      if (uploadedUrl) {
-        finalAvatarUrl = uploadedUrl;
+      try {
+        const { uploadImageToSupabase } = await import("./storage");
+        const { url: uploadedUrl } = await uploadImageToSupabase(finalAvatarUrl, "avatars");
+        if (uploadedUrl) {
+          finalAvatarUrl = uploadedUrl;
+        }
+      } catch (uploadErr) {
+        console.warn("Avatar cloud upload warning, storing image directly:", uploadErr);
       }
     }
 
-    const payload: Record<string, any> = {
-      updated_at: new Date().toISOString(),
-    };
-    if (updates.fullName !== undefined) payload.full_name = updates.fullName;
-    if (updates.phone !== undefined) payload.phone = updates.phone;
-    if (finalAvatarUrl !== undefined) payload.avatar_url = finalAvatarUrl;
+    const targetUserId = userId && !userId.includes("00000000") ? userId : null;
+    const fullName = updates.fullName?.trim() || "Store Administrator";
+    const phone = updates.phone?.trim() || "+91 98765 43210";
+    const now = new Date().toISOString();
 
-    // 1. Resolve actual Admin user ID if userId is missing or placeholder
-    let targetUserId = userId;
-    if (!targetUserId || targetUserId.includes("00000000")) {
-      const rows = await sql`SELECT id FROM profiles WHERE role = 'admin' LIMIT 1`;
-      if (rows.length > 0) {
-        targetUserId = rows[0].id;
-      }
-    }
-
-    // 2. Update profiles table
-    if (targetUserId && !targetUserId.includes("00000000")) {
-      if (updates.fullName !== undefined && updates.phone !== undefined && finalAvatarUrl !== undefined) {
-        await sql`UPDATE profiles SET full_name = ${payload.full_name}, phone = ${payload.phone}, avatar_url = ${payload.avatar_url}, updated_at = ${payload.updated_at} WHERE id = ${targetUserId}`;
-      } else if (updates.fullName !== undefined && updates.phone !== undefined) {
-        await sql`UPDATE profiles SET full_name = ${payload.full_name}, phone = ${payload.phone}, updated_at = ${payload.updated_at} WHERE id = ${targetUserId}`;
-      } else if (updates.fullName !== undefined) {
-        await sql`UPDATE profiles SET full_name = ${payload.full_name}, updated_at = ${payload.updated_at} WHERE id = ${targetUserId}`;
-      }
+    // 1. Update profiles table
+    let updatedRows: any[] = [];
+    if (targetUserId) {
+      updatedRows = await sql`
+        UPDATE profiles
+        SET 
+          full_name = ${fullName},
+          phone = ${phone},
+          avatar_url = ${finalAvatarUrl ?? null},
+          updated_at = ${now}
+        WHERE id = ${targetUserId} OR LOWER(email) = ${cleanEmail}
+        RETURNING id, email, full_name, phone, avatar_url
+      `;
     } else {
-      // Update by admin role if exact ID isn't found
-      if (updates.fullName !== undefined && updates.phone !== undefined && finalAvatarUrl !== undefined) {
-        await sql`UPDATE profiles SET full_name = ${payload.full_name}, phone = ${payload.phone}, avatar_url = ${payload.avatar_url}, updated_at = ${payload.updated_at} WHERE role = 'admin'`;
-      } else if (updates.fullName !== undefined && updates.phone !== undefined) {
-        await sql`UPDATE profiles SET full_name = ${payload.full_name}, phone = ${payload.phone}, updated_at = ${payload.updated_at} WHERE role = 'admin'`;
-      } else if (updates.fullName !== undefined) {
-        await sql`UPDATE profiles SET full_name = ${payload.full_name}, updated_at = ${payload.updated_at} WHERE role = 'admin'`;
-      }
+      updatedRows = await sql`
+        UPDATE profiles
+        SET 
+          full_name = ${fullName},
+          phone = ${phone},
+          avatar_url = ${finalAvatarUrl ?? null},
+          updated_at = ${now}
+        WHERE LOWER(email) = ${cleanEmail} OR role = 'admin'
+        RETURNING id, email, full_name, phone, avatar_url
+      `;
     }
 
-    // 3. Update auth user_metadata if active session
+    // If no row existed, insert a new record into profiles
+    if (!updatedRows || updatedRows.length === 0) {
+      const newId = targetUserId || `admin_${cleanEmail.replace(/[^a-zA-Z0-9]/g, "_")}`;
+      await sql`
+        INSERT INTO profiles (id, email, full_name, role, phone, avatar_url, approval_status, created_at, updated_at)
+        VALUES (${newId}, ${cleanEmail}, ${fullName}, 'admin', ${phone}, ${finalAvatarUrl ?? null}, 'approved', ${now}, ${now})
+        ON CONFLICT (id) DO UPDATE SET
+          full_name = EXCLUDED.full_name,
+          phone = EXCLUDED.phone,
+          avatar_url = EXCLUDED.avatar_url,
+          updated_at = EXCLUDED.updated_at
+      `;
+    }
+
+    // 2. Also update public.users table if it exists
+    try {
+      await sql`
+        UPDATE public.users 
+        SET name = ${fullName}, updated_at = ${now}
+        WHERE LOWER(email) = ${cleanEmail} OR role = 'admin'
+      `;
+    } catch {}
+
+    // 3. Also update auth_users table if it exists
+    try {
+      await sql`
+        UPDATE auth_users
+        SET full_name = ${fullName}, phone = ${phone}, updated_at = ${now}
+        WHERE LOWER(email) = ${cleanEmail} OR role = 'admin'
+      `;
+    } catch {}
+
+    // 4. Update store_settings phone if phone is updated
+    try {
+      await sql`
+        UPDATE store_settings
+        SET phone = ${phone}, updated_at = ${now}
+        WHERE id = 'default_settings'
+      `;
+    } catch {}
+
+    // 5. Update auth user_metadata if active session exists
     try {
       await supabase.auth.updateUser({
         data: {
-          full_name: updates.fullName,
-          phone: updates.phone,
+          full_name: fullName,
+          phone: phone,
           avatar_url: finalAvatarUrl,
         },
       });
     } catch {}
 
-    return { success: true };
+    // 6. Cache locally for instant availability
+    try {
+      localStorage.setItem(
+        "subhone_admin_profile",
+        JSON.stringify({
+          fullName,
+          phone,
+          avatarUrl: finalAvatarUrl || "",
+        })
+      );
+    } catch {}
+
+    return { success: true, avatarUrl: finalAvatarUrl };
   } catch (err: any) {
     console.error("Failed to update admin profile in DB:", err);
     return { success: false, error: err?.message || "Failed to update profile." };

@@ -263,7 +263,14 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 - **Delivery Record Excel Export Totals & Bold Placement (Sep 2026)**:
   - **Explicit Summary Labels & Placement**: Updated `src/lib/deliveryRecordExcelExport.ts`. The headings `Total Purchase Price`, `Total Sell Price`, and `Total Profit` are now placed directly in the cell immediately preceding each calculated total amount (`Total Purchase Price` in Column H before Column I, and `Total Sell Price` and `Total Profit` merged across Columns H–I before Column J) with right alignment.
   - **Bold Styling**: Integrated `xlsx-js-style` to apply genuine font styling (`{ font: { bold: true } }`) across table headers and summary headings/totals.
-  - **Key Alignment**: Synchronized empty-items fallback object keys with the main line-items schema (`Customer Name`, `Store Name`, `MRP of Product`, `Purchase Price of the Products`, `Retailers Price`, `Date and Time of Delivery`) ensuring uniform columns.
-
-
-
+- **Admin Profile Identity & Avatar Forever Persistence Fix (Sep 2026)**:
+  - **Multi-Layer Authoritative Persistence (`src/lib/settings.ts`)**:
+    - Re-architected `updateAdminProfileInDb` to target the active administrator record by email (`subhonehealthgroup@gmail.com` / `admin@subhone.com`) and ID in `public.profiles` using raw SQL with upsert resilience.
+    - Synchronized profile updates across `public.profiles`, `public.users`, `public.auth_users`, and `store_settings` tables in Neon Lakebase Postgres.
+    - Implemented `fetchAdminProfileFromDb(email, userId)` using direct Neon SQL queries, bypassing client-side PostgREST RLS limitations when reading profile details on admin dashboard mount.
+  - **In-Browser Image Optimization & Storage Fallback (`AdminDashboard.tsx`)**:
+    - Built-in canvas image resizer (max 360x360, 0.88 quality JPEG) for photo uploads and camera capture, ensuring lightweight, high-fidelity avatar data that stores seamlessly in Neon Postgres `text` columns without hitting network timeout or storage limits.
+    - Uploads to CDN/Vercel Blob via `uploadImageToSupabase` when available, gracefully falling back to persistent optimized image storage in Postgres.
+  - **Session & Local Cache Synchronization (`AuthContext.tsx` & `AdminDashboard.tsx`)**:
+    - Updated `getStoredUser` and `signIn` in `AuthContext.tsx` to read persisted avatar, phone, and name from `sessionStorage` and `localStorage` (`subhone_admin_profile`) rather than resetting avatar to `null` or using hardcoded placeholder strings on refresh.
+    - Added global event listener `subhone_admin_profile_updated` in `AuthContext.tsx` and dispatched upon clicking "Save All Changes Forever", reactively updating header avatars and user metadata in real time without requiring a manual page refresh.

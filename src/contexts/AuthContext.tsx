@@ -63,20 +63,31 @@ function getStoredUser(): AppUser | null {
     if (savedAdmin) {
       const parsed = JSON.parse(savedAdmin);
       if (parsed?.email) {
+        let cachedProfile: any = null;
+        try {
+          const raw = localStorage.getItem("subhone_admin_profile");
+          if (raw) cachedProfile = JSON.parse(raw);
+        } catch {}
+
+        const finalName = parsed.fullName || cachedProfile?.fullName || "Store Administrator";
+        const finalPhone = parsed.phone || cachedProfile?.phone || "+91 98765 43210";
+        const finalAvatar = parsed.avatarUrl || cachedProfile?.avatarUrl || null;
+        const adminId = parsed.id && !parsed.id.includes("00000000") ? parsed.id : "admin_subhonehealthgroup_id";
+
         return {
           authUser: {
-            id: parsed.id || "00000000-0000-0000-0000-000000000000",
+            id: adminId,
             email: parsed.email,
-            user_metadata: { role: "admin", full_name: parsed.fullName || "Admin" },
+            user_metadata: { role: "admin", full_name: finalName, phone: finalPhone, avatar_url: finalAvatar },
           },
           profile: {
-            id: parsed.id || "00000000-0000-0000-0000-000000000000",
+            id: adminId,
             email: parsed.email,
-            full_name: parsed.fullName || "Admin",
+            full_name: finalName,
             role: "admin",
-            phone: "+91 98765 43210",
+            phone: finalPhone,
             shop_name: "SubhOne Central Healthcare",
-            avatar_url: null,
+            avatar_url: finalAvatar,
             approval_status: "approved",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -340,10 +351,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
+    const handleProfileUpdate = (e: any) => {
+      const detail = e.detail;
+      if (!detail) return;
+      setAppUser((prev) => {
+        if (!prev || prev.profile.role !== "admin") return prev;
+        return {
+          ...prev,
+          authUser: {
+            ...prev.authUser,
+            user_metadata: {
+              ...prev.authUser.user_metadata,
+              full_name: detail.fullName || prev.authUser.user_metadata?.full_name,
+              phone: detail.phone || prev.authUser.user_metadata?.phone,
+              avatar_url: detail.avatarUrl !== undefined ? detail.avatarUrl : prev.authUser.user_metadata?.avatar_url,
+            },
+          },
+          profile: {
+            ...prev.profile,
+            full_name: detail.fullName || prev.profile.full_name,
+            phone: detail.phone || prev.profile.phone,
+            avatar_url: detail.avatarUrl !== undefined ? detail.avatarUrl : prev.profile.avatar_url,
+          },
+        };
+      });
+    };
+    window.addEventListener("subhone_admin_profile_updated", handleProfileUpdate);
+
     return () => {
       mounted = false;
       clearTimeout(timeoutTimer);
       subscription.unsubscribe();
+      window.removeEventListener("subhone_admin_profile_updated", handleProfileUpdate);
     };
   }, [hydrateSession]);
 
@@ -388,15 +427,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: "Incorrect admin password. Please enter the valid admin password." };
         }
 
-        const fallbackId = "00000000-0000-0000-0000-000000000000";
+        let cachedProfile: any = null;
+        try {
+          const raw = localStorage.getItem("subhone_admin_profile");
+          if (raw) cachedProfile = JSON.parse(raw);
+        } catch {}
+
+        const adminId = cleanEmail === "subhonehealthgroup@gmail.com" ? "admin_subhonehealthgroup_id" : "admin_fixed_id";
+        const finalName = cachedProfile?.fullName || "Store Administrator";
+        const finalPhone = cachedProfile?.phone || "+91 98765 43210";
+        const finalAvatar = cachedProfile?.avatarUrl || null;
+
         const adminProfile: Profile = {
-          id: fallbackId,
-          full_name: "Store Administrator",
+          id: adminId,
+          full_name: finalName,
           role: "admin",
           email: cleanEmail,
-          phone: "+91 98765 43210",
+          phone: finalPhone,
           shop_name: "SubhOne Central Healthcare",
-          avatar_url: null,
+          avatar_url: finalAvatar,
           approval_status: "approved",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -406,9 +455,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           sessionStorage.setItem(
             "subhone_active_admin_session",
             JSON.stringify({
-              id: fallbackId,
+              id: adminId,
               email: cleanEmail,
-              fullName: adminProfile.full_name,
+              fullName: finalName,
+              phone: finalPhone,
+              avatarUrl: finalAvatar,
               role: "admin",
               timestamp: Date.now(),
             })
@@ -419,9 +470,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setAppUser({
           authUser: {
-            id: fallbackId,
+            id: adminId,
             email: cleanEmail,
-            user_metadata: { full_name: adminProfile.full_name, role: "admin", approval_status: "approved" },
+            user_metadata: { full_name: finalName, phone: finalPhone, avatar_url: finalAvatar, role: "admin", approval_status: "approved" },
           },
           profile: adminProfile,
         });

@@ -34,6 +34,7 @@ import {
   fetchStoreSettings,
   saveStoreSettingsToDb,
   updateAdminProfileInDb,
+  fetchAdminProfileFromDb,
   subscribeToStoreSettingsRealtime,
   DEFAULT_STORE_SETTINGS,
 } from "../lib/settings";
@@ -955,9 +956,36 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [dbSubCategories, setDbSubCategories] = useState<DbSubCategory[]>([]);
 
   // Admin profile state
-  const [adminAvatar, setAdminAvatar] = useState<string>(user?.profileImage || "");
-  const [adminName, setAdminName] = useState<string>(user?.name || "SubhOne Administrator");
-  const [adminPhone, setAdminPhone] = useState<string>(user?.phone || "+91 98765 43210");
+  const [adminAvatar, setAdminAvatar] = useState<string>(() => {
+    try {
+      const cached = localStorage.getItem("subhone_admin_profile");
+      if (cached) {
+        const p = JSON.parse(cached);
+        if (p.avatarUrl) return p.avatarUrl;
+      }
+    } catch {}
+    return user?.profileImage || "";
+  });
+  const [adminName, setAdminName] = useState<string>(() => {
+    try {
+      const cached = localStorage.getItem("subhone_admin_profile");
+      if (cached) {
+        const p = JSON.parse(cached);
+        if (p.fullName) return p.fullName;
+      }
+    } catch {}
+    return user?.name || "SubhOne Administrator";
+  });
+  const [adminPhone, setAdminPhone] = useState<string>(() => {
+    try {
+      const cached = localStorage.getItem("subhone_admin_profile");
+      if (cached) {
+        const p = JSON.parse(cached);
+        if (p.phone) return p.phone;
+      }
+    } catch {}
+    return user?.phone || "+91 98765 43210";
+  });
 
   // Product management state
   const [search, setSearch] = useState("");
@@ -1073,19 +1101,17 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       }
     });
 
-    // 2. Fetch admin profile details and avatar from Supabase
+    // 2. Fetch admin profile details and avatar from Neon database
     const loadAdminProfile = async () => {
-      let query = supabase.from("profiles").select("*");
-      if (user?.id && user.id.length > 20 && !user.id.includes("00000000")) {
-        query = query.eq("id", user.id);
-      } else {
-        query = query.eq("role", "admin").limit(1);
-      }
-      const { data } = await query.maybeSingle();
-      if (mounted && data) {
-        if (data.avatar_url) setAdminAvatar(data.avatar_url);
-        if (data.full_name) setAdminName(data.full_name);
-        if (data.phone) setAdminPhone(data.phone);
+      try {
+        const data = await fetchAdminProfileFromDb(user?.email, user?.id);
+        if (mounted && data) {
+          if (data.avatarUrl !== undefined) setAdminAvatar(data.avatarUrl);
+          if (data.fullName) setAdminName(data.fullName);
+          if (data.phone) setAdminPhone(data.phone);
+        }
+      } catch (err) {
+        console.warn("Notice loading admin profile:", err);
       }
     };
     loadAdminProfile();
@@ -5257,10 +5283,47 @@ function SettingsTab({
   const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Optimize image dimensions on upload to keep avatar crisp, lightweight and fast
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const dataUrl = ev.target?.result as string;
-      if (dataUrl) setAdminAvatar(dataUrl);
+      const rawDataUrl = ev.target?.result as string;
+      if (!rawDataUrl) return;
+
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          const MAX_SIZE = 360;
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height = Math.round((height * MAX_SIZE) / width);
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width = Math.round((width * MAX_SIZE) / height);
+              height = MAX_SIZE;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const optimized = canvas.toDataURL("image/jpeg", 0.88);
+            setAdminAvatar(optimized);
+            return;
+          }
+        } catch {}
+        setAdminAvatar(rawDataUrl);
+      };
+      img.onerror = () => {
+        setAdminAvatar(rawDataUrl);
+      };
+      img.src = rawDataUrl;
     };
     reader.readAsDataURL(file);
     e.target.value = "";
@@ -5270,16 +5333,17 @@ function SettingsTab({
     setSaveStatus("saving");
     setStatusMsg("");
     try {
-      // 1. Save store settings to Supabase DB
+      // 1. Save store settings to Neon DB
       const storeRes = await saveStoreSettingsToDb(settings);
       if (!storeRes.success) {
         throw new Error(storeRes.error || "Failed to save store settings to database.");
       }
 
-      // 2. Save admin profile & avatar permanently to Supabase DB
+      // 2. Save admin profile & avatar permanently to Neon DB
+      const adminEmail = user?.email || "subhonehealthgroup@gmail.com";
       const profRes = await updateAdminProfileInDb(
         user?.id || "",
-        user?.email || "admin@subhone.com",
+        adminEmail,
         {
           fullName: adminName,
           phone: adminPhone,
@@ -5287,11 +5351,54 @@ function SettingsTab({
         }
       );
       if (!profRes.success) {
-        console.warn("Profile update warning:", profRes.error);
+        throw new Error(profRes.error || "Failed to update administrator profile in database.");
       }
 
+      const finalAvatar = profRes.avatarUrl !== undefined ? profRes.avatarUrl : adminAvatar;
+      if (finalAvatar !== adminAvatar) {
+        setAdminAvatar(finalAvatar);
+      }
+
+      // 3. Update session storage & local cache so changes are 100% permanent across reloads
+      const profileData = {
+        fullName: adminName,
+        phone: adminPhone,
+        avatarUrl: finalAvatar,
+      };
+
+      try {
+        localStorage.setItem("subhone_admin_profile", JSON.stringify(profileData));
+        const savedSession = sessionStorage.getItem("subhone_active_admin_session");
+        if (savedSession) {
+          const parsed = JSON.parse(savedSession);
+          sessionStorage.setItem(
+            "subhone_active_admin_session",
+            JSON.stringify({
+              ...parsed,
+              fullName: adminName,
+              phone: adminPhone,
+              avatarUrl: finalAvatar,
+            })
+          );
+        }
+      } catch {}
+
+      // 4. Update in-memory user reference
+      if (user) {
+        user.name = adminName;
+        user.phone = adminPhone;
+        user.profileImage = finalAvatar;
+      }
+
+      // 5. Broadcast global profile update event for live UI reactivity
+      window.dispatchEvent(
+        new CustomEvent("subhone_admin_profile_updated", {
+          detail: profileData,
+        })
+      );
+
       setSaveStatus("saved");
-      setStatusMsg("Configuration & Admin profile saved to Supabase Database forever!");
+      setStatusMsg("Configuration & Admin profile saved to database forever!");
       setTimeout(() => setSaveStatus("idle"), 5000);
     } catch (e: any) {
       console.error("Failed to save settings:", e);
