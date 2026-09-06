@@ -125,16 +125,7 @@ function TruckIcon({ className }: { className?: string }) {
   );
 }
 
-function GoogleIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" className="shrink-0">
-      <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" />
-      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z" />
-      <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
-      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
-    </svg>
-  );
-}
+
 
 // ─── Floating Medical Cross Background Accent ─────────────────────────────────
 
@@ -595,13 +586,12 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                         key={r}
                         type="button"
                         onClick={() => { setSelectedRole(r); setError(""); setSuccess(""); }}
-                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer ${
+                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center cursor-pointer ${
                           active
                             ? "bg-white text-[#0f172a] shadow-sm font-black border border-white"
                             : "text-slate-500 hover:text-slate-900"
                         }`}
                       >
-                        <span>{r === "retailer" ? "🏪" : "🛡️"}</span>
                         <span>{roleInfo.label}</span>
                       </button>
                     );
@@ -877,29 +867,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                 </form>
               )}
 
-              {/* ── Divider: "or" ── */}
-              <div className="relative my-0.5">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200" />
-                </div>
-                <div className="relative flex justify-center text-xs">
-                  <span className="bg-white px-3 text-slate-400 font-semibold uppercase tracking-wider">
-                    or
-                  </span>
-                </div>
-              </div>
 
-              {/* ── Continue with Google Button ── */}
-              <button
-                type="button"
-                onClick={() => {
-                  setError("Google Single Sign-On is being provisioned. Please enter your email and password above.");
-                }}
-                className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-700 text-xs sm:text-sm font-bold flex items-center justify-center gap-3 shadow-2xs hover:shadow-xs active:scale-[0.99] transition-all cursor-pointer"
-              >
-                <GoogleIcon />
-                <span>Continue with Google</span>
-              </button>
 
               {/* ── Switch Mode Link: Don't have an account? Create Account ── */}
               <div className="text-center text-xs text-slate-600 pt-1">
