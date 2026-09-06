@@ -81,7 +81,8 @@ export default async function handler(req: any, res: any) {
     }
 
     const role = userRole === 'retailer' ? 'retailer' : 'customer';
-    const paymentMethod = typeof paymentType === 'string' && paymentType ? paymentType : 'COD';
+    // Retailers are strictly restricted to Cash on Delivery (COD); online and card payments are disabled.
+    const paymentMethod = role === 'retailer' ? 'COD' : (typeof paymentType === 'string' && paymentType ? paymentType : 'COD');
     const paymentStatus = paymentMethod === 'online' || paymentMethod === 'UPI' || paymentMethod === 'Card' ? 'Paid' : 'Pending';
 
     // Resolve every cart line against the current product row. Never trust the

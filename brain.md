@@ -383,6 +383,7 @@ The application reads configuration through `import.meta.env` (defined in `.env`
     - `src/pages/DeliveryPartnerDashboard.tsx`: Delivery partner dashboard header renders the official brand logo.
     - `src/components/OrderTrackingModal.tsx`: Real-time order tracking modal header showcases the official logo.
     - `src/lib/invoiceGenerator.ts`: Printed invoice bill now displays the official logo at the top center above the store name.
-
-
-
+- **Retailer Payment Options Policy - COD Only (Sep 2026)**:
+  - **Restriction**: Online payment (UPI / QR) and card payment (Debit / Credit Card) options have been completely removed for wholesale retailer accounts.
+  - **Client-Side Enforcement**: In `src/components/CheckoutModal.tsx`, when `isRetailer` is detected, the payment method selection displays a dedicated "Cash on Delivery (COD) - Wholesale B2B Only" card explaining payment upon doorstep stock delivery and physical invoice verification. UPI and Card options are completely omitted, and `paymentMethod` is initialized and locked to `"COD"`.
+  - **Backend API & Data Layer Enforcement**: In `api/create-order.ts` and `src/lib/orders.ts`, whenever `userRole === 'retailer'`, `paymentMethod` is strictly forced to `'COD'` and `paymentStatus` to `'Pending'`, rejecting or overriding any online/card parameters sent.

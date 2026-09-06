@@ -48,7 +48,7 @@ export default function CheckoutModal({
     (isRetailer ? (user.name || appUser?.profile?.full_name) : undefined);
   const [addresses, setAddresses] = useState<DbAddress[]>([]);
   const [selectedAddrId, setSelectedAddrId] = useState<string>("");
-  const [paymentMethod, setPaymentMethod] = useState<"UPI" | "Card" | "COD">("UPI");
+  const [paymentMethod, setPaymentMethod] = useState<"UPI" | "Card" | "COD">(isRetailer ? "COD" : "UPI");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [orderPlaced, setOrderPlaced] = useState<{ id: string; orderNumber: string } | null>(null);
@@ -71,6 +71,9 @@ export default function CheckoutModal({
     if (open) {
       setError("");
       setOrderPlaced(null);
+      if (isRetailer) {
+        setPaymentMethod("COD");
+      }
       orderRequestKey.current = crypto.randomUUID();
       // Pre-fill name/phone from logged-in user
       setNewAddr((prev) => ({
@@ -159,15 +162,17 @@ export default function CheckoutModal({
       shippingAddress = found;
     }
 
+    const effectivePaymentMethod = isRetailer ? "COD" : paymentMethod;
+
     const { data: order, error: orderErr } = await placeOrder({
       customerName: shippingAddress.name || user.name || appUser?.profile?.full_name || "Retail Partner",
       customerPhone: shippingAddress.phone || user.phone || appUser?.profile?.phone || "+91 9000000000",
       shippingAddress,
       items,
       totalAmount: finalTotal,
-      paymentMethod,
+      paymentMethod: effectivePaymentMethod,
       userId: appUser?.authUser?.id || appUser?.profile?.id,
-      userRole: "retailer",
+      userRole: isRetailer ? "retailer" : (user.role || "customer"),
       shopName: effectiveShopName || null,
       idempotencyKey: orderRequestKey.current || undefined,
     });
@@ -383,26 +388,50 @@ export default function CheckoutModal({
                 <span className="w-5 h-5 rounded-full bg-[#006a39] text-white text-xs flex items-center justify-center font-bold">2</span>
                 Payment Method
               </h3>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { id: "UPI" as const, label: "UPI / QR", sub: "GPay, PhonePe, Paytm" },
-                  { id: "Card" as const, label: "Debit/Credit", sub: "Visa, MC, RuPay" },
-                  { id: "COD" as const, label: "Cash on Delivery", sub: "Pay at Doorstep" },
-                ].map((pm) => (
-                  <div
-                    key={pm.id}
-                    onClick={() => setPaymentMethod(pm.id)}
-                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all text-center ${
-                      paymentMethod === pm.id
-                        ? "border-[#006a39] bg-[#f0fdf4]"
-                        : "border-[#e4ede2] bg-white hover:border-[#bbf7d0]"
-                    }`}
-                  >
-                    <p className="text-xs font-bold text-[#073b4c]">{pm.label}</p>
-                    <p className="text-[9px] text-[#9aa89b] mt-0.5">{pm.sub}</p>
+              {isRetailer ? (
+                <div className="p-3.5 rounded-2xl border-2 border-[#006a39] bg-[#f0fdf4] flex items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 text-[#006a39] flex items-center justify-center text-lg shrink-0 border border-emerald-200">
+                      💵
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-[#073b4c]">Cash on Delivery (COD)</p>
+                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-300">
+                          Wholesale B2B Only
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#596b5e] mt-0.5 font-medium">
+                        Pay upon doorstep stock cargo delivery &amp; physical invoice verification
+                      </p>
+                    </div>
                   </div>
-                ))}
-              </div>
+                  <div className="w-6 h-6 rounded-full bg-[#006a39] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                    ✓
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { id: "UPI" as const, label: "UPI / QR", sub: "GPay, PhonePe, Paytm" },
+                    { id: "Card" as const, label: "Debit/Credit", sub: "Visa, MC, RuPay" },
+                    { id: "COD" as const, label: "Cash on Delivery", sub: "Pay at Doorstep" },
+                  ].map((pm) => (
+                    <div
+                      key={pm.id}
+                      onClick={() => setPaymentMethod(pm.id)}
+                      className={`p-3 rounded-xl border-2 cursor-pointer transition-all text-center ${
+                        paymentMethod === pm.id
+                          ? "border-[#006a39] bg-[#f0fdf4]"
+                          : "border-[#e4ede2] bg-white hover:border-[#bbf7d0]"
+                      }`}
+                    >
+                      <p className="text-xs font-bold text-[#073b4c]">{pm.label}</p>
+                      <p className="text-[9px] text-[#9aa89b] mt-0.5">{pm.sub}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Order Items & Price Summary */}
