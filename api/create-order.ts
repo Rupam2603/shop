@@ -187,12 +187,15 @@ export default async function handler(req: any, res: any) {
 
     const orderNumber = makeOrderNumber();
 
+    // Defensively ensure invoice_number column exists across any branch/database instance
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_number TEXT');
+
     // Lock table to ensure every different order gets a different, strictly sequential invoice number
     await client.query('LOCK TABLE orders IN SHARE ROW EXCLUSIVE MODE');
 
     // Determine sequential invoice number starting from INV-001
     const { rows: seqRows } = await client.query(
-      `SELECT COALESCE(MAX(NULLIF(regexp_replace(invoice_number, '[^0-9]', '', 'g'), '')::int), 0) + 1 AS next_seq FROM orders`
+      `SELECT COALESCE(MAX(NULLIF(regexp_replace(COALESCE(invoice_number, ''), '[^0-9]', '', 'g'), '')::int), 0) + 1 AS next_seq FROM orders`
     );
     const nextSeq = Number(seqRows[0]?.next_seq || 1);
     const invoiceNumber = `INV-${String(nextSeq).padStart(3, '0')}`;

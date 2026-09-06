@@ -34,6 +34,7 @@ export default async function handler(req: any, res: any) {
   let client: any = null;
   try {
     client = await pool.connect();
+    await client.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_number TEXT').catch(() => {});
 
     // GET /api/orders?userId=...
     if (req.method === 'GET') {

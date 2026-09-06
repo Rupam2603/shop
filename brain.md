@@ -356,6 +356,8 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - **Guaranteed Distinct Invoice Numbers Across Every Order**:
     - Created PostgreSQL UNIQUE INDEX `idx_orders_invoice_number ON orders (invoice_number) WHERE invoice_number IS NOT NULL AND invoice_number <> ''` in Neon Lakebase Postgres to enforce database-level uniqueness.
     - Added `LOCK TABLE orders IN SHARE ROW EXCLUSIVE MODE` in `api/create-order.ts` before reading `MAX(seq)` to eliminate concurrent sequence race conditions.
+    - Added self-healing `ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_number TEXT` in `api/create-order.ts` and `api/orders.ts` to prevent schema mismatch across multiple database instances or branches.
+    - Synchronized both Neon Postgres databases (`ep-falling-cell-azm5qjrf` and `ep-divine-scene-az33au23`) with column `invoice_number` and unique index.
     - Implemented `resolveOrderInvoiceNumber(order, fallbackIndex)` in `src/lib/invoiceGenerator.ts` to replace hardcoded fallback with deterministic hashing and sequential indexing so every different order is guaranteed a distinct invoice ID.
     - Updated `AdminDashboard.tsx` to sort orders chronologically and map unique, sequential `INV-001`, `INV-002`, `INV-003`... IDs across all live orders.
     - Updated `ProfilePage.tsx` to assign and pass unique sequential invoice numbers for all live and fallback orders.
