@@ -2,12 +2,10 @@ import { useState, useMemo, useEffect } from "react";
 import type { Page } from "../App";
 import KeyCategoriesBar, { KEY_CATEGORIES, KeyCategoryItem } from "../components/KeyCategoriesBar";
 import InsuranceModal from "../components/InsuranceModal";
-import ProductDetailModal, { retailerPrice, PopupProduct } from "../components/ProductModal";
-import { KEY_CATEGORIES_CONFIG, KeyCategoryMeta, isProductInCategory } from "../lib/keyCategories";
+import ProductDetailModal, { PopupProduct } from "../components/ProductModal";
+import { KEY_CATEGORIES_CONFIG, KeyCategoryMeta, isProductInCategory, KEY_CATEGORY_MAP } from "../lib/keyCategories";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
 import { useCart } from "../contexts/CartContext";
-
-const U = (id: string) => `https://images.unsplash.com/${id}?w=300&q=80`;
 
 function parsePrice(p: string) {
   return parseFloat(p.replace(/[₹,]/g, "")) || 0;
@@ -35,26 +33,35 @@ export default function CategoryPage({
 
   useEffect(() => {
     setSelectedSubCat("All");
+    setSearchQuery("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, [categoryId]);
 
-  // Lookup current Category Configuration
+  // Lookup current Category Configuration with deep alias matching
   const categoryMeta: KeyCategoryMeta = useMemo(() => {
+    const cleanId = (categoryId || "all").trim().toLowerCase();
+    const mappedName = KEY_CATEGORY_MAP[cleanId]?.toLowerCase();
+
     const found = KEY_CATEGORIES_CONFIG.find(
       (c) =>
-        c.id.toLowerCase() === categoryId.toLowerCase() ||
-        c.short.toLowerCase() === categoryId.toLowerCase() ||
-        c.name.toLowerCase() === categoryId.toLowerCase()
+        c.id.toLowerCase() === cleanId ||
+        c.short.toLowerCase() === cleanId ||
+        c.name.toLowerCase() === cleanId ||
+        (mappedName && c.name.toLowerCase() === mappedName) ||
+        (c.id === "wellness" && (cleanId === "immunity" || cleanId.includes("immunity"))) ||
+        (c.id === "skin" && (cleanId === "personal-care" || cleanId.includes("personal"))) ||
+        (c.id === "medical-supplies" && (cleanId === "devices" || cleanId.includes("device")))
     );
     return (
       found || {
         id: categoryId,
-        name: categoryId,
+        name: KEY_CATEGORY_MAP[cleanId] || categoryId,
         short: categoryId,
         tagline: "Verified Pharmacy Products",
-        description: "Explore genuine medicines and wellness essentials.",
-        accent: "#006a39",
-        lightBg: "#eef7f0",
-        iconBg: "#bbf7d0",
+        description: "Explore genuine medicines and wellness essentials with express delivery.",
+        accent: "#ff3366",
+        lightBg: "#fff0f3",
+        iconBg: "#ffe4e9",
         filterFn: (p: any) => isProductInCategory(p.cat, categoryId),
       }
     );
@@ -125,7 +132,7 @@ export default function CategoryPage({
   const filteredProducts = useMemo(() => {
     let list = productList;
 
-    // Filter by specific Category's logic
+    // Filter by specific Category logic
     if (categoryMeta.filterFn) {
       list = list.filter(categoryMeta.filterFn);
     } else {
@@ -167,15 +174,15 @@ export default function CategoryPage({
       onNavigate(cat.route as Page);
       return;
     }
-    onNavigate("category" as any, cat.id);
+    onNavigate("category", cat.id);
   };
 
   return (
-    <div className="bg-[#f5fbf2] min-h-screen">
+    <div className="bg-transparent min-h-screen">
       <div className="max-w-[1280px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 flex flex-col gap-4 sm:gap-6">
 
         {/* ── Key Categories Bar ── */}
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#e4ede2] shadow-xs overflow-hidden">
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
           <KeyCategoriesBar
             selectedId={categoryMeta.id}
             onSelectCategory={handleSelectKeyCategory}
@@ -183,31 +190,33 @@ export default function CategoryPage({
         </div>
 
         {/* ── Breadcrumb ── */}
-        <div className="flex items-center gap-2 text-xs text-[#6d7a6f] px-1 font-medium">
-          <button onClick={() => onNavigate("home")} className="hover:text-[#006a39] hover:underline cursor-pointer">
+        <div className="flex items-center gap-2 text-xs text-slate-500 px-1 font-medium">
+          <button onClick={() => onNavigate("home")} className="hover:text-[#ff3366] transition-colors cursor-pointer">
             Home
           </button>
           <span>/</span>
-          <button onClick={() => onNavigate("medicines")} className="hover:text-[#006a39] hover:underline cursor-pointer">
+          <button onClick={() => onNavigate("category", "all")} className="hover:text-[#ff3366] transition-colors cursor-pointer">
             Categories
           </button>
           <span>/</span>
-          <span className="font-bold text-[#073b4c]">{categoryMeta.short}</span>
+          <span className="font-extrabold text-slate-900">{categoryMeta.short}</span>
         </div>
 
         {/* ── Dedicated Category Hero Banner ── */}
         <div
-          className="rounded-3xl p-6 sm:p-8 lg:p-10 text-white relative overflow-hidden shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
+          className="rounded-3xl p-6 sm:p-8 lg:p-10 text-white relative overflow-hidden shadow-lg border border-white/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
           style={{
-            background: `linear-gradient(135deg, ${categoryMeta.accent} 0%, #073b4c 100%)`,
+            background: `linear-gradient(135deg, ${categoryMeta.accent}ee 0%, #002244 100%)`,
           }}
         >
-          <div className="flex flex-col gap-2 max-w-2xl relative z-10">
+          <div className="absolute inset-0 bg-radial from-white/10 via-transparent to-black/20 pointer-events-none" />
+
+          <div className="flex flex-col gap-2.5 max-w-2xl relative z-10">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="bg-white/20 text-white text-[11px] font-black tracking-wider uppercase px-3 py-1 rounded-full backdrop-blur-xs border border-white/20">
+              <span className="bg-white/20 text-white text-[11px] font-black tracking-wider uppercase px-3 py-1 rounded-full backdrop-blur-md border border-white/25 shadow-2xs">
                 Category Collection
               </span>
-              <span className="text-white/80 text-xs font-semibold">
+              <span className="text-white/85 text-xs font-bold">
                 {filteredProducts.length} Products Available
               </span>
             </div>
@@ -216,23 +225,23 @@ export default function CategoryPage({
               {categoryMeta.name}
             </h1>
 
-            <p className="text-white/85 text-xs sm:text-sm leading-relaxed max-w-xl font-normal">
+            <p className="text-white/90 text-xs sm:text-sm leading-relaxed max-w-xl font-normal">
               {categoryMeta.description}
             </p>
 
-            <div className="flex items-center gap-4 pt-1 text-[11px] sm:text-xs text-white/80">
+            <div className="flex items-center gap-4 pt-1 text-[11px] sm:text-xs text-white/85">
               <div className="flex items-center gap-1.5">
-                <span className="text-emerald-400 font-bold">⚡</span>
+                <span className="text-emerald-300 font-bold">⚡</span>
                 <span>30-Min Fast Delivery</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-emerald-400 font-bold">🛡️</span>
+                <span className="text-emerald-300 font-bold">🛡️</span>
                 <span>Batch Verified Quality</span>
               </div>
             </div>
           </div>
 
-          {/* Search & Sort Controls inside Banner on Desktop */}
+          {/* Search & Sort Controls inside Banner */}
           <div className="w-full md:w-auto shrink-0 flex flex-col sm:flex-row md:flex-col gap-2.5 z-10">
             <div className="relative">
               <input
@@ -240,12 +249,13 @@ export default function CategoryPage({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={`Search in ${categoryMeta.short}…`}
-                className="w-full md:w-64 bg-white/15 backdrop-blur-md border border-white/30 text-white placeholder-white/60 text-xs sm:text-sm px-3.5 py-2.5 rounded-xl focus:outline-none focus:bg-white focus:text-[#073b4c] focus:placeholder-gray-400 transition-all shadow-xs"
+                className="w-full md:w-64 bg-white/20 backdrop-blur-md border border-white/30 text-white placeholder-white/70 text-xs sm:text-sm px-3.5 py-2.5 rounded-xl focus:outline-none focus:bg-white focus:text-slate-900 focus:placeholder-slate-400 transition-all shadow-xs font-medium"
               />
               {searchQuery && (
                 <button
+                  type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white text-xs font-bold"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white text-xs font-bold cursor-pointer"
                 >
                   ✕
                 </button>
@@ -255,20 +265,20 @@ export default function CategoryPage({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-white/15 backdrop-blur-md border border-white/30 text-white text-xs sm:text-sm px-3 py-2 rounded-xl focus:outline-none focus:bg-white focus:text-[#073b4c] transition-all cursor-pointer font-medium"
+              className="bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs sm:text-sm px-3 py-2.5 rounded-xl focus:outline-none focus:bg-white focus:text-slate-900 transition-all cursor-pointer font-bold"
             >
-              <option value="featured" className="text-[#073b4c]">Featured</option>
-              <option value="price-asc" className="text-[#073b4c]">Price: Low to High</option>
-              <option value="price-desc" className="text-[#073b4c]">Price: High to Low</option>
-              <option value="discount" className="text-[#073b4c]">Highest Discount</option>
+              <option value="featured" className="text-slate-900">Featured</option>
+              <option value="price-asc" className="text-slate-900">Price: Low to High</option>
+              <option value="price-desc" className="text-slate-900">Price: High to Low</option>
+              <option value="discount" className="text-slate-900">Highest Discount</option>
             </select>
           </div>
         </div>
 
         {/* Retailer banner notice */}
         {isRetailer && (
-          <div className="bg-[#073b4c] text-white p-3 rounded-2xl flex items-center gap-3">
-            <span className="bg-[#0369a1] text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide shrink-0">Retailer</span>
+          <div className="bg-[#002244] text-white p-3 rounded-2xl flex items-center gap-3 border border-sky-900/40 shadow-xs">
+            <span className="bg-[#ff3366] text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wide shrink-0">Retailer</span>
             <p className="text-xs font-medium">
               Viewing <span className="font-bold text-[#7dd3fc]">wholesale distributor prices</span> for verified pharmacies & retailers.
             </p>
@@ -278,13 +288,13 @@ export default function CategoryPage({
         {/* ── Sub-Category Filters (if available) ── */}
         {availableSubCategories.length > 0 && (
           <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
-            <span className="text-xs font-bold text-[#073b4c] shrink-0 pl-1 mr-1">Sub-categories:</span>
+            <span className="text-xs font-bold text-slate-700 shrink-0 pl-1 mr-1">Sub-categories:</span>
             <button
               onClick={() => setSelectedSubCat("All")}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
                 selectedSubCat === "All"
-                  ? "bg-[#006a39] text-white shadow-xs"
-                  : "bg-white text-[#4a5568] border border-[#e2e8f0] hover:bg-emerald-50"
+                  ? "bg-[#ff3366] text-white shadow-xs shadow-rose-500/20"
+                  : "bg-white/90 text-slate-700 border border-slate-200/85 hover:bg-rose-50/50 hover:border-rose-200"
               }`}
             >
               All
@@ -295,8 +305,8 @@ export default function CategoryPage({
                 onClick={() => setSelectedSubCat(sub)}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
                   selectedSubCat === sub
-                    ? "bg-[#006a39] text-white shadow-xs"
-                    : "bg-white text-[#4a5568] border border-[#e2e8f0] hover:bg-emerald-50"
+                    ? "bg-[#ff3366] text-white shadow-xs shadow-rose-500/20"
+                    : "bg-white/90 text-slate-700 border border-slate-200/85 hover:bg-rose-50/50 hover:border-rose-200"
                 }`}
               >
                 {sub}
@@ -308,24 +318,25 @@ export default function CategoryPage({
         {/* ── Product Catalog Grid ── */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between px-1">
-            <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg">
+            <h2 className="font-['Manrope',sans-serif] font-black text-slate-900 text-base sm:text-lg">
               {categoryMeta.short} Products ({filteredProducts.length})
             </h2>
-            <span className="text-xs text-[#6d7a6f]">
+            <span className="text-xs text-slate-500 font-medium">
               Showing {filteredProducts.length} items
             </span>
           </div>
 
           {filteredProducts.length === 0 ? (
-            <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/80 p-12 text-center flex flex-col items-center gap-3 shadow-sm">
+            <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/85 p-12 text-center flex flex-col items-center gap-3 shadow-2xs">
               <span className="text-4xl">🔍</span>
-              <h3 className="font-bold text-[#073b4c] text-base">No products found</h3>
-              <p className="text-xs text-[#6d7a6f] max-w-sm">
+              <h3 className="font-black text-slate-900 text-base">No products found</h3>
+              <p className="text-xs text-slate-500 max-w-sm">
                 No items match your search in this category. Try adjusting your query or explore other categories.
               </p>
               <button
+                type="button"
                 onClick={() => setSearchQuery("")}
-                className="mt-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] text-white font-bold text-xs shadow-md shadow-emerald-950/15 cursor-pointer active:scale-95"
+                className="mt-2 px-5 py-2.5 rounded-2xl bg-[#ff3366] hover:bg-[#e02958] text-white font-bold text-xs shadow-md shadow-rose-500/20 cursor-pointer active:scale-95 transition-all"
               >
                 Clear Search
               </button>
@@ -356,31 +367,30 @@ export default function CategoryPage({
                       retailer_price: (p as any).retailer_price,
                       return_policy: (p as any).return_policy || "Non-Returnable",
                     })}
-                    className={`bg-white/85 backdrop-blur-xl rounded-3xl border ${
-                      isOutOfStock ? "border-rose-200/80 opacity-75" : "border-white/90 hover:border-emerald-300/80"
-                    } hover:shadow-xl hover:shadow-emerald-950/8 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer`}
+                    className={`bg-white/90 backdrop-blur-xl rounded-3xl border ${
+                      isOutOfStock ? "border-rose-200/80 opacity-75" : "border-slate-200/85 hover:border-[#ff3366]/40"
+                    } hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer shadow-2xs`}
                   >
                     {/* Image & Badge */}
-                    <div className="relative bg-gradient-to-b from-white/90 to-slate-50/50 h-32 sm:h-38 overflow-hidden flex items-center justify-center p-3">
+                    <div className="relative bg-slate-50/70 h-32 sm:h-38 overflow-hidden flex items-center justify-center p-3">
                       {p.disc && (
                         <span
-                          className="absolute top-2.5 left-2.5 z-10 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase shadow-xs border border-white/30 backdrop-blur-md"
-                          style={{ backgroundColor: categoryMeta.accent }}
+                          className="absolute top-2.5 left-2.5 z-10 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase shadow-xs bg-[#ff3366]"
                         >
                           {p.disc} OFF
                         </span>
                       )}
                       {isOutOfStock ? (
-                        <span className="absolute top-2.5 right-2.5 z-10 bg-rose-50/90 text-rose-700 border border-rose-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs backdrop-blur-md">
-                          Out of Stock
+                        <span className="absolute top-2.5 right-2.5 z-10 bg-rose-50 text-rose-700 border border-rose-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs backdrop-blur-md">
+                          {isRetailer ? "Stock Out" : "Out of Stock"}
                         </span>
                       ) : isLowStock ? (
-                        <span className="absolute top-2.5 right-2.5 z-10 bg-amber-50/90 text-amber-800 border border-amber-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase animate-pulse shadow-2xs backdrop-blur-md">
-                          Only {p.stock} Left
+                        <span className="absolute top-2.5 right-2.5 z-10 bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase animate-pulse shadow-2xs backdrop-blur-md">
+                          {isRetailer ? `Low (${p.stock})` : `Only ${p.stock} Left`}
                         </span>
                       ) : (
-                        <span className="absolute top-2.5 right-2.5 z-10 bg-emerald-50/90 text-emerald-800 border border-emerald-200 text-[8px] font-bold px-2 py-0.5 rounded-full shadow-2xs backdrop-blur-md">
-                          {p.stock} in stock
+                        <span className="absolute top-2.5 right-2.5 z-10 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[8px] font-bold px-2 py-0.5 rounded-full shadow-2xs backdrop-blur-md">
+                          {isRetailer ? `📦 ${p.stock} units` : `${p.stock} in stock`}
                         </span>
                       )}
                       <img
@@ -391,33 +401,33 @@ export default function CategoryPage({
                       />
                     </div>
 
-                    <div className="p-3.5 flex flex-col gap-1 flex-1 bg-white/70 backdrop-blur-md">
-                      <p className="text-[9px] font-black uppercase tracking-[0.6px]" style={{ color: categoryMeta.accent }}>
+                    <div className="p-3.5 flex flex-col gap-1 flex-1 bg-white">
+                      <p className="text-[9px] font-black uppercase tracking-[0.6px] text-[#003b6d]">
                         {p.brand}
                       </p>
-                      <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[34px] group-hover:text-[#006a39] transition-colors">
+                      <p className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[34px] group-hover:text-[#ff3366] transition-colors">
                         {p.name}
                       </p>
                       <div className="flex flex-wrap items-center gap-1 mt-0.5">
                         {p.subCat && (
-                          <span className="inline-block text-[9px] font-bold bg-teal-50 text-teal-700 border border-teal-200/80 px-2 py-0.5 rounded-full leading-none w-fit">
+                          <span className="inline-block text-[9px] font-bold bg-sky-50 text-sky-700 border border-sky-200/80 px-2 py-0.5 rounded-full leading-none w-fit">
                             {p.subCat}
                           </span>
                         )}
                         {p.sub && (
-                          <span className="inline-block text-[9px] font-bold bg-emerald-50/80 text-[#006a39] border border-emerald-200/80 px-2 py-0.5 rounded-full leading-none w-fit">
+                          <span className="inline-block text-[9px] font-bold bg-slate-50 text-slate-600 border border-slate-200/80 px-2 py-0.5 rounded-full leading-none w-fit truncate max-w-[150px]">
                             {p.sub}
                           </span>
                         )}
                       </div>
 
-                      <div className="mt-auto pt-2.5 border-t border-[#f0f5f1] flex items-center justify-between">
+                      <div className="mt-auto pt-2.5 border-t border-slate-100 flex items-center justify-between">
                         <div>
-                          <span className="font-['Manrope',sans-serif] font-black text-[#0369a1] text-sm sm:text-base">
+                          <span className="font-['Manrope',sans-serif] font-black text-slate-900 text-sm sm:text-base">
                             {p.price}
                           </span>
                           {p.orig && (
-                            <span className="text-[#8aa08e] text-[10px] line-through ml-1 font-semibold">
+                            <span className="text-slate-400 text-[10px] line-through ml-1 font-semibold">
                               MRP {p.orig}
                             </span>
                           )}
@@ -447,8 +457,7 @@ export default function CategoryPage({
                                 img: p.img,
                               });
                             }}
-                            className="w-8 h-8 rounded-2xl flex items-center justify-center text-white shrink-0 hover:scale-110 active:scale-95 transition-all shadow-md shadow-emerald-950/15 cursor-pointer border border-white/30"
-                            style={{ backgroundColor: categoryMeta.accent }}
+                            className="w-8 h-8 rounded-2xl flex items-center justify-center bg-rose-50 hover:bg-[#ff3366] text-[#ff3366] hover:text-white border border-rose-200/80 font-bold shrink-0 hover:scale-105 active:scale-95 transition-all shadow-2xs cursor-pointer"
                             title="Add to cart"
                           >
                             +

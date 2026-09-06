@@ -315,7 +315,6 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
   const [activeKeyCat, setActiveKeyCat] = useState("all");
 
   const handleSelectKeyCategory = (cat: KeyCategoryItem) => {
-    setActiveKeyCat(cat.id);
     if (cat.id === "insurance") {
       setShowInsuranceModal(true);
       return;
@@ -324,6 +323,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
       onNavigate(cat.route as Page);
       return;
     }
+    onNavigate("category", cat.id);
   };
 
   useEffect(() => {

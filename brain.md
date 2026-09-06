@@ -485,7 +485,16 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - **Top Categories & Deals of the Day (Side-by-Side as in Reference)**:
     - **Top Categories**: 6 luxury cards (*Monsoon Care*, *Immunity Boosters*, *Pain Relief*, *Baby Care*, *Personal Care*, *Health Devices*) using high-resolution cropped category artwork extracted directly from the user's reference (`/categories/monsoon-care.png`, `/categories/immunity-boosters.png`, `/categories/pain-relief.png`, `/categories/baby-care.png`, `/categories/personal-care.png`, `/categories/health-devices.png`) with crisp square aspect ratios and rose `View All →` link.
     - **Deals of the Day**: 4 product cards (*Dettol Liquid 250ml 29% OFF*, *Crocin Advance 25% OFF*, *Accu-Chek 50 Strips 12% OFF*, *Dolo-650 Tablet 10% OFF*) with green discount badges, strike-through MRP pricing, and real database product connectivity.
-  - **Footer (`src/components/Footer.tsx`)**:
-    - Refreshed footer with clean glassmorphism, slate typography, and upgraded 24/7 Support Bot banner to luxury dark slate with rose accents and glowing status badge.
+  - **Key Category Section Navigation & CategoryPage Redesign (Sep 2026)**:
+    - **Navigation Bug Fix**: Resolved issue where clicking key categories on the Home Page (`handleSelectKeyCategory`) did not route to the dedicated category page. Updated `handleSelectKeyCategory` to call `onNavigate("category", cat.id)` for all key categories, while properly opening modals for special items (`insurance`).
+    - **Category Alias & Deep Matching (`src/lib/keyCategories.ts` & `src/pages/CategoryPage.tsx`)**:
+      - Added category alias support (`immunity` -> `Daily Wellness & Immunity`, `personal-care` -> `Skin Care & Ointments`, `devices` -> `Medical Supplies & Devices`) so that clicking either Top Categories cards or Key Categories bar cleanly maps to canonical category configs.
+      - Updated `categoryMeta` lookup to search by ID, short name, full name, or canonical alias.
+    - **CategoryPage Redesign**:
+      - Upgraded `src/pages/CategoryPage.tsx` from legacy green background (`#f5fbf2`) and buttons to luxury transparent canvas, frosted glass Key Categories bar, and slate/rose typography.
+      - Styled dedicated category hero banner with dynamic accent gradient blending into midnight blue (`#002244`), glassmorphic badge, fast delivery & batch-verified badges, search input, and sort dropdown.
+      - Replaced legacy green sub-category chips and action buttons with luxury rose pills (`bg-[#ff3366] text-white shadow-rose-500/20`).
+      - Upgraded product cards to luxury white glass cards with hover lift transitions, discount pills, stock badges, and rose Add-to-Cart buttons.
+      - Verified end-to-end with automated browser subagent testing: Home -> Skin -> Pain Relief -> Home -> Monsoon Care.
 
 

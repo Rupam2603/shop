@@ -38,9 +38,11 @@ export type KeyProductCategory = typeof KEY_PRODUCT_CATEGORIES[number];
  */
 export const KEY_CATEGORY_MAP: Record<string, string> = {
   skin: "Skin Care & Ointments",
+  "personal-care": "Skin Care & Ointments",
   "pain-relief": "Pain Relief & Muscle Care",
   "weight-loss": "Weight Loss & Metabolism",
   wellness: "Daily Wellness & Immunity",
+  immunity: "Daily Wellness & Immunity",
   monsoon: "Monsoon Health & Antiseptics",
   baby: "Baby Care & Infant Nutrition",
   women: "Women's Health & Hygiene",
@@ -49,6 +51,7 @@ export const KEY_CATEGORY_MAP: Record<string, string> = {
   hair: "Hair Care & Scalp Therapy",
   vaccines: "Vaccines & Medical Disposables",
   "medical-supplies": "Medical Supplies & Devices",
+  devices: "Medical Supplies & Devices",
 };
 
 /**
