@@ -603,7 +603,12 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
               {pendingApprovalInfo && (
                 <div className="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 text-xs text-amber-950 flex flex-col gap-2 shadow-xs">
                   <div className="flex items-center justify-between font-bold">
-                    <span>Retailer Application In Review</span>
+                    <span className="flex items-center gap-1.5">
+                      <svg className="w-4 h-4 text-amber-800" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M5 2H4v2h1v1c0 2.46 1.32 4.77 3.43 6.02.35.21.57.55.57.9v.16c0 .35-.21.69-.57.9A7.01 7.01 0 0 0 5 19v1H4v2h16v-2h-1v-1c0-2.46-1.32-4.77-3.43-6.02-.36-.21-.57-.55-.57-.9v-.16c0-.35.21-.69.57-.9A7.01 7.01 0 0 0 19 5V4h1V2zm12 3c0 1.76-.94 3.41-2.45 4.3-.97.57-1.55 1.55-1.55 2.62v.16c0 1.07.58 2.05 1.55 2.62 1.51.89 2.45 2.54 2.45 4.3v1H7v-1c0-1.76.94-3.41 2.45-4.3.97-.57 1.55-1.55 1.55-2.62v-.16c0-1.07-.58-2.05-1.55-2.62A5.01 5.01 0 0 1 7 5V4h10z" />
+                      </svg>
+                      <span>Retailer Application In Review</span>
+                    </span>
                     <span className="text-[10px] uppercase bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-extrabold">
                       Pending
                     </span>
