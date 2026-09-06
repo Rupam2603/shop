@@ -1012,6 +1012,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
   const lowStockCount = useMemo(() => products.filter((p) => p.stock > 0 && p.stock <= 10).length, [products]);
   const outOfStockCount = useMemo(() => products.filter((p) => p.stock === 0).length, [products]);
+  const missingPurchasePriceCount = useMemo(() => products.filter((p) => !p.purchasePrice).length, [products]);
 
   const filteredProducts = useMemo(() => {
     let list = products;
@@ -1872,6 +1873,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
               onEdit={openEdit} onDelete={(id) => setDeleteId(id)}
               onToggleListing={handleToggleProductListing}
               onOpenBulkUpload={() => setShowBulkUpload(true)}
+              missingPurchasePriceCount={missingPurchasePriceCount}
             />
           )}
           {activeTab === "inventory" && (
@@ -2153,12 +2155,13 @@ function DashboardTab({
 }
 
 /* ─── TAB: PRODUCTS CATALOG ─── */
-function ProductsTab({ products, allProductCount, categories, search, setSearch, catFilter, setCatFilter, onEdit, onDelete, onToggleListing, onOpenBulkUpload }: {
+function ProductsTab({ products, allProductCount, categories, search, setSearch, catFilter, setCatFilter, onEdit, onDelete, onToggleListing, onOpenBulkUpload, missingPurchasePriceCount }: {
   products: Product[]; allProductCount: number; categories: string[];
   search: string; setSearch: (v: string) => void; catFilter: string; setCatFilter: (v: string) => void;
   onEdit: (p: Product) => void; onDelete: (id: number) => void;
   onToggleListing?: (p: Product) => void;
   onOpenBulkUpload?: () => void;
+  missingPurchasePriceCount?: number;
 }) {
   const [statusFilter, setStatusFilter] = useState<"All" | "listed" | "unlisted">("All");
 
@@ -2170,6 +2173,20 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Purchase Price Missing Warning Banner */}
+      {!!missingPurchasePriceCount && (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-300 rounded-2xl px-4 py-3.5 shadow-xs">
+          <span className="text-amber-600 text-lg leading-none mt-0.5">⚠️</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-extrabold text-amber-800">
+              {missingPurchasePriceCount} product{missingPurchasePriceCount > 1 ? "s are" : " is"} missing Purchase Price
+            </p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Purchase Price is required for accurate delivery record exports. Open each highlighted product and set the Purchase Price (₹) field.
+            </p>
+          </div>
+        </div>
+      )}
       {/* Filter Bar */}
       <div className="glass-admin-card rounded-3xl p-4 sm:p-5 flex flex-col gap-3.5 shadow-xs">
         {/* Row 1: Dedicated Prominent Wide Search Bar */}
@@ -2310,6 +2327,15 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
                   <div className="flex flex-col">
                     <span className="text-[10px] font-extrabold text-[#0369a1] uppercase">Retailer B2B</span>
                     <span className="text-sm sm:text-base font-extrabold text-[#0369a1]">₹{p.retailerPrice}</span>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-extrabold text-amber-700 uppercase">Purchase</span>
+                    {p.purchasePrice ? (
+                      <span className="text-sm sm:text-base font-extrabold text-amber-700">₹{p.purchasePrice}</span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-rose-500 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-md">⚠ Missing</span>
+                    )}
                   </div>
 
                   <div className="flex flex-col items-start md:items-end">
