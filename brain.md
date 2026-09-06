@@ -399,4 +399,11 @@ The application reads configuration through `import.meta.env` (defined in `.env`
     - Review submission in `src/components/ProductModal.tsx` requires authentication as a genuine customer account (`role === 'customer'`), with real customer names (`appUser.profile.full_name`) or `"Verified Customer"`.
     - Unauthenticated users are prompted to sign in with their customer account before reviewing.
     - Real customers can also submit verified reviews from their delivered orders in `src/pages/ProfilePage.tsx` under "My Reviews".
+- **Key Categories Bar Scrollbar Removal & Dynamic Side Arrows (Sep 2026)**:
+  - Completely removed native/browser grey scrollbars using `.no-scrollbar` and `scrollbarWidth: "none"`, `msOverflowStyle: "none"`, and `::-webkit-scrollbar { display: none !important }` across all browsers in `src/index.css` and `src/components/KeyCategoriesBar.tsx`.
+  - Added dynamic floating left and right navigation chevron buttons with smooth gradient backdrops in `KeyCategoriesBar.tsx`.
+  - Arrows dynamically appear strictly when scrolling is needed (left arrow when `scrollLeft > 4`, right arrow when `scrollLeft < maxScroll - 4`, and both hidden when all categories fit comfortably on screen).
+  - Smooth programmatic scrolling on arrow click (`handleScroll`) with responsive width observation via `ResizeObserver` and window resize listeners.
+
+
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 
 export interface KeyCategoryItem {
   id: string;
@@ -223,6 +223,22 @@ export const KEY_CATEGORIES: KeyCategoryItem[] = [
   },
 ];
 
+function ChevronLeftIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
 interface KeyCategoriesBarProps {
   selectedId?: string;
   onSelectCategory: (category: KeyCategoryItem) => void;
@@ -234,13 +250,85 @@ export default function KeyCategoriesBar({
   onSelectCategory,
   className = "",
 }: KeyCategoriesBarProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    const maxScroll = scrollWidth - clientWidth;
+    setCanScrollLeft(scrollLeft > 4);
+    setCanScrollRight(maxScroll > 4 && scrollLeft < maxScroll - 4);
+  }, []);
+
+  useEffect(() => {
+    checkScroll();
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      checkScroll();
+    });
+    resizeObserver.observe(el);
+
+    window.addEventListener("resize", checkScroll);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, [checkScroll]);
+
+  const handleScroll = (direction: "left" | "right") => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const scrollAmount = Math.max(el.clientWidth * 0.65, 240);
+    el.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  };
+
   return (
     <div className={`w-full bg-white/75 backdrop-blur-xl border-b border-white/60 shadow-2xs relative ${className}`}>
+      {/* Left Scroll Arrow (visible only when scrolling left is required) */}
+      {canScrollLeft && (
+        <div className="absolute left-0 top-0 bottom-0 z-20 flex items-center pr-4 pl-1.5 bg-gradient-to-r from-white via-white/90 to-transparent pointer-events-none transition-all duration-200">
+          <button
+            type="button"
+            onClick={() => handleScroll("left")}
+            aria-label="Scroll left"
+            className="pointer-events-auto w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-white text-[#006a39] border border-emerald-200/80 shadow-md hover:shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-md"
+          >
+            <ChevronLeftIcon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Right Scroll Arrow (visible only when scrolling right is required) */}
+      {canScrollRight && (
+        <div className="absolute right-0 top-0 bottom-0 z-20 flex items-center pl-4 pr-1.5 bg-gradient-to-l from-white via-white/90 to-transparent pointer-events-none transition-all duration-200">
+          <button
+            type="button"
+            onClick={() => handleScroll("right")}
+            aria-label="Scroll right"
+            className="pointer-events-auto w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-white text-[#006a39] border border-emerald-200/80 shadow-md hover:shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-md"
+          >
+            <ChevronRightIcon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+          </button>
+        </div>
+      )}
+
       <div className="w-full px-2 sm:px-4">
         <div
-          className="flex items-center gap-1 sm:gap-2 lg:gap-3 overflow-x-auto py-2 sm:py-2.5 scroll-smooth select-none scrollbar-thin scrollbar-thumb-emerald-200/60 hover:scrollbar-thumb-emerald-300"
+          ref={scrollContainerRef}
+          onScroll={checkScroll}
+          className="flex items-center gap-1 sm:gap-2 lg:gap-3 overflow-x-auto py-2 sm:py-2.5 scroll-smooth select-none no-scrollbar"
           style={{
             WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
           }}
         >
           {KEY_CATEGORIES.map((cat) => {
