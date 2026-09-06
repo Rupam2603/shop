@@ -260,8 +260,9 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - **Database Schema Normalization (Neon Postgres)**: Added missing columns `is_listed` (BOOLEAN DEFAULT true), `retailer_discount_percent` (NUMERIC DEFAULT 0), and `web_image_url` (TEXT) across `public.products` and `public.inventory_products` tables on active clusters.
   - **Resilient Querying (`src/lib/products.ts`)**: Streamlined SQL queries to `SELECT * FROM products WHERE is_listed IS NOT FALSE ORDER BY numeric_id ASC`. Dynamically calculates `retailer_discount_percent` from `(mrp - retailer_price) / mrp` whenever missing, safely strips sensitive `purchase_price` for non-admin viewers, and hardens PostgREST fallback.
   - **Loading & Empty State UX (`HomePage.tsx`)**: Added dedicated loading spinner while catalog data is resolving and refined empty message display so active category names are explicitly rendered when a specific key category has 0 items.
-- **Delivery Record Excel Export Totals Clarification (Sep 2026)**:
-  - **Explicit Summary Labels**: Updated `src/lib/deliveryRecordExcelExport.ts` summary section. Instead of a generic `MONTHLY TOTALS` label with unlabeled numbers, the export now explicitly labels rows as `Total Purchase Price` (aligning with `Purchase Price of the Products`), `Total Sell Price` (aligning with `Retailers Price`), and `Total Profit`.
+- **Delivery Record Excel Export Totals & Bold Placement (Sep 2026)**:
+  - **Explicit Summary Labels & Placement**: Updated `src/lib/deliveryRecordExcelExport.ts`. The headings `Total Purchase Price`, `Total Sell Price`, and `Total Profit` are now placed directly in the cell immediately preceding each calculated total amount (`Total Purchase Price` in Column H before Column I, and `Total Sell Price` and `Total Profit` merged across Columns H–I before Column J) with right alignment.
+  - **Bold Styling**: Integrated `xlsx-js-style` to apply genuine font styling (`{ font: { bold: true } }`) across table headers and summary headings/totals.
   - **Key Alignment**: Synchronized empty-items fallback object keys with the main line-items schema (`Customer Name`, `Store Name`, `MRP of Product`, `Purchase Price of the Products`, `Retailers Price`, `Date and Time of Delivery`) ensuring uniform columns.
 
 

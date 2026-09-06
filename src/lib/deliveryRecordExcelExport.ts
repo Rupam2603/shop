@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import XLSX from "xlsx-js-style";
 import type { DbOrder } from "./orders";
 
 export function exportDeliveryRecordToExcel(
@@ -79,21 +79,24 @@ export function exportDeliveryRecordToExcel(
   // Empty row before summary
   sheetRows.push({});
 
-  // Summary rows
+  // Summary rows: headings placed in the cell immediately preceding each calculated total amount
   const profit = totalSellMonthly - totalPurchaseMonthly;
 
+  // Row 1: Total Purchase Price heading in Column H ("MRP of Product"), amount in Column I ("Purchase Price of the Products")
   sheetRows.push({
-    "Product Name": "Total Purchase Price",
+    "MRP of Product": "Total Purchase Price",
     "Purchase Price of the Products": totalPurchaseMonthly,
   });
 
+  // Row 2: Total Sell Price heading in Column H (merged to I), amount in Column J ("Retailers Price")
   sheetRows.push({
-    "Product Name": "Total Sell Price",
+    "MRP of Product": "Total Sell Price",
     "Retailers Price": totalSellMonthly,
   });
 
+  // Row 3: Total Profit heading in Column H (merged to I), amount in Column J ("Retailers Price")
   sheetRows.push({
-    "Product Name": "Total Profit",
+    "MRP of Product": "Total Profit",
     "Retailers Price": profit,
   });
 
@@ -108,11 +111,51 @@ export function exportDeliveryRecordToExcel(
     { wch: 22 }, // Customer Name
     { wch: 22 }, // Store Name
     { wch: 8 },  // Qty
-    { wch: 15 }, // MRP of Product
+    { wch: 22 }, // MRP of Product
     { wch: 28 }, // Purchase Price of the Products
     { wch: 18 }, // Retailers Price
     { wch: 22 }, // Date and Time of Delivery
   ];
+
+  // 1-based row indices for summary
+  const totalRows = sheetRows.length + 1; // last row
+  const rowProfit = totalRows;
+  const rowSell = totalRows - 1;
+  const rowPurchase = totalRows - 2;
+
+  // Merge Column H & Column I for Row Sell and Row Profit so the label sits right against Column J
+  worksheet["!merges"] = [
+    { s: { r: rowSell - 1, c: 7 }, e: { r: rowSell - 1, c: 8 } },
+    { s: { r: rowProfit - 1, c: 7 }, e: { r: rowProfit - 1, c: 8 } },
+  ];
+
+  // Bold table header row
+  const colLetters = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
+  colLetters.forEach((col) => {
+    const cellRef = `${col}1`;
+    if (worksheet[cellRef]) {
+      worksheet[cellRef].s = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "006A39" } },
+        alignment: { horizontal: "center" },
+      };
+    }
+  });
+
+  // Bold summary headings & amounts in bold with right alignment
+  const boldStyle = { font: { bold: true }, alignment: { horizontal: "right" } };
+
+  // Total Purchase Price: H (heading) and I (amount)
+  if (worksheet[`H${rowPurchase}`]) worksheet[`H${rowPurchase}`].s = boldStyle;
+  if (worksheet[`I${rowPurchase}`]) worksheet[`I${rowPurchase}`].s = boldStyle;
+
+  // Total Sell Price: H (heading spanning across H & I) and J (amount)
+  if (worksheet[`H${rowSell}`]) worksheet[`H${rowSell}`].s = boldStyle;
+  if (worksheet[`J${rowSell}`]) worksheet[`J${rowSell}`].s = boldStyle;
+
+  // Total Profit: H (heading spanning across H & I) and J (amount)
+  if (worksheet[`H${rowProfit}`]) worksheet[`H${rowProfit}`].s = boldStyle;
+  if (worksheet[`J${rowProfit}`]) worksheet[`J${rowProfit}`].s = boldStyle;
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Delivery Record");
