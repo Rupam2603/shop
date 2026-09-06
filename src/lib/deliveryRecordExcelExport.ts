@@ -129,15 +129,15 @@ export function exportDeliveryRecordToExcel(
     { s: { r: rowProfit - 1, c: 7 }, e: { r: rowProfit - 1, c: 8 } },
   ];
 
-  // Bold table header row
+  // Bold table header row: ensure crisp bold text across all spreadsheet software
   const colLetters = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
   colLetters.forEach((col) => {
     const cellRef = `${col}1`;
     if (worksheet[cellRef]) {
       worksheet[cellRef].s = {
-        font: { bold: true, color: { rgb: "FFFFFF" } },
-        fill: { fgColor: { rgb: "006A39" } },
-        alignment: { horizontal: "center" },
+        font: { bold: true, name: "Calibri", sz: 11, color: { rgb: "000000" } },
+        fill: { patternType: "solid", fgColor: { rgb: "E2E8F0" } },
+        alignment: { horizontal: "center", vertical: "center" },
       };
     }
   });
