@@ -198,6 +198,7 @@ export async function placeOrder(params: {
     const fullOrder: DbOrder = {
       id: data.id,
       order_number: data.order_number,
+      invoice_number: data.invoice_number || null,
       user_id: data.user_id || userId,
       customer_name: data.customer_name || params.customerName || "Customer",
       customer_phone: data.customer_phone || params.customerPhone || "",

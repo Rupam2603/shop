@@ -164,11 +164,13 @@ export default function ProfilePage({
       }))
     : user.addresses ?? [];
 
-  // Combine live orders with fallback
+  // Combine live orders with fallback, ensuring every order has a distinct invoice number
   const displayOrders = dbOrders.length > 0
-    ? dbOrders.map((o) => ({
+    ? dbOrders.map((o, idx) => ({
         id: o.order_number,
         dbId: o.id,
+        invoiceNumber: o.invoice_number || `INV-${String(idx + 1).padStart(3, "0")}`,
+        createdAt: o.created_at,
         date: new Date(o.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
         status: o.status,
         total: Number(o.total_amount),
@@ -178,7 +180,10 @@ export default function ProfilePage({
         deliveryPartnerName: o.delivery_partner_name,
         deliveryPartnerPhone: o.delivery_partner_phone,
       }))
-    : user.role === "retailer" ? RETAILER_ORDERS : CUSTOMER_ORDERS;
+    : (user.role === "retailer" ? RETAILER_ORDERS : CUSTOMER_ORDERS).map((o, idx) => ({
+        ...o,
+        invoiceNumber: `INV-${String(idx + 1).padStart(3, "0")}`,
+      }));
 
   const totalSpent = displayOrders.filter((o) => o.status !== "Cancelled").reduce((s, o) => s + o.total, 0);
 
@@ -800,12 +805,14 @@ export default function ProfilePage({
 
                               <button
                                 onClick={() => {
+                                  const orderIndex = displayOrders.findIndex((item) => item.id === o.id || (item as any).dbId === o.id);
+                                  const resolvedInvoiceNumber = (o as any).invoiceNumber || `INV-${String(orderIndex >= 0 ? orderIndex + 1 : 1).padStart(3, "0")}`;
                                   const dbOrder = dbOrders.find((db) => db.order_number === o.id || db.id === o.id);
                                   if (dbOrder) {
                                     printOrDownloadInvoice({
                                       id: dbOrder.order_number,
                                       dbId: dbOrder.id,
-                                      invoiceNumber: dbOrder.invoice_number || undefined,
+                                      invoiceNumber: dbOrder.invoice_number || resolvedInvoiceNumber,
                                       createdAt: dbOrder.created_at,
                                       customer: dbOrder.customer_name || user.name,
                                       phone: dbOrder.customer_phone || user.phone || "+91 98765 00000",
@@ -830,9 +837,10 @@ export default function ProfilePage({
                                       })),
                                     });
                                   } else {
-                                    // Fallback for sample/demo orders in profile history
+                                    // Fallback for sample/demo orders in profile history with distinct invoice ID
                                     printOrDownloadInvoice({
                                       id: o.id,
+                                      invoiceNumber: resolvedInvoiceNumber,
                                       customer: user.name,
                                       phone: user.phone || "+91 98765 00000",
                                       role: user.role === "retailer" ? "retailer" : "customer",

@@ -1265,68 +1265,85 @@ export default function AdminDashboard({ user, onLogout }: Props) {
 
   const liveOrders = useMemo(() => {
     if (dbOrders.length > 0) {
-      return dbOrders
-        .filter((o) => !deletedOrderIds.includes(o.id) && !deletedOrderIds.includes(o.order_number))
-        .map((o) => {
-          const shipAddr = (o.shipping_address || {}) as any;
-          const isExplicitRetailer = o.user_role === "retailer" || shipAddr?.user_role === "retailer";
-          const isExplicitCustomer = o.user_role === "customer" || shipAddr?.user_role === "customer";
+      const active = dbOrders.filter(
+        (o) => !deletedOrderIds.includes(o.id) && !deletedOrderIds.includes(o.order_number)
+      );
 
-          const finalRole: "retailer" | "customer" = isExplicitRetailer
-            ? "retailer"
-            : isExplicitCustomer
-            ? "customer"
-            : o.shop_name ||
-              shipAddr?.shop_name ||
-              o.customer_name?.toLowerCase().includes("store") ||
-              o.customer_name?.toLowerCase().includes("pharmacy") ||
-              o.customer_name?.toLowerCase().includes("medical") ||
-              o.customer_name?.toLowerCase().includes("pharma")
-            ? "retailer"
-            : "customer";
+      // Chronological sort oldest-to-newest to map distinct sequential invoice numbers starting from INV-001
+      const chronological = [...active].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
 
-          const finalShopName =
-            o.shop_name ||
+      // Pre-map order ID to distinct sequential invoice number
+      const invoiceMap = new Map<string, string>();
+      chronological.forEach((o, idx) => {
+        const invNum = o.invoice_number?.trim() || `INV-${String(idx + 1).padStart(3, "0")}`;
+        invoiceMap.set(o.id, invNum);
+        if (o.order_number) invoiceMap.set(o.order_number, invNum);
+      });
+
+      return active.map((o) => {
+        const shipAddr = (o.shipping_address || {}) as any;
+        const isExplicitRetailer = o.user_role === "retailer" || shipAddr?.user_role === "retailer";
+        const isExplicitCustomer = o.user_role === "customer" || shipAddr?.user_role === "customer";
+
+        const finalRole: "retailer" | "customer" = isExplicitRetailer
+          ? "retailer"
+          : isExplicitCustomer
+          ? "customer"
+          : o.shop_name ||
             shipAddr?.shop_name ||
-            (finalRole === "retailer" ? o.customer_name : undefined);
+            o.customer_name?.toLowerCase().includes("store") ||
+            o.customer_name?.toLowerCase().includes("pharmacy") ||
+            o.customer_name?.toLowerCase().includes("medical") ||
+            o.customer_name?.toLowerCase().includes("pharma")
+          ? "retailer"
+          : "customer";
 
-          const dateObj = new Date(o.created_at);
-          const dateStr = !isNaN(dateObj.getTime())
-            ? dateObj.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
-            : "Today";
-          const rawDateStr = !isNaN(dateObj.getTime())
-            ? dateObj.toISOString().split("T")[0]
-            : undefined;
+        const finalShopName =
+          o.shop_name ||
+          shipAddr?.shop_name ||
+          (finalRole === "retailer" ? o.customer_name : undefined);
 
-          return {
-            id: o.order_number,
-            dbId: o.id,
-            invoiceNumber: o.invoice_number || undefined,
-            createdAt: o.created_at,
-            customer: o.customer_name,
-            phone: o.customer_phone,
-            items: o.order_items?.length || 1,
-            amount: Number(o.total_amount),
-            status: o.status,
-            date: dateStr,
-            rawDate: rawDateStr,
-            payment: o.payment_method,
-            role: finalRole,
-            shopName: finalShopName,
-            address: formatOrderAddress(o.shipping_address),
-            orderItems: (o.order_items || []).map((oi: any) => ({
-              name: oi.product_name || "Unknown Product",
-              quantity: Number(oi.quantity || 0),
-              price: Number(oi.unit_price || 0),
-              totalPrice: Number(oi.total_price || (Number(oi.unit_price || 0) * Number(oi.quantity || 0))),
-              mrp: oi.mrp == null ? Number(oi.unit_price || 0) : Number(oi.mrp),
-              batch: oi.batch_no || undefined,
-              expiry: oi.expiry_date || undefined,
-              sku: oi.sku || undefined,
-            })),
-            paymentStatus: o.payment_status,
-          };
-        });
+        const dateObj = new Date(o.created_at);
+        const dateStr = !isNaN(dateObj.getTime())
+          ? dateObj.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+          : "Today";
+        const rawDateStr = !isNaN(dateObj.getTime())
+          ? dateObj.toISOString().split("T")[0]
+          : undefined;
+
+        const assignedInvoice = invoiceMap.get(o.id) || invoiceMap.get(o.order_number) || o.invoice_number || "INV-001";
+
+        return {
+          id: o.order_number,
+          dbId: o.id,
+          invoiceNumber: assignedInvoice,
+          createdAt: o.created_at,
+          customer: o.customer_name,
+          phone: o.customer_phone,
+          items: o.order_items?.length || 1,
+          amount: Number(o.total_amount),
+          status: o.status,
+          date: dateStr,
+          rawDate: rawDateStr,
+          payment: o.payment_method,
+          role: finalRole,
+          shopName: finalShopName,
+          address: formatOrderAddress(o.shipping_address),
+          orderItems: (o.order_items || []).map((oi: any) => ({
+            name: oi.product_name || "Unknown Product",
+            quantity: Number(oi.quantity || 0),
+            price: Number(oi.unit_price || 0),
+            totalPrice: Number(oi.total_price || (Number(oi.unit_price || 0) * Number(oi.quantity || 0))),
+            mrp: oi.mrp == null ? Number(oi.unit_price || 0) : Number(oi.mrp),
+            batch: oi.batch_no || undefined,
+            expiry: oi.expiry_date || undefined,
+            sku: oi.sku || undefined,
+          })),
+          paymentStatus: o.payment_status,
+        };
+      });
     }
     return [];
   }, [dbOrders, deletedOrderIds]);

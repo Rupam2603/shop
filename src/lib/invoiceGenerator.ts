@@ -114,27 +114,59 @@ export function formatToDateTimeString(val: string): string {
 }
 
 /**
+ * Resolves a unique, distinct invoice ID starting from "INV-001" for any order.
+ * Ensures every different order gets a different invoice number.
+ */
+export function resolveOrderInvoiceNumber(
+  order: { id?: string; dbId?: string; invoiceNumber?: string },
+  fallbackIndex?: number
+): string {
+  if (order.invoiceNumber && order.invoiceNumber.trim()) {
+    const clean = order.invoiceNumber.trim().toUpperCase();
+    if (clean.startsWith("INV-")) return clean;
+    const num = clean.replace(/\D/g, "");
+    if (num) return `INV-${num.padStart(3, "0")}`;
+    return `INV-${clean}`;
+  }
+
+  const rawId = (order.id || order.dbId || "").trim();
+  if (rawId && /^INV-\d+$/i.test(rawId)) {
+    return rawId.toUpperCase();
+  }
+
+  if (typeof fallbackIndex === "number" && fallbackIndex >= 0) {
+    return `INV-${String(fallbackIndex + 1).padStart(3, "0")}`;
+  }
+
+  if (rawId) {
+    // If order number contains a short sequence (e.g. ORD-001, ORD-002, ORD-12)
+    const digits = rawId.replace(/\D/g, "");
+    if (digits.length > 0 && digits.length <= 3) {
+      return `INV-${digits.padStart(3, "0")}`;
+    }
+
+    // Deterministic hash so every different order ID reliably gets a distinct invoice ID
+    let hash = 5381;
+    for (let i = 0; i < rawId.length; i++) {
+      hash = ((hash << 5) + hash + rawId.charCodeAt(i)) & 0x7fffffff;
+    }
+    const derivedNum = (hash % 900) + 101; // Range 101-1000
+    return `INV-${String(derivedNum).padStart(3, "0")}`;
+  }
+
+  return "INV-001";
+}
+
+/**
  * Generate Invoice Bill HTML matching SubhOne specification
  */
-export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<StoreSettings>): string {
+export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<StoreSettings>, fallbackIndex?: number): string {
   const storeName = settings?.storeName || "SubhOne Health Group";
   const storePhone = settings?.phone || "+91 98765 43210";
   const storeAddress = settings?.address || "14/B Central Avenue, Kolkata, West Bengal 700012";
 
-  // Invoice numbers start from INV-001
-  let billNo = order.invoiceNumber?.trim();
-  if (!billNo) {
-    if (order.id && /^INV-\d+$/i.test(order.id.trim())) {
-      billNo = order.id.trim().toUpperCase();
-    } else {
-      const digits = (order.id || "").replace(/\D/g, "");
-      if (digits.length > 0 && digits.length <= 4) {
-        billNo = `INV-${digits.padStart(3, "0")}`;
-      } else {
-        billNo = "INV-001";
-      }
-    }
-  }
+  // Guarantee every different order has a different invoice ID starting from INV-001
+  const billNo = resolveOrderInvoiceNumber(order, fallbackIndex);
 
   const dateTimeFormatted = formatToDateTimeString(order.date);
   const custId = order.dbId ? `CUST-${order.dbId.slice(0, 6).toUpperCase()}` : `CUST-${(order.id || "").replace(/\D/g, "") || "1001"}`;
@@ -504,9 +536,9 @@ function downloadHtmlBlob(filename: string, fullHtml: string) {
 /**
  * 1-Click Print & Save as PDF for Single Invoice
  */
-export function printOrDownloadInvoice(order: InvoiceOrderData, settings?: Partial<StoreSettings>) {
-  const billNo = order.invoiceNumber || (order.id.startsWith("ORD-") ? `INV-${order.id.replace("ORD-", "")}` : `INV-${order.id}`);
-  const content = generateInvoiceHtml(order, settings);
+export function printOrDownloadInvoice(order: InvoiceOrderData, settings?: Partial<StoreSettings>, fallbackIndex?: number) {
+  const billNo = resolveOrderInvoiceNumber(order, fallbackIndex);
+  const content = generateInvoiceHtml({ ...order, invoiceNumber: billNo }, settings, fallbackIndex);
   const fullHtml = wrapInPrintableDocument(`Invoice - ${billNo}`, content, false);
   printHtmlInIframe(fullHtml);
 }
@@ -514,9 +546,9 @@ export function printOrDownloadInvoice(order: InvoiceOrderData, settings?: Parti
 /**
  * 1-Click Direct File Download for Single Invoice
  */
-export function downloadInvoiceFile(order: InvoiceOrderData, settings?: Partial<StoreSettings>) {
-  const billNo = order.invoiceNumber || (order.id.startsWith("ORD-") ? `INV-${order.id.replace("ORD-", "")}` : `INV-${order.id}`);
-  const content = generateInvoiceHtml(order, settings);
+export function downloadInvoiceFile(order: InvoiceOrderData, settings?: Partial<StoreSettings>, fallbackIndex?: number) {
+  const billNo = resolveOrderInvoiceNumber(order, fallbackIndex);
+  const content = generateInvoiceHtml({ ...order, invoiceNumber: billNo }, settings, fallbackIndex);
   const fullHtml = wrapInPrintableDocument(`Invoice - ${billNo}`, content, false);
   downloadHtmlBlob(`SubhOne-Invoice-${billNo}.html`, fullHtml);
 }

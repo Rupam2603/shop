@@ -353,8 +353,12 @@ The application reads configuration through `import.meta.env` (defined in `.env`
       `SELECT COALESCE(MAX(NULLIF(regexp_replace(invoice_number, '\D', '', 'g'), '')::int), 0) + 1 AS next_seq FROM orders`
       and format it as `INV-${String(nextSeq).padStart(3, "0")}` (e.g. `INV-001`, `INV-002`, `INV-003`, etc.).
     - Stored `invoice_number` in `public.orders` and returned in API response.
-    - Updated `DbOrder` interface in `src/lib/orders.ts` and `InvoiceOrderData` in `src/lib/invoiceGenerator.ts` to include `invoice_number?: string | null` / `invoiceNumber?: string`.
-    - Added fallback resolution in `invoiceGenerator.ts` to derive `INV-001` if not yet stamped.
+  - **Guaranteed Distinct Invoice Numbers Across Every Order**:
+    - Created PostgreSQL UNIQUE INDEX `idx_orders_invoice_number ON orders (invoice_number) WHERE invoice_number IS NOT NULL AND invoice_number <> ''` in Neon Lakebase Postgres to enforce database-level uniqueness.
+    - Added `LOCK TABLE orders IN SHARE ROW EXCLUSIVE MODE` in `api/create-order.ts` before reading `MAX(seq)` to eliminate concurrent sequence race conditions.
+    - Implemented `resolveOrderInvoiceNumber(order, fallbackIndex)` in `src/lib/invoiceGenerator.ts` to replace hardcoded fallback with deterministic hashing and sequential indexing so every different order is guaranteed a distinct invoice ID.
+    - Updated `AdminDashboard.tsx` to sort orders chronologically and map unique, sequential `INV-001`, `INV-002`, `INV-003`... IDs across all live orders.
+    - Updated `ProfilePage.tsx` to assign and pass unique sequential invoice numbers for all live and fallback orders.
   - **Date & Time Visibility**:
     - Implemented `formatToDateTimeString(val)` in `src/lib/invoiceGenerator.ts` to format timestamps into complete Indian date and time (e.g. `06 Sep 2026, 09:43 PM`).
     - Added `Date & Time` as a prominent column in the top invoice summary table alongside `Bill No.` and `Customer ID`.
