@@ -384,8 +384,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
     }).filter(Boolean) as HomeCategorySectionItem[];
 
     if (activeKeyCat && activeKeyCat !== "all") {
-      const selectedOnly = sections.filter((s) => s.id === activeKeyCat);
-      if (selectedOnly.length > 0) return selectedOnly;
+      return sections.filter((s) => s.id === activeKeyCat);
     }
 
     return sections;
@@ -535,6 +534,14 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
           </div>
         )}
 
+        {/* Loading state indicator */}
+        {dbProducts === null && (
+          <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-[#e4ede2] p-8 text-center flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-3 border-[#006a39] border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs font-semibold text-[#073b4c]">Loading medicines and healthcare catalog...</p>
+          </div>
+        )}
+
         {/* Key Category sections */}
         {categoriesData.map((item) => (
           <CategorySection
@@ -547,16 +554,22 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
           />
         ))}
 
-        {categoriesData.length === 0 && (
+        {dbProducts !== null && categoriesData.length === 0 && (
           <div className="bg-white rounded-2xl border border-[#e4ede2] p-8 text-center flex flex-col items-center gap-3">
-            <p className="text-sm font-bold text-[#073b4c]">No products found in this key category yet.</p>
-            <button
-              type="button"
-              onClick={() => setActiveKeyCat("all")}
-              className="px-4 py-2 bg-[#006a39] text-white text-xs font-bold rounded-xl hover:bg-[#00522c] transition-colors cursor-pointer"
-            >
-              View All Key Categories
-            </button>
+            <p className="text-sm font-bold text-[#073b4c]">
+              {activeKeyCat !== "all"
+                ? `No products found in ${KEY_CATEGORIES.find((k) => k.id === activeKeyCat)?.name || "this key category"} yet.`
+                : "No products currently available in the catalog."}
+            </p>
+            {activeKeyCat !== "all" && (
+              <button
+                type="button"
+                onClick={() => setActiveKeyCat("all")}
+                className="px-4 py-2 bg-[#006a39] text-white text-xs font-bold rounded-xl hover:bg-[#00522c] transition-colors cursor-pointer"
+              >
+                View All Key Categories
+              </button>
+            )}
           </div>
         )}
 

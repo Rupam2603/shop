@@ -115,36 +115,39 @@ export async function fetchCategories(): Promise<DbCategory[]> {
  * Fetch products directly from Neon Postgres authoritative products table
  */
 export async function fetchProducts(filters: ProductFilters = {}): Promise<DbProduct[]> {
-  const safeCols = "id, numeric_id, name, subtitle, category_id, category_name, sub_category_id, sub_category_name, brand, sku, hsn, mrp, customer_price, retailer_price, discount_percent, retailer_discount_percent, stock, image_url, web_image_url, details, is_flash_sale, is_featured, is_listed, badges, created_at, updated_at";
   try {
     let rows: any[];
     if (filters.includeUnlisted) {
-      if (filters.isAdmin) {
-        rows = await sql`SELECT * FROM products ORDER BY numeric_id ASC`;
-      } else {
-        rows = await sql`SELECT id, numeric_id, name, subtitle, category_id, category_name, sub_category_id, sub_category_name, brand, sku, hsn, mrp, customer_price, retailer_price, discount_percent, retailer_discount_percent, stock, image_url, web_image_url, details, is_flash_sale, is_featured, is_listed, badges, created_at, updated_at FROM products ORDER BY numeric_id ASC`;
-      }
+      rows = await sql`SELECT * FROM products ORDER BY numeric_id ASC`;
     } else {
-      if (filters.isAdmin) {
-        rows = await sql`SELECT * FROM products WHERE is_listed = true ORDER BY numeric_id ASC`;
-      } else {
-        rows = await sql`SELECT id, numeric_id, name, subtitle, category_id, category_name, sub_category_id, sub_category_name, brand, sku, hsn, mrp, customer_price, retailer_price, discount_percent, retailer_discount_percent, stock, image_url, web_image_url, details, is_flash_sale, is_featured, is_listed, badges, created_at, updated_at FROM products WHERE is_listed = true ORDER BY numeric_id ASC`;
-      }
+      rows = await sql`SELECT * FROM products WHERE is_listed IS NOT FALSE ORDER BY numeric_id ASC`;
     }
 
-    let prods: DbProduct[] = (rows as any[]).map((r) => ({
-      ...r,
-      numeric_id: Number(r.numeric_id) || 0,
-      mrp: Number(r.mrp) || 0,
-      customer_price: Number(r.customer_price) || 0,
-      retailer_price: Number(r.retailer_price) || 0,
-      discount_percent: Number(r.discount_percent) || 0,
-      retailer_discount_percent: Number(r.retailer_discount_percent) || 0,
-      stock: Number(r.stock) || 0,
-      is_flash_sale: Boolean(r.is_flash_sale),
-      is_featured: Boolean(r.is_featured),
-      is_listed: r.is_listed !== false,
-    }));
+    let prods: DbProduct[] = (rows as any[]).map((r) => {
+      const mrp = Number(r.mrp) || 0;
+      const retailerPrice = Number(r.retailer_price) || 0;
+      const calcRetailerDisc = mrp > 0 && retailerPrice > 0 ? Math.round(((mrp - retailerPrice) / mrp) * 100) : 0;
+      const retailerDiscount = r.retailer_discount_percent != null && Number(r.retailer_discount_percent) > 0
+        ? Number(r.retailer_discount_percent)
+        : calcRetailerDisc;
+
+      return {
+        ...r,
+        numeric_id: Number(r.numeric_id) || 0,
+        mrp,
+        customer_price: Number(r.customer_price) || 0,
+        retailer_price: retailerPrice,
+        discount_percent: Number(r.discount_percent) || 0,
+        retailer_discount_percent: retailerDiscount,
+        stock: Number(r.stock) || 0,
+        image_url: r.image_url || r.web_image_url || "",
+        web_image_url: r.web_image_url || r.image_url || "",
+        is_flash_sale: Boolean(r.is_flash_sale),
+        is_featured: Boolean(r.is_featured),
+        is_listed: r.is_listed !== false,
+        purchase_price: filters.isAdmin ? (r.purchase_price != null ? Number(r.purchase_price) : undefined) : undefined,
+      };
+    });
 
     if (filters.category && filters.category !== "All") {
       const targetCat = filters.category.toLowerCase().trim();
@@ -193,23 +196,35 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<DbPro
   } catch (error) {
     console.error("Error fetching products via sql, attempting fallback:", error);
     try {
-      let q = supabase.from("products").select(filters.isAdmin ? "*" : safeCols);
+      let q = supabase.from("products").select("*");
       if (!filters.includeUnlisted) {
-        q = q.eq("is_listed", true);
+        q = q.neq("is_listed", false);
       }
       const { data, error: supErr } = await q;
       if (!supErr && data) {
-        return (data as any[]).map((r) => ({
-          ...r,
-          numeric_id: Number(r.numeric_id) || 0,
-          mrp: Number(r.mrp) || 0,
-          customer_price: Number(r.customer_price) || 0,
-          retailer_price: Number(r.retailer_price) || 0,
-          discount_percent: Number(r.discount_percent) || 0,
-          retailer_discount_percent: Number(r.retailer_discount_percent) || 0,
-          stock: Number(r.stock) || 0,
-          is_listed: r.is_listed !== false,
-        })) as DbProduct[];
+        return (data as any[]).map((r) => {
+          const mrp = Number(r.mrp) || 0;
+          const retailerPrice = Number(r.retailer_price) || 0;
+          const calcRetailerDisc = mrp > 0 && retailerPrice > 0 ? Math.round(((mrp - retailerPrice) / mrp) * 100) : 0;
+          const retailerDiscount = r.retailer_discount_percent != null && Number(r.retailer_discount_percent) > 0
+            ? Number(r.retailer_discount_percent)
+            : calcRetailerDisc;
+
+          return {
+            ...r,
+            numeric_id: Number(r.numeric_id) || 0,
+            mrp,
+            customer_price: Number(r.customer_price) || 0,
+            retailer_price: retailerPrice,
+            discount_percent: Number(r.discount_percent) || 0,
+            retailer_discount_percent: retailerDiscount,
+            stock: Number(r.stock) || 0,
+            image_url: r.image_url || r.web_image_url || "",
+            web_image_url: r.web_image_url || r.image_url || "",
+            is_listed: r.is_listed !== false,
+            purchase_price: filters.isAdmin ? (r.purchase_price != null ? Number(r.purchase_price) : undefined) : undefined,
+          };
+        }) as DbProduct[];
       }
     } catch {}
     return [];

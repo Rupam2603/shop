@@ -255,6 +255,11 @@ The application reads configuration through `import.meta.env` (defined in `.env`
       - Populated sub-categories for Daily Wellness items (`Ayurvedic & Immunity`, `Energy & Electrolytes`, `Nutrition & Health Drink`, `Nutrition & Protein`) and Diet items (`Antacids & Digestion`).
   - **Storefront Category Alignment (`CategoryPage.tsx`)**:
     - Enhanced `categoryMeta` lookup in `src/pages/CategoryPage.tsx` to match against `c.name` in addition to `c.id` and `c.short`, ensuring that routing by canonical name or ID accurately resolves colors, taglines, sub-categories, and filtering rules.
+- **Storefront Product Listing Restoration & Resilience Fix (Sep 2026)**:
+  - **Root Cause Resolution**: `fetchProducts()` previously failed silently because SQL queries specified non-existent columns (`retailer_discount_percent`, `web_image_url`) on `public.products`, resulting in `NeonDbError: column "retailer_discount_percent" does not exist` and an empty array `[]` fallback across all storefront and catalog views.
+  - **Database Schema Normalization (Neon Postgres)**: Added missing columns `is_listed` (BOOLEAN DEFAULT true), `retailer_discount_percent` (NUMERIC DEFAULT 0), and `web_image_url` (TEXT) across `public.products` and `public.inventory_products` tables on active clusters.
+  - **Resilient Querying (`src/lib/products.ts`)**: Streamlined SQL queries to `SELECT * FROM products WHERE is_listed IS NOT FALSE ORDER BY numeric_id ASC`. Dynamically calculates `retailer_discount_percent` from `(mrp - retailer_price) / mrp` whenever missing, safely strips sensitive `purchase_price` for non-admin viewers, and hardens PostgREST fallback.
+  - **Loading & Empty State UX (`HomePage.tsx`)**: Added dedicated loading spinner while catalog data is resolving and refined empty message display so active category names are explicitly rendered when a specific key category has 0 items.
 
 
 
