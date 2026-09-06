@@ -92,20 +92,9 @@ export function nameToId(name: string): number {
   return (Math.abs(h) % 80) + 1;
 }
 
-const REVIEW_POOL = [
-  { id: "seed-1", name: "Sunita R.",  role: "customer", rating: 5, date: "Aug 20, 2026", verified: true,  helpful: 12, title: "Highly recommended for fast relief", text: "Works great! Applied at night and woke up feeling much better. Will definitely buy again." },
-  { id: "seed-2", name: "Ravi K. (MedPlus Pharmacy)", role: "retailer", rating: 5, date: "Aug 18, 2026", verified: true, helpful: 18, title: "Great wholesale margins & tamper-proof batch", text: "Ordered 50 units for our pharmacy store. Packaging was sealed, fresh batch with 2+ years expiry. High customer turnover!" },
-  { id: "seed-3", name: "Ananya S.",  role: "customer", rating: 5, date: "Aug 15, 2026", verified: true,  helpful: 5,  title: "Fast delivery and genuine", text: "Exactly as described. Very happy with this purchase. Delivered quickly and well-packaged." },
-  { id: "seed-4", name: "Mohan P. (Wellness Medico)", role: "retailer", rating: 4, date: "Aug 12, 2026", verified: true, helpful: 9,  title: "Solid retail demand", text: "Regular item in our dispensary. Good supplier discount and consistent formulation quality." },
-  { id: "seed-5", name: "Shanti D.",  role: "customer", rating: 5, date: "Aug 9, 2026",  verified: true,  helpful: 15, title: "Trusted brand for years", text: "My go-to brand for years. Reliable, effective, and trusted. Always satisfied with the quality." },
-  { id: "seed-6", name: "Priya M.",   role: "customer", rating: 5, date: "Aug 24, 2026", verified: true,  helpful: 19, title: "Excellent quality product", text: "Excellent quality! My entire family loves it. Genuine product, fast delivery, great packaging." },
-  { id: "seed-7", name: "Gupta Medical Store", role: "retailer", rating: 5, date: "Aug 22, 2026", verified: true, helpful: 24, title: "Best bulk price with fast dispatch", text: "SubhOne gives the best retailer margins on this item. Received bulk dispatch within 2 days in mint condition." },
-];
-
-export function getProductReviews(productId: number) {
-  const start = (productId * 3) % REVIEW_POOL.length;
-  const count = 3 + (productId % 3);
-  return Array.from({ length: count }, (_, i) => REVIEW_POOL[(start + i) % REVIEW_POOL.length]);
+// Real customers only: No fake or seeded review pool
+export function getProductReviews(_productId?: number) {
+  return [];
 }
 
 const CATEGORY_FEATURES: Record<string, string[]> = {
@@ -218,35 +207,29 @@ export default function ProductDetailModal({
   const [reviewFilter, setReviewFilter] = useState<"all" | "customer" | "retailer" | number>("all");
   const [likedReviews, setLikedReviews] = useState<string[]>([]);
 
-  const baseReviews = useMemo(() => getProductReviews(product.id), [product.id]);
-
   const allReviews = useMemo(() => {
-    const formattedDbReviews = dbReviews.map((r) => ({
+    return dbReviews.map((r) => ({
       id: r.id,
       name: r.user_name,
-      role: r.user_role,
+      role: r.user_role || "customer",
       rating: r.rating,
       date: new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
       verified: r.verified_purchase,
-      helpful: r.helpful_count,
-      title: r.title || (r.user_role === "retailer" ? "Wholesale Buyer Feedback" : "Verified Review"),
+      helpful: r.helpful_count || 0,
+      title: r.title || "Verified Customer Review",
       text: r.comment,
     }));
-
-    return [...formattedDbReviews, ...baseReviews];
-  }, [dbReviews, baseReviews]);
+  }, [dbReviews]);
 
   const filteredReviews = useMemo(() => {
     if (reviewFilter === "all") return allReviews;
-    if (reviewFilter === "customer") return allReviews.filter((r) => r.role === "customer");
-    if (reviewFilter === "retailer") return allReviews.filter((r) => r.role === "retailer");
     if (typeof reviewFilter === "number") return allReviews.filter((r) => r.rating === reviewFilter);
     return allReviews;
   }, [allReviews, reviewFilter]);
 
   const avgRating = allReviews.length
     ? allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length
-    : 5.0;
+    : 0;
 
   const accentColor = CAT_COLORS[product.cat] || "#006a39";
   const features = CATEGORY_FEATURES[product.cat] ?? ["Quality assured", "Genuine product", "Fast delivery", "Clinically tested"];
@@ -313,23 +296,28 @@ export default function ProductDetailModal({
     e.preventDefault();
     if (!reviewComment.trim()) return;
 
+    if (!appUser?.authUser && !appUser?.profile) {
+      alert("Please sign in to your customer account to submit a product review.");
+      return;
+    }
+
     setSubmittingReview(true);
     const reviewerName =
-      appUser?.profile.full_name ||
-      appUser?.profile.shop_name ||
-      (isRetailer ? "Verified Retailer" : "Verified Customer");
+      appUser?.profile?.full_name ||
+      (appUser?.authUser?.user_metadata?.full_name as string) ||
+      "Verified Customer";
 
-    const reviewerRole = appUser?.profile.role || (isRetailer ? "retailer" : "customer");
+    const reviewerRole = "customer";
 
     const { data, error } = await submitReview({
-      product_id: product.dbId,
+      product_id: product.dbId || null,
       product_numeric_id: product.id,
-      user_id: appUser?.authUser.id,
+      user_id: appUser?.authUser?.id || appUser?.profile?.id || null,
       user_name: reviewerName,
       user_role: reviewerRole,
       rating: reviewRating,
-      title: reviewTitle,
-      comment: reviewComment,
+      title: reviewTitle.trim() || undefined,
+      comment: reviewComment.trim(),
       verified_purchase: true,
     });
 
@@ -454,15 +442,23 @@ export default function ProductDetailModal({
             </div>
 
             {/* Rating pill */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 bg-[#fef9c3] px-2.5 py-1 rounded-lg">
-                <StarRow rating={avgRating} size={13} />
-                <span className="font-bold text-xs text-[#713f12]">{avgRating.toFixed(1)}</span>
+            {allReviews.length > 0 ? (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 bg-[#fef9c3] px-2.5 py-1 rounded-lg">
+                  <StarRow rating={avgRating} size={13} />
+                  <span className="font-bold text-xs text-[#713f12]">{avgRating.toFixed(1)}</span>
+                </div>
+                <span className="text-[#9aa89b] text-xs">({allReviews.length} {allReviews.length === 1 ? "review" : "reviews"})</span>
+                <span className="text-[#9aa89b] text-xs">·</span>
+                <span className="text-[#006a39] text-xs font-semibold">Verified Customer Reviews</span>
               </div>
-              <span className="text-[#9aa89b] text-xs">({allReviews.length} reviews)</span>
-              <span className="text-[#9aa89b] text-xs">·</span>
-              <span className="text-[#006a39] text-xs font-semibold">100% Genuine</span>
-            </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-[#8aa08e] text-xs font-medium">No reviews yet</span>
+                <span className="text-[#9aa89b] text-xs">·</span>
+                <span className="text-[#006a39] text-xs font-semibold">100% Genuine Medicine</span>
+              </div>
+            )}
 
             {/* Pricing Section */}
             <div className="p-4 rounded-xl bg-[#f8fafb] border border-[#e4ede2]">
@@ -668,10 +664,10 @@ export default function ProductDetailModal({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h3 className="font-['Manrope',sans-serif] font-extrabold text-xl text-[#073b4c]">
-                Verified Wholesale & Pharmacy Reviews
+                Verified Customer Reviews
               </h3>
               <p className="text-xs text-[#6d7a6f] mt-0.5">
-                Direct feedback from licensed pharmacy retailers and healthcare distributors across India.
+                Authentic product ratings and feedback submitted directly by verified customers.
               </p>
             </div>
             <button
@@ -682,7 +678,7 @@ export default function ProductDetailModal({
               }}
               className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#047857] text-white font-bold text-xs shadow-md shadow-emerald-950/15 hover:opacity-95 transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto active:scale-95"
             >
-              <span>{showReviewForm ? "✕ Close Form" : "✍ Write a Review"}</span>
+              <span>{showReviewForm ? "✕ Close Form" : "✍ Write Customer Review"}</span>
             </button>
           </div>
 
@@ -695,13 +691,13 @@ export default function ProductDetailModal({
               <div className="flex items-center justify-between border-b border-[#f0f4f0] pb-3">
                 <div>
                   <h4 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-base">
-                    Write Your Review
+                    Write Customer Review
                   </h4>
-                  <p className="text-[11px] text-[#9aa89b]">Share your experience with this product</p>
+                  <p className="text-[11px] text-[#9aa89b]">Share your genuine experience with this product</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">
-                    📦 Posting as Verified Pharmacy Retailer
+                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    ✓ Verified Customer Review
                   </span>
                   <button
                     type="button"
@@ -757,11 +753,7 @@ export default function ProductDetailModal({
                   type="text"
                   value={reviewTitle}
                   onChange={(e) => setReviewTitle(e.target.value)}
-                  placeholder={
-                    isRetailer
-                      ? "e.g. Excellent packaging, long expiry, great wholesale margin"
-                      : "e.g. Fast relief, genuine medicine, swift delivery"
-                  }
+                  placeholder="e.g. Fast relief, genuine medicine, swift delivery"
                   className="w-full px-3.5 py-2.5 bg-[#f8fafb] border border-[#d5dcd3] rounded-xl text-xs sm:text-sm text-[#073b4c] focus:outline-none focus:bg-white focus:border-[#006a39]"
                 />
               </div>
@@ -776,11 +768,7 @@ export default function ProductDetailModal({
                   rows={3}
                   value={reviewComment}
                   onChange={(e) => setReviewComment(e.target.value)}
-                  placeholder={
-                    isRetailer
-                      ? "Share your feedback regarding bulk packing quality, batch freshness, customer demand, and delivery turnaround..."
-                      : "Share your experience with the effectiveness, quality, taste/smell, and overall results..."
-                  }
+                  placeholder="Share your experience with the effectiveness, quality, taste/smell, and overall results..."
                   className="w-full px-3.5 py-2.5 bg-[#f8fafb] border border-[#d5dcd3] rounded-xl text-xs sm:text-sm text-[#073b4c] focus:outline-none focus:bg-white focus:border-[#006a39]"
                 />
               </div>
@@ -813,136 +801,145 @@ export default function ProductDetailModal({
           )}
 
           {/* ── Rating Breakdown & Selectable Overall Stars ── */}
-          <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 mb-6 bg-white p-5 rounded-2xl border border-[#e4ede2] shadow-xs">
-            {/* Clickable Overall Stars Card */}
-            <div className="flex sm:flex-col items-center gap-3 sm:gap-2 shrink-0 min-w-[130px] justify-center text-center">
-              <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-4xl sm:text-5xl leading-none">
-                {avgRating.toFixed(1)}
-              </p>
-              <div className="flex flex-col items-center">
-                {/* Selectable overall stars to filter */}
-                <div className="flex items-center gap-1 cursor-pointer" title="Click any star to filter reviews">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setReviewFilter(reviewFilter === s ? "all" : s)}
-                      className={`p-0.5 transition-transform hover:scale-125 ${
-                        typeof reviewFilter === "number" && reviewFilter >= s ? "scale-110" : ""
-                      }`}
-                      title={`Filter by ${s} Star${s > 1 ? "s" : ""}`}
-                    >
-                      <svg width="18" height="18" viewBox="0 0 14 14" fill="none">
-                        <path
-                          d="M7 1L8.854 5.09L13.5 5.835L10.25 8.995L11.021 13.5L7 11.277L2.979 13.5L3.75 8.995L0.5 5.835L5.146 5.09Z"
-                          fill={s <= Math.round(avgRating) ? "#f59e0b" : "#e5e7eb"}
-                        />
-                      </svg>
-                    </button>
-                  ))}
+          {allReviews.length > 0 ? (
+            <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 mb-6 bg-white p-5 rounded-2xl border border-[#e4ede2] shadow-xs">
+              {/* Clickable Overall Stars Card */}
+              <div className="flex sm:flex-col items-center gap-3 sm:gap-2 shrink-0 min-w-[130px] justify-center text-center">
+                <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-4xl sm:text-5xl leading-none">
+                  {avgRating.toFixed(1)}
+                </p>
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-1 cursor-pointer" title="Click any star to filter reviews">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setReviewFilter(reviewFilter === s ? "all" : s)}
+                        className={`p-0.5 transition-transform hover:scale-125 ${
+                          typeof reviewFilter === "number" && reviewFilter >= s ? "scale-110" : ""
+                        }`}
+                        title={`Filter by ${s} Star${s > 1 ? "s" : ""}`}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 14 14" fill="none">
+                          <path
+                            d="M7 1L8.854 5.09L13.5 5.835L10.25 8.995L11.021 13.5L7 11.277L2.979 13.5L3.75 8.995L0.5 5.835L5.146 5.09Z"
+                            fill={s <= Math.round(avgRating) ? "#f59e0b" : "#e5e7eb"}
+                          />
+                        </svg>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[#9aa89b] text-xs mt-1">{allReviews.length} verified {allReviews.length === 1 ? "review" : "reviews"}</p>
+                  <span className="text-[10px] text-[#006a39] font-semibold mt-0.5">
+                    ★ Click stars to filter
+                  </span>
                 </div>
-                <p className="text-[#9aa89b] text-xs mt-1">{allReviews.length} verified reviews</p>
-                <span className="text-[10px] text-[#006a39] font-semibold mt-0.5">
-                  ★ Click stars to filter
-                </span>
+              </div>
+
+              {/* Breakdown Bars (Selectable rows) */}
+              <div className="flex flex-col gap-2 flex-1 justify-center">
+                {ratingBreakdown.map(({ star, count }) => {
+                  const isSelected = reviewFilter === star;
+                  return (
+                    <button
+                      key={star}
+                      onClick={() => setReviewFilter(isSelected ? "all" : star)}
+                      className={`flex items-center gap-2 sm:gap-3 px-2 py-1 rounded-lg group text-left cursor-pointer transition-all ${
+                        isSelected ? "bg-[#e8f5ee] ring-2 ring-[#006a39]" : "hover:bg-[#f8fafb]"
+                      }`}
+                      title={`Click to filter ${star} Star reviews`}
+                    >
+                      <span className={`text-xs font-bold w-6 text-right shrink-0 ${
+                        isSelected ? "text-[#006a39]" : "text-[#6d7a6f] group-hover:text-[#006a39]"
+                      }`}>
+                        {star}★
+                      </span>
+                      <div className="flex-1 h-2.5 bg-[#f0f4f0] rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${allReviews.length ? (count / allReviews.length) * 100 : 0}%`,
+                            backgroundColor: star >= 4 ? "#006a39" : star === 3 ? "#d97706" : "#b91c1c",
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-semibold text-[#9aa89b] w-6 text-right shrink-0">{count}</span>
+                      {isSelected && (
+                        <span className="text-[10px] font-bold text-[#006a39] shrink-0">✓ Selected</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-
-            {/* Breakdown Bars (Selectable rows) */}
-            <div className="flex flex-col gap-2 flex-1 justify-center">
-              {ratingBreakdown.map(({ star, count }) => {
-                const isSelected = reviewFilter === star;
-                return (
-                  <button
-                    key={star}
-                    onClick={() => setReviewFilter(isSelected ? "all" : star)}
-                    className={`flex items-center gap-2 sm:gap-3 px-2 py-1 rounded-lg group text-left cursor-pointer transition-all ${
-                      isSelected ? "bg-[#e8f5ee] ring-2 ring-[#006a39]" : "hover:bg-[#f8fafb]"
-                    }`}
-                    title={`Click to filter ${star} Star reviews`}
-                  >
-                    <span className={`text-xs font-bold w-6 text-right shrink-0 ${
-                      isSelected ? "text-[#006a39]" : "text-[#6d7a6f] group-hover:text-[#006a39]"
-                    }`}>
-                      {star}★
-                    </span>
-                    <div className="flex-1 h-2.5 bg-[#f0f4f0] rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${allReviews.length ? (count / allReviews.length) * 100 : 0}%`,
-                          backgroundColor: star >= 4 ? "#006a39" : star === 3 ? "#d97706" : "#b91c1c",
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs font-semibold text-[#9aa89b] w-6 text-right shrink-0">{count}</span>
-                    {isSelected && (
-                      <span className="text-[10px] font-bold text-[#006a39] shrink-0">✓ Selected</span>
-                    )}
-                  </button>
-                );
-              })}
+          ) : (
+            <div className="mb-6 bg-white p-6 sm:p-8 rounded-2xl border border-[#e4ede2] text-center shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#006a39] flex items-center justify-center text-xl mx-auto mb-2.5 border border-emerald-200 shadow-2xs">
+                ✍
+              </div>
+              <h4 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-base">
+                No Customer Reviews Yet
+              </h4>
+              <p className="text-xs text-[#6d7a6f] max-w-md mx-auto mt-1 leading-relaxed">
+                Only real, verified customers can review products after ordering. Real customer reviews will appear here once submitted.
+              </p>
             </div>
-          </div>
+          )}
 
           {/* ── Review Filtering Chips & Reset ── */}
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full" style={{ scrollbarWidth: "none" }}>
-              {/* Category tabs */}
-              {[
-                { label: `All Reviews (${allReviews.length})`, value: "all" },
-                { label: `Pharmacy Retailer (${allReviews.filter((r) => r.role === "retailer").length})`, value: "retailer" },
-              ].map((tab) => (
+          {allReviews.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full" style={{ scrollbarWidth: "none" }}>
                 <button
-                  key={tab.value}
-                  onClick={() => setReviewFilter(tab.value as any)}
+                  onClick={() => setReviewFilter("all")}
                   className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors shrink-0 ${
-                    reviewFilter === tab.value
+                    reviewFilter === "all"
                       ? "bg-[#006a39] text-white shadow-sm"
                       : "bg-white border border-[#d5dcd3] text-[#3e4a3f] hover:border-[#006a39]"
                   }`}
                 >
-                  {tab.label}
+                  All Customer Reviews ({allReviews.length})
                 </button>
-              ))}
 
-              {/* Star rating filter chips */}
-              <div className="h-4 w-px bg-[#d5dcd3] mx-1 shrink-0" />
-              {[5, 4, 3, 2, 1].map((s) => (
+                <div className="h-4 w-px bg-[#d5dcd3] mx-1 shrink-0" />
+                {[5, 4, 3, 2, 1].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setReviewFilter(reviewFilter === s ? "all" : s)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors shrink-0 flex items-center gap-0.5 ${
+                      reviewFilter === s
+                        ? "bg-[#f59e0b] text-white shadow-sm font-bold"
+                        : "bg-white border border-[#d5dcd3] text-[#6d7a6f] hover:border-[#f59e0b]"
+                    }`}
+                  >
+                    <span>{s}</span>
+                    <span>★</span>
+                  </button>
+                ))}
+              </div>
+
+              {reviewFilter !== "all" && (
                 <button
-                  key={s}
-                  onClick={() => setReviewFilter(reviewFilter === s ? "all" : s)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors shrink-0 flex items-center gap-0.5 ${
-                    reviewFilter === s
-                      ? "bg-[#f59e0b] text-white shadow-sm font-bold"
-                      : "bg-white border border-[#d5dcd3] text-[#6d7a6f] hover:border-[#f59e0b]"
-                  }`}
+                  onClick={() => setReviewFilter("all")}
+                  className="text-xs font-bold text-[#b91c1c] hover:bg-[#fee2e2] bg-[#fef2f2] px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 shrink-0"
                 >
-                  <span>{s}</span>
-                  <span>★</span>
+                  <span>✕ Clear Filter</span>
                 </button>
-              ))}
+              )}
             </div>
-
-            {/* Active Filter Clear Button */}
-            {reviewFilter !== "all" && (
-              <button
-                onClick={() => setReviewFilter("all")}
-                className="text-xs font-bold text-[#b91c1c] hover:bg-[#fee2e2] bg-[#fef2f2] px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 shrink-0"
-              >
-                <span>✕ Clear Filter</span>
-              </button>
-            )}
-          </div>
+          )}
 
           {/* Review List */}
           <div className="flex flex-col gap-4">
-            {filteredReviews.length === 0 ? (
+            {allReviews.length === 0 ? (
               <div className="bg-white rounded-2xl border border-[#e4ede2] p-8 text-center text-xs text-[#9aa89b]">
-                No reviews found under this filter.
+                Be the first real customer to leave a review for this product!
+              </div>
+            ) : filteredReviews.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-[#e4ede2] p-8 text-center text-xs text-[#9aa89b]">
+                No customer reviews found under this filter.
               </div>
             ) : (
               filteredReviews.map((r, idx) => {
-                const isRetailerReview = r.role === "retailer";
                 const isLiked = likedReviews.includes(r.id);
 
                 return (
@@ -952,25 +949,15 @@ export default function ProductDetailModal({
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-3">
-                        <div
-                          className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 ${
-                            isRetailerReview ? "bg-[#0369a1]" : "bg-[#006a39]"
-                          }`}
-                        >
-                          {(r.name[0] || "U").toUpperCase()}
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 bg-[#006a39]">
+                          {(r.name[0] || "C").toUpperCase()}
                         </div>
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-bold text-[#073b4c] text-xs sm:text-sm">{r.name}</p>
-                            {isRetailerReview ? (
-                              <span className="text-[9px] font-extrabold bg-[#dbeafe] text-[#1d4ed8] border border-[#bfdbfe] px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
-                                <span>📦</span> Verified Retailer / Pharmacy
-                              </span>
-                            ) : (
-                              <span className="text-[9px] font-bold bg-[#d1fae5] text-[#047857] border border-[#a7f3d0] px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <span>✓</span> Verified Healthcare Partner
-                              </span>
-                            )}
+                            <span className="text-[9px] font-bold bg-[#d1fae5] text-[#047857] border border-[#a7f3d0] px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <span>✓</span> Verified Customer
+                            </span>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
                             <StarRow rating={r.rating} size={12} />

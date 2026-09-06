@@ -127,8 +127,6 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
       brandColor: "#006a39",
       name: p.name,
       sub: p.details || p.subtitle || p.brand,
-      rating: "4.8",
-      reviews: `(${p.stock + 120})`,
       price: isRetailer ? `₹${Math.round(p.retailer_price)}` : `₹${Math.round(p.customer_price)}`,
       orig: p.mrp > p.customer_price ? `₹${Math.round(p.mrp)}` : "",
       disc: p.discount_percent > 0 ? `${p.discount_percent}%` : "",
@@ -339,9 +337,9 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
                       </span>
                     )}
                     <div className="flex items-center gap-1.5 text-xs text-[#6d7a6f]">
-                      <StarIcon />
-                      <span className="font-extrabold text-[#073b4c] text-xs">{p.rating}</span>
-                      <span className="text-[#8aa08e] text-[11px] font-medium">{p.reviews}</span>
+                      <span className="text-[10px] font-bold text-[#006a39] bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        ✓ 100% Genuine
+                      </span>
                     </div>
 
                     <div className="mt-auto pt-2.5 border-t border-[#f0f5f1] flex items-center justify-between">

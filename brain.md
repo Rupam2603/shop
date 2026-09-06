@@ -387,3 +387,16 @@ The application reads configuration through `import.meta.env` (defined in `.env`
   - **Restriction**: Online payment (UPI / QR) and card payment (Debit / Credit Card) options have been completely removed for wholesale retailer accounts.
   - **Client-Side Enforcement**: In `src/components/CheckoutModal.tsx`, when `isRetailer` is detected, the payment method selection displays a dedicated "Cash on Delivery (COD) - Wholesale B2B Only" card explaining payment upon doorstep stock delivery and physical invoice verification. UPI and Card options are completely omitted, and `paymentMethod` is initialized and locked to `"COD"`.
   - **Backend API & Data Layer Enforcement**: In `api/create-order.ts` and `src/lib/orders.ts`, whenever `userRole === 'retailer'`, `paymentMethod` is strictly forced to `'COD'` and `paymentStatus` to `'Pending'`, rejecting or overriding any online/card parameters sent.
+- **Fake Reviews Elimination & Genuine Customer-Only Reviews Policy (Sep 2026)**:
+  - **Removal of Mock/Seeded Fake Reviews**:
+    - Removed `REVIEW_POOL` fake seed review arrays and pseudo-random review generators in `src/components/ProductModal.tsx` that previously injected 3–5 fabricated reviews per product (both existing and newly added items).
+    - Removed fake review counters and hardcoded 4.8 star ratings from `src/pages/OffersPage.tsx`, replacing them with authentic "✓ 100% Genuine" certification badges.
+    - Verified `reviews` table in Neon Lakebase Postgres is completely clean (0 mock rows).
+  - **No Fake Reviews for New Products**:
+    - When any new product is added/listed (via Admin Dashboard, bulk Excel import, or database), it starts with zero reviews (`reviews = []`, `avgRating = 0`).
+    - Rating breakdown and summary display a clean, reassuring empty state: *"No Customer Reviews Yet. Only real, verified customers can review products after ordering. Real customer reviews will appear here once submitted."*
+  - **Restricted to Real Customers Only**:
+    - Review submission in `src/components/ProductModal.tsx` requires authentication as a genuine customer account (`role === 'customer'`), with real customer names (`appUser.profile.full_name`) or `"Verified Customer"`.
+    - Unauthenticated users are prompted to sign in with their customer account before reviewing.
+    - Real customers can also submit verified reviews from their delivered orders in `src/pages/ProfilePage.tsx` under "My Reviews".
+
