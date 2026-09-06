@@ -463,13 +463,19 @@ The application reads configuration through `import.meta.env` (defined in `.env`
     - Floating white glass bar (`bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-2xl shadow-2xs`).
     - Standardized categories to match reference: *All* (active soft rose card with 4-square grid icon), *Skin*, *Pain Relief*, *Weight Loss*, *Wellness*, *Baby Care*, *Women*, *Men*, *Diet*, *Hair Care*, *Medical Supplies*, *Insurance*, *Health Checkups*.
     - Smooth horizontal scroll container with scroll navigation arrows that appear conditionally only when overflowing.
-  - **Hero Banner (`src/pages/HomePage.tsx`)**:
-    - Soft luxury blush pink gradient canvas (`from-rose-50/95 via-pink-50/85 to-rose-100/70`) with subtle ambient rose glows.
-    - Top badges: `LIMITED TIME OFFER` in soft rose pill + `🛡️ 100% Genuine Pharmacy`.
-    - Headline: **Flat <span className="text-[#ff3366]">20% Off</span> on First Order**.
-    - Description: *"Genuine medicines, certified wellness supplements, baby care & emergency essentials – delivered to your doorstep in 30 mins."*
-    - Actions: `Shop Medicines` (vibrant rose button) and `Explore Deals` (clean white glass button).
-    - Delivery partner illustration with SubhOne branded delivery box (`/delivery_hero.jpg`) and a floating circular badge: **30 \n MIN \n Delivery**.
+  - **Hero Banner Sliding Carousel (`src/components/HeroBannerSlider.tsx`)**:
+    - Transformed the static hero banner into an auto-advancing, animated multi-banner carousel with professional UI/UX animations.
+    - Features 4 distinct value-proposition slides tailored to SubhOne Healthcare & Pharmacy:
+      1. *First Order 20% Off*: Limited time offer with SubhOne delivery partner & 30-Min Delivery badge.
+      2. *Prescription & Expert Care*: Instant prescription verification by licensed pharmacists with cold-chain storage.
+      3. *Wholesale B2B Pharmacy*: Direct supply for registered chemists with up to 45% retailer margins and GST invoices.
+      4. *Daily Immunity & Wellness*: Family immunity care with verified vitamins, tonics & diagnostics.
+    - **Animation & UX Features**:
+      - Kinetic cubic-bezier slide transitions (`transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]`).
+      - Staggered entrance animations for slide badges, headline, text, and CTAs.
+      - Auto-play with live filling progress indicator on the active bottom pagination capsule (5.5s timer).
+      - Pause-on-hover and touch gesture support (`onTouchStart`, `onTouchMove`, `onTouchEnd`) with swipe thresholds for mobile & tablet devices.
+      - Frosted glass floating previous/next chevron navigation buttons.
   - **Trust Badges Bar**:
     - 4 glass pill cards with soft rose circular icons:
       1. *30-Min Fast Delivery* | *At your doorstep*

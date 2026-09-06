@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import type { Page } from "../App";
 import ProductDetailModal, { nameToId, type PopupProduct } from "../components/ProductModal";
 import KeyCategoriesBar, { KEY_CATEGORIES, KeyCategoryItem } from "../components/KeyCategoriesBar";
+import HeroBannerSlider from "../components/HeroBannerSlider";
 import { KEY_CATEGORIES_CONFIG, isProductInCategory } from "../lib/keyCategories";
 import InsuranceModal from "../components/InsuranceModal";
 import { useCart } from "../contexts/CartContext";
@@ -587,69 +588,8 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
           />
         </div>
 
-        {/* ── Hero Banner (Blush Pink Luxury Gradient with Delivery Hero & 30-Min Badge) ── */}
-        <div className="relative rounded-3xl overflow-hidden min-h-[340px] sm:min-h-[380px] lg:h-[400px] shadow-sm border border-rose-100/90 bg-gradient-to-r from-rose-50/95 via-pink-50/85 to-rose-100/70 flex flex-col md:flex-row items-center justify-between p-6 sm:p-10 lg:px-14 lg:py-8">
-          {/* Ambient soft blurs */}
-          <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-rose-200/40 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-20 right-1/4 w-80 h-80 rounded-full bg-pink-200/40 blur-3xl pointer-events-none" />
-
-          {/* Left Text & Actions */}
-          <div className="relative z-10 flex flex-col gap-3.5 sm:gap-4 max-w-xl justify-center text-left">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 bg-rose-100/90 text-[#ff3366] text-[10px] sm:text-xs px-3.5 py-1 rounded-full uppercase tracking-wider font-extrabold shadow-2xs">
-                LIMITED TIME OFFER
-              </span>
-              <span className="inline-flex items-center gap-1 text-slate-700 text-xs px-2.5 py-1 rounded-full font-semibold">
-                <span className="text-[#ff3366]">🛡️</span> 100% Genuine Pharmacy
-              </span>
-            </div>
-
-            <h1 className="font-['Manrope',sans-serif] font-black text-slate-900 text-3xl sm:text-4xl lg:text-5xl leading-tight sm:leading-[1.15] tracking-tight">
-              Flat <span className="text-[#ff3366]">20% Off</span> on First Order
-            </h1>
-
-            <p className="text-slate-600 text-xs sm:text-base leading-relaxed font-medium max-w-lg">
-              Genuine medicines, certified wellness supplements, baby care & emergency essentials – delivered to your doorstep in 30 mins.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              <button
-                type="button"
-                onClick={() => onNavigate("medicines")}
-                className="bg-[#ff3366] hover:bg-[#e62657] text-white text-xs sm:text-sm font-extrabold px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl shadow-md hover:shadow-rose-500/25 active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer"
-              >
-                <span>Shop Medicines</span>
-                <ArrowRight />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigate("offers")}
-                className="bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-bold px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all cursor-pointer"
-              >
-                Explore Deals
-              </button>
-            </div>
-          </div>
-
-          {/* Right Hero Image & 30-Min Badge */}
-          <div className="relative z-10 mt-6 md:mt-0 flex items-center justify-center shrink-0 w-full md:w-auto">
-            <div className="relative flex items-center justify-center">
-              <img
-                src="/delivery_hero.jpg"
-                alt="SubhOne Delivery Partner"
-                className="h-[250px] sm:h-[300px] lg:h-[340px] w-auto object-contain drop-shadow-xl"
-              />
-
-              {/* Floating 30 MIN Delivery Badge */}
-              <div className="absolute right-2 sm:right-4 top-1/4 bg-white/95 backdrop-blur-md rounded-full w-20 h-20 sm:w-24 sm:h-24 flex flex-col items-center justify-center border border-rose-100 shadow-xl text-center">
-                <span className="text-xl sm:text-2xl font-black text-[#ff3366] leading-none">30</span>
-                <span className="text-[10px] sm:text-xs font-black text-[#ff3366] tracking-wider leading-tight">MIN</span>
-                <span className="text-[9px] sm:text-[10px] font-semibold text-slate-500 leading-tight">Delivery</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* ── Hero Banner Sliding Carousel (Professional UI/UX Animation) ── */}
+        <HeroBannerSlider onNavigate={onNavigate} />
 
         {/* ── Trust Badges Bar ── */}
         <div className="bg-white/90 backdrop-blur-xl rounded-2xl border border-slate-200/85 p-4 sm:p-5 shadow-2xs grid grid-cols-2 lg:grid-cols-4 gap-4">
