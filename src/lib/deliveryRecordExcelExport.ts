@@ -33,17 +33,15 @@ export function exportDeliveryRecordToExcel(
       sheetRows.push({
         "Sl. No.": slNo,
         "Order Number": order.order_number,
-        "Store Name": order.shop_name || "—",
-        "Customer Name": order.customer_name || "—",
         "Product Sl. No.": `${slNo}.1`,
         "Product Name": "—",
+        "Customer Name": order.customer_name || "—",
+        "Store Name": order.shop_name || "—",
         "Qty": 0,
-        "MRP": 0,
-        "Purchase Price": 0,
-        "Retailer's Price": 0,
-        "Total Purchase": 0,
-        "Total Sell": 0,
-        "Date & Time of Delivery": deliveryDateFormatted,
+        "MRP of Product": 0,
+        "Purchase Price of the Products": 0,
+        "Retailers Price": 0,
+        "Date and Time of Delivery": deliveryDateFormatted,
       });
       return;
     }
@@ -85,13 +83,17 @@ export function exportDeliveryRecordToExcel(
   const profit = totalSellMonthly - totalPurchaseMonthly;
 
   sheetRows.push({
-    "Product Name": "MONTHLY TOTALS",
+    "Product Name": "Total Purchase Price",
     "Purchase Price of the Products": totalPurchaseMonthly,
+  });
+
+  sheetRows.push({
+    "Product Name": "Total Sell Price",
     "Retailers Price": totalSellMonthly,
   });
 
   sheetRows.push({
-    "Product Name": "PROFIT",
+    "Product Name": "Total Profit",
     "Retailers Price": profit,
   });
 
