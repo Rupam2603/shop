@@ -38,12 +38,10 @@ export function exportDeliveryRecordToExcel(
         "Customer Name": order.customer_name || "—",
         "Store Name": order.shop_name || "—",
         "Qty": 0,
-        "MRP": 0,
-        "Purchase Price": 0,
-        "Retailer's Price": 0,
-        "Total Purchase": 0,
-        "Total Sell": 0,
-        "Date & Time of Delivery": deliveryDateFormatted,
+        "MRP of Product": 0,
+        "Purchase Price of the Products": 0,
+        "Retailers Price": 0,
+        "Date and Time of Delivery": deliveryDateFormatted,
       });
       return;
     }
