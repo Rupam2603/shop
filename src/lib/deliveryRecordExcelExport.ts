@@ -53,7 +53,7 @@ export function exportDeliveryRecordToExcel(
       
       const qty = item.quantity || 1;
       const mrp = item.mrp || 0;
-      const purchasePrice = item.purchase_price_at_order || 0; // if it was not recorded, it will be 0
+      const purchasePrice = item.purchase_price_at_order || 0;
       const sellPrice = item.unit_price || 0;
       
       const rowTotalPurchase = purchasePrice * qty;
@@ -63,19 +63,17 @@ export function exportDeliveryRecordToExcel(
       totalSellMonthly += rowTotalSell;
 
       sheetRows.push({
-        "Sl. No.": itemIdx === 0 ? slNo : "", // show only on first row of order for clarity
+        "Sl. No.": itemIdx === 0 ? slNo : "",
         "Order Number": itemIdx === 0 ? order.order_number : "",
         "Product Sl. No.": pSlNo,
         "Product Name": item.product_name,
         "Customer Name": itemIdx === 0 ? (order.customer_name || "—") : "",
         "Store Name": itemIdx === 0 ? (order.shop_name || "—") : "",
         "Qty": qty,
-        "MRP": mrp,
-        "Purchase Price": purchasePrice,
-        "Retailer's Price": sellPrice,
-        "Total Purchase": rowTotalPurchase,
-        "Total Sell": rowTotalSell,
-        "Date & Time of Delivery": itemIdx === 0 ? deliveryDateFormatted : "",
+        "MRP of Product": mrp,
+        "Purchase Price of the Products": rowTotalPurchase,
+        "Retailers Price": rowTotalSell,
+        "Date and Time of Delivery": itemIdx === 0 ? deliveryDateFormatted : "",
       });
     });
   });
@@ -88,13 +86,13 @@ export function exportDeliveryRecordToExcel(
   
   sheetRows.push({
     "Product Name": "MONTHLY TOTALS",
-    "Total Purchase": totalPurchaseMonthly,
-    "Total Sell": totalSellMonthly,
+    "Purchase Price of the Products": totalPurchaseMonthly,
+    "Retailers Price": totalSellMonthly,
   });
   
   sheetRows.push({
     "Product Name": "PROFIT",
-    "Total Sell": profit,
+    "Retailers Price": profit,
   });
 
   const worksheet = XLSX.utils.json_to_sheet(sheetRows);
@@ -108,12 +106,10 @@ export function exportDeliveryRecordToExcel(
     { wch: 22 }, // Customer Name
     { wch: 22 }, // Store Name
     { wch: 8 },  // Qty
-    { wch: 10 }, // MRP
-    { wch: 14 }, // Purchase Price
-    { wch: 14 }, // Retailer's Price
-    { wch: 15 }, // Total Purchase
-    { wch: 15 }, // Total Sell
-    { wch: 22 }, // Date & Time of Delivery
+    { wch: 15 }, // MRP of Product
+    { wch: 28 }, // Purchase Price of the Products
+    { wch: 18 }, // Retailers Price
+    { wch: 22 }, // Date and Time of Delivery
   ];
 
   const workbook = XLSX.utils.book_new();
