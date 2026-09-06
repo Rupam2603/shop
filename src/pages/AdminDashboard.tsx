@@ -3956,6 +3956,15 @@ function DeliveryPartnersTab() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   });
+  // Delivery record date range — start and end month ("YYYY-MM")
+  const [deliveryStartMonth, setDeliveryStartMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [deliveryEndMonth, setDeliveryEndMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
   const [reportPartnerId, setReportPartnerId] = useState<string>("all");
   const [downloadingReport, setDownloadingReport] = useState(false);
   const [reportMsg, setReportMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -4366,16 +4375,30 @@ function DeliveryPartnersTab() {
               }
               const partner = partners.find(p => p.id === reportPartnerId);
               if (!partner) throw new Error("Partner not found");
-              
-              const orders = await fetchDeliveryPartnerOrdersByMonth(partner.id, reportMonth);
+
+              // Build ISO date range from the selected start/end months
+              const [sy, sm] = deliveryStartMonth.split("-").map(Number);
+              const [ey, em] = deliveryEndMonth.split("-").map(Number);
+              const rangeStartISO = new Date(sy, sm - 1, 1).toISOString();
+              const rangeEndISO   = new Date(ey, em, 1).toISOString(); // exclusive: start of month AFTER end-month
+              const rangeLabel = deliveryStartMonth === deliveryEndMonth
+                ? deliveryStartMonth
+                : `${deliveryStartMonth}_to_${deliveryEndMonth}`;
+
+              const orders = await fetchDeliveryPartnerOrdersByMonth(
+                partner.id,
+                deliveryStartMonth,  // used if startDate/endDate not provided; here we pass explicit range
+                rangeStartISO,
+                rangeEndISO
+              );
               if (orders.length === 0) {
-                setReportMsg({ type: "error", text: "No deliveries found for this period." });
+                setReportMsg({ type: "error", text: "No delivered orders found for this period. Check that orders are marked as Delivered." });
                 setDownloadingReport(false);
                 return;
               }
-              
-              exportDeliveryRecordToExcel(orders, { partnerName: partner.name, monthLabel: reportMonth });
-              setReportMsg({ type: "success", text: `Delivery report generated successfully (${orders.length} orders).` });
+
+              exportDeliveryRecordToExcel(orders, { partnerName: partner.name, monthLabel: rangeLabel });
+              setReportMsg({ type: "success", text: `✅ Delivery report generated — ${orders.length} order(s), ${orders.reduce((s, o) => s + (o.order_items?.length || 0), 0)} line item(s).` });
               setDownloadingReport(false);
               return;
             }
@@ -4499,6 +4522,36 @@ function DeliveryPartnersTab() {
               {/* Form Controls Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6 pt-6 border-t border-[#e4ede2]">
                 {/* 1. Date/Range Selector */}
+                {reportCategory === "delivery" ? (
+                  <div className="md:col-span-1 flex flex-col gap-3">
+                    <div>
+                      <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1.5">
+                        From Month
+                      </label>
+                      <input
+                        type="month"
+                        value={deliveryStartMonth}
+                        onChange={(e) => { setDeliveryStartMonth(e.target.value); setReportMsg(null); }}
+                        className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1.5">
+                        To Month
+                      </label>
+                      <input
+                        type="month"
+                        value={deliveryEndMonth}
+                        min={deliveryStartMonth}
+                        onChange={(e) => { setDeliveryEndMonth(e.target.value); setReportMsg(null); }}
+                        className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                      />
+                    </div>
+                    <p className="text-[11px] text-[#657969]">
+                      Range: <span className="font-bold text-[#073b4c]">{deliveryStartMonth} → {deliveryEndMonth}</span>
+                    </p>
+                  </div>
+                ) : (
                 <div>
                   <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1.5">
                     {reportRangeType === "weekly" ? "Select Week (Pick Any Day)" : "Select Month & Year"}
@@ -4528,6 +4581,7 @@ function DeliveryPartnersTab() {
                     Resolved Range: <span className="font-bold text-[#073b4c]">{activeRangeLabel}</span>
                   </p>
                 </div>
+                )}
 
                 {/* 2. Partner Filter */}
                 <div>
@@ -4868,8 +4922,12 @@ function DeliveryPartnersTab() {
                       try {
                         const d = new Date();
                         const currentMonthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-                        const [y, m] = currentMonthStr.split("-");
-                        const ordersWithItems = await fetchDeliveryPartnerOrdersByMonth(inspectPartner.id, parseInt(m, 10), parseInt(y, 10));
+                        // BUG FIX: previously passed two separate parseInt() args — function expects "YYYY-MM" string
+                        const ordersWithItems = await fetchDeliveryPartnerOrdersByMonth(inspectPartner.id, currentMonthStr);
+                        if (ordersWithItems.length === 0) {
+                          alert("No delivered orders found for this month.");
+                          return;
+                        }
                         exportDeliveryRecordToExcel(ordersWithItems, { 
                           partnerName: inspectPartner.name, 
                           monthLabel: currentMonthStr 

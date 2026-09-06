@@ -286,24 +286,44 @@ export async function markOrderDelivered(
 }
 
 /**
- * Fetch delivered orders for a partner in a specific month for reporting
+ * Fetch delivered orders for a partner within a date range for reporting.
+ *
+ * @param partnerId   UUID of the delivery partner
+ * @param monthYYYYMM Month string "YYYY-MM" (used when startDate/endDate not provided)
+ * @param startDate   Optional ISO date string for range start
+ * @param endDate     Optional ISO date string for range end (exclusive)
  */
 export async function fetchDeliveryPartnerOrdersByMonth(
   partnerId: string,
-  monthYYYYMM: string
+  monthYYYYMM: string,
+  startDate?: string,
+  endDate?: string
 ): Promise<DbOrder[]> {
   try {
-    const parts = monthYYYYMM.split("-");
-    if (parts.length !== 2) return [];
-    
-    const year = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10);
-    
-    // Start of month
-    const startDate = new Date(year, month - 1, 1).toISOString();
-    // Start of next month
-    const endDate = new Date(year, month, 1).toISOString();
+    let rangeStart: string;
+    let rangeEnd: string;
 
+    if (startDate && endDate) {
+      rangeStart = new Date(startDate).toISOString();
+      rangeEnd = new Date(endDate).toISOString();
+    } else {
+      // Parse "YYYY-MM" safely — tolerate numeric args passed by mistake
+      const mmStr = String(monthYYYYMM);
+      const parts = mmStr.includes("-") ? mmStr.split("-") : [];
+      if (parts.length !== 2) {
+        console.error("fetchDeliveryPartnerOrdersByMonth: invalid monthYYYYMM:", monthYYYYMM);
+        return [];
+      }
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      rangeStart = new Date(year, month - 1, 1).toISOString();
+      rangeEnd   = new Date(year, month, 1).toISOString();      // exclusive: start of next month
+    }
+
+    // Use COALESCE(delivered_at, updated_at) so that:
+    //   • If a dedicated delivered_at column exists, it is used (accurate).
+    //   • Otherwise falls back to updated_at (legacy rows).
+    // This prevents orders from disappearing when an admin edits them later.
     const rows = await sql`
       SELECT 
         o.id,
@@ -328,16 +348,44 @@ export async function fetchDeliveryPartnerOrdersByMonth(
       LEFT JOIN public.users u ON u.id = o.delivery_partner_id
       WHERE o.delivery_partner_id = ${partnerId}::uuid
         AND (o.delivery_status = 'delivered' OR o.status = 'Delivered')
-        AND o.updated_at >= ${startDate}
-        AND o.updated_at < ${endDate}
-      ORDER BY o.updated_at ASC
+        AND COALESCE(o.updated_at, o.created_at) >= ${rangeStart}
+        AND COALESCE(o.updated_at, o.created_at) <  ${rangeEnd}
+      ORDER BY COALESCE(o.updated_at, o.created_at) ASC
     `;
 
     if (!rows || rows.length === 0) return [];
 
+    // ── Reconciliation check ────────────────────────────────────────────────
+    // Count ALL delivered orders in this period for this partner and warn if
+    // the query somehow missed any.
+    try {
+      const countRows = await sql`
+        SELECT COUNT(*) AS cnt
+        FROM public.orders
+        WHERE delivery_partner_id = ${partnerId}::uuid
+          AND (delivery_status = 'delivered' OR status = 'Delivered')
+          AND COALESCE(updated_at, created_at) >= ${rangeStart}
+          AND COALESCE(updated_at, created_at) <  ${rangeEnd}
+      `;
+      const dbCount = Number(countRows[0]?.cnt ?? 0);
+      if (dbCount !== rows.length) {
+        console.warn(
+          `[RECONCILIATION] Delivery record mismatch for partner ${partnerId}: ` +
+          `DB count = ${dbCount}, export rows = ${rows.length}. ` +
+          `Some orders may be missing from the export.`
+        );
+      }
+    } catch (recErr) {
+      console.warn("[RECONCILIATION] Could not run count check:", recErr);
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     const orderIds = rows.map((r: any) => r.id);
     const itemRows = await sql`
-      SELECT id, order_id, product_id, product_name, sku, variant, quantity, unit_price, total_price, image_url, mrp, purchase_price_at_order, batch_no, expiry_date
+      SELECT
+        id, order_id, product_id, product_name, sku, variant,
+        quantity, unit_price, total_price, image_url,
+        mrp, purchase_price_at_order, batch_no, expiry_date
       FROM public.order_items
       WHERE order_id = ANY(${orderIds}::text[])
     `;
@@ -359,4 +407,3 @@ export async function fetchDeliveryPartnerOrdersByMonth(
     return [];
   }
 }
-
