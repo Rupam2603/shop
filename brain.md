@@ -77,6 +77,19 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 ---
 
 ## 6. Recent Updates & Current State
+- **Return & Replacement Policy System (Admin Panel & Product Description)**:
+  - Added `return_policy TEXT DEFAULT 'Non-Returnable'` column across Neon Postgres `products` and `inventory_products` tables.
+  - Admin Panel Add & Edit Product Modal (`src/pages/AdminDashboard.tsx`): Added interactive Return & Replacement Policy selector with 4 clear choices:
+    1. *Returnable (within 7 days)*
+    2. *7 Days Replacement*
+    3. *Returnable (within 7 days) & 7 Days Replacement*
+    4. *Non-Returnable* (default)
+  - Admin inventory product list table displays color-coded policy badges for each item.
+  - Data access layer (`src/lib/products.ts`) synchronizes `return_policy` on both `createProduct` and `updateProduct`.
+  - Product Description Modal (`src/components/ProductModal.tsx`):
+    - Specifications panel (left column) displays return/replacement status badge under live stock availability.
+    - Product detail block (right column) showcases a high-trust, responsive policy card detailing return criteria, replacement coverage, or non-returnable medicinal regulations.
+  - Seamlessly passed and maintained across all storefront product cards (`HomePage.tsx`, `MedicinesPage.tsx`, `CategoryPage.tsx`, `OffersPage.tsx`, `SearchPage.tsx`, and `NavBar.tsx`).
 - **Neon Auth Integration (Active)**:
   - Infrastructure declared in `neon.ts` (`auth: true`, `dataApi: true`) and deployed via `npx neon deploy`.
   - Neon Auth (`neon_auth` schema) active with Better Auth backend endpoints (`/sign-in/email`, `/sign-up/email`).

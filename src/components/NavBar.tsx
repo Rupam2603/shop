@@ -218,6 +218,7 @@ export default function NavBar({
       stock: p.stock ?? 50,
       customer_price: p.customer_price,
       retailer_price: p.retailer_price,
+      return_policy: p.return_policy || "Non-Returnable",
     });
     setIsSearchOpen(false);
     setSearchValue("");

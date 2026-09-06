@@ -26,6 +26,7 @@ export interface PopupProduct {
   stock?: number;
   customer_price?: number;
   retailer_price?: number;
+  return_policy?: string;
 }
 
 export const CAT_COLORS: Record<string, string> = {
@@ -415,6 +416,38 @@ export default function ProductDetailModal({
                   </span>
                 )}
               </div>
+              <div>
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.7px] text-[#8aa08e] mb-1">Return & Replacement</p>
+                {(product.return_policy === "Returnable (within 7 days)") ? (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-xl">
+                    <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 15v-1a4 4 0 00-4-4H4m0 0l3-3m-3 3l3 3m5 6h5a2 2 0 002-2V7a2 2 0 00-2-2H9a2 2 0 00-2 2v2" />
+                    </svg>
+                    Returnable (7 Days)
+                  </span>
+                ) : (product.return_policy === "7 Days Replacement") ? (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-xl">
+                    <svg className="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    7 Days Replacement
+                  </span>
+                ) : (product.return_policy === "Returnable (within 7 days) & 7 Days Replacement") ? (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-teal-900 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-xl">
+                    <svg className="w-3.5 h-3.5 text-teal-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    7 Days Return & Replace
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-700 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-xl">
+                    <svg className="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                    Non-Returnable
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -515,6 +548,67 @@ export default function ProductDetailModal({
                   <span className="text-[#006a39] font-extrabold">{product.subCat}</span>
                 </div>
               )}
+            </div>
+
+            {/* Return & Replacement Policy Banner */}
+            <div className={`p-3.5 rounded-2xl border flex items-start gap-3 transition-all ${
+              (product.return_policy === "Returnable (within 7 days)")
+                ? "bg-emerald-50/70 border-emerald-200/80 text-emerald-950"
+                : (product.return_policy === "7 Days Replacement")
+                ? "bg-blue-50/70 border-blue-200/80 text-blue-950"
+                : (product.return_policy === "Returnable (within 7 days) & 7 Days Replacement")
+                ? "bg-teal-50/70 border-teal-200/80 text-teal-950"
+                : "bg-slate-50/80 border-slate-200/90 text-slate-800"
+            }`}>
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base font-bold shadow-xs ${
+                (product.return_policy === "Returnable (within 7 days)")
+                  ? "bg-emerald-600 text-white"
+                  : (product.return_policy === "7 Days Replacement")
+                  ? "bg-blue-600 text-white"
+                  : (product.return_policy === "Returnable (within 7 days) & 7 Days Replacement")
+                  ? "bg-teal-600 text-white"
+                  : "bg-slate-500 text-white"
+              }`}>
+                {(product.return_policy === "Returnable (within 7 days)") && (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 15v-1a4 4 0 00-4-4H4m0 0l3-3m-3 3l3 3m5 6h5a2 2 0 002-2V7a2 2 0 00-2-2H9a2 2 0 00-2 2v2" />
+                  </svg>
+                )}
+                {(product.return_policy === "7 Days Replacement") && (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                )}
+                {(product.return_policy === "Returnable (within 7 days) & 7 Days Replacement") && (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                )}
+                {(!product.return_policy || product.return_policy === "Non-Returnable") && (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-black uppercase tracking-wide">
+                    {(product.return_policy === "Returnable (within 7 days)") && "Returnable (Within 7 Days)"}
+                    {(product.return_policy === "7 Days Replacement") && "7 Days Replacement"}
+                    {(product.return_policy === "Returnable (within 7 days) & 7 Days Replacement") && "7 Days Return & Replacement"}
+                    {(!product.return_policy || product.return_policy === "Non-Returnable") && "Non-Returnable Product"}
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/80 border border-current/20">
+                    Policy
+                  </span>
+                </div>
+                <p className="text-xs mt-0.5 leading-relaxed opacity-90">
+                  {(product.return_policy === "Returnable (within 7 days)") && "This item can be returned within 7 days of delivery for a full refund if unused, sealed, and in its original packaging."}
+                  {(product.return_policy === "7 Days Replacement") && "Free replacement available within 7 days of delivery in case of damaged, defective, or incorrect medicine received."}
+                  {(product.return_policy === "Returnable (within 7 days) & 7 Days Replacement") && "Complete peace of mind: item is eligible for both a 7-day hassle-free return for refund or a free direct replacement."}
+                  {(!product.return_policy || product.return_policy === "Non-Returnable") && "This item is non-returnable due to health, hygiene, and pharmaceutical safety guidelines. Damaged or wrong items are eligible for prompt replacement."}
+                </p>
+              </div>
             </div>
 
             {/* Key Features */}

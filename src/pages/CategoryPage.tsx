@@ -109,6 +109,7 @@ export default function CategoryPage({
       stock: p.stock ?? 50,
       customer_price: p.customer_price,
       retailer_price: p.retailer_price,
+      return_policy: p.return_policy || "Non-Returnable",
     }));
   }, [dbProducts]);
 
@@ -340,6 +341,7 @@ export default function CategoryPage({
                     key={p.id}
                     onClick={() => setSelectedProduct({
                       id: p.id,
+                      dbId: (p as any).dbId,
                       name: p.name,
                       sub: p.sub,
                       price: p.price,
@@ -350,6 +352,9 @@ export default function CategoryPage({
                       brand: p.brand,
                       img: p.img,
                       stock: p.stock ?? 50,
+                      customer_price: (p as any).customer_price,
+                      retailer_price: (p as any).retailer_price,
+                      return_policy: (p as any).return_policy || "Non-Returnable",
                     })}
                     className={`bg-white/85 backdrop-blur-xl rounded-3xl border ${
                       isOutOfStock ? "border-rose-200/80 opacity-75" : "border-white/90 hover:border-emerald-300/80"

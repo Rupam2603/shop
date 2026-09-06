@@ -156,6 +156,7 @@ export default function OffersPage({ userRole, onNavigate }: OffersPageProps) {
       disc: product.disc || "",
       img: product.img,
       stock: product.stock ?? 50,
+      return_policy: product.return_policy || "Non-Returnable",
     });
   };
 

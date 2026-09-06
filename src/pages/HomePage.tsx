@@ -68,6 +68,7 @@ export interface HomeCategoryProduct {
   stock?: number;
   customer_price?: number;
   retailer_price?: number;
+  return_policy?: string;
 }
 
 export interface HomeCategorySectionItem {
@@ -253,6 +254,7 @@ function CategorySection({
               stock: p.stock ?? 50,
               customer_price: p.customer_price,
               retailer_price: p.retailer_price,
+              return_policy: p.return_policy || "Non-Returnable",
             })}
             onAddToCart={() => onAddToCart(p, item.cat)}
           />
@@ -379,6 +381,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
           stock: p.stock ?? 50,
           customer_price: p.customer_price,
           retailer_price: p.retailer_price,
+          return_policy: p.return_policy || "Non-Returnable",
         })),
       };
     }).filter(Boolean) as HomeCategorySectionItem[];
@@ -414,6 +417,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
       stock: p.stock ?? 50,
       customer_price: p.customer_price,
       retailer_price: p.retailer_price,
+      return_policy: p.return_policy || "Non-Returnable",
     }));
   }, [dbProducts, isRetailer]);
 
@@ -615,6 +619,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
                         stock: pStock,
                         customer_price: (p as any).customer_price,
                         retailer_price: (p as any).retailer_price,
+                        return_policy: (p as any).return_policy || "Non-Returnable",
                       })}
                       className={`w-[170px] sm:w-[220px] lg:w-auto shrink-0 snap-start bg-white rounded-2xl border ${isOutOfStock ? "border-red-200 opacity-80" : "border-[rgba(189,202,188,0.4)]"} overflow-hidden flex flex-col group hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer`}
                     >

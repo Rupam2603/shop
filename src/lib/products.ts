@@ -37,6 +37,7 @@ export interface DbProduct {
   is_listed?: boolean;
   badges?: any[];
   purchase_price?: number;
+  return_policy?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -58,6 +59,7 @@ export interface DbInventoryProduct {
   mrp: number;
   customer_price: number;
   retailer_price: number;
+  return_policy?: string | null;
   purchase_price?: number;
   discount_percent: number;
   retailer_discount_percent: number;
@@ -146,6 +148,7 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<DbPro
         is_featured: Boolean(r.is_featured),
         is_listed: r.is_listed !== false,
         purchase_price: filters.isAdmin ? (r.purchase_price != null ? Number(r.purchase_price) : undefined) : undefined,
+        return_policy: r.return_policy || "Non-Returnable",
       };
     });
 
@@ -289,16 +292,17 @@ export async function createProduct(
     const pFeat = Boolean(product.is_featured);
     const pIsListed = product.is_listed !== false;
     const pBadges = JSON.stringify(product.badges || []);
+    const pReturnPolicy = product.return_policy || "Non-Returnable";
 
     const insertedProd = await sql`
       INSERT INTO products (
         numeric_id, name, subtitle, category_id, category_name, sub_category_id, sub_category_name, brand, sku, hsn, mrp,
         customer_price, retailer_price, purchase_price, discount_percent, stock, image_url, details,
-        is_flash_sale, is_featured, is_listed, badges, updated_at
+        is_flash_sale, is_featured, is_listed, badges, return_policy, updated_at
       ) VALUES (
         ${numId}, ${pName}, ${pSubtitle}, ${pCatId}, ${pCatName}, ${pSubCatId}, ${pSubCatName}, ${pBrand}, ${pSku}, ${pHsn}, ${pMrp},
         ${pCustPrice}, ${pRetPrice}, ${pPurPrice}, ${pDisc}, ${pStock}, ${pImage}, ${pDetails},
-        ${pFlash}, ${pFeat}, ${pIsListed}, ${pBadges}::jsonb, now()
+        ${pFlash}, ${pFeat}, ${pIsListed}, ${pBadges}::jsonb, ${pReturnPolicy}, now()
       ) RETURNING *
     `;
 
@@ -310,11 +314,11 @@ export async function createProduct(
         INSERT INTO inventory_products (
           id, numeric_id, product_id, name, subtitle, category_id, category_name, brand, sku, hsn, mrp,
           customer_price, retailer_price, purchase_price, discount_percent, stock, image_url, web_image_url, details,
-          is_flash_sale, is_featured, is_listed, badges, updated_at
+          is_flash_sale, is_featured, is_listed, badges, return_policy, updated_at
         ) VALUES (
           ${data.id}, ${data.numeric_id}, ${data.id}, ${data.name}, ${data.subtitle}, ${data.category_id}, ${data.category_name}, ${data.brand}, ${data.sku}, ${data.hsn}, ${data.mrp},
           ${data.customer_price}, ${data.retailer_price}, ${data.purchase_price}, ${data.discount_percent}, ${data.stock}, ${data.image_url}, ${data.image_url}, ${data.details},
-          ${data.is_flash_sale}, ${data.is_featured}, ${pIsListed}, ${JSON.stringify(data.badges)}::jsonb, now()
+          ${data.is_flash_sale}, ${data.is_featured}, ${pIsListed}, ${JSON.stringify(data.badges)}::jsonb, ${pReturnPolicy}, now()
         ) ON CONFLICT (id) DO UPDATE SET
           numeric_id = EXCLUDED.numeric_id,
           product_id = EXCLUDED.product_id,
@@ -338,6 +342,7 @@ export async function createProduct(
           is_featured = EXCLUDED.is_featured,
           is_listed = EXCLUDED.is_listed,
           badges = EXCLUDED.badges,
+          return_policy = EXCLUDED.return_policy,
           updated_at = EXCLUDED.updated_at
       `;
     } catch (invErr) {
@@ -401,6 +406,7 @@ export async function updateProduct(
     const pFeat = updates.is_featured !== undefined ? Boolean(updates.is_featured) : existing.is_featured;
     const pIsListed = updates.is_listed !== undefined ? Boolean(updates.is_listed) : (existing.is_listed !== undefined ? Boolean(existing.is_listed) : true);
     const pBadges = JSON.stringify(updates.badges !== undefined ? updates.badges : existing.badges);
+    const pReturnPolicy = updates.return_policy !== undefined ? updates.return_policy : (existing.return_policy || "Non-Returnable");
 
     const updatedRows = await sql`
       UPDATE products SET
@@ -425,6 +431,7 @@ export async function updateProduct(
         is_featured = ${pFeat},
         is_listed = ${pIsListed},
         badges = ${pBadges}::jsonb,
+        return_policy = ${pReturnPolicy},
         updated_at = now()
       WHERE id = ${id}
       RETURNING *
@@ -457,6 +464,7 @@ export async function updateProduct(
           is_featured = ${data.is_featured},
           is_listed = ${pIsListed},
           badges = ${JSON.stringify(data.badges)}::jsonb,
+          return_policy = ${pReturnPolicy},
           updated_at = now()
         WHERE id = ${id}
       `;

@@ -283,6 +283,7 @@ type Product = {
   details?: string;
   badges?: ProductBadge[];
   isListed?: boolean;
+  return_policy?: string;
 };
 
 type Settings = {
@@ -434,6 +435,7 @@ const emptyForm = (category = ""): ProductFormState => ({
   customerPrice: 0, retailerPrice: 0, purchasePrice: undefined, stock: 0, image: undefined, details: "",
   badges: DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
   isListed: true,
+  return_policy: "Non-Returnable",
 });
 
 const INPUT_CLS = "w-full bg-white/70 backdrop-blur-md border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] placeholder:text-[#a8b8aa] focus:outline-none focus:bg-white focus:border-[#006a39] focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-xs";
@@ -879,8 +881,84 @@ function ProductModal({
             </button>
           </div>
 
+          {/* Return & Replacement Policy */}
+          <div className="bg-[#f8faf9] rounded-2xl p-4 border border-[#dce8dc] flex flex-col gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block">
+                  Return & Replacement Policy
+                </label>
+                <span className="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full uppercase">
+                  Storefront Visible
+                </span>
+              </div>
+              <p className="text-[10px] text-[#6d7a6f] mt-0.5">
+                Select whether this product is returnable (within 7 days) or non-returnable, and 7 days replacement.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {[
+                {
+                  value: "Returnable (within 7 days)",
+                  label: "Returnable (within 7 days)",
+                  desc: "Eligible for return & refund within 7 days",
+                  icon: "🔄",
+                  activeColor: "border-emerald-500 bg-emerald-50/60 text-[#006a39]",
+                },
+                {
+                  value: "7 Days Replacement",
+                  label: "7 Days Replacement",
+                  desc: "Eligible for free replacement within 7 days",
+                  icon: "🔁",
+                  activeColor: "border-sky-500 bg-sky-50/60 text-[#0284c7]",
+                },
+                {
+                  value: "Returnable (within 7 days) & 7 Days Replacement",
+                  label: "Return & 7 Days Replacement",
+                  desc: "Both return & replacement within 7 days",
+                  icon: "🔄🔁",
+                  activeColor: "border-teal-500 bg-teal-50/60 text-[#0f766e]",
+                },
+                {
+                  value: "Non-Returnable",
+                  label: "Non-Returnable",
+                  desc: "Non-returnable due to health & hygiene safety",
+                  icon: "🚫",
+                  activeColor: "border-slate-400 bg-slate-100/80 text-slate-700",
+                },
+              ].map((opt) => {
+                const isSelected = (form.return_policy || "Non-Returnable") === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setForm((p) => ({ ...p, return_policy: opt.value }))}
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-2.5 ${
+                      isSelected
+                        ? `bg-white shadow-sm ring-2 ring-[#006a39]/25 scale-[1.01] ${opt.activeColor}`
+                        : "bg-white/70 border-[#e4ede2] hover:bg-white hover:border-emerald-200"
+                    }`}
+                  >
+                    <span className="text-xl shrink-0 mt-0.5">{opt.icon}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className={`text-xs font-bold ${isSelected ? "text-[#006a39]" : "text-[#073b4c]"}`}>
+                          {opt.label}
+                        </p>
+                        {isSelected && <span className="text-xs text-[#006a39] font-black">✓</span>}
+                      </div>
+                      <p className="text-[10px] text-[#6d7a6f] mt-0.5 leading-tight">{opt.desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Badges & Tags */}
           <div className="bg-[#f5f9f6] rounded-2xl p-4 border border-[#dce8dc] flex flex-col gap-3">
+
             <div className="flex items-center justify-between">
               <div>
                 <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block">
@@ -1018,6 +1096,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           details: p.details || "",
           isListed: p.is_listed !== false,
           badges: Array.isArray(p.badges) && p.badges.length > 0 ? p.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
+          return_policy: p.return_policy || "Non-Returnable",
         }))
       );
       // Categories are dynamically managed by dbCategories
@@ -1456,6 +1535,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
     setForm({
       ...p,
       badges: p.badges && p.badges.length > 0 ? p.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
+      return_policy: p.return_policy || "Non-Returnable",
     });
     setModal({ open: true, mode: "edit" });
   };
@@ -1557,6 +1637,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           is_featured: isFeatured,
           is_listed: form.isListed !== false,
           badges: form.badges || [],
+          return_policy: form.return_policy || "Non-Returnable",
         });
 
         if (error || !data) {
@@ -1602,6 +1683,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           is_featured: isFeatured,
           is_listed: form.isListed !== false,
           badges: form.badges || [],
+          return_policy: form.return_policy || "Non-Returnable",
         });
 
         if (error || !data) {
@@ -1630,6 +1712,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           details: p.details || "",
           isListed: p.is_listed !== false,
           badges: Array.isArray(p.badges) && p.badges.length > 0 ? p.badges : DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
+          return_policy: p.return_policy || "Non-Returnable",
         })));
       }
       
@@ -2398,6 +2481,23 @@ function ProductsTab({ products, allProductCount, categories, search, setSearch,
                       {p.details && (
                         <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full">
                           {p.details}
+                        </span>
+                      )}
+                      {p.return_policy && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          p.return_policy.includes("Returnable")
+                            ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                            : p.return_policy.includes("Replacement")
+                            ? "bg-sky-50 text-sky-800 border-sky-200"
+                            : "bg-slate-50 text-slate-700 border-slate-200"
+                        }`}>
+                          {p.return_policy.includes("Returnable") && p.return_policy.includes("Replacement")
+                            ? "🔄🔁 7d Return & Replace"
+                            : p.return_policy.includes("Returnable")
+                            ? "🔄 7d Returnable"
+                            : p.return_policy.includes("Replacement")
+                            ? "🔁 7d Replacement"
+                            : "🚫 Non-Returnable"}
                         </span>
                       )}
                     </div>
