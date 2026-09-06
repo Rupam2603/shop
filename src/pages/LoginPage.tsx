@@ -603,7 +603,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
               {pendingApprovalInfo && (
                 <div className="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 text-xs text-amber-950 flex flex-col gap-2 shadow-xs">
                   <div className="flex items-center justify-between font-bold">
-                    <span>⏳ Retailer Application In Review</span>
+                    <span>Retailer Application In Review</span>
                     <span className="text-[10px] uppercase bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-extrabold">
                       Pending
                     </span>
