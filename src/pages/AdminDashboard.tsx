@@ -3982,14 +3982,14 @@ function DeliveryPartnersTab() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   });
-  // Delivery record date range — start and end month ("YYYY-MM")
-  const [deliveryStartMonth, setDeliveryStartMonth] = useState(() => {
+  // Delivery record date range — start and end date ("YYYY-MM-DD")
+  const [deliveryStartDate, setDeliveryStartDate] = useState(() => {
     const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
   });
-  const [deliveryEndMonth, setDeliveryEndMonth] = useState(() => {
+  const [deliveryEndDate, setDeliveryEndDate] = useState(() => {
     const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   });
   const [reportPartnerId, setReportPartnerId] = useState<string>("all");
   const [downloadingReport, setDownloadingReport] = useState(false);
@@ -4402,18 +4402,26 @@ function DeliveryPartnersTab() {
               const partner = partners.find(p => p.id === reportPartnerId);
               if (!partner) throw new Error("Partner not found");
 
-              // Build ISO date range from the selected start/end months
-              const [sy, sm] = deliveryStartMonth.split("-").map(Number);
-              const [ey, em] = deliveryEndMonth.split("-").map(Number);
-              const rangeStartISO = new Date(sy, sm - 1, 1).toISOString();
-              const rangeEndISO   = new Date(ey, em, 1).toISOString(); // exclusive: start of month AFTER end-month
-              const rangeLabel = deliveryStartMonth === deliveryEndMonth
-                ? deliveryStartMonth
-                : `${deliveryStartMonth}_to_${deliveryEndMonth}`;
+              // Build ISO date range from the selected start/end dates
+              const sy = parseInt(deliveryStartDate.slice(0,4), 10);
+              const sm = parseInt(deliveryStartDate.slice(5,7), 10);
+              const sd = parseInt(deliveryStartDate.slice(8,10), 10);
+              const ey = parseInt(deliveryEndDate.slice(0,4), 10);
+              const em = parseInt(deliveryEndDate.slice(5,7), 10);
+              const ed = parseInt(deliveryEndDate.slice(8,10), 10);
+              
+              const rangeStartISO = new Date(sy, sm - 1, sd).toISOString();
+              const endObj = new Date(ey, em - 1, ed);
+              endObj.setDate(endObj.getDate() + 1); // exclusive: start of the day AFTER end-date
+              const rangeEndISO = endObj.toISOString(); 
+
+              const rangeLabel = deliveryStartDate === deliveryEndDate
+                ? deliveryStartDate
+                : `${deliveryStartDate}_to_${deliveryEndDate}`;
 
               const orders = await fetchDeliveryPartnerOrdersByMonth(
                 partner.id,
-                deliveryStartMonth,  // used if startDate/endDate not provided; here we pass explicit range
+                deliveryStartDate.substring(0, 7),  // fallback month if needed
                 rangeStartISO,
                 rangeEndISO
               );
@@ -4552,29 +4560,29 @@ function DeliveryPartnersTab() {
                   <div className="md:col-span-1 flex flex-col gap-3">
                     <div>
                       <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1.5">
-                        From Month
+                        From Date
                       </label>
                       <input
-                        type="month"
-                        value={deliveryStartMonth}
-                        onChange={(e) => { setDeliveryStartMonth(e.target.value); setReportMsg(null); }}
+                        type="date"
+                        value={deliveryStartDate}
+                        onChange={(e) => { setDeliveryStartDate(e.target.value); setReportMsg(null); }}
                         className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1.5">
-                        To Month
+                        To Date
                       </label>
                       <input
-                        type="month"
-                        value={deliveryEndMonth}
-                        min={deliveryStartMonth}
-                        onChange={(e) => { setDeliveryEndMonth(e.target.value); setReportMsg(null); }}
+                        type="date"
+                        value={deliveryEndDate}
+                        min={deliveryStartDate}
+                        onChange={(e) => { setDeliveryEndDate(e.target.value); setReportMsg(null); }}
                         className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
                       />
                     </div>
                     <p className="text-[11px] text-[#657969]">
-                      Range: <span className="font-bold text-[#073b4c]">{deliveryStartMonth} → {deliveryEndMonth}</span>
+                      Range: <span className="font-bold text-[#073b4c]">{deliveryStartDate} → {deliveryEndDate}</span>
                     </p>
                   </div>
                 ) : (
