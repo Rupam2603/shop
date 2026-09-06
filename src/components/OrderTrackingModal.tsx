@@ -204,6 +204,8 @@ export default function OrderTrackingModal({
     ? {
         id: activeOrder.order_number,
         dbId: activeOrder.id,
+        invoiceNumber: activeOrder.invoice_number || undefined,
+        createdAt: activeOrder.created_at,
         customer: activeOrder.customer_name || userName || "Valued Customer",
         phone: activeOrder.customer_phone || userPhone || "+91 98765 00000",
         role: isRetailer ? "retailer" : "customer",

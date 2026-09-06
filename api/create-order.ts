@@ -59,7 +59,7 @@ export default async function handler(req: any, res: any) {
     const { rows: existing } = await client.query(
       `SELECT id, order_number, user_id, customer_name, customer_phone,
               shipping_address, total_amount, payment_method, payment_status,
-              status, user_role, shop_name, created_at, updated_at
+              status, user_role, shop_name, invoice_number, created_at, updated_at
          FROM orders
         WHERE idempotency_key = $1
         FOR UPDATE`,
@@ -186,6 +186,14 @@ export default async function handler(req: any, res: any) {
     }
 
     const orderNumber = makeOrderNumber();
+
+    // Determine sequential invoice number starting from INV-001
+    const { rows: seqRows } = await client.query(
+      `SELECT COALESCE(MAX(NULLIF(regexp_replace(invoice_number, '\\D', '', 'g'), '')::int), 0) + 1 AS next_seq FROM orders`
+    );
+    const nextSeq = Number(seqRows[0]?.next_seq || 1);
+    const invoiceNumber = `INV-${String(nextSeq).padStart(3, '0')}`;
+
     const address = {
       ...(shippingAddress || {}),
       user_role: role,
@@ -196,11 +204,11 @@ export default async function handler(req: any, res: any) {
       `INSERT INTO orders (
         order_number, user_id, customer_name, customer_phone, shipping_address,
         total_amount, payment_method, payment_status, status, user_role, shop_name,
-        idempotency_key
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Processing',$9,$10,$11)
+        idempotency_key, invoice_number
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Processing',$9,$10,$11,$12)
       RETURNING id, order_number, user_id, customer_name, customer_phone,
                 shipping_address, total_amount, payment_method, payment_status,
-                status, user_role, shop_name, created_at, updated_at`,
+                status, user_role, shop_name, invoice_number, created_at, updated_at`,
       [
         orderNumber,
         String(customer.id),
@@ -213,6 +221,7 @@ export default async function handler(req: any, res: any) {
         role,
         shopName || null,
         idempotencyKey,
+        invoiceNumber,
       ]
     );
 

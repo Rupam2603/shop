@@ -805,6 +805,8 @@ export default function ProfilePage({
                                     printOrDownloadInvoice({
                                       id: dbOrder.order_number,
                                       dbId: dbOrder.id,
+                                      invoiceNumber: dbOrder.invoice_number || undefined,
+                                      createdAt: dbOrder.created_at,
                                       customer: dbOrder.customer_name || user.name,
                                       phone: dbOrder.customer_phone || user.phone || "+91 98765 00000",
                                       role: dbOrder.user_role === "retailer" ? "retailer" : "customer",

@@ -32,6 +32,7 @@ export interface DbOrder {
   delivery_status?: "unassigned" | "accepted" | "picked_up" | "delivered" | string | null;
   delivery_partner_name?: string | null;
   delivery_partner_phone?: string | null;
+  invoice_number?: string | null;
 }
 
 export function getDisplayStatus(order: DbOrder, partnerName?: string): string {

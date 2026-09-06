@@ -14,6 +14,7 @@ export interface InvoiceOrderItem {
 export interface InvoiceOrderData {
   id: string;
   dbId?: string;
+  invoiceNumber?: string;
   customer: string;
   phone: string;
   role?: "retailer" | "customer";
@@ -98,11 +99,18 @@ export function numberToWords(num: number): string {
   return result ? `${result} Rupees Only` : "Zero Rupees Only";
 }
 
-function formatToDateString(val: string): string {
-  if (!val) return new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+export function formatToDateTimeString(val: string): string {
+  if (!val) {
+    const now = new Date();
+    const d = now.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    const t = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+    return `${d}, ${t}`;
+  }
   const d = new Date(val);
   if (isNaN(d.getTime())) return val;
-  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  const dateStr = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  const timeStr = d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  return `${dateStr}, ${timeStr}`;
 }
 
 /**
@@ -111,12 +119,25 @@ function formatToDateString(val: string): string {
 export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<StoreSettings>): string {
   const storeName = settings?.storeName || "SubhOne Health Group";
   const storePhone = settings?.phone || "+91 98765 43210";
-  const storeEmail = settings?.email || "support@subhone.com";
   const storeAddress = settings?.address || "14/B Central Avenue, Kolkata, West Bengal 700012";
 
-  const billNo = order.id.startsWith("ORD-") ? `INV-${order.id.replace("ORD-", "")}` : `INV-${order.id}`;
-  const dateFormatted = formatToDateString(order.date);
-  const custId = order.dbId ? `CUST-${order.dbId.slice(0, 6).toUpperCase()}` : `CUST-${order.id.replace(/\D/g, "") || "1001"}`;
+  // Invoice numbers start from INV-001
+  let billNo = order.invoiceNumber?.trim();
+  if (!billNo) {
+    if (order.id && /^INV-\d+$/i.test(order.id.trim())) {
+      billNo = order.id.trim().toUpperCase();
+    } else {
+      const digits = (order.id || "").replace(/\D/g, "");
+      if (digits.length > 0 && digits.length <= 4) {
+        billNo = `INV-${digits.padStart(3, "0")}`;
+      } else {
+        billNo = "INV-001";
+      }
+    }
+  }
+
+  const dateTimeFormatted = formatToDateTimeString(order.date);
+  const custId = order.dbId ? `CUST-${order.dbId.slice(0, 6).toUpperCase()}` : `CUST-${(order.id || "").replace(/\D/g, "") || "1001"}`;
 
   const isRetailer = order.role === "retailer";
   const customerDisplay = order.shopName
@@ -200,7 +221,7 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
         ${storeName}
       </div>
       <div style="text-align: center; font-size: 10.5px; color: #444; margin-bottom: 12px; border-bottom: 1.5px solid #222; padding-bottom: 8px;">
-        ${storeAddress} | Phone: ${storePhone} | Email: ${storeEmail}
+        ${storeAddress} | Phone: ${storePhone}
       </div>
 
       <div style="text-align: center; font-size: 14px; font-weight: 800; letter-spacing: 1px; margin: 10px 0 12px 0; text-decoration: underline;">
@@ -211,14 +232,14 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
         <thead>
           <tr>
             <th style="border: 1px solid #333; padding: 6px 10px; font-size: 11px; background-color: #f2f5f3; font-weight: 700; text-align: center;">Bill No.</th>
-            <th style="border: 1px solid #333; padding: 6px 10px; font-size: 11px; background-color: #f2f5f3; font-weight: 700; text-align: center;">Date</th>
+            <th style="border: 1px solid #333; padding: 6px 10px; font-size: 11px; background-color: #f2f5f3; font-weight: 700; text-align: center;">Date &amp; Time</th>
             <th style="border: 1px solid #333; padding: 6px 10px; font-size: 11px; background-color: #f2f5f3; font-weight: 700; text-align: center;">Customer ID</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td style="border: 1px solid #333; padding: 6px 10px; font-size: 11px; text-align: center; font-weight: bold; color: #006a39;">${billNo}</td>
-            <td style="border: 1px solid #333; padding: 6px 10px; font-size: 11px; text-align: center; font-weight: 600;">${dateFormatted}</td>
+            <td style="border: 1px solid #333; padding: 6px 10px; font-size: 11px; text-align: center; font-weight: 600;">${dateTimeFormatted}</td>
             <td style="border: 1px solid #333; padding: 6px 10px; font-size: 11px; text-align: center; font-weight: 600;">${custId}</td>
           </tr>
         </tbody>
@@ -248,6 +269,10 @@ export function generateInvoiceHtml(order: InvoiceOrderData, settings?: Partial<
               <strong style="font-size: 11.5px; color: ${order.paymentStatus === 'Pending' ? '#b45309' : '#006a39'};">
                 ${order.paymentStatus || (isCOD ? "Pending on Delivery" : "Paid / Confirmed")}
               </strong>
+            </div>
+            <div>
+              <span style="color: #555; display: block; font-size: 10px; text-transform: uppercase; font-weight: 700;">Order Date &amp; Time</span>
+              <strong style="font-size: 11px; color: #333;">${dateTimeFormatted}</strong>
             </div>
             <div>
               <span style="color: #555; display: block; font-size: 10px; text-transform: uppercase; font-weight: 700;">Order Status</span>
@@ -358,7 +383,7 @@ function wrapInPrintableDocument(title: string, contentHtml: string, isLandscape
   <style>
     @page {
       size: ${isLandscape ? "A4 landscape" : "A4 portrait"};
-      margin: 10mm;
+      margin: 0;
     }
     * { box-sizing: border-box; }
     body {
@@ -396,19 +421,22 @@ function wrapInPrintableDocument(title: string, contentHtml: string, isLandscape
       color: #fff;
     }
     @media print {
-      body {
-        padding: 0;
-        background: #fff;
+      html, body {
+        margin: 0 !important;
+        padding: 6mm 8mm !important;
+        background: #fff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
       .action-bar {
         display: none !important;
       }
       .print-container {
-        box-shadow: none;
-        padding: 0;
-        margin: 0;
-        max-width: 100%;
-        border-radius: 0;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        border-radius: 0 !important;
       }
     }
   </style>
@@ -477,8 +505,9 @@ function downloadHtmlBlob(filename: string, fullHtml: string) {
  * 1-Click Print & Save as PDF for Single Invoice
  */
 export function printOrDownloadInvoice(order: InvoiceOrderData, settings?: Partial<StoreSettings>) {
+  const billNo = order.invoiceNumber || (order.id.startsWith("ORD-") ? `INV-${order.id.replace("ORD-", "")}` : `INV-${order.id}`);
   const content = generateInvoiceHtml(order, settings);
-  const fullHtml = wrapInPrintableDocument(`Invoice - ${order.id}`, content, false);
+  const fullHtml = wrapInPrintableDocument(`Invoice - ${billNo}`, content, false);
   printHtmlInIframe(fullHtml);
 }
 
@@ -486,7 +515,7 @@ export function printOrDownloadInvoice(order: InvoiceOrderData, settings?: Parti
  * 1-Click Direct File Download for Single Invoice
  */
 export function downloadInvoiceFile(order: InvoiceOrderData, settings?: Partial<StoreSettings>) {
-  const billNo = order.id.startsWith("ORD-") ? `INV-${order.id.replace("ORD-", "")}` : `INV-${order.id}`;
+  const billNo = order.invoiceNumber || (order.id.startsWith("ORD-") ? `INV-${order.id.replace("ORD-", "")}` : `INV-${order.id}`);
   const content = generateInvoiceHtml(order, settings);
   const fullHtml = wrapInPrintableDocument(`Invoice - ${billNo}`, content, false);
   downloadHtmlBlob(`SubhOne-Invoice-${billNo}.html`, fullHtml);

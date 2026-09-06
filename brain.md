@@ -345,5 +345,23 @@ The application reads configuration through `import.meta.env` (defined in `.env`
     - Added dedicated **Recipient & Delivery Details** card in invoice HTML showcasing Customer Name, Phone, Delivery Address with pin icon (`📍 Delivery Address`), Payment Method (e.g. `Cash on Delivery (COD)`, `UPI / Online Payment`, `Credit / Debit Card`), Payment Status, and Order Status.
     - Updated payment checkboxes and breakdown in bottom summary.
     - Updated `AdminDashboard.tsx` (`liveOrders`, `OrdersTab`, `previewInvoice`), `ProfilePage.tsx`, and `OrderTrackingModal.tsx` to pass parsed delivery addresses and display delivery address in the admin invoice preview modal.
+- **Sequential Invoice Numbering (INV-001+), Date & Time Visibility & Print URL Removal (Sep 2026)**:
+  - **Sequential Invoice Numbering**:
+    - Altered `public.orders` in Neon Lakebase Postgres to add column `invoice_number TEXT`.
+    - Backfilled existing orders starting with `INV-001`.
+    - Updated `api/create-order.ts` to dynamically calculate the next sequence number:
+      `SELECT COALESCE(MAX(NULLIF(regexp_replace(invoice_number, '\D', '', 'g'), '')::int), 0) + 1 AS next_seq FROM orders`
+      and format it as `INV-${String(nextSeq).padStart(3, "0")}` (e.g. `INV-001`, `INV-002`, `INV-003`, etc.).
+    - Stored `invoice_number` in `public.orders` and returned in API response.
+    - Updated `DbOrder` interface in `src/lib/orders.ts` and `InvoiceOrderData` in `src/lib/invoiceGenerator.ts` to include `invoice_number?: string | null` / `invoiceNumber?: string`.
+    - Added fallback resolution in `invoiceGenerator.ts` to derive `INV-001` if not yet stamped.
+  - **Date & Time Visibility**:
+    - Implemented `formatToDateTimeString(val)` in `src/lib/invoiceGenerator.ts` to format timestamps into complete Indian date and time (e.g. `06 Sep 2026, 09:43 PM`).
+    - Added `Date & Time` as a prominent column in the top invoice summary table alongside `Bill No.` and `Customer ID`.
+    - Rendered explicit `Order Date & Time` in the Recipient & Delivery card.
+  - **Removed Website Links & Print URL Footer**:
+    - Removed any store email / URL text from the invoice template header and footer.
+    - Updated `wrapInPrintableDocument` print styling with `@page { margin: 0; }` and `@media print { html, body { margin: 0 !important; padding: 6mm 8mm !important; } }`. Setting `@page { margin: 0; }` instructs browsers (Chrome, Edge, Safari, Firefox) to suppress browser-generated headers (title/date) and footers (website URL).
+    - Updated `AdminDashboard.tsx`, `ProfilePage.tsx`, and `OrderTrackingModal.tsx` to pass `invoiceNumber` and `createdAt` into invoice generation and display `invoiceNumber` in modal titles and exported filenames.
 
 

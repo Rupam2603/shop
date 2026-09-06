@@ -1301,6 +1301,8 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           return {
             id: o.order_number,
             dbId: o.id,
+            invoiceNumber: o.invoice_number || undefined,
+            createdAt: o.created_at,
             customer: o.customer_name,
             phone: o.customer_phone,
             items: o.order_items?.length || 1,
@@ -2649,6 +2651,8 @@ function OrdersTab({
   orders: {
     id: string;
     dbId: string;
+    invoiceNumber?: string;
+    createdAt?: string;
     customer: string;
     phone: string;
     items: number;
@@ -2707,6 +2711,8 @@ function OrdersTab({
   const [previewInvoice, setPreviewInvoice] = useState<{
     id: string;
     dbId?: string;
+    invoiceNumber?: string;
+    createdAt?: string;
     customer: string;
     phone: string;
     address?: string;
@@ -3135,7 +3141,7 @@ function OrdersTab({
                 </div>
                 <div>
                   <h3 className="font-['Manrope',sans-serif] font-extrabold text-base sm:text-lg">Order Details & Invoice Inspection</h3>
-                  <p className="text-xs text-white/70 font-mono">Invoice Ref: #{previewInvoice.id}</p>
+                  <p className="text-xs text-white/70 font-mono">Invoice Ref: #{previewInvoice.invoiceNumber || previewInvoice.id}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
