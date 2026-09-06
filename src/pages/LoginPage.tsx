@@ -16,22 +16,22 @@ const ROLES: Record<string, RoleCfg> = {
   retailer: {
     label: "Retailer",
     badge: "B2B Wholesale",
-    accent: "#059669",
-    gradient: "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
+    accent: "#2563eb",
+    gradient: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
   },
   admin: {
-    label: "Admin / Delivery Partner",
+    label: "Admin / Staff",
     badge: "Operations & Logistics",
     accent: "#073b4c",
-    gradient: "linear-gradient(135deg, #073b4c 0%, #0c566d 100%)",
+    gradient: "linear-gradient(135deg, #073b4c 0%, #1e3a8a 100%)",
   },
 };
 
-// ─── Simple Icons ─────────────────────────────────────────────────────────────
+// ─── Modern Luxury Icons ──────────────────────────────────────────────────────
 
 function MailIcon({ className }: { className?: string }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <rect width="20" height="16" x="2" y="4" rx="2" />
       <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
     </svg>
@@ -40,7 +40,7 @@ function MailIcon({ className }: { className?: string }) {
 
 function LockIcon({ className }: { className?: string }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
@@ -49,7 +49,7 @@ function LockIcon({ className }: { className?: string }) {
 
 function EyeIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
       <circle cx="12" cy="12" r="3" />
     </svg>
@@ -58,7 +58,7 @@ function EyeIcon() {
 
 function EyeOffIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
       <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
       <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
@@ -69,7 +69,7 @@ function EyeOffIcon() {
 
 function UserIcon({ className }: { className?: string }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
@@ -78,7 +78,7 @@ function UserIcon({ className }: { className?: string }) {
 
 function BuildingIcon({ className }: { className?: string }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <rect width="16" height="20" x="4" y="2" rx="2" />
       <path d="M9 22v-4h6v4" />
       <path d="M8 6h.01" /><path d="M16 6h.01" /><path d="M8 10h.01" />
@@ -89,8 +89,65 @@ function BuildingIcon({ className }: { className?: string }) {
 
 function PhoneIcon({ className }: { className?: string }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  );
+}
+
+function ShieldCheckIcon({ className }: { className?: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  );
+}
+
+function PillIcon({ className }: { className?: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
+      <path d="m8.5 8.5 7 7" />
+    </svg>
+  );
+}
+
+function TruckIcon({ className }: { className?: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+      <path d="M15 18H9" />
+      <path d="M19 18h2a1 1 0 0 0 1-1v-5.65a1 1 0 0 0-.29-.71l-3.35-3.35A1 1 0 0 0 17.65 7H14v11" />
+      <circle cx="7" cy="18" r="2" />
+      <circle cx="17" cy="18" r="2" />
+    </svg>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" className="shrink-0">
+      <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" />
+      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z" />
+      <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
+    </svg>
+  );
+}
+
+// ─── Floating Medical Cross Background Accent ─────────────────────────────────
+
+function MedicalCross({ className, size = 32 }: { className?: string; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={`pointer-events-none ${className || ""}`}
+    >
+      <path d="M19 10.5h-5.5V5a1.5 1.5 0 0 0-3 0v5.5H5a1.5 1.5 0 0 0 0 3h5.5V19a1.5 1.5 0 0 0 3 0v-5.5H19a1.5 1.5 0 0 0 0-3z" />
     </svg>
   );
 }
@@ -99,18 +156,18 @@ function PhoneIcon({ className }: { className?: string }) {
 
 function ErrorBox({ msg }: { msg: string }) {
   return (
-    <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2.5 text-left animate-in fade-in duration-150">
-      <span className="text-red-500 font-bold text-sm leading-none mt-0.5">!</span>
-      <p className="text-red-700 text-xs leading-relaxed flex-1 break-words">{msg}</p>
+    <div className="bg-red-50/90 border border-red-200/90 rounded-2xl p-3.5 flex items-start gap-2.5 text-left animate-in fade-in duration-150 shadow-xs">
+      <span className="text-red-600 font-black text-sm leading-none mt-0.5">!</span>
+      <p className="text-red-700 text-xs leading-relaxed flex-1 break-words font-medium">{msg}</p>
     </div>
   );
 }
 
 function SuccessBox({ msg }: { msg: string }) {
   return (
-    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-start gap-2.5 text-left animate-in fade-in duration-150">
-      <span className="text-emerald-600 font-bold text-sm leading-none mt-0.5">✓</span>
-      <p className="text-emerald-700 text-xs leading-relaxed flex-1 break-words">{msg}</p>
+    <div className="bg-emerald-50/90 border border-emerald-200/90 rounded-2xl p-3.5 flex items-start gap-2.5 text-left animate-in fade-in duration-150 shadow-xs">
+      <span className="text-emerald-600 font-black text-sm leading-none mt-0.5">✓</span>
+      <p className="text-emerald-800 text-xs leading-relaxed flex-1 break-words font-medium">{msg}</p>
     </div>
   );
 }
@@ -142,7 +199,6 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
         setEmail(savedEmail);
         setRememberMe(true);
         if (savedRole && (savedRole === "admin" || savedRole === "retailer" || savedRole === "delivery_partner")) {
-          // If remembered role was admin or delivery_partner, default to the unified admin/delivery partner tab ("admin")
           setSelectedRole(savedRole === "delivery_partner" ? "admin" : savedRole);
         }
       }
@@ -243,7 +299,6 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
     }
 
     setLoading(true);
-    // When logging in under the unified Admin / Delivery Partner tab, pass "staff" sentinel so DB resolves the role
     const expectedRoleToPass = selectedRole === "admin" ? "staff" : selectedRole;
     const { error: authError } = await signIn(email.trim(), password, expectedRoleToPass);
     setLoading(false);
@@ -298,417 +353,630 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
     }
   };
 
-  const cfg = ROLES[selectedRole] || ROLES["retailer"];
   const roleList: UserRole[] = mode === "signup" ? ["retailer"] : ["retailer", "admin"];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f2f8f3] via-[#f9faf9] to-[#ebf5ed] flex flex-col justify-center items-center p-4 sm:p-6 text-[#073b4c]">
+    <div className="min-h-screen relative bg-gradient-to-br from-[#dbeafe] via-[#eff6ff] to-[#e0f2fe] flex items-center justify-center p-3 sm:p-6 lg:p-10 overflow-hidden font-['Plus_Jakarta_Sans',sans-serif]">
       
-      {/* Top action bar: Back to Store */}
-      {onBackToStore && (
-        <div className="w-full max-w-md mb-3 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onBackToStore}
-            className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#006a39] hover:text-[#004d2a] transition-colors cursor-pointer"
-          >
-            <span>←</span>
-            <span>Back to Pharmacy Store</span>
-          </button>
-          <span className="text-[11px] text-[#718574] font-semibold">SubhOne Health Group</span>
-        </div>
-      )}
+      {/* ── Ambient Background Glow & Floating Medical Cross Elements ── */}
+      <div className="absolute -top-32 -left-32 w-96 h-96 bg-blue-300/30 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 -right-32 w-96 h-96 bg-cyan-200/40 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-32 left-1/4 w-[500px] h-[500px] bg-blue-200/30 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Main Authentication Card */}
-      <div className="w-full max-w-md bg-white border border-[#e2ede4] rounded-3xl shadow-xl shadow-emerald-950/5 p-6 sm:p-8 flex flex-col gap-5">
+      <MedicalCross size={48} className="absolute top-12 left-1/4 text-blue-300/40 animate-pulse hidden md:block" />
+      <MedicalCross size={64} className="absolute top-1/2 left-8 text-blue-300/35 hidden lg:block" />
+      <MedicalCross size={40} className="absolute bottom-24 right-1/3 text-blue-400/30 hidden md:block" />
+      <MedicalCross size={72} className="absolute top-20 right-12 text-blue-300/25 hidden lg:block" />
+
+      {/* Decorative Botanical Leaf Accent (Bottom-Left) */}
+      <div className="absolute bottom-0 left-0 w-44 sm:w-64 h-44 sm:h-64 pointer-events-none opacity-40 lg:opacity-60">
+        <svg viewBox="0 0 200 200" fill="none" className="w-full h-full text-teal-600/30">
+          <path d="M10 190C15 130 50 80 110 50C100 90 85 140 10 190Z" fill="currentColor" />
+          <path d="M30 195C55 150 90 120 150 100C130 140 100 170 30 195Z" fill="currentColor" opacity="0.7" />
+          <path d="M10 170C40 120 70 80 130 70C110 100 80 140 10 170Z" fill="currentColor" opacity="0.5" />
+        </svg>
+      </div>
+
+      {/* ── Main Canvas Wrapper ── */}
+      <div className="w-full max-w-[1240px] relative z-10 flex flex-col gap-4 sm:gap-6 my-auto">
         
-        {/* Brand Header */}
-        <div className="text-center flex flex-col items-center">
-          <img
-            src="/logo.png"
-            alt="SubhOne Health Group"
-            className="w-16 h-16 rounded-2xl object-contain bg-white shadow-md p-1 mb-3 border border-[#dce7db]"
-          />
-          <h1 className="font-['Manrope',sans-serif] font-black text-xl sm:text-2xl text-[#073b4c] tracking-tight">
-            SubhOne Health Group
-          </h1>
-          <p className="text-xs text-[#627765] mt-1">
-            {mode === "login" ? "Sign in to your account" : "Create your new account"}
-          </p>
-        </div>
-
-        {/* Mode Switcher Tabs (Sign In / Sign Up) */}
-        <div className="grid grid-cols-2 p-1 rounded-2xl bg-[#f0f5f2] border border-[#dce7db] text-xs font-bold">
-          <button
-            type="button"
-            onClick={() => switchMode("login")}
-            className={`py-2 rounded-xl transition-all duration-150 cursor-pointer ${
-              mode === "login"
-                ? "bg-white text-[#073b4c] shadow-xs font-black"
-                : "text-[#627765] hover:text-[#073b4c]"
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            onClick={() => switchMode("signup")}
-            className={`py-2 rounded-xl transition-all duration-150 cursor-pointer ${
-              mode === "signup"
-                ? "bg-white text-[#073b4c] shadow-xs font-black"
-                : "text-[#627765] hover:text-[#073b4c]"
-            }`}
-          >
-            Create Account
-          </button>
-        </div>
-
-        {/* Clean Role Selector */}
-        <div className="flex flex-col gap-1.5">
-          <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-wider text-[#627765]">
-            <span>Account Type</span>
-            <span className="text-emerald-800 font-extrabold">{cfg.label}</span>
-          </div>
-
-          <div className={`grid gap-1.5 p-1 rounded-2xl bg-[#f0f5f2] border border-[#dce7db] ${roleList.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
-            {roleList.map((r) => {
-              const active = selectedRole === r;
-              const roleInfo = ROLES[r] || ROLES["retailer"];
-              return (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => { setSelectedRole(r); setError(""); setSuccess(""); }}
-                  className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${
-                    active
-                      ? "bg-white text-[#073b4c] shadow-xs font-black border border-white"
-                      : "text-[#627765] hover:text-[#073b4c]"
-                  }`}
-                >
-                  <span className="text-sm">
-                    {r === "retailer" ? "🏪" : "🛡️"}
-                  </span>
-                  <span>{roleInfo.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Pending Retailer Approval Notice (if applicable) */}
-        {pendingApprovalInfo && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 text-xs text-amber-900 flex flex-col gap-2">
-            <div className="flex items-center justify-between font-bold">
-              <span>⏳ Retailer Application In Review</span>
-              <span className="text-[10px] uppercase bg-amber-200 px-2 py-0.5 rounded-full">Pending</span>
-            </div>
-            <p className="text-[11px] text-amber-800 leading-normal">
-              Wholesale account for <strong>{pendingApprovalInfo.shopName}</strong> ({pendingApprovalInfo.email}) is currently being reviewed.
-            </p>
-            <div className="flex items-center gap-2 pt-1 border-t border-amber-200/80">
-              <button
-                type="button"
-                onClick={() => {
-                  setStatusQuery(pendingApprovalInfo.email);
-                  setShowStatusModal(true);
-                  handleCheckStatus(undefined, pendingApprovalInfo.email);
-                }}
-                className="text-[11px] font-bold text-amber-800 hover:underline"
-              >
-                View Status Details →
-              </button>
-              <button
-                type="button"
-                onClick={clearPendingApproval}
-                className="text-[11px] text-amber-700 hover:underline ml-auto"
-              >
-                Switch Account
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── Sign In Form ── */}
-        {mode === "login" && (
-          <form onSubmit={handleLogin} className="flex flex-col gap-3.5">
-            {/* Email */}
-            <div>
-              <label className="text-[11px] font-bold text-[#073b4c] block mb-1">
-                Email Address
-              </label>
-              <div className="relative">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8ea292] pointer-events-none">
-                  <MailIcon />
-                </div>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  autoComplete="email"
-                  required
-                  className="w-full bg-[#fbfdfb] border border-[#d6e4d8] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-[#073b4c] placeholder:text-[#9bb09f] focus:outline-none focus:border-[#006a39] focus:ring-2 focus:ring-emerald-500/20 transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="text-[11px] font-bold text-[#073b4c] block mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8ea292] pointer-events-none">
-                  <LockIcon />
-                </div>
-                <input
-                  type={showPass ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  required
-                  className="w-full bg-[#fbfdfb] border border-[#d6e4d8] rounded-xl pl-10 pr-10 py-2.5 text-sm text-[#073b4c] placeholder:text-[#9bb09f] focus:outline-none focus:border-[#006a39] focus:ring-2 focus:ring-emerald-500/20 transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8ea292] hover:text-[#073b4c] cursor-pointer"
-                  tabIndex={-1}
-                >
-                  {showPass ? <EyeOffIcon /> : <EyeIcon />}
-                </button>
-              </div>
-            </div>
-
-            {/* Remember Me & Forgot Password Row */}
-            <div className="flex items-center justify-between text-xs pt-0.5">
-              <label className="flex items-center gap-2 text-[#596b5e] cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-[#d6e4d8] text-[#006a39] focus:ring-emerald-500 cursor-pointer accent-[#006a39]"
-                />
-                <span>Remember me</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  setForgotEmail(email);
-                  setForgotError("");
-                  setForgotSuccess("");
-                  setShowForgot(true);
-                }}
-                className="font-bold text-[#006a39] hover:underline cursor-pointer"
-              >
-                Forgot password?
-              </button>
-            </div>
-
-            {error && <ErrorBox msg={error} />}
-            {success && <SuccessBox msg={success} />}
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all hover:opacity-95 active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2 shadow-md shadow-emerald-950/10 cursor-pointer mt-1"
-              style={{ background: cfg.gradient }}
-            >
-              {loading ? (
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <span>Sign In as {cfg.label}</span>
-              )}
-            </button>
-          </form>
-        )}
-
-        {/* ── Sign Up Form ── */}
-        {mode === "signup" && (
-          <form onSubmit={handleSignup} className="flex flex-col gap-3">
-            {/* Full Name */}
-            <div>
-              <label className="text-[11px] font-bold text-[#073b4c] block mb-1">
-                Full Name *
-              </label>
-              <div className="relative">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8ea292] pointer-events-none">
-                  <UserIcon />
-                </div>
-                <input
-                  type="text"
-                  value={signupName}
-                  onChange={(e) => setSignupName(e.target.value)}
-                  placeholder="John Doe"
-                  required
-                  className="w-full bg-[#fbfdfb] border border-[#d6e4d8] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-[#073b4c] placeholder:text-[#9bb09f] focus:outline-none focus:border-[#006a39] focus:ring-2 focus:ring-emerald-500/20 transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Email Address */}
-            <div>
-              <label className="text-[11px] font-bold text-[#073b4c] block mb-1">
-                Email Address *
-              </label>
-              <div className="relative">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8ea292] pointer-events-none">
-                  <MailIcon />
-                </div>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  required
-                  className="w-full bg-[#fbfdfb] border border-[#d6e4d8] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-[#073b4c] placeholder:text-[#9bb09f] focus:outline-none focus:border-[#006a39] focus:ring-2 focus:ring-emerald-500/20 transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Phone Number */}
-            <div>
-              <label className="text-[11px] font-bold text-[#073b4c] block mb-1">
-                Phone Number (Optional)
-              </label>
-              <div className="relative">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8ea292] pointer-events-none">
-                  <PhoneIcon />
-                </div>
-                <input
-                  type="tel"
-                  value={signupPhone}
-                  onChange={(e) => setSignupPhone(e.target.value.replace(/[^0-9+]/g, ""))}
-                  placeholder="+91 98765 43210"
-                  className="w-full bg-[#fbfdfb] border border-[#d6e4d8] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-[#073b4c] placeholder:text-[#9bb09f] focus:outline-none focus:border-[#006a39] focus:ring-2 focus:ring-emerald-500/20 transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Shop / Pharmacy Name */}
-            <div>
-              <label className="text-[11px] font-bold text-[#073b4c] block mb-1">
-                Shop / Pharmacy Name *
-              </label>
-              <div className="relative">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8ea292] pointer-events-none">
-                  <BuildingIcon />
-                </div>
-                <input
-                  type="text"
-                  value={signupShop}
-                  onChange={(e) => setSignupShop(e.target.value)}
-                  placeholder="e.g. Apollo Chemist, LifeCare Pharmacy"
-                  required
-                  className="w-full bg-[#fbfdfb] border border-[#d6e4d8] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-[#073b4c] placeholder:text-[#9bb09f] focus:outline-none focus:border-[#006a39] focus:ring-2 focus:ring-emerald-500/20 transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Password & Confirm Password */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div>
-                <label className="text-[11px] font-bold text-[#073b4c] block mb-1">
-                  Password *
-                </label>
-                <input
-                  type={showPass ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min 6 chars"
-                  required
-                  className="w-full bg-[#fbfdfb] border border-[#d6e4d8] rounded-xl px-3 py-2.5 text-sm text-[#073b4c] placeholder:text-[#9bb09f] focus:outline-none focus:border-[#006a39] focus:ring-2 focus:ring-emerald-500/20 transition-all"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold text-[#073b4c] block mb-1">
-                  Confirm Password *
-                </label>
-                <input
-                  type={showPass ? "text" : "password"}
-                  value={signupConfirm}
-                  onChange={(e) => setSignupConfirm(e.target.value)}
-                  placeholder="Confirm"
-                  required
-                  className="w-full bg-[#fbfdfb] border border-[#d6e4d8] rounded-xl px-3 py-2.5 text-sm text-[#073b4c] placeholder:text-[#9bb09f] focus:outline-none focus:border-[#006a39] focus:ring-2 focus:ring-emerald-500/20 transition-all"
-                />
-              </div>
-            </div>
-
-            {error && <ErrorBox msg={error} />}
-            {success && <SuccessBox msg={success} />}
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all hover:opacity-95 active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2 shadow-md shadow-emerald-950/10 cursor-pointer mt-1"
-              style={{ background: cfg.gradient }}
-            >
-              {loading ? (
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <span>Register as {cfg.label}</span>
-              )}
-            </button>
-          </form>
-        )}
-
-        {/* ── Sub-options & Helper Links ── */}
-        <div className="pt-3 border-t border-[#e8f0e9] flex flex-col gap-2 text-center text-xs text-[#627765]">
-          {selectedRole === "retailer" && (
-            <button
-              type="button"
-              onClick={() => {
-                setStatusQuery(email || "");
-                setShowStatusModal(true);
-                if (email) handleCheckStatus(undefined, email);
-              }}
-              className="text-[#006a39] font-bold hover:underline cursor-pointer"
-            >
-              Applied as Retailer? Check your verification status →
-            </button>
-          )}
-
-          {onBackToStore && (
+        {/* Top Navigation Row */}
+        {onBackToStore && (
+          <div className="w-full flex items-center justify-between px-2 sm:px-4">
             <button
               type="button"
               onClick={onBackToStore}
-              className="hover:text-[#073b4c] transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold text-[#1d4ed8] hover:text-[#1e40af] bg-white/70 hover:bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-white/80 shadow-xs transition-all cursor-pointer group"
             >
-              Want to browse products first? <span className="font-bold underline text-[#006a39]">Continue as Guest</span>
+              <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+              <span>Back to Store</span>
             </button>
-          )}
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
+              <span className="text-[11px] sm:text-xs font-bold text-slate-600 tracking-wide">
+                Verified Health Platform
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* ── Split Screen Card Container ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          
+          {/* ════════ LEFT COLUMN: Brand Hero & Value Proposition ════════ */}
+          <div className="lg:col-span-6 xl:col-span-6 flex flex-col justify-between h-full px-2 sm:px-6 lg:px-4">
+            
+            {/* Top Brand Logo - PRESERVED EXISTING LOGO */}
+            <div className="flex items-center gap-3 mb-6 sm:mb-8">
+              <img
+                src="/logo.png"
+                alt="SubhOne Health Group"
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-contain bg-white shadow-md p-1.5 border border-white/80 shrink-0"
+              />
+              <div className="flex flex-col text-left">
+                <span className="font-['Manrope',sans-serif] font-black text-[#0f172a] text-xl sm:text-2xl tracking-tight leading-tight">
+                  SubhOne
+                </span>
+                <span className="font-['Manrope',sans-serif] font-bold text-[#e11d48] text-base sm:text-lg tracking-tight leading-none">
+                  Health Group
+                </span>
+                <span className="text-[9px] sm:text-[10px] font-extrabold text-[#0284c7] tracking-[2px] uppercase mt-1">
+                  Pharmacy & Diagnostic
+                </span>
+              </div>
+            </div>
+
+            {/* Welcome Pill Badge */}
+            <div className="mb-4">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-blue-200/70 text-[#2563eb] text-xs font-black shadow-2xs">
+                <ShieldCheckIcon className="text-[#2563eb]" />
+                <span>{mode === "login" ? "Welcome Back" : "Fast & Secure Registration"}</span>
+              </span>
+            </div>
+
+            {/* Luxury Hero Headline */}
+            <div className="mb-4 sm:mb-6">
+              <h1 className="font-['Plus_Jakarta_Sans',sans-serif] font-black text-3xl sm:text-4xl md:text-5xl lg:text-[52px] text-[#0f172a] leading-[1.1] tracking-tight">
+                Your Health <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2563eb] via-[#1d4ed8] to-[#0284c7]">
+                  Our Priority
+                </span>
+              </h1>
+              <p className="text-slate-600 text-sm sm:text-base font-medium mt-3 sm:mt-4 max-w-lg leading-relaxed">
+                {mode === "login"
+                  ? "Log in to access your account and continue your health journey with verified genuine medicines."
+                  : "Join SubhOne Health Group to unlock wholesale medicine rates, direct distributor billing, and fast dispatch."}
+              </p>
+            </div>
+
+            {/* 3 Luxury Value Bullets */}
+            <div className="flex flex-col gap-3.5 sm:gap-4 mb-8">
+              {/* Bullet 1 */}
+              <div className="flex items-center gap-3.5 group">
+                <div className="w-11 h-11 rounded-2xl bg-white/90 backdrop-blur-md border border-blue-200/60 shadow-xs flex items-center justify-center text-[#2563eb] group-hover:scale-105 group-hover:shadow-md transition-all shrink-0">
+                  <PillIcon />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-['Plus_Jakarta_Sans',sans-serif] font-extrabold text-sm sm:text-base text-[#0f172a]">
+                    Wide Range
+                  </span>
+                  <span className="text-xs sm:text-sm text-slate-500 font-medium">
+                    of Health Products & Certified Brands
+                  </span>
+                </div>
+              </div>
+
+              {/* Bullet 2 */}
+              <div className="flex items-center gap-3.5 group">
+                <div className="w-11 h-11 rounded-2xl bg-white/90 backdrop-blur-md border border-blue-200/60 shadow-xs flex items-center justify-center text-[#2563eb] group-hover:scale-105 group-hover:shadow-md transition-all shrink-0">
+                  <ShieldCheckIcon />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-['Plus_Jakarta_Sans',sans-serif] font-extrabold text-sm sm:text-base text-[#0f172a]">
+                    Trusted
+                  </span>
+                  <span className="text-xs sm:text-sm text-slate-500 font-medium">
+                    Quality, Lab Certified & 100% Genuine Care
+                  </span>
+                </div>
+              </div>
+
+              {/* Bullet 3 */}
+              <div className="flex items-center gap-3.5 group">
+                <div className="w-11 h-11 rounded-2xl bg-white/90 backdrop-blur-md border border-blue-200/60 shadow-xs flex items-center justify-center text-[#2563eb] group-hover:scale-105 group-hover:shadow-md transition-all shrink-0">
+                  <TruckIcon />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-['Plus_Jakarta_Sans',sans-serif] font-extrabold text-sm sm:text-base text-[#0f172a]">
+                    Fast & Reliable
+                  </span>
+                  <span className="text-xs sm:text-sm text-slate-500 font-medium">
+                    Doorstep Express Delivery Across Pin Codes
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Delivery Partner Hero Visual Illustration */}
+            <div className="relative rounded-3xl overflow-hidden shadow-xl shadow-blue-900/10 border border-white/80 max-w-[420px] bg-gradient-to-t from-white via-white/80 to-transparent p-2 group">
+              <img
+                src="/delivery-hero.jpg"
+                alt="SubhOne Delivery Executive"
+                className="w-full h-48 sm:h-56 object-cover object-top rounded-2xl group-hover:scale-102 transition-transform duration-500"
+              />
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-white via-white/90 to-transparent p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-black text-[#0f172a]">SubhOne Express Fleet</p>
+                  <p className="text-[11px] text-slate-500 font-medium">Safe cold-chain & tamper-proof medicine boxes</p>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#2563eb] text-[10px] font-black uppercase">
+                  Active
+                </span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* ════════ RIGHT COLUMN: Luxury Glassmorphic Form Card ════════ */}
+          <div className="lg:col-span-6 xl:col-span-6 flex justify-center w-full">
+            <div className="w-full max-w-[490px] bg-white/95 backdrop-blur-2xl border border-white/90 rounded-[32px] sm:rounded-[38px] shadow-2xl shadow-blue-950/10 p-6 sm:p-10 flex flex-col gap-5 relative transition-all">
+              
+              {/* Card Top Brand Header - PRESERVED EXISTING LOGO */}
+              <div className="text-center flex flex-col items-center">
+                <img
+                  src="/logo.png"
+                  alt="SubhOne Health Group"
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-contain bg-white shadow-md p-1.5 border border-slate-100 mb-2.5"
+                />
+                <div className="flex flex-col items-center leading-none">
+                  <span className="font-['Manrope',sans-serif] font-black text-[#0f172a] text-lg sm:text-xl">
+                    SubhOne
+                  </span>
+                  <span className="font-['Manrope',sans-serif] font-bold text-[#e11d48] text-sm sm:text-base">
+                    Health Group
+                  </span>
+                  <span className="text-[9px] font-extrabold text-[#0284c7] tracking-[2px] uppercase mt-1">
+                    Pharmacy & Diagnostic
+                  </span>
+                </div>
+              </div>
+
+              {/* Form Headline */}
+              <div className="text-center mt-1">
+                <h2 className="font-['Plus_Jakarta_Sans',sans-serif] font-black text-2xl sm:text-[28px] text-[#0f172a] tracking-tight">
+                  {mode === "login" ? "Login to Your Account" : "Create an Account"}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+                  {mode === "login"
+                    ? "Welcome back! Please enter your details."
+                    : "Please enter your details to set up your account."}
+                </p>
+              </div>
+
+              {/* Segmented Sign In / Sign Up Mode Switcher */}
+              <div className="grid grid-cols-2 p-1.5 rounded-2xl bg-slate-100/80 border border-slate-200/70 text-xs font-extrabold">
+                <button
+                  type="button"
+                  onClick={() => switchMode("login")}
+                  className={`py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
+                    mode === "login"
+                      ? "bg-white text-[#0f172a] shadow-sm font-black"
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchMode("signup")}
+                  className={`py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
+                    mode === "signup"
+                      ? "bg-white text-[#0f172a] shadow-sm font-black"
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}
+                >
+                  Create Account
+                </button>
+              </div>
+
+              {/* Account Type Selector (Retailer vs Admin) */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-wider text-slate-500">
+                  <span>Select Portal</span>
+                  <span className="text-[#2563eb] font-extrabold">{ROLES[selectedRole]?.label}</span>
+                </div>
+
+                <div className={`grid gap-1.5 p-1 rounded-2xl bg-slate-100/80 border border-slate-200/70 ${roleList.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
+                  {roleList.map((r) => {
+                    const active = selectedRole === r;
+                    const roleInfo = ROLES[r] || ROLES["retailer"];
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => { setSelectedRole(r); setError(""); setSuccess(""); }}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer ${
+                          active
+                            ? "bg-white text-[#0f172a] shadow-sm font-black border border-white"
+                            : "text-slate-500 hover:text-slate-900"
+                        }`}
+                      >
+                        <span>{r === "retailer" ? "🏪" : "🛡️"}</span>
+                        <span>{roleInfo.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Pending Retailer Notice (if any) */}
+              {pendingApprovalInfo && (
+                <div className="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 text-xs text-amber-950 flex flex-col gap-2 shadow-xs">
+                  <div className="flex items-center justify-between font-bold">
+                    <span>⏳ Retailer Application In Review</span>
+                    <span className="text-[10px] uppercase bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-extrabold">
+                      Pending
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-amber-800 leading-normal">
+                    Wholesale account for <strong>{pendingApprovalInfo.shopName}</strong> ({pendingApprovalInfo.email}) is currently being reviewed.
+                  </p>
+                  <div className="flex items-center gap-2 pt-2 border-t border-amber-200/80">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStatusQuery(pendingApprovalInfo.email);
+                        setShowStatusModal(true);
+                        handleCheckStatus(undefined, pendingApprovalInfo.email);
+                      }}
+                      className="text-[11px] font-extrabold text-blue-700 hover:underline"
+                    >
+                      View Status Details →
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearPendingApproval}
+                      className="text-[11px] text-slate-500 hover:underline ml-auto"
+                    >
+                      Switch Account
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Sign In Form ── */}
+              {mode === "login" && (
+                <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                  {/* Email */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 block mb-1.5">
+                      Email Address *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <MailIcon />
+                      </div>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="name@example.com"
+                        autoComplete="email"
+                        required
+                        className="w-full bg-[#f8fafc] border border-slate-200/90 rounded-2xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/15 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 block mb-1.5">
+                      Password *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <LockIcon />
+                      </div>
+                      <input
+                        type={showPass ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        autoComplete="current-password"
+                        required
+                        className="w-full bg-[#f8fafc] border border-slate-200/90 rounded-2xl pl-11 pr-11 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/15 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPass(!showPass)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer p-1"
+                        tabIndex={-1}
+                        aria-label={showPass ? "Hide password" : "Show password"}
+                      >
+                        {showPass ? <EyeOffIcon /> : <EyeIcon />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Remember Me & Forgot Password Row */}
+                  <div className="flex items-center justify-between text-xs pt-0.5">
+                    <label className="flex items-center gap-2 text-slate-600 font-medium cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="w-4 h-4 rounded border-slate-300 text-[#2563eb] focus:ring-blue-500 cursor-pointer accent-[#2563eb]"
+                      />
+                      <span>Remember me</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotEmail(email);
+                        setForgotError("");
+                        setForgotSuccess("");
+                        setShowForgot(true);
+                      }}
+                      className="font-bold text-[#2563eb] hover:underline cursor-pointer"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+
+                  {error && <ErrorBox msg={error} />}
+                  {success && <SuccessBox msg={success} />}
+
+                  {/* Primary CTA Button: Login -> */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3.5 px-6 rounded-2xl font-black text-sm text-white bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] hover:from-[#1d4ed8] hover:to-[#1e40af] shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer mt-1 disabled:opacity-60"
+                  >
+                    {loading ? (
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>Login</span>
+                        <span className="text-base font-bold">→</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+
+              {/* ── Sign Up Form ── */}
+              {mode === "signup" && (
+                <form onSubmit={handleSignup} className="flex flex-col gap-3.5">
+                  {/* Full Name */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 block mb-1">
+                      Full Name *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <UserIcon />
+                      </div>
+                      <input
+                        type="text"
+                        value={signupName}
+                        onChange={(e) => setSignupName(e.target.value)}
+                        placeholder="John Doe"
+                        required
+                        className="w-full bg-[#f8fafc] border border-slate-200/90 rounded-2xl pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/15 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email Address */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 block mb-1">
+                      Email Address *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <MailIcon />
+                      </div>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="name@example.com"
+                        required
+                        className="w-full bg-[#f8fafc] border border-slate-200/90 rounded-2xl pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/15 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Phone Number */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 block mb-1">
+                      Phone Number (Optional)
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <PhoneIcon />
+                      </div>
+                      <input
+                        type="tel"
+                        value={signupPhone}
+                        onChange={(e) => setSignupPhone(e.target.value.replace(/[^0-9+]/g, ""))}
+                        placeholder="+91 98765 43210"
+                        className="w-full bg-[#f8fafc] border border-slate-200/90 rounded-2xl pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/15 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Shop / Pharmacy Name */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 block mb-1">
+                      Shop / Pharmacy Name *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <BuildingIcon />
+                      </div>
+                      <input
+                        type="text"
+                        value={signupShop}
+                        onChange={(e) => setSignupShop(e.target.value)}
+                        placeholder="e.g. Apollo Chemist, LifeCare Pharmacy"
+                        required
+                        className="w-full bg-[#f8fafc] border border-slate-200/90 rounded-2xl pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/15 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password & Confirm Password */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="text-xs font-bold text-slate-800 block mb-1">
+                        Password *
+                      </label>
+                      <input
+                        type={showPass ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Min 6 chars"
+                        required
+                        className="w-full bg-[#f8fafc] border border-slate-200/90 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/15 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-800 block mb-1">
+                        Confirm Password *
+                      </label>
+                      <input
+                        type={showPass ? "text" : "password"}
+                        value={signupConfirm}
+                        onChange={(e) => setSignupConfirm(e.target.value)}
+                        placeholder="Confirm"
+                        required
+                        className="w-full bg-[#f8fafc] border border-slate-200/90 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/15 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {error && <ErrorBox msg={error} />}
+                  {success && <SuccessBox msg={success} />}
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3.5 px-6 rounded-2xl font-black text-sm text-white bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] hover:from-[#1d4ed8] hover:to-[#1e40af] shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer mt-1 disabled:opacity-60"
+                  >
+                    {loading ? (
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>Create Account</span>
+                        <span className="text-base font-bold">→</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+
+              {/* ── Divider: "or" ── */}
+              <div className="relative my-0.5">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-white px-3 text-slate-400 font-semibold uppercase tracking-wider">
+                    or
+                  </span>
+                </div>
+              </div>
+
+              {/* ── Continue with Google Button ── */}
+              <button
+                type="button"
+                onClick={() => {
+                  setError("Google Single Sign-On is being provisioned. Please enter your email and password above.");
+                }}
+                className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-700 text-xs sm:text-sm font-bold flex items-center justify-center gap-3 shadow-2xs hover:shadow-xs active:scale-[0.99] transition-all cursor-pointer"
+              >
+                <GoogleIcon />
+                <span>Continue with Google</span>
+              </button>
+
+              {/* ── Switch Mode Link: Don't have an account? Create Account ── */}
+              <div className="text-center text-xs text-slate-600 pt-1">
+                {mode === "login" ? (
+                  <p>
+                    Don&apos;t have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => switchMode("signup")}
+                      className="font-black text-[#2563eb] hover:underline cursor-pointer"
+                    >
+                      Create Account
+                    </button>
+                  </p>
+                ) : (
+                  <p>
+                    Already have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => switchMode("login")}
+                      className="font-black text-[#2563eb] hover:underline cursor-pointer"
+                    >
+                      Sign In
+                    </button>
+                  </p>
+                )}
+              </div>
+
+              {/* ── Retailer Status Link ── */}
+              {selectedRole === "retailer" && (
+                <div className="pt-2 border-t border-slate-100 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusQuery(email || "");
+                      setShowStatusModal(true);
+                      if (email) handleCheckStatus(undefined, email);
+                    }}
+                    className="text-xs font-bold text-[#0284c7] hover:underline cursor-pointer"
+                  >
+                    Applied as Retailer? Check your verification status →
+                  </button>
+                </div>
+              )}
+
+            </div>
+          </div>
+
         </div>
 
       </div>
 
-      {/* ── Forgot Password Modal ── */}
+      {/* ── Forgot Password Modal (Matching Luxury Glassmorphism) ── */}
       {showForgot && (
         <div
-          className="fixed inset-0 bg-[#07242e]/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-150"
           onClick={() => setShowForgot(false)}
         >
           <div
-            className="bg-white border border-[#e4ede2] rounded-3xl w-full max-w-sm p-6 shadow-2xl relative animate-in zoom-in-95 duration-150 flex flex-col gap-4"
+            className="bg-white/95 backdrop-blur-2xl border border-white/90 rounded-[32px] w-full max-w-sm p-6 sm:p-7 shadow-2xl relative animate-in zoom-in-95 duration-150 flex flex-col gap-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="font-['Manrope',sans-serif] font-bold text-base text-[#073b4c]">
+              <h3 className="font-['Plus_Jakarta_Sans',sans-serif] font-black text-lg text-slate-900">
                 Reset Password
               </h3>
               <button
                 type="button"
                 onClick={() => setShowForgot(false)}
-                className="w-7 h-7 rounded-full bg-[#f0f5f1] hover:bg-[#e2ede4] flex items-center justify-center text-xs text-[#073b4c] cursor-pointer"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-xs text-slate-700 cursor-pointer transition-colors"
+                aria-label="Close"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-[#627765] leading-relaxed">
+            <p className="text-xs text-slate-500 leading-relaxed font-medium">
               Enter your registered email address and we will send you a password reset link.
             </p>
 
@@ -719,7 +987,7 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                 onChange={(e) => setForgotEmail(e.target.value)}
                 placeholder="name@example.com"
                 required
-                className="w-full bg-[#fbfdfb] border border-[#d6e4d8] rounded-xl px-3.5 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39] focus:ring-2 focus:ring-emerald-500/20"
+                className="w-full bg-[#f8fafc] border border-slate-200/90 rounded-2xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/15"
               />
 
               {forgotError && <ErrorBox msg={forgotError} />}
@@ -729,14 +997,14 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                 <button
                   type="button"
                   onClick={() => setShowForgot(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-[#d6e4d8] text-xs font-bold text-[#627765] hover:bg-[#f4faf5] cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="flex-1 py-2.5 rounded-xl bg-[#006a39] text-white text-xs font-bold hover:bg-[#005a30] transition-colors disabled:opacity-60 flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-white text-xs font-bold hover:opacity-95 transition-all disabled:opacity-60 flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-blue-600/25"
                 >
                   {forgotLoading && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                   <span>{forgotLoading ? "Sending..." : "Send Link"}</span>
@@ -750,28 +1018,29 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
       {/* ── Check Retailer Approval Status Modal ── */}
       {showStatusModal && (
         <div
-          className="fixed inset-0 bg-[#07242e]/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-150"
           onClick={() => setShowStatusModal(false)}
         >
           <div
-            className="bg-white border border-[#e4ede2] rounded-3xl w-full max-w-md p-6 shadow-2xl relative animate-in zoom-in-95 duration-150 flex flex-col gap-4"
+            className="bg-white/95 backdrop-blur-2xl border border-white/90 rounded-[32px] w-full max-w-md p-6 sm:p-8 shadow-2xl relative animate-in zoom-in-95 duration-150 flex flex-col gap-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="font-['Manrope',sans-serif] font-bold text-base text-[#073b4c]">
+              <h3 className="font-['Plus_Jakarta_Sans',sans-serif] font-black text-lg text-slate-900">
                 Retailer Application Status
               </h3>
               <button
                 type="button"
                 onClick={() => setShowStatusModal(false)}
-                className="w-7 h-7 rounded-full bg-[#f0f5f1] hover:bg-[#e2ede4] flex items-center justify-center text-xs text-[#073b4c] cursor-pointer"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-xs text-slate-700 cursor-pointer transition-colors"
+                aria-label="Close"
               >
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleCheckStatus} className="flex flex-col gap-2">
-              <label className="text-[11px] font-bold text-[#073b4c]">
+              <label className="text-xs font-bold text-slate-800">
                 Registered Email or Phone Number
               </label>
               <div className="flex gap-2">
@@ -781,12 +1050,12 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                   onChange={(e) => setStatusQuery(e.target.value)}
                   placeholder="email@example.com or 9876543210"
                   required
-                  className="flex-1 bg-[#fbfdfb] border border-[#d6e4d8] rounded-xl px-3.5 py-2 text-xs sm:text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39] focus:ring-2 focus:ring-emerald-500/20"
+                  className="flex-1 bg-[#f8fafc] border border-slate-200/90 rounded-2xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/15"
                 />
                 <button
                   type="submit"
                   disabled={statusLoading}
-                  className="px-4 py-2 rounded-xl bg-[#006a39] hover:bg-[#005a30] text-white text-xs font-bold transition-all disabled:opacity-60 flex items-center gap-1.5 cursor-pointer shrink-0"
+                  className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-white text-xs font-bold transition-all disabled:opacity-60 flex items-center gap-1.5 cursor-pointer shrink-0 shadow-md shadow-blue-600/25"
                 >
                   {statusLoading && <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                   <span>{statusLoading ? "Checking..." : "Check"}</span>
@@ -796,11 +1065,11 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
 
             {/* Results */}
             {statusResult.searched && (
-              <div className="pt-3 border-t border-[#e8f0e9] animate-in fade-in duration-150">
+              <div className="pt-3 border-t border-slate-100 animate-in fade-in duration-150">
                 {statusResult.found && statusResult.retailer ? (
                   <div className="flex flex-col gap-3">
                     <div
-                      className={`p-3 rounded-xl border flex items-center justify-between text-xs font-bold ${
+                      className={`p-3.5 rounded-2xl border flex items-center justify-between text-xs font-bold ${
                         statusResult.retailer.approvalStatus === "approved"
                           ? "bg-emerald-50 border-emerald-200 text-emerald-900"
                           : statusResult.retailer.approvalStatus === "pending"
@@ -815,23 +1084,23 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                           ? "⏳ Application Under Review"
                           : "❌ Application Declined"}
                       </span>
-                      <span className="uppercase text-[10px] px-2 py-0.5 rounded-full bg-white/70">
+                      <span className="uppercase text-[10px] px-2 py-0.5 rounded-full bg-white/80 font-black">
                         {statusResult.retailer.approvalStatus}
                       </span>
                     </div>
 
-                    <div className="bg-[#f7faf7] border border-[#e2ece0] rounded-xl p-3 text-xs flex flex-col gap-1.5 text-[#596b5e]">
+                    <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 text-xs flex flex-col gap-1.5 text-slate-600">
                       <div className="flex justify-between">
                         <span>Shop:</span>
-                        <strong className="text-[#073b4c]">{statusResult.retailer.shopName}</strong>
+                        <strong className="text-slate-900">{statusResult.retailer.shopName}</strong>
                       </div>
                       <div className="flex justify-between">
                         <span>Contact:</span>
-                        <span className="text-[#073b4c]">{statusResult.retailer.fullName}</span>
+                        <span className="text-slate-900">{statusResult.retailer.fullName}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Email:</span>
-                        <span className="font-mono text-emerald-800">{statusResult.retailer.email}</span>
+                        <span className="font-mono text-blue-700">{statusResult.retailer.email}</span>
                       </div>
                     </div>
 
@@ -844,16 +1113,16 @@ export default function LoginPage({ onBackToStore }: { onBackToStore?: () => voi
                           setMode("login");
                           setShowStatusModal(false);
                         }}
-                        className="w-full py-2.5 rounded-xl bg-[#006a39] text-white text-xs font-bold hover:bg-[#005a30] transition-colors cursor-pointer"
+                        className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-white text-xs font-black shadow-md shadow-blue-600/25 transition-all cursor-pointer"
                       >
                         Sign In as Retailer Now →
                       </button>
                     )}
                   </div>
                 ) : (
-                  <div className="text-center py-4 bg-[#f7faf7] rounded-xl border border-[#e2ece0] text-xs">
-                    <p className="font-bold text-[#073b4c]">No Application Found</p>
-                    <p className="text-[#718574] text-[11px] mt-0.5">
+                  <div className="text-center py-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-xs">
+                    <p className="font-bold text-slate-800">No Application Found</p>
+                    <p className="text-slate-500 text-[11px] mt-0.5">
                       No retailer record found for &ldquo;{statusQuery}&rdquo;.
                     </p>
                   </div>

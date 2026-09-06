@@ -77,6 +77,21 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 ---
 
 ## 6. Recent Updates & Current State
+- **Luxury Glassmorphic Login & Signup UI/UX**:
+  - Completely redesigned `LoginPage.tsx` matching the user reference design with luxury typography (`Plus Jakarta Sans` & `Manrope`) and multi-layered glassmorphic styling (`bg-white/95 backdrop-blur-2xl border-white/90 shadow-2xl shadow-blue-950/10`).
+  - Left hero column features:
+    - Preserved existing brand logo (`/logo.png`) with SubhOne Health Group typography.
+    - Soft sky-blue gradient canvas with floating translucent medical crosses and bottom-left botanical accents.
+    - Glass pill badge (`Welcome Back` / `Fast & Secure Registration`).
+    - Headline: `Your Health` `<span className="text-[#2563eb]">Our Priority</span>`.
+    - Three circular glassmorphic value bullets: *Wide Range of Health Products*, *Trusted Quality & Care*, and *Fast & Reliable Delivery*.
+    - Delivery partner illustration (`/delivery-hero.jpg`) proudly holding the medicine delivery parcel box.
+  - Right form card features:
+    - Pristine floating glassmorphism card with centered logo, luxury headers, and segmented *Sign In / Create Account* and *Retailer / Admin* tabs.
+    - Sleek modern inputs with inner icons (`MailIcon`, `LockIcon`, `Eye/EyeOff`), `Remember me` checkbox, and vibrant blue `Forgot password?` link.
+    - Royal blue gradient CTA button (`Login →` / `Create Account →`).
+    - Integrated `Continue with Google` social button and smooth account creation toggles.
+    - Fully responsive with mobile bottom-sheet ergonomics and >=44px touch targets.
 - **Return & Replacement Policy System (Admin Panel & Product Description)**:
   - Added `return_policy TEXT DEFAULT 'Non-Returnable'` column across Neon Postgres `products` and `inventory_products` tables.
   - Admin Panel Add & Edit Product Modal (`src/pages/AdminDashboard.tsx`): Added interactive Return & Replacement Policy selector with 4 clear choices:
