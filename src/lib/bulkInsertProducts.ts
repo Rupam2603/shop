@@ -46,6 +46,7 @@ export async function bulkInsertProducts(
         mrp: row.mrp,
         customer_price: row.mrp,
         retailer_price: row.retailerPrice,
+        purchase_price: row.purchasePrice ?? null,
         discount_percent: 0,
         retailer_discount_percent: 0,
         stock: row.inventoryStock || 0,

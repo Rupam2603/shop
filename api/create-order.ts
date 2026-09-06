@@ -105,7 +105,7 @@ export default async function handler(req: any, res: any) {
       let lookup = validProductId
         ? await client.query(
             `SELECT id, numeric_id, name, sku, mrp, customer_price, retailer_price,
-                    stock, image_url
+                    stock, image_url, purchase_price
                FROM products
               WHERE id = $1
               FOR UPDATE`,
@@ -116,7 +116,7 @@ export default async function handler(req: any, res: any) {
       if (!lookup.rows.length && hasNumericId) {
         lookup = await client.query(
             `SELECT id, numeric_id, name, sku, mrp, customer_price, retailer_price,
-                    stock, image_url
+                    stock, image_url, purchase_price
                FROM products
               WHERE numeric_id = $1
               FOR UPDATE`,
@@ -127,7 +127,7 @@ export default async function handler(req: any, res: any) {
       if (!lookup.rows.length && productName) {
         lookup = await client.query(
             `SELECT id, numeric_id, name, sku, mrp, customer_price, retailer_price,
-                    stock, image_url
+                    stock, image_url, purchase_price
                FROM products
               WHERE name = $1
               FOR UPDATE`,
@@ -163,6 +163,7 @@ export default async function handler(req: any, res: any) {
         total_price: lineTotal,
         image_url: product.image_url || null,
         mrp: toNumber(product.mrp, unitPrice),
+        purchase_price_at_order: product.purchase_price ? Number(product.purchase_price) : null,
         batch_no: raw?.batchNo || raw?.batch_no || `SBH-${String(product.numeric_id || '101').padStart(3, '0')}-${new Date().toISOString().slice(2, 7).replace('-', '')}`,
         expiry_date: raw?.expiryDate || raw?.expiry_date || `12/${(new Date().getFullYear() + 2).toString().slice(-2)}`,
         stock_before: stock,
@@ -217,14 +218,14 @@ export default async function handler(req: any, res: any) {
       const { rows } = await client.query(
         `INSERT INTO order_items (
           order_id, product_id, product_name, sku, variant, quantity,
-          unit_price, total_price, image_url, mrp, batch_no, expiry_date
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+          unit_price, total_price, image_url, mrp, purchase_price_at_order, batch_no, expiry_date
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
         RETURNING id, order_id, product_id, product_name, sku, variant,
-                  quantity, unit_price, total_price, image_url, mrp, batch_no, expiry_date`,
+                  quantity, unit_price, total_price, image_url, mrp, purchase_price_at_order, batch_no, expiry_date`,
         [
           order.id, item.product_id, item.product_name, item.sku, item.variant,
           item.quantity, item.unit_price, item.total_price, item.image_url,
-          item.mrp, item.batch_no, item.expiry_date,
+          item.mrp, item.purchase_price_at_order, item.batch_no, item.expiry_date,
         ]
       );
       itemRows.push(rows[0]);

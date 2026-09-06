@@ -272,6 +272,7 @@ type Product = {
   hsn: string;
   mrp: number;
   customerPrice: number;
+  purchasePrice?: number;
   retailerPrice: number;
   stock: number;
   image?: string;
@@ -426,7 +427,7 @@ function safeDiscountPercent(base: number, price: number): number {
 type ProductFormState = Omit<Product, "id"> & { id?: number; category_id?: string; sub_category_id?: string; sub_category_name?: string; };
 const emptyForm = (category = ""): ProductFormState => ({
   name: "", category, brand: "", sku: "", hsn: CAT_HSN[category] ?? "", mrp: 0,
-  customerPrice: 0, retailerPrice: 0, stock: 0, image: undefined, details: "",
+  customerPrice: 0, retailerPrice: 0, purchasePrice: undefined, stock: 0, image: undefined, details: "",
   badges: DEFAULT_PRODUCT_BADGES.map((b) => ({ ...b })),
   isListed: true,
 });
@@ -793,8 +794,8 @@ function ProductModal({
               className={INPUT_CLS} maxLength={8} />
           </div>
 
-          {/* MRP / Retailer Price */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* MRP / Retailer Price / Purchase Price */}
+          <div className="grid grid-cols-3 gap-3">
             <Field label="MRP (₹)">
               <input type="number" min="0" value={form.mrp || ""}
                 onChange={(e) => setForm((p) => ({ ...p, mrp: Number(e.target.value) }))}
@@ -804,6 +805,11 @@ function ProductModal({
               <input type="number" min="0" value={form.retailerPrice || ""}
                 onChange={(e) => setForm((p) => ({ ...p, retailerPrice: Number(e.target.value) }))}
                 placeholder="0" className={`${INPUT_CLS} !border-blue-300 focus:!border-blue-600`} />
+            </Field>
+            <Field label="Purchase Price (₹)">
+              <input type="number" min="0" value={form.purchasePrice || ""}
+                onChange={(e) => setForm((p) => ({ ...p, purchasePrice: Number(e.target.value) }))}
+                placeholder="0" className={`${INPUT_CLS} !border-amber-300 focus:!border-amber-600`} />
             </Field>
           </div>
 
@@ -961,7 +967,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
   const [showBulkUpload, setShowBulkUpload] = useState(false);
 
   const refetchProducts = useCallback(() => {
-    fetchProducts({ includeUnlisted: true }).then((data) => {
+    fetchProducts({ includeUnlisted: true, isAdmin: true }).then((data) => {
       const dbProds = data || [];
       setProducts(
         dbProds.map((p) => ({
@@ -975,6 +981,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           mrp: Number(p.mrp),
           customerPrice: Number(p.customer_price),
           retailerPrice: Number(p.retailer_price),
+          purchasePrice: p.purchase_price ? Number(p.purchase_price) : undefined,
           stock: p.stock,
           image: p.image_url,
           details: p.details || "",
@@ -1120,6 +1127,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
                   mrp: Number(payload.new.mrp),
                   customerPrice: Number(payload.new.customer_price),
                   retailerPrice: Number(payload.new.retailer_price),
+                  purchasePrice: payload.new.purchase_price ? Number(payload.new.purchase_price) : undefined,
                   stock: payload.new.stock,
                   image: payload.new.image_url,
                   details: payload.new.details || "",
@@ -1142,6 +1150,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             mrp: Number(newP.mrp),
             customerPrice: Number(newP.customer_price),
             retailerPrice: Number(newP.retailer_price),
+            purchasePrice: newP.purchase_price ? Number(newP.purchase_price) : undefined,
             stock: newP.stock,
             image: newP.image_url,
             details: newP.details || "",
@@ -1443,6 +1452,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           mrp: Number(form.mrp),
           customer_price: Number(form.mrp),
           retailer_price: Number(form.retailerPrice) || Math.round(Number(form.mrp) * 0.85),
+          purchase_price: form.purchasePrice ? Number(form.purchasePrice) : null,
           discount_percent: 0,
           retailer_discount_percent: 0,
           stock: Number(form.stock) || 0,
@@ -1487,6 +1497,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           mrp: Number(form.mrp),
           customer_price: Number(form.mrp),
           retailer_price: Number(form.retailerPrice) || Math.round(Number(form.mrp) * 0.85),
+          purchase_price: form.purchasePrice ? Number(form.purchasePrice) : null,
           discount_percent: 0,
           retailer_discount_percent: 0,
           stock: Number(form.stock) || 0,
@@ -1505,7 +1516,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       }
 
       // Refresh product list immediately from DB
-      const freshProducts = await fetchProducts({ includeUnlisted: true });
+      const freshProducts = await fetchProducts({ includeUnlisted: true, isAdmin: true });
       if (freshProducts) {
         setProducts(freshProducts.map((p) => ({
           id: p.numeric_id,
@@ -1518,6 +1529,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
           mrp: Number(p.mrp),
           customerPrice: Number(p.customer_price),
           retailerPrice: Number(p.retailer_price),
+          purchasePrice: p.purchase_price ? Number(p.purchase_price) : undefined,
           stock: p.stock,
           image: p.image_url,
           details: p.details || "",
@@ -1547,7 +1559,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
       const { error } = await dbToggleListing(targetDbId, newListed);
       if (error) {
         alert("Failed to update listing status: " + error);
-        const fresh = await fetchProducts({ includeUnlisted: true });
+        const fresh = await fetchProducts({ includeUnlisted: true, isAdmin: true });
         if (fresh) {
           setProducts(fresh.map((prod) => ({
             id: prod.numeric_id,
@@ -1560,6 +1572,7 @@ export default function AdminDashboard({ user, onLogout }: Props) {
             mrp: Number(prod.mrp),
             customerPrice: Number(prod.customer_price),
             retailerPrice: Number(prod.retailer_price),
+            purchasePrice: prod.purchase_price ? Number(prod.purchase_price) : undefined,
             stock: prod.stock,
             image: prod.image_url,
             details: prod.details || "",

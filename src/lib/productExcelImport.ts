@@ -21,6 +21,7 @@ const HEADER_MAP = {
   hsnCode: 'HSN Code (GST)',
   mrp: 'MRP (₹)',
   retailerPrice: 'Retailer Price (₹)',
+  purchasePrice: 'Purchase Price',
   inventoryStock: 'Inventory Stock (Available Units)',
   listed: 'Listed on Storefront (Active)',
   featured: 'Featured Product',
@@ -45,6 +46,7 @@ export interface ParsedProductRow {
   hsnCode: string;
   mrp: number;
   retailerPrice: number;
+  purchasePrice?: number;
   retailerOfferPercent: number | null;
   retailerMarginPercent: number | null;
   inventoryStock: number;
@@ -149,6 +151,7 @@ export function parseProductExcel(fileBuffer: ArrayBuffer): ImportResult {
     const category = String(get('category') ?? '').trim();
     const mrp = toNumber(get('mrp'));
     const retailerPrice = toNumber(get('retailerPrice'));
+    const purchasePrice = toNumber(get('purchasePrice'));
     const inventoryStock = toNumber(get('inventoryStock')) || 0;
 
     const errors: string[] = [];
@@ -195,6 +198,7 @@ export function parseProductExcel(fileBuffer: ArrayBuffer): ImportResult {
       hsnCode: String(get('hsnCode') ?? '').trim(),
       mrp: pricingInput.mrp,
       retailerPrice: pricingInput.retailerPrice,
+      purchasePrice: Number.isNaN(purchasePrice) ? undefined : purchasePrice,
       retailerOfferPercent,
       retailerMarginPercent,
       inventoryStock,

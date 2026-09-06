@@ -36,6 +36,7 @@ export interface DbProduct {
   is_featured: boolean;
   is_listed?: boolean;
   badges?: any[];
+  purchase_price?: number;
   created_at: string;
   updated_at: string;
 }
@@ -89,6 +90,7 @@ export interface ProductFilters {
   search?: string;
   sortBy?: "featured" | "price-asc" | "price-desc" | "discount";
   includeUnlisted?: boolean;
+  isAdmin?: boolean;
 }
 
 /**
@@ -113,10 +115,11 @@ export async function fetchCategories(): Promise<DbCategory[]> {
  * Fetch products directly from Neon Postgres authoritative products table
  */
 export async function fetchProducts(filters: ProductFilters = {}): Promise<DbProduct[]> {
+  const safeCols = "id, numeric_id, name, subtitle, category_id, category_name, sub_category_id, sub_category_name, brand, sku, hsn, mrp, customer_price, retailer_price, discount_percent, retailer_discount_percent, stock, image_url, web_image_url, details, is_flash_sale, is_featured, is_listed, badges, created_at, updated_at";
   try {
     const rows = filters.includeUnlisted
-      ? await sql`SELECT * FROM products ORDER BY numeric_id ASC`
-      : await sql`SELECT * FROM products WHERE is_listed = true ORDER BY numeric_id ASC`;
+      ? (filters.isAdmin ? await sql`SELECT * FROM products ORDER BY numeric_id ASC` : await sql(`SELECT ${safeCols} FROM products ORDER BY numeric_id ASC`))
+      : (filters.isAdmin ? await sql`SELECT * FROM products WHERE is_listed = true ORDER BY numeric_id ASC` : await sql(`SELECT ${safeCols} FROM products WHERE is_listed = true ORDER BY numeric_id ASC`));
 
     let prods: DbProduct[] = (rows as any[]).map((r) => ({
       ...r,
@@ -179,7 +182,7 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<DbPro
   } catch (error) {
     console.error("Error fetching products via sql, attempting fallback:", error);
     try {
-      let q = supabase.from("products").select("*");
+      let q = supabase.from("products").select(filters.isAdmin ? "*" : safeCols);
       if (!filters.includeUnlisted) {
         q = q.eq("is_listed", true);
       }
@@ -251,6 +254,7 @@ export async function createProduct(
     const pMrp = Number(product.mrp) || 0;
     const pCustPrice = Number(product.customer_price) || 0;
     const pRetPrice = Number(product.retailer_price) || 0;
+    const pPurPrice = Number(product.purchase_price) || null;
     const pDisc = Number(product.discount_percent) || 0;
     const pStock = Number(product.stock) || 0;
     const pImage = finalImageUrl || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80";
@@ -263,11 +267,11 @@ export async function createProduct(
     const insertedProd = await sql`
       INSERT INTO products (
         numeric_id, name, subtitle, category_id, category_name, sub_category_id, sub_category_name, brand, sku, hsn, mrp,
-        customer_price, retailer_price, discount_percent, stock, image_url, details,
+        customer_price, retailer_price, purchase_price, discount_percent, stock, image_url, details,
         is_flash_sale, is_featured, is_listed, badges, updated_at
       ) VALUES (
         ${numId}, ${pName}, ${pSubtitle}, ${pCatId}, ${pCatName}, ${pSubCatId}, ${pSubCatName}, ${pBrand}, ${pSku}, ${pHsn}, ${pMrp},
-        ${pCustPrice}, ${pRetPrice}, ${pDisc}, ${pStock}, ${pImage}, ${pDetails},
+        ${pCustPrice}, ${pRetPrice}, ${pPurPrice}, ${pDisc}, ${pStock}, ${pImage}, ${pDetails},
         ${pFlash}, ${pFeat}, ${pIsListed}, ${pBadges}::jsonb, now()
       ) RETURNING *
     `;
@@ -279,11 +283,11 @@ export async function createProduct(
       await sql`
         INSERT INTO inventory_products (
           id, numeric_id, product_id, name, subtitle, category_id, category_name, brand, sku, hsn, mrp,
-          customer_price, retailer_price, discount_percent, stock, image_url, web_image_url, details,
+          customer_price, retailer_price, purchase_price, discount_percent, stock, image_url, web_image_url, details,
           is_flash_sale, is_featured, is_listed, badges, updated_at
         ) VALUES (
           ${data.id}, ${data.numeric_id}, ${data.id}, ${data.name}, ${data.subtitle}, ${data.category_id}, ${data.category_name}, ${data.brand}, ${data.sku}, ${data.hsn}, ${data.mrp},
-          ${data.customer_price}, ${data.retailer_price}, ${data.discount_percent}, ${data.stock}, ${data.image_url}, ${data.image_url}, ${data.details},
+          ${data.customer_price}, ${data.retailer_price}, ${data.purchase_price}, ${data.discount_percent}, ${data.stock}, ${data.image_url}, ${data.image_url}, ${data.details},
           ${data.is_flash_sale}, ${data.is_featured}, ${pIsListed}, ${JSON.stringify(data.badges)}::jsonb, now()
         ) ON CONFLICT (id) DO UPDATE SET
           numeric_id = EXCLUDED.numeric_id,
@@ -298,6 +302,7 @@ export async function createProduct(
           mrp = EXCLUDED.mrp,
           customer_price = EXCLUDED.customer_price,
           retailer_price = EXCLUDED.retailer_price,
+          purchase_price = EXCLUDED.purchase_price,
           discount_percent = EXCLUDED.discount_percent,
           stock = EXCLUDED.stock,
           image_url = EXCLUDED.image_url,
@@ -361,6 +366,7 @@ export async function updateProduct(
     const pMrp = updates.mrp !== undefined ? Number(updates.mrp) : existing.mrp;
     const pCustPrice = updates.customer_price !== undefined ? Number(updates.customer_price) : existing.customer_price;
     const pRetPrice = updates.retailer_price !== undefined ? Number(updates.retailer_price) : existing.retailer_price;
+    const pPurPrice = updates.purchase_price !== undefined ? (updates.purchase_price === null ? null : Number(updates.purchase_price)) : (existing.purchase_price !== undefined ? existing.purchase_price : null);
     const pDisc = updates.discount_percent !== undefined ? Number(updates.discount_percent) : existing.discount_percent;
     const pStock = updates.stock !== undefined ? Number(updates.stock) : existing.stock;
     const pImage = finalImageUrl !== undefined ? finalImageUrl : existing.image_url;
@@ -384,6 +390,7 @@ export async function updateProduct(
         mrp = ${pMrp},
         customer_price = ${pCustPrice},
         retailer_price = ${pRetPrice},
+        purchase_price = ${pPurPrice},
         discount_percent = ${pDisc},
         stock = ${pStock},
         image_url = ${pImage},
@@ -414,6 +421,7 @@ export async function updateProduct(
           mrp = ${data.mrp},
           customer_price = ${data.customer_price},
           retailer_price = ${data.retailer_price},
+          purchase_price = ${data.purchase_price},
           discount_percent = ${data.discount_percent},
           stock = ${data.stock},
           image_url = ${data.image_url},
