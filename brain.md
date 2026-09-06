@@ -446,7 +446,9 @@ The application reads configuration through `import.meta.env` (defined in `.env`
     - Secondary filter row with "All Visibility", "All Categories ({count})", rose count pill, and "Import Excel" button.
     - Grid/table header row (`PRODUCT`, `PRICING`, `STOCK & STATUS`, `ACTIONS`).
     - Floating white glass cards per product with square image container, status indicator (`● Listed on Store` / `○ Draft`), HSN badge, SKU, category & brand pills, return policy tags, 3-column pricing (`MRP`, `CUSTOMER`, `RETAILER B2B`), stock count with status badge, and circular action buttons (`View`, `Edit`, `Delete`).
-    - Interactive pagination controls with page buttons (`< 1 2 3 4 5 >`) and page size selector (`10 per page`).
+  - **Elimination of Deep Green Accents**:
+    - Completely replaced legacy `#006a39` and `#008749` deep green buttons, borders, highlights, gradients, and icons across all tabs and modals with the luxury rose/pink (`from-rose-500 to-pink-500`, `rose-600`, `rose-50`) and dark slate (`text-slate-900`, `border-slate-200`) palette to match the reference design.
+    - Preserved standard emerald indicator pills strictly for positive status indicators (`In Stock`, `● Listed on Store`, `Delivered`).
 
 
 

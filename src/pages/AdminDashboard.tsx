@@ -451,12 +451,12 @@ const emptyForm = (category = ""): ProductFormState => ({
   return_policy: "Non-Returnable",
 });
 
-const INPUT_CLS = "w-full bg-white/70 backdrop-blur-md border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] placeholder:text-[#a8b8aa] focus:outline-none focus:bg-white focus:border-[#006a39] focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-xs";
+const INPUT_CLS = "w-full bg-white/70 backdrop-blur-md border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-900 placeholder:text-[#a8b8aa] focus:outline-none focus:bg-white focus:border-rose-400 focus:ring-4 focus:ring-rose-500/10 transition-all shadow-xs";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">{label}</label>
+      <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px] block mb-1.5">{label}</label>
       {children}
     </div>
   );
@@ -581,20 +581,20 @@ function ProductModal({
     <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-end sm:items-center justify-center p-0 sm:p-5 animate-in fade-in overflow-y-auto">
       <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-t-3xl sm:rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[90dvh] sm:max-h-[92vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-7 py-5 border-b border-[#e4ede2] bg-gradient-to-r from-white/90 via-emerald-50/30 to-white/90 shrink-0">
+        <div className="flex items-center justify-between px-7 py-5 border-b border-slate-200 bg-gradient-to-r from-white/90 via-emerald-50/30 to-white/90 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-emerald-100/80 text-emerald-800 flex items-center justify-center shadow-sm">
-              <Icons.Pill className="w-5 h-5 text-[#006a39]" />
+              <Icons.Pill className="w-5 h-5 text-rose-600" />
             </div>
             <div>
-              <h2 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg">
+              <h2 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-lg">
                 {mode === "add" ? "Add New Pharmaceutical Product" : "Edit Product Catalog Entry"}
               </h2>
               <p className="text-xs text-[#6d7a6f]">Real-time synchronization across Supabase Cloud</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-[#f0f5f1] flex items-center justify-center text-[#073b4c] hover:bg-[#e2ede4] transition-colors cursor-pointer">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1L11 11M11 1L1 11" stroke="#073b4c" strokeWidth="2" strokeLinecap="round" /></svg>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-[#f0f5f1] flex items-center justify-center text-slate-900 hover:bg-[#e2ede4] transition-colors cursor-pointer">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1L11 11M11 1L1 11" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" /></svg>
           </button>
         </div>
 
@@ -607,9 +607,9 @@ function ProductModal({
           )}
           {/* Image Upload */}
           <div>
-            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-2">Product Image Showcase</label>
+            <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px] block mb-2">Product Image Showcase</label>
             <div
-              className="relative rounded-2xl border-2 border-dashed border-[#cfe0cf] overflow-hidden cursor-pointer hover:border-[#006a39] transition-all group bg-emerald-50/20"
+              className="relative rounded-2xl border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-rose-400 transition-all group bg-emerald-50/20"
               style={{ minHeight: "130px" }}
               onClick={() => galleryRef.current?.click()}
             >
@@ -625,9 +625,9 @@ function ProductModal({
                   </button>
                 </div>
               ) : (
-                <div className="h-32 flex flex-col items-center justify-center gap-2 text-[#8aa090] group-hover:text-[#006a39] transition-colors">
-                  <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shadow-xs text-[#006a39]">
-                    <Icons.Camera className="w-5 h-5 text-[#006a39]" />
+                <div className="h-32 flex flex-col items-center justify-center gap-2 text-[#8aa090] group-hover:text-rose-600 transition-colors">
+                  <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shadow-xs text-rose-600">
+                    <Icons.Camera className="w-5 h-5 text-rose-600" />
                   </div>
                   <p className="text-xs font-bold">Click or drag image to upload</p>
                   <p className="text-[10px] text-[#9aa89b]">Supports JPG, PNG, WebP format</p>
@@ -638,15 +638,15 @@ function ProductModal({
               <button
                 type="button"
                 onClick={() => cameraRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#dce7db] bg-white/80 hover:bg-white text-xs font-bold text-[#073b4c] transition-all cursor-pointer shadow-xs"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 bg-white/80 hover:bg-white text-xs font-bold text-slate-900 transition-all cursor-pointer shadow-xs"
               >
-                <Icons.Camera className="w-4 h-4 text-[#006a39]" />
+                <Icons.Camera className="w-4 h-4 text-rose-600" />
                 <span>Take Live Photo</span>
               </button>
               <button
                 type="button"
                 onClick={() => galleryRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#dce7db] bg-white/80 hover:bg-white text-xs font-bold text-[#073b4c] transition-all cursor-pointer shadow-xs"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 bg-white/80 hover:bg-white text-xs font-bold text-slate-900 transition-all cursor-pointer shadow-xs"
               >
                 <Icons.Image className="w-4 h-4 text-[#0369a1]" />
                 <span>Upload from Gallery</span>
@@ -674,9 +674,9 @@ function ProductModal({
           <div className="flex flex-col gap-4">
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px]">Category *</label>
+                <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px]">Category *</label>
                 <button type="button" onClick={() => setShowAddCat(!showAddCat)}
-                  className="text-[11px] font-bold text-[#006a39] hover:underline flex items-center gap-1 cursor-pointer">
+                  className="text-[11px] font-bold text-rose-600 hover:underline flex items-center gap-1 cursor-pointer">
                   <span>+</span>
                   <span>Add Category</span>
                 </button>
@@ -721,11 +721,11 @@ function ProductModal({
                     onKeyDown={(e) => e.key === "Enter" && submitNewCat()}
                     className={`${INPUT_CLS} flex-1`} />
                   <button type="button" onClick={submitNewCat}
-                    className="px-4 py-2 rounded-xl bg-[#006a39] text-white text-xs font-bold hover:opacity-90 shrink-0 cursor-pointer shadow-xs">
+                    className="px-4 py-2 rounded-xl bg-rose-500 text-white text-xs font-bold hover:opacity-90 shrink-0 cursor-pointer shadow-xs">
                     Add
                   </button>
                   <button type="button" onClick={() => { setShowAddCat(false); setNewCatName(""); }}
-                    className="px-3 py-2 rounded-xl border border-[#dce7db] text-xs font-semibold text-[#073b4c] hover:bg-white shrink-0 cursor-pointer">
+                    className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-900 hover:bg-white shrink-0 cursor-pointer">
                     Cancel
                   </button>
                 </div>
@@ -736,9 +736,9 @@ function ProductModal({
             {form.category_id && (
               <div className="animate-in fade-in duration-300">
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px]">Sub-Category</label>
+                  <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px]">Sub-Category</label>
                   <button type="button" onClick={() => setShowAddSubCat(!showAddSubCat)}
-                    className="text-[11px] font-bold text-[#006a39] hover:underline flex items-center gap-1 cursor-pointer">
+                    className="text-[11px] font-bold text-rose-600 hover:underline flex items-center gap-1 cursor-pointer">
                     <span>+</span>
                     <span>Add Sub-Category</span>
                   </button>
@@ -776,11 +776,11 @@ function ProductModal({
                       onKeyDown={(e) => e.key === "Enter" && submitNewSubCat()}
                       className={`${INPUT_CLS} flex-1`} />
                     <button type="button" onClick={submitNewSubCat}
-                      className="px-4 py-2 rounded-xl bg-[#006a39] text-white text-xs font-bold hover:opacity-90 shrink-0 cursor-pointer shadow-xs">
+                      className="px-4 py-2 rounded-xl bg-rose-500 text-white text-xs font-bold hover:opacity-90 shrink-0 cursor-pointer shadow-xs">
                       Add
                     </button>
                     <button type="button" onClick={() => { setShowAddSubCat(false); setNewSubCatName(""); }}
-                      className="px-3 py-2 rounded-xl border border-[#dce7db] text-xs font-semibold text-[#073b4c] hover:bg-white shrink-0 cursor-pointer">
+                      className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-900 hover:bg-white shrink-0 cursor-pointer">
                       Cancel
                     </button>
                   </div>
@@ -804,7 +804,7 @@ function ProductModal({
           {/* HSN Code */}
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
-              <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px]">HSN Code (GST)</label>
+              <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px]">HSN Code (GST)</label>
               <span className="text-[9px] bg-blue-100 text-blue-800 font-extrabold px-2 py-0.5 rounded-full uppercase">GST Tax Compliant</span>
             </div>
             <input type="text" value={form.hsn}
@@ -843,7 +843,7 @@ function ProductModal({
               <div className="grid grid-cols-1 gap-3 animate-in fade-in">
                 <div className="bg-emerald-50/80 backdrop-blur-md rounded-2xl p-3.5 text-center border border-emerald-200 flex flex-col justify-center">
                   <p className="text-[10px] text-emerald-800 font-extrabold uppercase tracking-wide">Retailer Wholesale View</p>
-                  <p className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-xl sm:text-2xl mt-0.5">₹{form.retailerPrice}</p>
+                  <p className="font-['Manrope',sans-serif] font-extrabold text-rose-600 text-xl sm:text-2xl mt-0.5">₹{form.retailerPrice}</p>
                   <div className="flex flex-col gap-0.5 mt-0.5">
                     {pricing.retailerOfferPercent !== null && (
                       <p className="text-[10px] font-bold text-emerald-800">
@@ -851,7 +851,7 @@ function ProductModal({
                       </p>
                     )}
                     {pricing.retailerMarginPercent !== null && (
-                      <p className="text-[9px] font-semibold text-[#006a39]/85">
+                      <p className="text-[9px] font-semibold text-rose-600/85">
                         +{pricing.retailerMarginPercent}% extra retailer margin
                       </p>
                     )}
@@ -875,7 +875,7 @@ function ProductModal({
                 {form.isListed !== false ? "✓" : "!"}
               </div>
               <div>
-                <p className="font-bold text-xs text-[#073b4c]">
+                <p className="font-bold text-xs text-slate-900">
                   {form.isListed !== false ? "Listed on Storefront (Active)" : "Draft / Unlisted (Hidden)"}
                 </p>
                 <p className="text-[10px] text-[#657969]">
@@ -898,7 +898,7 @@ function ProductModal({
           <div className="bg-[#f8faf9] rounded-2xl p-4 border border-[#dce8dc] flex flex-col gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block">
+                <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px] block">
                   Return & Replacement Policy
                 </label>
                 <span className="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full uppercase">
@@ -917,7 +917,7 @@ function ProductModal({
                   label: "Returnable (within 7 days)",
                   desc: "Eligible for return & refund within 7 days",
                   icon: "🔄",
-                  activeColor: "border-emerald-500 bg-emerald-50/60 text-[#006a39]",
+                  activeColor: "border-emerald-500 bg-emerald-50/60 text-rose-600",
                 },
                 {
                   value: "7 Days Replacement",
@@ -949,17 +949,17 @@ function ProductModal({
                     onClick={() => setForm((p) => ({ ...p, return_policy: opt.value }))}
                     className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-2.5 ${
                       isSelected
-                        ? `bg-white shadow-sm ring-2 ring-[#006a39]/25 scale-[1.01] ${opt.activeColor}`
-                        : "bg-white/70 border-[#e4ede2] hover:bg-white hover:border-emerald-200"
+                        ? `bg-white shadow-sm ring-2 ring-rose-400/25 scale-[1.01] ${opt.activeColor}`
+                        : "bg-white/70 border-slate-200 hover:bg-white hover:border-emerald-200"
                     }`}
                   >
                     <span className="text-xl shrink-0 mt-0.5">{opt.icon}</span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between">
-                        <p className={`text-xs font-bold ${isSelected ? "text-[#006a39]" : "text-[#073b4c]"}`}>
+                        <p className={`text-xs font-bold ${isSelected ? "text-rose-600" : "text-slate-900"}`}>
                           {opt.label}
                         </p>
-                        {isSelected && <span className="text-xs text-[#006a39] font-black">✓</span>}
+                        {isSelected && <span className="text-xs text-rose-600 font-black">✓</span>}
                       </div>
                       <p className="text-[10px] text-[#6d7a6f] mt-0.5 leading-tight">{opt.desc}</p>
                     </div>
@@ -974,7 +974,7 @@ function ProductModal({
 
             <div className="flex items-center justify-between">
               <div>
-                <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block">
+                <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px] block">
                   Product Badges & Tags
                 </label>
                 <p className="text-[10px] text-[#6d7a6f]">Toggle badges or click text to rename tags</p>
@@ -982,7 +982,7 @@ function ProductModal({
               <button
                 type="button"
                 onClick={handleAddCustomBadge}
-                className="text-[10px] font-bold text-[#006a39] bg-white hover:bg-emerald-100 px-3 py-1 rounded-xl transition-all flex items-center gap-1 cursor-pointer border border-[#bbf7d0] shadow-xs"
+                className="text-[10px] font-bold text-rose-600 bg-white hover:bg-emerald-100 px-3 py-1 rounded-xl transition-all flex items-center gap-1 cursor-pointer border border-[#bbf7d0] shadow-xs"
               >
                 <span>+ Add Tag</span>
               </button>
@@ -994,8 +994,8 @@ function ProductModal({
                   key={badge.id}
                   className={`flex items-center gap-2 p-2 rounded-xl border transition-all ${
                     badge.checked
-                      ? "bg-white border-[#006a39] shadow-xs ring-1 ring-[#006a39]/20"
-                      : "bg-white/60 border-[#e4ede2] opacity-75 hover:opacity-100"
+                      ? "bg-white border-rose-400 shadow-xs ring-1 ring-rose-400/20"
+                      : "bg-white/60 border-slate-200 opacity-75 hover:opacity-100"
                   }`}
                 >
                   <input
@@ -1003,14 +1003,14 @@ function ProductModal({
                     id={`badge-${badge.id}-${idx}`}
                     checked={badge.checked}
                     onChange={(e) => handleToggleBadge(idx, e.target.checked)}
-                    className="w-4 h-4 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39] shrink-0"
+                    className="w-4 h-4 rounded text-rose-600 focus:ring-rose-400 cursor-pointer accent-rose-500 shrink-0"
                   />
                   <input
                     type="text"
                     value={badge.name}
                     onChange={(e) => handleUpdateBadgeName(idx, e.target.value)}
                     placeholder="Tag Name"
-                    className="flex-1 bg-transparent text-xs font-semibold text-[#073b4c] focus:outline-none focus:bg-white px-1.5 py-0.5 rounded"
+                    className="flex-1 bg-transparent text-xs font-semibold text-slate-900 focus:outline-none focus:bg-white px-1.5 py-0.5 rounded"
                   />
                   <button
                     type="button"
@@ -1026,11 +1026,11 @@ function ProductModal({
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 px-7 pb-7 pt-3 border-t border-[#e4ede2] bg-white/70">
-          <button onClick={onClose} disabled={isSaving} className="flex-1 py-3 rounded-2xl border border-[#dce7db] text-[#073b4c] text-xs sm:text-sm font-bold hover:bg-white transition-all cursor-pointer disabled:opacity-50">
+        <div className="flex gap-3 px-7 pb-7 pt-3 border-t border-slate-200 bg-white/70">
+          <button onClick={onClose} disabled={isSaving} className="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-900 text-xs sm:text-sm font-bold hover:bg-white transition-all cursor-pointer disabled:opacity-50">
             Cancel
           </button>
-          <button onClick={onSave} disabled={isSaving} className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] text-white text-xs sm:text-sm font-bold hover:opacity-95 transition-all shadow-lg shadow-emerald-950/15 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
+          <button onClick={onSave} disabled={isSaving} className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 text-white text-xs sm:text-sm font-bold hover:opacity-95 transition-all shadow-lg shadow-rose-500/20 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
             {isSaving && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
             <span>{isSaving ? "Saving to Cloud DB…" : mode === "add" ? "Create Product Entry" : "Save Product Updates"}</span>
           </button>
@@ -2208,17 +2208,17 @@ function DashboardTab({
   onNavigate: (t: AdminTab) => void;
 }) {
   const stats = [
-    { label: "Active Products", value: products.length, unit: "Certified SKUs", color: "#006a39", bg: "rgba(0, 106, 57, 0.08)", icon: <Icons.Pill className="w-5 h-5 text-[#006a39]" /> },
+    { label: "Active Products", value: products.length, unit: "Certified SKUs", color: "#e11d48", bg: "rgba(244, 63, 94, )", icon: <Icons.Pill className="w-5 h-5 text-rose-600" /> },
     { label: "Inventory Alerts", value: lowStockCount + outOfStockCount, unit: "low / out of stock", color: "#c2410c", bg: "rgba(194, 65, 12, 0.08)", icon: <Icons.Alert className="w-5 h-5 text-[#c2410c]" /> },
     { label: "Wholesale Approvals", value: pendingRetailersCount, unit: pendingRetailersCount > 0 ? "applications pending" : "all partners verified", color: "#d97706", bg: "rgba(217, 119, 6, 0.08)", icon: <Icons.Store className="w-5 h-5 text-[#d97706]" /> },
     { label: "Today's Orders", value: 23, unit: "real-time orders", color: "#0369a1", bg: "rgba(3, 105, 161, 0.08)", icon: <Icons.Order className="w-5 h-5 text-[#0369a1]" /> },
   ];
 
   const recentActivity = [
-    { text: "Stock updated: Volini Spray 249ml (+50 units)", time: "10 min ago", dot: "#006a39" },
+    { text: "Stock updated: Volini Spray 249ml (+50 units)", time: "10 min ago", dot: "#e11d48" },
     { text: "New order: ORD-2847 — Priya Sharma, ₹763", time: "24 min ago", dot: "#0369a1" },
     { text: "Low stock alert: Chyawanprash 860g (3 units)", time: "1 hr ago", dot: "#c2410c" },
-    { text: "Product added: Glucon D Regular Jar 219g", time: "2 hrs ago", dot: "#006a39" },
+    { text: "Product added: Glucon D Regular Jar 219g", time: "2 hrs ago", dot: "#e11d48" },
     { text: "Order delivered: ORD-2841 — Deepa Krishnan", time: "3 hrs ago", dot: "#047857" },
     { text: "Low stock alert: Candid Powder 174g (5 units)", time: "4 hrs ago", dot: "#c2410c" },
   ];
@@ -2268,7 +2268,7 @@ function DashboardTab({
               </div>
             </div>
             <div>
-              <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-3xl sm:text-4xl leading-none tracking-tight">{s.value}</p>
+              <p className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-3xl sm:text-4xl leading-none tracking-tight">{s.value}</p>
               <p className="text-xs text-[#657969] font-medium mt-1.5">{s.unit}</p>
             </div>
           </div>
@@ -2277,7 +2277,7 @@ function DashboardTab({
 
       {/* Today's Revenue Highlights Banner */}
       <div className="rounded-3xl p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden shadow-2xl"
-        style={{ background: "linear-gradient(135deg, #073b4c 0%, #0a5568 50%, #006a39 100%)" }}
+        style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #e11d48 100%)" }}
       >
         <div className="relative z-10 text-white">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs font-semibold mb-2">
@@ -2298,7 +2298,7 @@ function DashboardTab({
           <button onClick={() => onNavigate("inventory")} className="bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-bold px-5 py-3 rounded-2xl transition-all cursor-pointer">
             Manage Inventory
           </button>
-          <button onClick={() => onNavigate("orders")} className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95 text-white text-xs sm:text-sm font-bold px-6 py-3 rounded-2xl transition-all shadow-lg shadow-emerald-950/30 cursor-pointer active:scale-95">
+          <button onClick={() => onNavigate("orders")} className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95 text-white text-xs sm:text-sm font-bold px-6 py-3 rounded-2xl transition-all shadow-lg shadow-rose-500/30 cursor-pointer active:scale-95">
             View Live Orders →
           </button>
         </div>
@@ -2309,7 +2309,7 @@ function DashboardTab({
         <div className="glass-admin-card rounded-3xl p-6 sm:p-7 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base sm:text-lg">Real-Time Activity Feed</h3>
+              <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-base sm:text-lg">Real-Time Activity Feed</h3>
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
             </div>
             <div className="flex flex-col gap-4">
@@ -2317,7 +2317,7 @@ function DashboardTab({
                 <div key={i} className="flex items-start gap-3.5 p-2 rounded-xl hover:bg-white/60 transition-colors">
                   <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 shadow-xs" style={{ backgroundColor: a.dot }} />
                   <div>
-                    <p className="text-[#073b4c] text-xs sm:text-sm font-semibold leading-snug">{a.text}</p>
+                    <p className="text-slate-900 text-xs sm:text-sm font-semibold leading-snug">{a.text}</p>
                     <p className="text-[#728575] text-[11px] mt-0.5 font-medium">{a.time}</p>
                   </div>
                 </div>
@@ -2330,10 +2330,10 @@ function DashboardTab({
           <div>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base sm:text-lg">Low Stock Replenishment</h3>
+                <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-base sm:text-lg">Low Stock Replenishment</h3>
                 <p className="text-xs text-[#657969]">Items at or below critical threshold</p>
               </div>
-              <button onClick={() => onNavigate("inventory")} className="text-xs font-bold text-[#006a39] hover:underline cursor-pointer">
+              <button onClick={() => onNavigate("inventory")} className="text-xs font-bold text-rose-600 hover:underline cursor-pointer">
                 View All Inventory →
               </button>
             </div>
@@ -2342,9 +2342,9 @@ function DashboardTab({
               {products.filter((p) => p.stock <= 10).slice(0, 5).map((p) => {
                 const st = stockStatus(p.stock);
                 return (
-                  <div key={p.id} className="flex items-center justify-between p-3 rounded-2xl bg-white/70 border border-[#e2ece0] hover:bg-white transition-all">
+                  <div key={p.id} className="flex items-center justify-between p-3 rounded-2xl bg-white/70 border border-slate-200 hover:bg-white transition-all">
                     <div>
-                      <p className="text-[#073b4c] text-xs sm:text-sm font-bold truncate max-w-[200px]">{p.name}</p>
+                      <p className="text-slate-900 text-xs sm:text-sm font-bold truncate max-w-[200px]">{p.name}</p>
                       <p className="text-[#728575] text-[11px] font-mono">HSN: {p.hsn} · SKU: {p.sku}</p>
                     </div>
                     <span className="text-[11px] font-extrabold px-3 py-1 rounded-full border shadow-2xs" style={{ color: st.color, backgroundColor: st.bg, borderColor: st.border }}>
@@ -2732,7 +2732,7 @@ function InventoryTab({ products, filter, setFilter, search, setSearch, stockEdi
         <input
           type="text" value={search} onChange={(e) => setSearch(e.target.value)}
           placeholder="Search inventory by product name, SKU, brand or category…"
-          className="w-full pl-11 pr-10 py-3 text-xs sm:text-sm bg-white/80 border border-[#dce7db] rounded-2xl focus:outline-none focus:border-[#006a39] font-medium"
+          className="w-full pl-11 pr-10 py-3 text-xs sm:text-sm bg-white/80 border border-slate-200 rounded-2xl focus:outline-none focus:border-rose-400 font-medium"
         />
       </div>
 
@@ -2749,7 +2749,7 @@ function InventoryTab({ products, filter, setFilter, search, setSearch, stockEdi
             </div>
             <div>
               <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#657969]">{s.label}</p>
-              <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-2xl mt-0.5">{s.count} Items</p>
+              <p className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-2xl mt-0.5">{s.count} Items</p>
             </div>
           </button>
         ))}
@@ -2763,8 +2763,8 @@ function InventoryTab({ products, filter, setFilter, search, setSearch, stockEdi
             onClick={() => setFilter(f)}
             className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
               filter === f
-                ? "bg-gradient-to-r from-[#006a39] to-[#008749] text-white shadow-md shadow-emerald-950/20"
-                : "bg-white/80 text-[#596b5e] border border-[#dce7db] hover:bg-white"
+                ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-md shadow-rose-500/25"
+                : "bg-white/80 text-[#596b5e] border border-slate-200 hover:bg-white"
             }`}
           >
             {f} ({filterCounts[f] ?? 0})
@@ -2787,7 +2787,7 @@ function InventoryTab({ products, filter, setFilter, search, setSearch, stockEdi
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base truncate">{p.name}</p>
+                    <p className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-sm sm:text-base truncate">{p.name}</p>
                     <span className="font-mono text-[10px] bg-sky-50 text-sky-800 border border-sky-200 px-2 py-0.5 rounded-full font-bold">
                       HSN: {p.hsn}
                     </span>
@@ -2803,7 +2803,7 @@ function InventoryTab({ products, filter, setFilter, search, setSearch, stockEdi
                 {/* Progress bar */}
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="flex items-center gap-2.5">
-                    <span className="font-['Manrope',sans-serif] font-black text-sm text-[#073b4c] w-12 text-right">{p.stock} units</span>
+                    <span className="font-['Manrope',sans-serif] font-black text-sm text-slate-900 w-12 text-right">{p.stock} units</span>
                     <div className="w-24 sm:w-32 h-2.5 bg-[#e4ede2] rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: st.color }} />
                     </div>
@@ -2823,13 +2823,13 @@ function InventoryTab({ products, filter, setFilter, search, setSearch, stockEdi
                       onChange={(e) => setStockEdits((prev) => ({ ...prev, [p.id]: e.target.value }))}
                       onKeyDown={(e) => { if (e.key === "Enter") onApplyStock(p.id); }}
                       placeholder={String(p.stock)}
-                      className="w-20 bg-white border border-[#dce7db] rounded-xl px-2.5 py-1.5 text-xs font-black text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                      className="w-20 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-black text-slate-900 focus:outline-none focus:border-rose-400"
                     />
                     <button
                       type="button"
                       onClick={() => onApplyStock(p.id)}
                       disabled={!stockEdits[p.id]}
-                      className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-[#006a39] text-white transition-all disabled:opacity-30 hover:opacity-95 cursor-pointer shadow-xs"
+                      className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-rose-500 text-white transition-all disabled:opacity-30 hover:opacity-95 cursor-pointer shadow-xs"
                     >
                       Save
                     </button>
@@ -3077,7 +3077,7 @@ function OrdersTab({
         <div
           onClick={() => setRoleSegment("all")}
           className={`glass-admin-card glass-admin-card-hover rounded-3xl p-5 sm:p-6 cursor-pointer border-2 transition-all ${
-            roleSegment === "all" ? "!border-[#006a39] shadow-lg shadow-emerald-950/10" : ""
+            roleSegment === "all" ? "!border-rose-400 shadow-lg shadow-emerald-950/10" : ""
           }`}
         >
           <div className="flex items-center justify-between mb-2">
@@ -3086,7 +3086,7 @@ function OrdersTab({
               {orders.length} total
             </span>
           </div>
-          <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-3xl sm:text-4xl">
+          <p className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-3xl sm:text-4xl">
             ₹{(retailerRevenue + customerRevenue).toLocaleString()}
           </p>
           <p className="text-xs text-[#657969] mt-1">All processed & active platform fulfillments</p>
@@ -3122,7 +3122,7 @@ function OrdersTab({
               {customerOrders.length} orders
             </span>
           </div>
-          <p className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-3xl sm:text-4xl">
+          <p className="font-['Manrope',sans-serif] font-extrabold text-rose-600 text-3xl sm:text-4xl">
             ₹{customerRevenue.toLocaleString()}
           </p>
           <p className="text-xs text-[#657969] mt-1">Direct consumer prescriptions & wellness</p>
@@ -3135,7 +3135,7 @@ function OrdersTab({
           <button
             onClick={() => setRoleSegment("all")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              roleSegment === "all" ? "bg-white text-[#073b4c] shadow-xs" : "text-[#657969] hover:text-[#073b4c]"
+              roleSegment === "all" ? "bg-white text-slate-900 shadow-xs" : "text-[#657969] hover:text-slate-900"
             }`}
           >
             All ({orders.length})
@@ -3152,7 +3152,7 @@ function OrdersTab({
           <button
             onClick={() => setRoleSegment("customer")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              roleSegment === "customer" ? "bg-[#006a39] text-white shadow-xs" : "text-[#657969] hover:text-emerald-800"
+              roleSegment === "customer" ? "bg-rose-500 text-white shadow-xs" : "text-[#657969] hover:text-emerald-800"
             }`}
           >
             <Icons.User className="w-3.5 h-3.5" />
@@ -3171,7 +3171,7 @@ function OrdersTab({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search order ID, patient, pharmacy or phone…"
-              className="w-full pl-10 pr-3 py-2 text-xs sm:text-sm bg-white/80 border border-[#dce7db] rounded-2xl focus:outline-none focus:border-[#006a39]"
+              className="w-full pl-10 pr-3 py-2 text-xs sm:text-sm bg-white/80 border border-slate-200 rounded-2xl focus:outline-none focus:border-rose-400"
             />
           </div>
 
@@ -3180,9 +3180,9 @@ function OrdersTab({
               type="button"
               onClick={onRefresh}
               disabled={isRefreshing}
-              className="px-3.5 py-2 rounded-2xl bg-white border border-[#dce7db] text-xs font-bold text-[#073b4c] hover:bg-emerald-50 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-2xl bg-white border border-slate-200 text-xs font-bold text-slate-900 hover:bg-emerald-50 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs flex items-center gap-1.5"
             >
-              <Icons.Refresh className={`w-3.5 h-3.5 text-[#006a39] ${isRefreshing ? "animate-spin" : ""}`} />
+              <Icons.Refresh className={`w-3.5 h-3.5 text-rose-600 ${isRefreshing ? "animate-spin" : ""}`} />
               <span>{isRefreshing ? "Syncing…" : "Refresh"}</span>
             </button>
           )}
@@ -3197,8 +3197,8 @@ function OrdersTab({
             onClick={() => setFilter(f)}
             className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
               filter === f
-                ? "bg-gradient-to-r from-[#006a39] to-[#008749] text-white shadow-md shadow-emerald-950/20"
-                : "bg-white/80 text-[#596b5e] border border-[#dce7db] hover:bg-white"
+                ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-md shadow-rose-500/25"
+                : "bg-white/80 text-[#596b5e] border border-slate-200 hover:bg-white"
             }`}
           >
             {f}
@@ -3211,7 +3211,7 @@ function OrdersTab({
         {groupedOrdersByDate.length === 0 ? (
           <div className="glass-admin-card rounded-3xl py-16 text-center text-[#728575] text-sm flex flex-col items-center gap-2 shadow-xs">
             <Icons.Order className="w-10 h-10 text-[#728575] stroke-1" />
-            <p className="font-bold text-[#073b4c]">No matching orders found</p>
+            <p className="font-bold text-slate-900">No matching orders found</p>
             <p className="text-xs">Adjust your search query or status filter.</p>
           </div>
         ) : (
@@ -3227,13 +3227,13 @@ function OrdersTab({
                       type="checkbox"
                       checked={isDayAllSelected}
                       onChange={() => handleToggleSelectDay(group.items)}
-                      className="w-4 h-4 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39]"
+                      className="w-4 h-4 rounded text-rose-600 focus:ring-rose-400 cursor-pointer accent-rose-500"
                     />
                     <div className="w-9 h-9 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-base shadow-2xs">
                       <Icons.Calendar className="w-4 h-4 text-emerald-800" />
                     </div>
                     <div>
-                      <h4 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base">{group.date}</h4>
+                      <h4 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-sm sm:text-base">{group.date}</h4>
                       <p className="text-[11px] text-[#657969]">{group.items.length} {group.items.length === 1 ? "Order" : "Orders"} placed</p>
                     </div>
                   </div>
@@ -3245,7 +3245,7 @@ function OrdersTab({
                     <button
                       type="button"
                       onClick={() => handlePrintDailyPdf(group.date)}
-                      className="bg-[#006a39] hover:bg-[#008749] text-white font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95"
+                      className="bg-rose-500 hover:bg-rose-600 text-white font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95"
                     >
                       <Icons.Printer className="w-3.5 h-3.5 text-white" />
                       <span>Daily PDF Report</span>
@@ -3272,21 +3272,21 @@ function OrdersTab({
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => toggleSelectOrder(o.id)}
-                            className="w-4 h-4 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39] mt-2.5"
+                            className="w-4 h-4 rounded text-rose-600 focus:ring-rose-400 cursor-pointer accent-rose-500 mt-2.5"
                           />
-                          <div className="w-10 h-10 rounded-2xl bg-white border border-[#dce7db] flex items-center justify-center font-bold text-base shadow-xs shrink-0 mt-0.5 text-[#073b4c]">
-                            {isRetailer ? <Icons.Store className="w-4 h-4 text-sky-700" /> : <Icons.User className="w-4 h-4 text-[#006a39]" />}
+                          <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 flex items-center justify-center font-bold text-base shadow-xs shrink-0 mt-0.5 text-slate-900">
+                            {isRetailer ? <Icons.Store className="w-4 h-4 text-sky-700" /> : <Icons.User className="w-4 h-4 text-rose-600" />}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-mono text-xs font-black text-[#006a39]">#{o.id}</span>
+                              <span className="font-mono text-xs font-black text-rose-600">#{o.id}</span>
                               <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${isRetailer ? "bg-sky-50 text-sky-800 border-sky-200" : "bg-emerald-50 text-emerald-800 border-emerald-200"}`}>
                                 {isRetailer ? "Retailer Wholesale" : "Customer Direct"}
                               </span>
                               <span className="text-[10px] text-[#728575] font-medium">{o.date}</span>
                             </div>
 
-                            <p className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-base mt-0.5 truncate">
+                            <p className="font-['Manrope',sans-serif] font-bold text-slate-900 text-sm sm:text-base mt-0.5 truncate">
                               {o.customer}
                               {isRetailer && o.shopName && (
                                 <span className="text-sky-700 font-semibold text-xs ml-2">· {o.shopName}</span>
@@ -3300,9 +3300,9 @@ function OrdersTab({
                         </div>
 
                         {/* Amount & Status Selector */}
-                        <div className="flex items-center justify-between md:justify-end gap-3.5 shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-[#e4ede2]">
+                        <div className="flex items-center justify-between md:justify-end gap-3.5 shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-200">
                           <div className="text-left md:text-right">
-                            <p className="font-['Manrope',sans-serif] font-extrabold text-sm sm:text-lg text-[#073b4c]">
+                            <p className="font-['Manrope',sans-serif] font-extrabold text-sm sm:text-lg text-slate-900">
                               ₹{o.amount.toLocaleString()}
                             </p>
                             <span className="inline-block text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border mt-1" style={{ color: st.color, backgroundColor: st.bg, borderColor: st.border }}>
@@ -3313,7 +3313,7 @@ function OrdersTab({
                           <select
                             value={o.status}
                             onChange={(e) => onUpdateStatus?.(o.dbId || o.id, e.target.value as any)}
-                            className="text-xs font-extrabold bg-white border border-[#dce7db] rounded-2xl px-3 py-2 text-[#073b4c] focus:outline-none focus:border-[#006a39] cursor-pointer shadow-xs"
+                            className="text-xs font-extrabold bg-white border border-slate-200 rounded-2xl px-3 py-2 text-slate-900 focus:outline-none focus:border-rose-400 cursor-pointer shadow-xs"
                           >
                             <option value="Processing">Processing</option>
                             <option value="Dispatched">Dispatched</option>
@@ -3329,7 +3329,7 @@ function OrdersTab({
                           <button
                             type="button"
                             onClick={() => handlePrintInvoice(o)}
-                            className="flex items-center gap-1.5 bg-[#006a39] hover:bg-[#008749] text-white text-xs font-bold px-3 py-2 rounded-2xl transition-all shadow-xs cursor-pointer active:scale-95"
+                            className="flex items-center gap-1.5 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold px-3 py-2 rounded-2xl transition-all shadow-xs cursor-pointer active:scale-95"
                           >
                             <Icons.Printer className="w-3.5 h-3.5 text-white" />
                             <span>Invoice</span>
@@ -3337,15 +3337,15 @@ function OrdersTab({
                           <button
                             type="button"
                             onClick={() => handleDownloadInvoice(o)}
-                            className="flex items-center gap-1 bg-white border border-[#dce7db] hover:bg-emerald-50 text-xs font-bold text-[#006a39] p-2 rounded-2xl transition-all cursor-pointer"
+                            className="flex items-center gap-1 bg-white border border-slate-200 hover:bg-emerald-50 text-xs font-bold text-rose-600 p-2 rounded-2xl transition-all cursor-pointer"
                             title="Save invoice file"
                           >
-                            <Icons.Download className="w-3.5 h-3.5 text-[#006a39]" />
+                            <Icons.Download className="w-3.5 h-3.5 text-rose-600" />
                           </button>
                           <button
                             type="button"
                             onClick={() => setPreviewInvoice(o)}
-                            className="flex items-center gap-1 bg-white border border-[#dce7db] hover:bg-slate-50 text-xs font-bold text-[#475569] px-3 py-2 rounded-2xl transition-all cursor-pointer"
+                            className="flex items-center gap-1 bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-[#475569] px-3 py-2 rounded-2xl transition-all cursor-pointer"
                           >
                             <Icons.Eye className="w-3.5 h-3.5 text-[#475569]" />
                             <span>Details</span>
@@ -3373,7 +3373,7 @@ function OrdersTab({
       {previewInvoice && (
         <div className="fixed inset-0 z-50 bg-[#07242e]/70 backdrop-blur-xl flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
           <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-t-3xl sm:rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
-            <div className="p-5 bg-[#073b4c] text-white flex items-center justify-between gap-3">
+            <div className="p-5 bg-slate-900 text-white flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
                   <Icons.Order className="w-5 h-5 text-emerald-300" />
@@ -3404,18 +3404,18 @@ function OrdersTab({
 
             <div className="p-6 overflow-y-auto flex flex-col gap-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="p-4 bg-white rounded-2xl border border-[#dce7db]">
+                <div className="p-4 bg-white rounded-2xl border border-slate-200">
                   <p className="text-[10px] font-extrabold text-[#728575] uppercase tracking-wider">Customer / Recipient</p>
-                  <p className="font-bold text-[#073b4c] text-sm mt-1">{previewInvoice.customer}</p>
+                  <p className="font-bold text-slate-900 text-sm mt-1">{previewInvoice.customer}</p>
                   <p className="text-xs text-[#596b5e] mt-0.5">Phone: {previewInvoice.phone}</p>
                 </div>
-                <div className="p-4 bg-white rounded-2xl border border-[#dce7db]">
+                <div className="p-4 bg-white rounded-2xl border border-slate-200">
                   <p className="text-[10px] font-extrabold text-[#728575] uppercase tracking-wider">Payment & Status</p>
-                  <p className="font-bold text-[#073b4c] text-sm mt-1">₹{previewInvoice.amount.toLocaleString()} ({previewInvoice.payment})</p>
+                  <p className="font-bold text-slate-900 text-sm mt-1">₹{previewInvoice.amount.toLocaleString()} ({previewInvoice.payment})</p>
                   <p className="text-xs text-emerald-800 font-bold mt-0.5">{previewInvoice.status} · {previewInvoice.paymentStatus || "Paid"}</p>
                 </div>
-                <div className="p-4 bg-white rounded-2xl border border-[#dce7db] sm:col-span-2">
-                  <p className="text-[10px] font-extrabold text-[#006a39] uppercase tracking-wider flex items-center gap-1.5">
+                <div className="p-4 bg-white rounded-2xl border border-slate-200 sm:col-span-2">
+                  <p className="text-[10px] font-extrabold text-rose-600 uppercase tracking-wider flex items-center gap-1.5">
                     <span>📍</span>
                     <span>Delivery Address</span>
                   </p>
@@ -3426,14 +3426,14 @@ function OrdersTab({
               </div>
 
               {/* Items Breakdown Table */}
-              <div className="bg-white rounded-2xl border border-[#dce7db] p-4 overflow-hidden">
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 overflow-hidden">
                 <p className="text-[10px] font-extrabold text-[#728575] uppercase tracking-wider mb-2.5">
                   Ordered Products Breakdown ({previewInvoice.orderItems?.length || previewInvoice.items} items)
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="border-b border-[#e4ede2] text-[10px] uppercase font-extrabold text-[#596b5e]">
+                      <tr className="border-b border-slate-200 text-[10px] uppercase font-extrabold text-[#596b5e]">
                         <th className="py-2 px-1 text-center w-8">#</th>
                         <th className="py-2 px-2">Item</th>
                         <th className="py-2 px-2 text-center">Batch / Exp</th>
@@ -3448,19 +3448,19 @@ function OrdersTab({
                         previewInvoice.orderItems.map((it, idx) => (
                           <tr key={idx} className="hover:bg-slate-50/50">
                             <td className="py-2 px-1 text-center font-bold text-[#657969]">{idx + 1}</td>
-                            <td className="py-2 px-2 font-bold text-[#073b4c]">
+                            <td className="py-2 px-2 font-bold text-slate-900">
                               {it.name}
                               {it.sku && <span className="block text-[10px] font-normal text-[#657969]">SKU: {it.sku}</span>}
                             </td>
                             <td className="py-2 px-2 text-center font-mono text-[10px] text-[#657969]">
                               {it.batch || "—"} / {it.expiry || "—"}
                             </td>
-                            <td className="py-2 px-2 text-center font-bold text-[#073b4c]">{it.quantity}</td>
+                            <td className="py-2 px-2 text-center font-bold text-slate-900">{it.quantity}</td>
                             <td className="py-2 px-2 text-right text-[#657969]">
                               {it.mrp ? `₹${Number(it.mrp).toLocaleString()}` : "—"}
                             </td>
-                            <td className="py-2 px-2 text-right font-bold text-[#006a39]">₹{Number(it.price).toLocaleString()}</td>
-                            <td className="py-2 px-2 text-right font-extrabold text-[#073b4c]">
+                            <td className="py-2 px-2 text-right font-bold text-rose-600">₹{Number(it.price).toLocaleString()}</td>
+                            <td className="py-2 px-2 text-right font-extrabold text-slate-900">
                               ₹{(Number(it.totalPrice) || (Number(it.price) * Number(it.quantity))).toLocaleString()}
                             </td>
                           </tr>
@@ -3488,10 +3488,10 @@ function OrdersTab({
             <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4 text-2xl shadow-xs">
               <Icons.Trash className="w-7 h-7 text-rose-600" />
             </div>
-            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg mb-1">Delete Order #{confirmDeleteOrder.id}</h3>
+            <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-lg mb-1">Delete Order #{confirmDeleteOrder.id}</h3>
             <p className="text-[#657969] text-xs mb-6 leading-relaxed">Are you sure you want to delete this order ({confirmDeleteOrder.customer}, ₹{confirmDeleteOrder.amount.toLocaleString()})? This action cannot be undone.</p>
             <div className="flex gap-3">
-              <button onClick={() => setConfirmDeleteOrder(null)} className="flex-1 py-2.5 rounded-2xl border border-[#dce7db] text-[#657969] font-bold text-xs hover:bg-white cursor-pointer">Cancel</button>
+              <button onClick={() => setConfirmDeleteOrder(null)} className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-[#657969] font-bold text-xs hover:bg-white cursor-pointer">Cancel</button>
               <button onClick={handleConfirmSingleDelete} className="flex-1 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-md shadow-rose-950/20">Delete</button>
             </div>
           </div>
@@ -3624,11 +3624,11 @@ function UsersTab({
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#006a39]">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-rose-600">
               Live Supabase Authentication & Profile Management
             </span>
           </div>
-          <h2 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xl sm:text-2xl">
+          <h2 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-xl sm:text-2xl">
             User Accounts & Security Directory
           </h2>
           <p className="text-xs text-[#657969] mt-0.5">
@@ -3640,9 +3640,9 @@ function UsersTab({
           type="button"
           onClick={onRefresh}
           disabled={isRefreshing}
-          className="px-4 py-2.5 rounded-2xl bg-white/80 border border-[#dce7db] hover:bg-white text-[#073b4c] text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer self-start md:self-auto active:scale-95"
+          className="px-4 py-2.5 rounded-2xl bg-white/80 border border-slate-200 hover:bg-white text-slate-900 text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer self-start md:self-auto active:scale-95"
         >
-          <Icons.Refresh className={`w-4 h-4 text-[#006a39] ${isRefreshing ? "animate-spin" : ""}`} />
+          <Icons.Refresh className={`w-4 h-4 text-rose-600 ${isRefreshing ? "animate-spin" : ""}`} />
           <span>{isRefreshing ? "Syncing DB…" : "Refresh Directory"}</span>
         </button>
       </div>
@@ -3652,7 +3652,7 @@ function UsersTab({
         <button
           onClick={() => setUsersSubTab("users")}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            usersSubTab === "users" ? "bg-white text-[#073b4c] shadow-xs" : "text-[#657969] hover:text-[#073b4c]"
+            usersSubTab === "users" ? "bg-white text-slate-900 shadow-xs" : "text-[#657969] hover:text-slate-900"
           }`}
         >
           User Directory
@@ -3660,7 +3660,7 @@ function UsersTab({
         <button
           onClick={() => setUsersSubTab("login-logs")}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-            usersSubTab === "login-logs" ? "bg-[#073b4c] text-white shadow-xs" : "text-[#657969] hover:text-[#073b4c]"
+            usersSubTab === "login-logs" ? "bg-slate-900 text-white shadow-xs" : "text-[#657969] hover:text-slate-900"
           }`}
         >
           <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -3673,13 +3673,13 @@ function UsersTab({
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 sm:gap-4">
         <div onClick={() => { setRoleFilter("all"); setStatusFilter("all"); }} className="glass-admin-card glass-admin-card-hover rounded-3xl p-4 cursor-pointer border-2 transition-all">
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#657969]">Total Registered</span>
-          <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-2xl sm:text-3xl mt-1">{stats.total}</p>
+          <p className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-2xl sm:text-3xl mt-1">{stats.total}</p>
           <p className="text-[11px] text-[#728575] mt-0.5">All accounts</p>
         </div>
 
         <div onClick={() => { setRoleFilter("retailer"); setStatusFilter("all"); }} className="glass-admin-card glass-admin-card-hover rounded-3xl p-4 cursor-pointer border-2 transition-all">
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800">Retailers & Pharmacies</span>
-          <p className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-2xl sm:text-3xl mt-1">{stats.retailers}</p>
+          <p className="font-['Manrope',sans-serif] font-extrabold text-rose-600 text-2xl sm:text-3xl mt-1">{stats.retailers}</p>
           <p className="text-[11px] text-[#728575] mt-0.5">Wholesale B2B partners</p>
         </div>
 
@@ -3708,8 +3708,8 @@ function UsersTab({
                 onClick={() => setRoleFilter(r)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
                   roleFilter === r
-                    ? "bg-white text-[#073b4c] shadow-xs"
-                    : "text-[#657969] hover:text-[#073b4c]"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-[#657969] hover:text-slate-900"
                 }`}
               >
                 {r === "all" ? "All Roles" : r === "retailer" ? "Retailers" : "Admins"}
@@ -3724,8 +3724,8 @@ function UsersTab({
                 onClick={() => setStatusFilter(s)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
                   statusFilter === s
-                    ? "bg-white text-[#073b4c] shadow-xs"
-                    : "text-[#657969] hover:text-[#073b4c]"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-[#657969] hover:text-slate-900"
                 }`}
               >
                 {s === "all" ? "All Statuses" : s}
@@ -3740,13 +3740,13 @@ function UsersTab({
             placeholder="Search by name, email, shop, or phone…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white/80 border border-[#dce7db] rounded-2xl px-4 py-2.5 text-xs sm:text-sm text-[#073b4c] placeholder:text-[#a8b8aa] focus:outline-none focus:bg-white focus:border-[#006a39] shadow-xs"
+            className="w-full bg-white/80 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-[#a8b8aa] focus:outline-none focus:bg-white focus:border-rose-400 shadow-xs"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="text-xs text-[#728575] hover:text-[#073b4c] font-bold shrink-0 cursor-pointer"
+              className="text-xs text-[#728575] hover:text-slate-900 font-bold shrink-0 cursor-pointer"
             >
               Clear
             </button>
@@ -3781,7 +3781,7 @@ function UsersTab({
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base truncate">
+                      <p className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-sm sm:text-base truncate">
                         {u.fullName}
                       </p>
                       {/* Role Pill */}
@@ -3818,7 +3818,7 @@ function UsersTab({
                       
                     </p>
                     {u.businessName && (
-                      <p className="text-xs text-[#006a39] font-semibold mt-0.5">
+                      <p className="text-xs text-rose-600 font-semibold mt-0.5">
                         🏬 {u.businessName}
                       </p>
                     )}
@@ -3835,9 +3835,9 @@ function UsersTab({
                   <button
                     type="button"
                     onClick={() => setDetailsModalUser(u)}
-                    className="px-3 py-1.5 rounded-xl bg-white border border-[#dce7db] hover:bg-[#f0f5f2] text-[#073b4c] text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-[#f0f5f2] text-slate-900 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
                   >
-                    <Icons.Eye className="w-3.5 h-3.5 text-[#006a39]" />
+                    <Icons.Eye className="w-3.5 h-3.5 text-rose-600" />
                     <span>Details</span>
                   </button>
 
@@ -3850,7 +3850,7 @@ function UsersTab({
                       setPasswordError("");
                       setPasswordSuccess("");
                     }}
-                    className="px-3 py-1.5 rounded-xl bg-white border border-[#dce7db] hover:bg-[#f0f5f2] text-[#073b4c] text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-[#f0f5f2] text-slate-900 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
                   >
                     <span>🔑</span>
                     <span>Set Password</span>
@@ -3861,7 +3861,7 @@ function UsersTab({
                     <button
                       type="button"
                       onClick={() => setStatusModal({ user: u, targetStatus: "active" })}
-                      className="px-3 py-1.5 rounded-xl bg-[#006a39] hover:bg-[#008749] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
                     >
                       <Icons.Check className="w-3.5 h-3.5" />
                       <span>Approve</span>
@@ -3922,7 +3922,7 @@ function UsersTab({
         {filteredUsers.length === 0 && (
           <div className="py-16 text-center text-[#728575] text-sm flex flex-col items-center gap-2">
             <Icons.User className="w-10 h-10 text-[#728575] stroke-1" />
-            <p className="font-bold text-[#073b4c]">No users matched your criteria</p>
+            <p className="font-bold text-slate-900">No users matched your criteria</p>
             <p className="text-xs">Adjust your search query, role filter, or approval status filter.</p>
           </div>
         )}
@@ -3938,14 +3938,14 @@ function UsersTab({
                   🔑
                 </div>
                 <div>
-                  <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg">Change User Password</h3>
+                  <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-lg">Change User Password</h3>
                   <p className="text-xs text-[#657969]">{passwordModalUser.fullName} ({passwordModalUser.email})</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setPasswordModalUser(null)}
-                className="text-[#657969] hover:text-[#073b4c] text-xl font-bold cursor-pointer"
+                className="text-[#657969] hover:text-slate-900 text-xl font-bold cursor-pointer"
               >
                 ✕
               </button>
@@ -3953,7 +3953,7 @@ function UsersTab({
 
             <form onSubmit={handleExecutePasswordChange} className="flex flex-col gap-4">
               <div>
-                <label className="block text-[11px] font-extrabold text-[#073b4c] uppercase tracking-wider mb-1.5">
+                <label className="block text-[11px] font-extrabold text-slate-900 uppercase tracking-wider mb-1.5">
                   New Secure Password
                 </label>
                 <input
@@ -3963,7 +3963,7 @@ function UsersTab({
                   placeholder="Enter new 6+ char password…"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39] shadow-xs"
+                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-rose-400 shadow-xs"
                 />
                 <p className="text-[11px] text-[#728575] mt-1">
                   The user can immediately log in with this newly assigned password.
@@ -3986,14 +3986,14 @@ function UsersTab({
                 <button
                   type="button"
                   onClick={() => setPasswordModalUser(null)}
-                  className="flex-1 py-2.5 rounded-2xl border border-[#dce7db] text-[#657969] font-bold text-xs hover:bg-white cursor-pointer"
+                  className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-[#657969] font-bold text-xs hover:bg-white cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={passwordLoading}
-                  className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] text-white font-bold text-xs shadow-md shadow-emerald-950/20 hover:opacity-95 transition-all cursor-pointer disabled:opacity-50"
+                  className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-xs shadow-md shadow-rose-500/25 hover:opacity-95 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {passwordLoading ? "Updating…" : "Update Password"}
                 </button>
@@ -4016,7 +4016,7 @@ function UsersTab({
             }`}>
               {statusModal.targetStatus === "blocked" ? "⚠️" : statusModal.targetStatus === "active" ? "✓" : "✕"}
             </div>
-            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg mb-1 capitalize">
+            <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-lg mb-1 capitalize">
               {statusModal.targetStatus} User Account
             </h3>
             <p className="text-[#657969] text-xs mb-6 leading-relaxed">
@@ -4027,7 +4027,7 @@ function UsersTab({
               <button
                 type="button"
                 onClick={() => setStatusModal(null)}
-                className="flex-1 py-2.5 rounded-2xl border border-[#dce7db] text-[#657969] font-bold text-xs hover:bg-white cursor-pointer"
+                className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-[#657969] font-bold text-xs hover:bg-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -4057,7 +4057,7 @@ function UsersTab({
             <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4 text-2xl shadow-xs">
               <Icons.Trash className="w-7 h-7 text-rose-600" />
             </div>
-            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg mb-1">
+            <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-lg mb-1">
               Delete User Account
             </h3>
             <p className="text-[#657969] text-xs mb-6 leading-relaxed">
@@ -4067,7 +4067,7 @@ function UsersTab({
               <button
                 type="button"
                 onClick={() => setDeleteModalUser(null)}
-                className="flex-1 py-2.5 rounded-2xl border border-[#dce7db] text-[#657969] font-bold text-xs hover:bg-white cursor-pointer"
+                className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-[#657969] font-bold text-xs hover:bg-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -4088,53 +4088,53 @@ function UsersTab({
       {detailsModalUser && (
         <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl animate-in zoom-in-95">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#e4ede2]">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
                   <Icons.User className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base">User Account Details</h3>
+                  <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-base">User Account Details</h3>
                   <p className="text-[11px] text-[#657969]">ID: {detailsModalUser.id}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setDetailsModalUser(null)}
-                className="text-[#657969] hover:text-[#073b4c] text-lg font-bold cursor-pointer"
+                className="text-[#657969] hover:text-slate-900 text-lg font-bold cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="flex flex-col gap-3 text-xs text-[#073b4c]">
-              <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+            <div className="flex flex-col gap-3 text-xs text-slate-900">
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
                 <span className="text-[#657969]">Full Name:</span>
                 <span className="font-bold">{detailsModalUser.fullName}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
                 <span className="text-[#657969]">Email:</span>
                 <span className="font-mono font-bold text-emerald-800">{detailsModalUser.email}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
                 <span className="text-[#657969]">Phone:</span>
                 <span className="font-mono">Not provided</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
                 <span className="text-[#657969]">User Role:</span>
-                <span className="font-extrabold uppercase text-[#006a39]">{detailsModalUser.role}</span>
+                <span className="font-extrabold uppercase text-rose-600">{detailsModalUser.role}</span>
               </div>
               {detailsModalUser.businessName && (
-                <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+                <div className="flex justify-between py-1.5 border-b border-slate-100">
                   <span className="text-[#657969]">Business / Shop Name:</span>
                   <span className="font-bold">{detailsModalUser.businessName}</span>
                 </div>
               )}
-              <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
                 <span className="text-[#657969]">Account Status:</span>
                 <span className="font-extrabold uppercase">{detailsModalUser.status}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-[#edf3ee]">
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
                 <span className="text-[#657969]">Created At:</span>
                 <span>{new Date(detailsModalUser.createdAt).toLocaleString("en-IN")}</span>
               </div>
@@ -4144,7 +4144,7 @@ function UsersTab({
             <button
               type="button"
               onClick={() => setDetailsModalUser(null)}
-              className="w-full mt-5 py-2.5 rounded-2xl bg-[#006a39] text-white text-xs font-bold hover:bg-[#008749] transition-all cursor-pointer shadow-xs"
+              className="w-full mt-5 py-2.5 rounded-2xl bg-rose-500 text-white text-xs font-bold hover:bg-rose-600 transition-all cursor-pointer shadow-xs"
             >
               Close Details
             </button>
@@ -4208,7 +4208,7 @@ function LoginLogsPanel() {
           {(["all", "customer", "retailer", "admin"] as const).map((r) => (
             <button key={r} onClick={() => setRoleFilter(r)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
-                roleFilter === r ? "bg-white text-[#073b4c] shadow-xs" : "text-[#657969] hover:text-[#073b4c]"
+                roleFilter === r ? "bg-white text-slate-900 shadow-xs" : "text-[#657969] hover:text-slate-900"
               }`}>{r === "all" ? "All Roles" : r}</button>
           ))}
         </div>
@@ -4216,16 +4216,16 @@ function LoginLogsPanel() {
           {(["all", "success", "failed", "blocked_attempt"] as const).map((s) => (
             <button key={s} onClick={() => setStatusFilter(s)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
-                statusFilter === s ? "bg-white text-[#073b4c] shadow-xs" : "text-[#657969] hover:text-[#073b4c]"
+                statusFilter === s ? "bg-white text-slate-900 shadow-xs" : "text-[#657969] hover:text-slate-900"
               }`}>{s === "all" ? "All" : s === "blocked_attempt" ? "Blocked" : s}</button>
           ))}
         </div>
         <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
-          className="border border-[#dce7db] rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-[#006a39]" placeholder="From" />
+          className="border border-slate-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-rose-400" placeholder="From" />
         <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
-          className="border border-[#dce7db] rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-[#006a39]" placeholder="To" />
+          className="border border-slate-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-rose-400" placeholder="To" />
         <button onClick={() => loadLogs(0)} disabled={loading}
-          className="px-4 py-2 rounded-2xl bg-[#006a39] text-white text-xs font-bold hover:bg-[#008749] transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95">
+          className="px-4 py-2 rounded-2xl bg-rose-500 text-white text-xs font-bold hover:bg-rose-600 transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95">
           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           {loading ? "Loading…" : "Apply Filters"}
         </button>
@@ -4238,7 +4238,7 @@ function LoginLogsPanel() {
           <div className="py-16 text-center text-[#728575] text-sm">Loading login logs…</div>
         ) : logs.length === 0 ? (
           <div className="py-16 text-center text-[#728575] text-sm">
-            <p className="font-bold text-[#073b4c]">No login logs found</p>
+            <p className="font-bold text-slate-900">No login logs found</p>
             <p className="text-xs mt-1">Adjust your filters or wait for login events.</p>
           </div>
         ) : (
@@ -4246,11 +4246,11 @@ function LoginLogsPanel() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-gradient-to-r from-emerald-50/90 to-white border-b border-[#dce8dc]">
-                  <th className="text-left px-4 py-3 font-extrabold text-[#073b4c] uppercase tracking-wider">Time</th>
-                  <th className="text-left px-4 py-3 font-extrabold text-[#073b4c] uppercase tracking-wider">Email</th>
-                  <th className="text-left px-4 py-3 font-extrabold text-[#073b4c] uppercase tracking-wider">Role</th>
-                  <th className="text-left px-4 py-3 font-extrabold text-[#073b4c] uppercase tracking-wider">Result</th>
-                  <th className="text-left px-4 py-3 font-extrabold text-[#073b4c] uppercase tracking-wider hidden md:table-cell">IP Address</th>
+                  <th className="text-left px-4 py-3 font-extrabold text-slate-900 uppercase tracking-wider">Time</th>
+                  <th className="text-left px-4 py-3 font-extrabold text-slate-900 uppercase tracking-wider">Email</th>
+                  <th className="text-left px-4 py-3 font-extrabold text-slate-900 uppercase tracking-wider">Role</th>
+                  <th className="text-left px-4 py-3 font-extrabold text-slate-900 uppercase tracking-wider">Result</th>
+                  <th className="text-left px-4 py-3 font-extrabold text-slate-900 uppercase tracking-wider hidden md:table-cell">IP Address</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#e4ede2]">
@@ -4259,7 +4259,7 @@ function LoginLogsPanel() {
                     <td className="px-4 py-3 text-[#657969] font-mono whitespace-nowrap">
                       {new Date(log.loggedInAt).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "medium" })}
                     </td>
-                    <td className="px-4 py-3 font-medium text-[#073b4c] max-w-[200px] truncate">{log.email}</td>
+                    <td className="px-4 py-3 font-medium text-slate-900 max-w-[200px] truncate">{log.email}</td>
                     <td className="px-4 py-3">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold capitalize bg-slate-100 text-slate-700 border border-slate-200">
                         {log.role || "—"}
@@ -4283,12 +4283,12 @@ function LoginLogsPanel() {
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3">
           <button onClick={() => loadLogs(page - 1)} disabled={page === 0 || loading}
-            className="px-4 py-2 rounded-2xl bg-white border border-[#dce7db] text-xs font-bold text-[#073b4c] hover:bg-emerald-50 transition-all disabled:opacity-40 cursor-pointer">
+            className="px-4 py-2 rounded-2xl bg-white border border-slate-200 text-xs font-bold text-slate-900 hover:bg-emerald-50 transition-all disabled:opacity-40 cursor-pointer">
             ← Previous
           </button>
           <span className="text-xs text-[#657969] font-bold">Page {page + 1} of {totalPages}</span>
           <button onClick={() => loadLogs(page + 1)} disabled={page >= totalPages - 1 || loading}
-            className="px-4 py-2 rounded-2xl bg-white border border-[#dce7db] text-xs font-bold text-[#073b4c] hover:bg-emerald-50 transition-all disabled:opacity-40 cursor-pointer">
+            className="px-4 py-2 rounded-2xl bg-white border border-slate-200 text-xs font-bold text-slate-900 hover:bg-emerald-50 transition-all disabled:opacity-40 cursor-pointer">
             Next →
           </button>
         </div>
@@ -4418,14 +4418,14 @@ function DeliveryPartnersTab() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="glass-admin-card rounded-3xl p-5 shadow-xs">
           <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#657969]">Total Partners</p>
-          <p className="font-['Manrope',sans-serif] font-black text-2xl sm:text-3xl text-[#073b4c] mt-1">
+          <p className="font-['Manrope',sans-serif] font-black text-2xl sm:text-3xl text-slate-900 mt-1">
             {partners.length}
           </p>
         </div>
 
         <div className="glass-admin-card rounded-3xl p-5 shadow-xs">
           <p className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800">On Duty Now</p>
-          <p className="font-['Manrope',sans-serif] font-black text-2xl sm:text-3xl text-[#006a39] mt-1 flex items-center gap-2">
+          <p className="font-['Manrope',sans-serif] font-black text-2xl sm:text-3xl text-rose-600 mt-1 flex items-center gap-2">
             <span>{onDutyCount}</span>
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
           </p>
@@ -4440,7 +4440,7 @@ function DeliveryPartnersTab() {
 
         <div className="glass-admin-card rounded-3xl p-5 shadow-xs">
           <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#657969]">GPS Beacons</p>
-          <p className="font-['Manrope',sans-serif] font-black text-2xl sm:text-3xl text-[#073b4c] mt-1">
+          <p className="font-['Manrope',sans-serif] font-black text-2xl sm:text-3xl text-slate-900 mt-1">
             {locations.length} Live
           </p>
         </div>
@@ -4460,8 +4460,8 @@ function DeliveryPartnersTab() {
               onClick={() => setSubTab(t.id as any)}
               className={`px-4 py-2 rounded-2xl text-xs font-bold font-['Manrope',sans-serif] transition-all cursor-pointer whitespace-nowrap ${
                 subTab === t.id
-                  ? "bg-[#006a39] text-white shadow-md shadow-emerald-950/20"
-                  : "bg-white text-[#073b4c] border border-[#dce7db] hover:bg-emerald-50"
+                  ? "bg-rose-500 text-white shadow-md shadow-rose-500/25"
+                  : "bg-white text-slate-900 border border-slate-200 hover:bg-emerald-50"
               }`}
             >
               {t.label}
@@ -4473,7 +4473,7 @@ function DeliveryPartnersTab() {
           <button
             onClick={loadData}
             disabled={loading}
-            className="p-2.5 rounded-2xl bg-white border border-[#dce7db] hover:bg-emerald-50 text-xs font-bold text-[#073b4c] cursor-pointer"
+            className="p-2.5 rounded-2xl bg-white border border-slate-200 hover:bg-emerald-50 text-xs font-bold text-slate-900 cursor-pointer"
             title="Refresh Data"
           >
             <span className={loading ? "animate-spin" : ""}>🔄</span>
@@ -4484,7 +4484,7 @@ function DeliveryPartnersTab() {
               setCreateError("");
               setShowAddModal(true);
             }}
-            className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-emerald-950/15 cursor-pointer active:scale-95"
+            className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-rose-500/20 cursor-pointer active:scale-95"
           >
             <span>+</span>
             <span>Add Delivery Partner</span>
@@ -4498,7 +4498,7 @@ function DeliveryPartnersTab() {
           {partners.map((p) => (
             <div
               key={p.id}
-              className="glass-admin-card rounded-3xl p-5 border border-[#dce7db] shadow-xs hover:shadow-md transition-all flex flex-col justify-between gap-4"
+              className="glass-admin-card rounded-3xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-all flex flex-col justify-between gap-4"
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
@@ -4526,33 +4526,33 @@ function DeliveryPartnersTab() {
                       className="w-13 h-13 rounded-2xl object-cover border-2 border-emerald-600 shadow-md shrink-0"
                     />
                   ) : (
-                    <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-[#006a39] to-[#008749] text-white font-black text-xl flex items-center justify-center shadow-md shrink-0">
+                    <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-500 text-white font-black text-xl flex items-center justify-center shadow-md shrink-0">
                       {(p.name?.[0] || "D").toUpperCase()}
                     </div>
                   )}
 
                   <div className="min-w-0">
-                    <h4 className="font-['Manrope',sans-serif] font-extrabold text-base text-[#073b4c] truncate">
+                    <h4 className="font-['Manrope',sans-serif] font-extrabold text-base text-slate-900 truncate">
                       {p.name}
                       {p.partnerCode && (
-                        <span className="ml-2 text-xs text-[#006a39] font-mono bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200">
+                        <span className="ml-2 text-xs text-rose-600 font-mono bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200">
                           {p.partnerCode}
                         </span>
                       )}
                     </h4>
                     <p className="text-xs text-[#657969] font-mono truncate">{p.email}</p>
-                    <p className="text-xs text-[#006a39] font-bold mt-0.5">{p.phone || "No phone yet"}</p>
+                    <p className="text-xs text-rose-600 font-bold mt-0.5">{p.phone || "No phone yet"}</p>
                   </div>
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-[#f0f4f0] grid grid-cols-2 gap-2 text-[11px]">
                   <div className="bg-[#f8fafb] rounded-xl p-2 text-center">
                     <span className="text-[#657969] block">Active Orders</span>
-                    <span className="font-black text-[#006a39] text-sm">{p.activeOrdersCount || 0}</span>
+                    <span className="font-black text-rose-600 text-sm">{p.activeOrdersCount || 0}</span>
                   </div>
                   <div className="bg-[#f8fafb] rounded-xl p-2 text-center">
                     <span className="text-[#657969] block">Delivered</span>
-                    <span className="font-black text-[#073b4c] text-sm">{p.completedOrdersCount || 0}</span>
+                    <span className="font-black text-slate-900 text-sm">{p.completedOrdersCount || 0}</span>
                   </div>
                 </div>
 
@@ -4560,14 +4560,14 @@ function DeliveryPartnersTab() {
                   <p className="text-xs text-[#657969] mt-2.5 flex items-center gap-1">
                     <span>🛵</span>
                     <span>{p.vehicleType}</span>
-                    {p.vehicleNumber && <span className="font-mono font-bold text-[#073b4c]">({p.vehicleNumber})</span>}
+                    {p.vehicleNumber && <span className="font-mono font-bold text-slate-900">({p.vehicleNumber})</span>}
                   </p>
                 )}
               </div>
 
               <button
                 onClick={() => handleInspect(p)}
-                className="w-full py-2.5 rounded-2xl bg-white border border-[#dce7db] hover:bg-[#f0f5f2] text-[#073b4c] font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                className="w-full py-2.5 rounded-2xl bg-white border border-slate-200 hover:bg-[#f0f5f2] text-slate-900 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
               >
                 <span>View Full Details & Orders</span>
                 <span>→</span>
@@ -4578,7 +4578,7 @@ function DeliveryPartnersTab() {
           {partners.length === 0 && (
             <div className="col-span-full py-16 text-center text-[#728575] glass-admin-card rounded-3xl flex flex-col items-center gap-2">
               <span className="text-3xl">🛵</span>
-              <p className="font-bold text-[#073b4c]">No delivery partners registered yet</p>
+              <p className="font-bold text-slate-900">No delivery partners registered yet</p>
               <p className="text-xs">Click "+ Add Delivery Partner" above to create an employee account.</p>
             </div>
           )}
@@ -4590,7 +4590,7 @@ function DeliveryPartnersTab() {
         <div className="flex flex-col gap-4">
           <div className="glass-admin-card rounded-3xl p-5 flex items-center justify-between">
             <div>
-              <h3 className="font-['Manrope',sans-serif] font-black text-lg text-[#073b4c]">
+              <h3 className="font-['Manrope',sans-serif] font-black text-lg text-slate-900">
                 City-Wide Live Fleet GPS Tracking
               </h3>
               <p className="text-xs text-[#657969]">
@@ -4610,8 +4610,8 @@ function DeliveryPartnersTab() {
       {/* ── SUB-TAB 3: ATTENDANCE LOGS ── */}
       {subTab === "attendance" && (
         <div className="glass-admin-card rounded-3xl overflow-hidden shadow-xs">
-          <div className="p-5 border-b border-[#e4ede2] flex items-center justify-between">
-            <h3 className="font-['Manrope',sans-serif] font-black text-base text-[#073b4c]">
+          <div className="p-5 border-b border-slate-200 flex items-center justify-between">
+            <h3 className="font-['Manrope',sans-serif] font-black text-base text-slate-900">
               Daily Attendance & Shift Records
             </h3>
             <span className="text-xs text-[#728575]">Auto-logged upon on-duty toggles</span>
@@ -4619,7 +4619,7 @@ function DeliveryPartnersTab() {
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#f8fafb] border-b border-[#e4ede2] text-[#073b4c] font-black uppercase text-[10px] tracking-wider">
+              <thead className="bg-[#f8fafb] border-b border-slate-200 text-slate-900 font-black uppercase text-[10px] tracking-wider">
                 <tr>
                   <th className="p-4">Partner Name</th>
                   <th className="p-4">Email</th>
@@ -4632,7 +4632,7 @@ function DeliveryPartnersTab() {
               <tbody className="divide-y divide-[#f0f4f0]">
                 {attendance.map((rec) => (
                   <tr key={rec.id} className="hover:bg-[#f8fafb] transition-colors">
-                    <td className="p-4 font-bold text-[#073b4c]">{rec.userName}</td>
+                    <td className="p-4 font-bold text-slate-900">{rec.userName}</td>
                     <td className="p-4 font-mono text-[#657969]">{rec.userEmail}</td>
                     <td className="p-4 font-semibold">{rec.workDate}</td>
                     <td className="p-4 text-emerald-800 font-mono">
@@ -4807,7 +4807,7 @@ function DeliveryPartnersTab() {
                 <div>
                   <div className="flex items-center gap-2.5">
                     <span className="text-2xl">📥</span>
-                    <h3 className="font-['Manrope',sans-serif] font-black text-lg text-[#073b4c]">
+                    <h3 className="font-['Manrope',sans-serif] font-black text-lg text-slate-900">
                       Partner Reports Export
                     </h3>
                   </div>
@@ -4817,7 +4817,7 @@ function DeliveryPartnersTab() {
                 </div>
 
                 <div className="flex flex-wrap gap-2 items-center">
-                  <div className="inline-flex rounded-2xl bg-[#eef4ef] p-1 border border-[#dce7db] self-start sm:self-auto">
+                  <div className="inline-flex rounded-2xl bg-[#eef4ef] p-1 border border-slate-200 self-start sm:self-auto">
                     <button
                       type="button"
                       onClick={() => {
@@ -4826,8 +4826,8 @@ function DeliveryPartnersTab() {
                       }}
                       className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         reportCategory === "attendance"
-                          ? "bg-[#006a39] text-white shadow-xs"
-                          : "text-[#073b4c] hover:text-[#006a39]"
+                          ? "bg-rose-500 text-white shadow-xs"
+                          : "text-slate-900 hover:text-rose-600"
                       }`}
                     >
                       Attendance
@@ -4841,8 +4841,8 @@ function DeliveryPartnersTab() {
                       }}
                       className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         reportCategory === "delivery"
-                          ? "bg-[#006a39] text-white shadow-xs"
-                          : "text-[#073b4c] hover:text-[#006a39]"
+                          ? "bg-rose-500 text-white shadow-xs"
+                          : "text-slate-900 hover:text-rose-600"
                       }`}
                     >
                       Deliveries
@@ -4850,7 +4850,7 @@ function DeliveryPartnersTab() {
                   </div>
 
                   {reportCategory === "attendance" && (
-                    <div className="inline-flex rounded-2xl bg-[#eef4ef] p-1 border border-[#dce7db] self-start sm:self-auto">
+                    <div className="inline-flex rounded-2xl bg-[#eef4ef] p-1 border border-slate-200 self-start sm:self-auto">
                   <button
                     type="button"
                     onClick={() => {
@@ -4859,8 +4859,8 @@ function DeliveryPartnersTab() {
                     }}
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       reportRangeType === "weekly"
-                        ? "bg-[#006a39] text-white shadow-xs"
-                        : "text-[#073b4c] hover:text-[#006a39]"
+                        ? "bg-rose-500 text-white shadow-xs"
+                        : "text-slate-900 hover:text-rose-600"
                     }`}
                   >
                     📅 Weekly Report
@@ -4873,8 +4873,8 @@ function DeliveryPartnersTab() {
                     }}
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       reportRangeType === "monthly"
-                        ? "bg-[#006a39] text-white shadow-xs"
-                        : "text-[#073b4c] hover:text-[#006a39]"
+                        ? "bg-rose-500 text-white shadow-xs"
+                        : "text-slate-900 hover:text-rose-600"
                     }`}
                   >
                   </button>
@@ -4884,23 +4884,23 @@ function DeliveryPartnersTab() {
               </div>
 
               {/* Form Controls Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6 pt-6 border-t border-[#e4ede2]">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6 pt-6 border-t border-slate-200">
                 {/* 1. Date/Range Selector */}
                 {reportCategory === "delivery" ? (
                   <div className="md:col-span-1 flex flex-col gap-3">
                     <div>
-                      <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1.5">
+                      <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1.5">
                         From Date
                       </label>
                       <input
                         type="date"
                         value={deliveryStartDate}
                         onChange={(e) => { setDeliveryStartDate(e.target.value); setReportMsg(null); }}
-                        className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                        className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-rose-400"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1.5">
+                      <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1.5">
                         To Date
                       </label>
                       <input
@@ -4908,16 +4908,16 @@ function DeliveryPartnersTab() {
                         value={deliveryEndDate}
                         min={deliveryStartDate}
                         onChange={(e) => { setDeliveryEndDate(e.target.value); setReportMsg(null); }}
-                        className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                        className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-rose-400"
                       />
                     </div>
                     <p className="text-[11px] text-[#657969]">
-                      Range: <span className="font-bold text-[#073b4c]">{deliveryStartDate} → {deliveryEndDate}</span>
+                      Range: <span className="font-bold text-slate-900">{deliveryStartDate} → {deliveryEndDate}</span>
                     </p>
                   </div>
                 ) : (
                 <div>
-                  <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1.5">
                     {reportRangeType === "weekly" ? "Select Week (Pick Any Day)" : "Select Month & Year"}
                   </label>
                   {reportRangeType === "weekly" ? (
@@ -4928,7 +4928,7 @@ function DeliveryPartnersTab() {
                         setReportWeekDate(e.target.value);
                         setReportMsg(null);
                       }}
-                      className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                      className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-rose-400"
                     />
                   ) : (
                     <input
@@ -4938,18 +4938,18 @@ function DeliveryPartnersTab() {
                         setReportMonth(e.target.value);
                         setReportMsg(null);
                       }}
-                      className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                      className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-rose-400"
                     />
                   )}
                   <p className="text-[11px] text-[#657969] mt-1">
-                    Resolved Range: <span className="font-bold text-[#073b4c]">{activeRangeLabel}</span>
+                    Resolved Range: <span className="font-bold text-slate-900">{activeRangeLabel}</span>
                   </p>
                 </div>
                 )}
 
                 {/* 2. Partner Filter */}
                 <div>
-                  <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1.5">
                     Target Delivery Partner
                   </label>
                   <select
@@ -4958,7 +4958,7 @@ function DeliveryPartnersTab() {
                       setReportPartnerId(e.target.value);
                       setReportMsg(null);
                     }}
-                    className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                    className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-rose-400"
                   >
                     <option value="all">👥 All Delivery Partners ({partners.length})</option>
                     {partners.map((p) => (
@@ -4968,7 +4968,7 @@ function DeliveryPartnersTab() {
                     ))}
                   </select>
                   <p className="text-[11px] text-[#657969] mt-1">
-                    Selected Scope: <span className="font-bold text-[#073b4c]">{selectedPartnerName}</span>
+                    Selected Scope: <span className="font-bold text-slate-900">{selectedPartnerName}</span>
                   </p>
                 </div>
 
@@ -4978,7 +4978,7 @@ function DeliveryPartnersTab() {
                     type="button"
                     onClick={handleDownloadExcel}
                     disabled={downloadingReport}
-                    className="w-full py-2.5 px-5 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] text-white font-bold text-sm shadow-md shadow-emerald-950/20 hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full py-2.5 px-5 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-sm shadow-md shadow-rose-500/25 hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {downloadingReport ? (
                       <>
@@ -5015,37 +5015,37 @@ function DeliveryPartnersTab() {
 
             {/* Excel Columns & Rules Specification Preview */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="glass-admin-card rounded-3xl p-5 shadow-xs border border-[#e4ede2]">
-                <h4 className="font-['Manrope',sans-serif] font-black text-xs text-[#073b4c] uppercase tracking-wider flex items-center gap-2 mb-3">
+              <div className="glass-admin-card rounded-3xl p-5 shadow-xs border border-slate-200">
+                <h4 className="font-['Manrope',sans-serif] font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2 mb-3">
                   <span>📑</span>
                   <span>Excel Sheet Format & Columns</span>
                 </h4>
                 <div className="space-y-1.5 text-xs text-[#657969]">
-                  <p><b className="text-[#073b4c]">1. Sl. No.:</b> 1, 2, 3... sequence per export row.</p>
-                  <p><b className="text-[#073b4c]">2. Name:</b> Delivery partner's registered full name.</p>
-                  <p><b className="text-[#073b4c]">3. Mobile Number:</b> Partner mobile number or "—".</p>
-                  <p><b className="text-[#073b4c]">4. Date:</b> Calendar day in YYYY-MM-DD format.</p>
-                  <p><b className="text-[#073b4c]">5. Check In:</b> Formatted local check-in time (e.g. 09:15 AM) or "—".</p>
-                  <p><b className="text-[#073b4c]">6. Check Out:</b> Formatted local check-out time or "—".</p>
-                  <p><b className="text-[#073b4c]">7. Status:</b> <span className="text-emerald-700 font-bold">Present</span>, <span className="text-rose-700 font-bold">Absent</span>, or <span className="text-sky-700 font-bold">Week Off</span>.</p>
-                  <p><b className="text-[#073b4c]">8. Week Off:</b> Assigned weekly off day (e.g. "Sunday") or "Not Set".</p>
+                  <p><b className="text-slate-900">1. Sl. No.:</b> 1, 2, 3... sequence per export row.</p>
+                  <p><b className="text-slate-900">2. Name:</b> Delivery partner's registered full name.</p>
+                  <p><b className="text-slate-900">3. Mobile Number:</b> Partner mobile number or "—".</p>
+                  <p><b className="text-slate-900">4. Date:</b> Calendar day in YYYY-MM-DD format.</p>
+                  <p><b className="text-slate-900">5. Check In:</b> Formatted local check-in time (e.g. 09:15 AM) or "—".</p>
+                  <p><b className="text-slate-900">6. Check Out:</b> Formatted local check-out time or "—".</p>
+                  <p><b className="text-slate-900">7. Status:</b> <span className="text-emerald-700 font-bold">Present</span>, <span className="text-rose-700 font-bold">Absent</span>, or <span className="text-sky-700 font-bold">Week Off</span>.</p>
+                  <p><b className="text-slate-900">8. Week Off:</b> Assigned weekly off day (e.g. "Sunday") or "Not Set".</p>
                 </div>
               </div>
 
-              <div className="glass-admin-card rounded-3xl p-5 shadow-xs border border-[#e4ede2]">
-                <h4 className="font-['Manrope',sans-serif] font-black text-xs text-[#073b4c] uppercase tracking-wider flex items-center gap-2 mb-3">
+              <div className="glass-admin-card rounded-3xl p-5 shadow-xs border border-slate-200">
+                <h4 className="font-['Manrope',sans-serif] font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2 mb-3">
                   <span>💡</span>
                   <span>HR & Attendance Rules</span>
                 </h4>
                 <div className="space-y-2 text-xs text-[#657969]">
                   <p>
-                    <b className="text-[#073b4c]">Calendar Integrity:</b> Every single calendar day in the selected week or month is guaranteed to appear for every partner, even if no shift was worked.
+                    <b className="text-slate-900">Calendar Integrity:</b> Every single calendar day in the selected week or month is guaranteed to appear for every partner, even if no shift was worked.
                   </p>
                   <p>
-                    <b className="text-[#073b4c]">Weekly Off Exemption:</b> Missing shifts on a partner's assigned weekly off day are automatically marked <span className="bg-sky-50 text-sky-800 font-bold px-1.5 py-0.5 rounded-md">Week Off</span> instead of Absent.
+                    <b className="text-slate-900">Weekly Off Exemption:</b> Missing shifts on a partner's assigned weekly off day are automatically marked <span className="bg-sky-50 text-sky-800 font-bold px-1.5 py-0.5 rounded-md">Week Off</span> instead of Absent.
                   </p>
                   <p>
-                    <b className="text-[#073b4c]">Assigning Off Days:</b> You can set each rider's weekly off day anytime by clicking <em>"View Full Details & Orders"</em> on their card in the Partners tab.
+                    <b className="text-slate-900">Assigning Off Days:</b> You can set each rider's weekly off day anytime by clicking <em>"View Full Details & Orders"</em> on their card in the Partners tab.
                   </p>
                 </div>
               </div>
@@ -5064,7 +5064,7 @@ function DeliveryPartnersTab() {
                   🛵
                 </div>
                 <div>
-                  <h3 className="font-['Manrope',sans-serif] font-black text-[#073b4c] text-lg">
+                  <h3 className="font-['Manrope',sans-serif] font-black text-slate-900 text-lg">
                     Create Delivery Partner
                   </h3>
                   <p className="text-xs text-[#657969]">Assign login credentials for mobile rider app</p>
@@ -5072,7 +5072,7 @@ function DeliveryPartnersTab() {
               </div>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="text-[#657969] hover:text-[#073b4c] text-xl font-bold cursor-pointer"
+                className="text-[#657969] hover:text-slate-900 text-xl font-bold cursor-pointer"
               >
                 ✕
               </button>
@@ -5086,7 +5086,7 @@ function DeliveryPartnersTab() {
               )}
 
               <div>
-                <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1">
+                <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1">
                   Full Name *
                 </label>
                 <input
@@ -5095,12 +5095,12 @@ function DeliveryPartnersTab() {
                   placeholder="e.g. Ramesh Ghosh"
                   value={newPartner.fullName}
                   onChange={(e) => setNewPartner((p) => ({ ...p, fullName: e.target.value }))}
-                  className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-rose-400"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1">
+                <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1">
                   Email (Login ID) *
                 </label>
                 <input
@@ -5109,12 +5109,12 @@ function DeliveryPartnersTab() {
                   placeholder="e.g. ramesh.delivery@subhone.com"
                   value={newPartner.email}
                   onChange={(e) => setNewPartner((p) => ({ ...p, email: e.target.value }))}
-                  className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-rose-400"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1">
+                <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1">
                   Initial Password (default: Delivery@2026)
                 </label>
                 <input
@@ -5122,12 +5122,12 @@ function DeliveryPartnersTab() {
                   placeholder="Delivery@2026"
                   value={newPartner.password}
                   onChange={(e) => setNewPartner((p) => ({ ...p, password: e.target.value }))}
-                  className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-rose-400"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-extrabold text-[#073b4c] uppercase tracking-wider mb-1">
+                <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-1">
                   Mobile Number (Optional)
                 </label>
                 <input
@@ -5135,7 +5135,7 @@ function DeliveryPartnersTab() {
                   placeholder="+91 98765 43210"
                   value={newPartner.phone}
                   onChange={(e) => setNewPartner((p) => ({ ...p, phone: e.target.value }))}
-                  className="w-full bg-white border border-[#dce7db] rounded-2xl px-4 py-2.5 text-sm text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                  className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-rose-400"
                 />
               </div>
 
@@ -5143,14 +5143,14 @@ function DeliveryPartnersTab() {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-2.5 rounded-2xl border border-[#dce7db] text-[#073b4c] font-bold text-xs"
+                  className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-slate-900 font-bold text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={creating}
-                  className="flex-1 py-2.5 rounded-2xl bg-[#006a39] hover:bg-[#008749] text-white font-bold text-xs shadow-md disabled:opacity-50"
+                  className="flex-1 py-2.5 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-md disabled:opacity-50"
                 >
                   {creating ? "Creating…" : "Create Account"}
                 </button>
@@ -5165,7 +5165,7 @@ function DeliveryPartnersTab() {
         <div className="fixed inset-0 bg-[#07242e]/70 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
             {/* Header */}
-            <div className="bg-gradient-to-r from-[#073b4c] to-[#006a39] text-white p-5 sm:p-6 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-slate-900 to-rose-600 text-white p-5 sm:p-6 flex items-center justify-between">
               <div className="flex items-center gap-3.5">
                 {inspectPartner.avatarUrl ? (
                   <img
@@ -5202,10 +5202,10 @@ function DeliveryPartnersTab() {
             {/* Profile Content */}
             <div className="p-6 overflow-y-auto flex flex-col gap-5 text-xs">
               {/* Partner Details Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-[#f8fafb] rounded-2xl p-4 border border-[#e4ede2]">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-[#f8fafb] rounded-2xl p-4 border border-slate-200">
                 <div>
                   <span className="text-[#657969] block">Phone</span>
-                  <span className="font-bold text-[#073b4c]">{inspectPartner.phone || "—"}</span>
+                  <span className="font-bold text-slate-900">{inspectPartner.phone || "—"}</span>
                 </div>
                 <div>
                   <span className="text-[#657969] block">Duty Status</span>
@@ -5213,28 +5213,28 @@ function DeliveryPartnersTab() {
                 </div>
                 <div>
                   <span className="text-[#657969] block">Today's Attendance</span>
-                  <span className="font-bold uppercase text-[#073b4c]">{inspectPartner.todayAttendanceStatus || "—"}</span>
+                  <span className="font-bold uppercase text-slate-900">{inspectPartner.todayAttendanceStatus || "—"}</span>
                 </div>
                 <div>
                   <span className="text-[#657969] block">Vehicle</span>
-                  <span className="font-bold text-[#073b4c]">{inspectPartner.vehicleType || "—"}</span>
+                  <span className="font-bold text-slate-900">{inspectPartner.vehicleType || "—"}</span>
                 </div>
                 <div>
                   <span className="text-[#657969] block">Vehicle Number</span>
-                  <span className="font-bold font-mono text-[#073b4c]">{inspectPartner.vehicleNumber || "—"}</span>
+                  <span className="font-bold font-mono text-slate-900">{inspectPartner.vehicleNumber || "—"}</span>
                 </div>
                 <div>
                   <span className="text-[#657969] block">Joined</span>
-                  <span className="font-bold text-[#073b4c]">
+                  <span className="font-bold text-slate-900">
                     {new Date(inspectPartner.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                   </span>
                 </div>
               </div>
 
               {/* Weekly Off Day Setting */}
-              <div className="bg-[#f8fafb] rounded-2xl p-4 border border-[#e4ede2] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="bg-[#f8fafb] rounded-2xl p-4 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <span className="text-xs font-black text-[#073b4c] block">Assigned Weekly Off Day</span>
+                  <span className="text-xs font-black text-slate-900 block">Assigned Weekly Off Day</span>
                   <p className="text-[11px] text-[#657969] mt-0.5">Excuses partner from Absent marking on this day in attendance reports.</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -5254,7 +5254,7 @@ function DeliveryPartnersTab() {
                       }
                     }}
                     disabled={updatingWeeklyOff}
-                    className="bg-white border border-[#dce7db] rounded-xl px-3 py-1.5 text-xs font-bold text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                    className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-rose-400"
                   >
                     <option value="None">None (Works 7 Days)</option>
                     {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((d) => (
@@ -5268,7 +5268,7 @@ function DeliveryPartnersTab() {
               {inspectPartner.address && (
                 <div>
                   <span className="text-[#657969] block mb-1 font-bold">Base Address</span>
-                  <p className="text-xs text-[#073b4c] bg-[#f8fafb] p-3 rounded-xl border border-[#e4ede2]">
+                  <p className="text-xs text-slate-900 bg-[#f8fafb] p-3 rounded-xl border border-slate-200">
                     {inspectPartner.address}
                   </p>
                 </div>
@@ -5277,7 +5277,7 @@ function DeliveryPartnersTab() {
               {/* Partner Orders */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-['Manrope',sans-serif] font-black text-sm text-[#073b4c]">
+                  <h4 className="font-['Manrope',sans-serif] font-black text-sm text-slate-900">
                     Assigned Deliveries ({partnerOrders.length})
                   </h4>
                   <button
@@ -5317,10 +5317,10 @@ function DeliveryPartnersTab() {
                     {partnerOrders.map((ord) => (
                       <div
                         key={ord.id}
-                        className="flex items-center justify-between p-3 rounded-xl bg-white border border-[#e4ede2] shadow-2xs"
+                        className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200 shadow-2xs"
                       >
                         <div>
-                          <span className="font-mono font-bold text-[#006a39]">{ord.order_number}</span>
+                          <span className="font-mono font-bold text-rose-600">{ord.order_number}</span>
                           <span className="text-[#657969] ml-2">({ord.customer_name})</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -5357,7 +5357,7 @@ function LabBookingsTab({
     <div className="flex flex-col gap-6">
       <div className="glass-admin-card rounded-3xl p-5 flex items-center justify-between">
         <div>
-          <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base sm:text-lg">Diagnostic Lab Test Bookings</h3>
+          <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-base sm:text-lg">Diagnostic Lab Test Bookings</h3>
           <p className="text-xs text-[#657969]">Home sample collection & digital health reports</p>
         </div>
         <span className="bg-emerald-100 text-emerald-800 text-xs font-black px-3 py-1 rounded-full">
@@ -5375,7 +5375,7 @@ function LabBookingsTab({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-sm sm:text-base truncate">{b.package_name}</p>
+                    <p className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-sm sm:text-base truncate">{b.package_name}</p>
                     <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-800 border border-purple-200">
                       ₹{b.total_amount}
                     </span>
@@ -5389,7 +5389,7 @@ function LabBookingsTab({
                 <select
                   value={b.status}
                   onChange={(e) => onUpdateStatus(b.id, e.target.value as any)}
-                  className="text-xs font-bold bg-white border border-[#dce7db] rounded-2xl px-3 py-2 text-[#073b4c] focus:outline-none focus:border-[#006a39]"
+                  className="text-xs font-bold bg-white border border-slate-200 rounded-2xl px-3 py-2 text-slate-900 focus:outline-none focus:border-rose-400"
                 >
                   <option value="booked">Booked</option>
                   <option value="sample_collected">Sample Collected</option>
@@ -5405,7 +5405,7 @@ function LabBookingsTab({
         {bookings.length === 0 && (
           <div className="py-16 text-center text-[#728575] text-sm flex flex-col items-center gap-2">
             <Icons.Lab className="w-10 h-10 text-[#728575] stroke-1" />
-            <p className="font-bold text-[#073b4c]">No lab test bookings found</p>
+            <p className="font-bold text-slate-900">No lab test bookings found</p>
             <p className="text-xs">Incoming patient diagnostics will appear here in real-time.</p>
           </div>
         )}
@@ -5463,7 +5463,7 @@ function RevenueTab({ liveOrders }: { liveOrders: any[] }) {
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="rounded-3xl p-6 flex flex-col justify-between text-white shadow-xl"
-          style={{ background: "linear-gradient(135deg, #073b4c 0%, #006a39 100%)" }}
+          style={{ background: "linear-gradient(135deg, #0f172a 0%, #e11d48 100%)" }}
         >
           <div>
             <p className="text-white/60 text-xs font-bold uppercase tracking-wider">Live System Clock</p>
@@ -5475,7 +5475,7 @@ function RevenueTab({ liveOrders }: { liveOrders: any[] }) {
         <div className="glass-admin-card rounded-3xl p-6 flex flex-col justify-between">
           <div>
             <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#657969]">Today&apos;s Gross GMV</p>
-            <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-3xl mt-1">₹{today.revenue.toLocaleString()}</p>
+            <p className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-3xl mt-1">₹{today.revenue.toLocaleString()}</p>
           </div>
           <p className="text-xs text-emerald-700 font-bold mt-3">{growthRate > 0 ? '+' : ''}{growthRate}% vs yesterday</p>
         </div>
@@ -5483,7 +5483,7 @@ function RevenueTab({ liveOrders }: { liveOrders: any[] }) {
         <div className="glass-admin-card rounded-3xl p-6 flex flex-col justify-between">
           <div>
             <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#657969]">7-Day Revenue Velocity</p>
-            <p className="font-['Manrope',sans-serif] font-extrabold text-[#006a39] text-3xl mt-1">₹{weekTotal.toLocaleString()}</p>
+            <p className="font-['Manrope',sans-serif] font-extrabold text-rose-600 text-3xl mt-1">₹{weekTotal.toLocaleString()}</p>
           </div>
           <p className="text-xs text-[#657969] mt-3">{weekOrders} total transactions · Avg ₹{avgDaily}/day</p>
         </div>
@@ -5491,11 +5491,11 @@ function RevenueTab({ liveOrders }: { liveOrders: any[] }) {
 
       {/* Daily History Table */}
       <div className="glass-admin-card rounded-3xl p-6 sm:p-7">
-        <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base sm:text-lg mb-5">7-Day Revenue Performance</h3>
+        <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-base sm:text-lg mb-5">7-Day Revenue Performance</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#e4ede2] text-[10px] font-extrabold text-[#728575] uppercase tracking-wider">
+              <tr className="border-b border-slate-200 text-[10px] font-extrabold text-[#728575] uppercase tracking-wider">
                 <th className="pb-3 text-left">Date</th>
                 <th className="pb-3 text-left">Orders</th>
                 <th className="pb-3 text-left">Gross Revenue</th>
@@ -5507,9 +5507,9 @@ function RevenueTab({ liveOrders }: { liveOrders: any[] }) {
             <tbody className="divide-y divide-[#e4ede2]">
               {revenueHistory.map((r, i) => (
                 <tr key={r.date} className="hover:bg-white/80 transition-colors">
-                  <td className="py-3 font-bold text-[#073b4c]">{r.date} {i === 0 && " (Today)"}</td>
+                  <td className="py-3 font-bold text-slate-900">{r.date} {i === 0 && " (Today)"}</td>
                   <td className="py-3 text-[#596b5e] font-semibold">{r.orders}</td>
-                  <td className="py-3 font-extrabold text-[#006a39]">₹{r.revenue.toLocaleString()}</td>
+                  <td className="py-3 font-extrabold text-rose-600">₹{r.revenue.toLocaleString()}</td>
                   <td className="py-3 font-mono text-emerald-800">₹{r.upi.toLocaleString()}</td>
                   <td className="py-3 font-mono text-sky-800">₹{r.card.toLocaleString()}</td>
                   <td className="py-3 font-mono text-amber-800">₹{r.cod.toLocaleString()}</td>
@@ -5722,7 +5722,7 @@ function SettingsTab({
               <Icons.Check className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="font-extrabold text-[#006a39]">Database Synchronization Success!</p>
+              <p className="font-extrabold text-rose-600">Database Synchronization Success!</p>
               <p className="text-xs text-emerald-800/90 font-medium">{statusMsg}</p>
             </div>
           </div>
@@ -5747,13 +5747,13 @@ function SettingsTab({
 
       {/* ── 1. Admin Profile Picture & Account Card ── */}
       <div className="glass-admin-card rounded-3xl p-6 sm:p-8">
-        <div className="flex items-center justify-between gap-4 mb-6 border-b border-[#e4ede2]/80 pb-5">
+        <div className="flex items-center justify-between gap-4 mb-6 border-b border-slate-200/80 pb-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-100/80 text-[#006a39] flex items-center justify-center shadow-xs">
-              <Icons.User className="w-5 h-5 text-[#006a39]" />
+            <div className="w-10 h-10 rounded-2xl bg-emerald-100/80 text-rose-600 flex items-center justify-center shadow-xs">
+              <Icons.User className="w-5 h-5 text-rose-600" />
             </div>
             <div>
-              <h2 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-lg">
+              <h2 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-lg">
                 Administrator Profile & Identity
               </h2>
               <p className="text-xs text-[#657969]">
@@ -5761,7 +5761,7 @@ function SettingsTab({
               </p>
             </div>
           </div>
-          <span className="bg-emerald-100 text-[#006a39] text-[10px] font-black uppercase px-3 py-1 rounded-full border border-emerald-300 shadow-xs">
+          <span className="bg-emerald-100 text-rose-600 text-[10px] font-black uppercase px-3 py-1 rounded-full border border-emerald-300 shadow-xs">
             Master Superadmin
           </span>
         </div>
@@ -5770,7 +5770,7 @@ function SettingsTab({
           {/* Avatar Section */}
           <div className="flex flex-col items-center gap-3 shrink-0">
             <div className="relative group">
-              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden border-3 border-white/80 shadow-xl bg-gradient-to-br from-[#006a39] to-[#008749] flex items-center justify-center relative">
+              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden border-3 border-white/80 shadow-xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center relative">
                 {adminAvatar ? (
                   <img
                     src={adminAvatar}
@@ -5811,9 +5811,9 @@ function SettingsTab({
               <button
                 type="button"
                 onClick={() => avatarFileRef.current?.click()}
-                className="px-3.5 py-1.5 rounded-xl bg-white/80 hover:bg-white text-[11px] font-extrabold text-[#006a39] border border-emerald-300/80 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-white/80 hover:bg-white text-[11px] font-extrabold text-rose-600 border border-emerald-300/80 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
               >
-                <Icons.Image className="w-3.5 h-3.5 text-[#006a39]" />
+                <Icons.Image className="w-3.5 h-3.5 text-rose-600" />
                 <span>Upload Photo</span>
               </button>
               <button
@@ -5850,7 +5850,7 @@ function SettingsTab({
           {/* Personal Info Fields */}
           <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+              <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px] block mb-1.5">
                 Admin Full Name
               </label>
               <input
@@ -5862,7 +5862,7 @@ function SettingsTab({
               />
             </div>
             <div>
-              <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+              <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px] block mb-1.5">
                 Admin Direct Phone
               </label>
               <input
@@ -5874,7 +5874,7 @@ function SettingsTab({
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+              <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px] block mb-1.5">
                 Authentication Login Email
               </label>
               <input
@@ -5896,7 +5896,7 @@ function SettingsTab({
         {pharmacySaveStatus === "saved" && (
           <div className="mb-5 p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/40 text-emerald-950 text-xs font-bold flex items-center justify-between shadow-xs animate-in slide-in-from-top-1">
             <div className="flex items-center gap-2.5">
-              <Icons.Check className="w-4 h-4 text-[#006a39]" />
+              <Icons.Check className="w-4 h-4 text-rose-600" />
               <span>{pharmacyMsg || "Pharmacy Identity saved to Supabase Database successfully!"}</span>
             </div>
             <button onClick={() => setPharmacySaveStatus("idle")} className="text-emerald-900 font-bold px-1.5 cursor-pointer">✕</button>
@@ -5913,13 +5913,13 @@ function SettingsTab({
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-4 mb-5 border-b border-[#e4ede2]/80 pb-4 flex-wrap">
+        <div className="flex items-center justify-between gap-4 mb-5 border-b border-slate-200/80 pb-4 flex-wrap">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-2xl bg-teal-100/80 text-teal-800 flex items-center justify-center shadow-xs">
-              <Icons.Store className="w-4 h-4 text-[#006a39]" />
+              <Icons.Store className="w-4 h-4 text-rose-600" />
             </div>
             <div>
-              <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base">
+              <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-base">
                 Pharmacy & Store Identity
               </h3>
               <p className="text-xs text-[#657969]">
@@ -5931,7 +5931,7 @@ function SettingsTab({
             type="button"
             onClick={handleSavePharmacyDetails}
             disabled={pharmacySaveStatus === "saving"}
-            className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#006a39] to-[#008749] text-white text-xs font-extrabold hover:opacity-95 transition-all shadow-md shadow-emerald-950/15 cursor-pointer flex items-center gap-2 disabled:opacity-50"
+            className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 text-white text-xs font-extrabold hover:opacity-95 transition-all shadow-md shadow-rose-500/20 cursor-pointer flex items-center gap-2 disabled:opacity-50"
           >
             {pharmacySaveStatus === "saving" ? (
               <>
@@ -5949,7 +5949,7 @@ function SettingsTab({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+            <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px] block mb-1.5">
               Trade / Pharmacy Name
             </label>
             <input
@@ -5961,7 +5961,7 @@ function SettingsTab({
             />
           </div>
           <div>
-            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+            <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px] block mb-1.5">
               Customer Support Helpline
             </label>
             <input
@@ -5973,7 +5973,7 @@ function SettingsTab({
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+            <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px] block mb-1.5">
               Support & Notification Email
             </label>
             <input
@@ -5985,7 +5985,7 @@ function SettingsTab({
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+            <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px] block mb-1.5">
               Official Pharmacy Headquarters Address
             </label>
             <input
@@ -6001,12 +6001,12 @@ function SettingsTab({
 
       {/* ── 3. Product & Inventory Configurations ── */}
       <div className="glass-admin-card rounded-3xl p-6 sm:p-8">
-        <div className="flex items-center gap-3 mb-5 border-b border-[#e4ede2]/80 pb-4">
+        <div className="flex items-center gap-3 mb-5 border-b border-slate-200/80 pb-4">
           <div className="w-9 h-9 rounded-2xl bg-amber-100/80 text-amber-800 flex items-center justify-center shadow-xs">
             <Icons.Box className="w-4 h-4 text-amber-800" />
           </div>
           <div>
-            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base">
+            <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-base">
               Catalog & Inventory Thresholds
             </h3>
             <p className="text-xs text-[#657969]">
@@ -6017,7 +6017,7 @@ function SettingsTab({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+            <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px] block mb-1.5">
               Low Stock Warning Threshold (Units)
             </label>
             <input
@@ -6029,7 +6029,7 @@ function SettingsTab({
             />
           </div>
           <div>
-            <label className="text-[10px] font-extrabold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">
+            <label className="text-[10px] font-extrabold text-slate-900 uppercase tracking-[0.8px] block mb-1.5">
               Default Retailer Wholesale Discount (%)
             </label>
             <input
@@ -6046,12 +6046,12 @@ function SettingsTab({
 
       {/* ── 4. Automated Notification Preferences ── */}
       <div className="glass-admin-card rounded-3xl p-6 sm:p-8">
-        <div className="flex items-center gap-3 mb-5 border-b border-[#e4ede2]/80 pb-4">
+        <div className="flex items-center gap-3 mb-5 border-b border-slate-200/80 pb-4">
           <div className="w-9 h-9 rounded-2xl bg-sky-100/80 text-sky-800 flex items-center justify-center shadow-xs">
             <Icons.Alert className="w-4 h-4 text-sky-800" />
           </div>
           <div>
-            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base">
+            <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-base">
               Automated Alerts & Operations
             </h3>
             <p className="text-xs text-[#657969]">
@@ -6061,42 +6061,42 @@ function SettingsTab({
         </div>
 
         <div className="flex flex-col gap-3.5">
-          <label className="flex items-center justify-between p-3.5 rounded-2xl bg-white/70 border border-[#e4ede2] hover:bg-white transition-all cursor-pointer">
+          <label className="flex items-center justify-between p-3.5 rounded-2xl bg-white/70 border border-slate-200 hover:bg-white transition-all cursor-pointer">
             <div>
-              <p className="text-xs font-extrabold text-[#073b4c]">Email Alerts for Low Stock</p>
+              <p className="text-xs font-extrabold text-slate-900">Email Alerts for Low Stock</p>
               <p className="text-[11px] text-[#657969]">Send automated email when inventory reaches critical threshold</p>
             </div>
             <input
               type="checkbox"
               checked={settings.emailAlerts}
               onChange={(e) => setSettings((p) => ({ ...p, emailAlerts: e.target.checked }))}
-              className="w-5 h-5 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39]"
+              className="w-5 h-5 rounded text-rose-600 focus:ring-rose-400 cursor-pointer accent-rose-500"
             />
           </label>
 
-          <label className="flex items-center justify-between p-3.5 rounded-2xl bg-white/70 border border-[#e4ede2] hover:bg-white transition-all cursor-pointer">
+          <label className="flex items-center justify-between p-3.5 rounded-2xl bg-white/70 border border-slate-200 hover:bg-white transition-all cursor-pointer">
             <div>
-              <p className="text-xs font-extrabold text-[#073b4c]">SMS Alerts for New High-Value Orders</p>
+              <p className="text-xs font-extrabold text-slate-900">SMS Alerts for New High-Value Orders</p>
               <p className="text-[11px] text-[#657969]">Receive instant SMS notifications on wholesale bulk transactions</p>
             </div>
             <input
               type="checkbox"
               checked={settings.smsAlerts}
               onChange={(e) => setSettings((p) => ({ ...p, smsAlerts: e.target.checked }))}
-              className="w-5 h-5 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39]"
+              className="w-5 h-5 rounded text-rose-600 focus:ring-rose-400 cursor-pointer accent-rose-500"
             />
           </label>
 
-          <label className="flex items-center justify-between p-3.5 rounded-2xl bg-white/70 border border-[#e4ede2] hover:bg-white transition-all cursor-pointer">
+          <label className="flex items-center justify-between p-3.5 rounded-2xl bg-white/70 border border-slate-200 hover:bg-white transition-all cursor-pointer">
             <div>
-              <p className="text-xs font-extrabold text-[#073b4c]">Automatic Re-Order Recommendations</p>
+              <p className="text-xs font-extrabold text-slate-900">Automatic Re-Order Recommendations</p>
               <p className="text-[11px] text-[#657969]">Auto-draft supplier purchase orders for out-of-stock items</p>
             </div>
             <input
               type="checkbox"
               checked={settings.autoReorder}
               onChange={(e) => setSettings((p) => ({ ...p, autoReorder: e.target.checked }))}
-              className="w-5 h-5 rounded text-[#006a39] focus:ring-[#006a39] cursor-pointer accent-[#006a39]"
+              className="w-5 h-5 rounded text-rose-600 focus:ring-rose-400 cursor-pointer accent-rose-500"
             />
           </label>
         </div>
@@ -6104,9 +6104,9 @@ function SettingsTab({
 
       {/* ── 5. Category Taxonomy Management ── */}
       <div className="glass-admin-card rounded-3xl p-6 sm:p-8">
-        <div className="flex items-center justify-between mb-4 border-b border-[#e4ede2]/80 pb-4">
+        <div className="flex items-center justify-between mb-4 border-b border-slate-200/80 pb-4">
           <div>
-            <h3 className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-base">
+            <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-base">
               Catalog Category Taxonomy
             </h3>
             <p className="text-xs text-[#657969]">{categories.length} active medicine & health categories</p>
@@ -6125,7 +6125,7 @@ function SettingsTab({
           <button
             type="button"
             onClick={handleAddCat}
-            className="px-5 py-2.5 rounded-2xl bg-[#006a39] text-white text-xs font-extrabold hover:opacity-90 shadow-md shadow-emerald-950/15 cursor-pointer shrink-0"
+            className="px-5 py-2.5 rounded-2xl bg-rose-500 text-white text-xs font-extrabold hover:opacity-90 shadow-md shadow-rose-500/20 cursor-pointer shrink-0"
           >
             Add Category
           </button>
@@ -6135,7 +6135,7 @@ function SettingsTab({
           {categories.map((c) => (
             <span
               key={c}
-              className="px-3 py-1.5 rounded-xl bg-white/80 border border-[#dce7db] text-xs font-bold text-[#073b4c] shadow-2xs flex items-center gap-2"
+              className="px-3 py-1.5 rounded-xl bg-white/80 border border-slate-200 text-xs font-bold text-slate-900 shadow-2xs flex items-center gap-2"
             >
               <span>{c}</span>
               <button
@@ -6166,7 +6166,7 @@ function SettingsTab({
       {/* ── 6. Save Permanent Changes Button ── */}
       <div className="sticky bottom-4 z-20 p-4 rounded-3xl bg-white/90 backdrop-blur-2xl border border-white/80 shadow-2xl flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-xs font-extrabold text-[#073b4c]">Ready to apply changes?</p>
+          <p className="text-xs font-extrabold text-slate-900">Ready to apply changes?</p>
           <p className="text-[11px] text-[#657969]">Settings and profile are saved directly to Supabase cloud database.</p>
         </div>
         <div className="flex items-center gap-3">
@@ -6174,7 +6174,7 @@ function SettingsTab({
             type="button"
             onClick={handleSaveSettings}
             disabled={saveStatus === "saving"}
-            className="bg-gradient-to-r from-[#006a39] to-[#008749] text-white font-bold text-sm px-8 py-3.5 rounded-2xl hover:opacity-95 transition-all cursor-pointer shadow-lg shadow-emerald-950/20 active:scale-95 flex items-center gap-2.5 disabled:opacity-50"
+            className="bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-sm px-8 py-3.5 rounded-2xl hover:opacity-95 transition-all cursor-pointer shadow-lg shadow-rose-500/25 active:scale-95 flex items-center gap-2.5 disabled:opacity-50"
           >
             {saveStatus === "saving" ? (
               <>
