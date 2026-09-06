@@ -4848,9 +4848,35 @@ function DeliveryPartnersTab() {
 
               {/* Partner Orders */}
               <div>
-                <h4 className="font-['Manrope',sans-serif] font-black text-sm text-[#073b4c] mb-2">
-                  Assigned Deliveries ({partnerOrders.length})
-                </h4>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-['Manrope',sans-serif] font-black text-sm text-[#073b4c]">
+                    Assigned Deliveries ({partnerOrders.length})
+                  </h4>
+                  <button
+                    onClick={async () => {
+                      setDownloadingReport(true);
+                      try {
+                        const d = new Date();
+                        const currentMonthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+                        const [y, m] = currentMonthStr.split("-");
+                        const ordersWithItems = await fetchDeliveryPartnerOrdersByMonth(inspectPartner.id, parseInt(m, 10), parseInt(y, 10));
+                        exportDeliveryRecordToExcel(ordersWithItems, { 
+                          partnerName: inspectPartner.name, 
+                          monthLabel: currentMonthStr 
+                        });
+                      } catch (err) {
+                        console.error(err);
+                      } finally {
+                        setDownloadingReport(false);
+                      }
+                    }}
+                    disabled={downloadingReport}
+                    title="Export Current Month Delivery Record"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[11px] font-black uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
+                  >
+                    {downloadingReport ? "..." : "📥 Export"}
+                  </button>
+                </div>
 
                 {loadingPartnerOrders ? (
                   <div className="py-6 text-center text-[#728575]">Loading partner orders…</div>
