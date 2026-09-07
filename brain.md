@@ -77,6 +77,10 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 ---
 
 ## 6. Recent Updates & Current State
+- **Minimalist & Compact Trailing "View All" Category Card (`src/pages/HomePage.tsx`)**:
+  - Replaced the oversized, bulky dashed pink placeholder card with a sleek, minimalist action tile (`w-[96px] sm:w-[110px] max-w-[115px] justify-self-start rounded-2xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-[#ff3366]/40 hover:shadow-xs`).
+  - Integrated a clean circular arrow action icon (`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-200/70 shadow-2xs group-hover:bg-[#ff3366] group-hover:text-white`) and subtle typography (`View All` + category name).
+  - Eliminates loud dashed borders and excessive whitespace, blending seamlessly alongside compact product cards.
 - **Store-Wide 100% Unified Compact Product Display Sizing (Sep 2026)**:
   - **Standardized Product Card Dimensions Across All Store Sections**:
     - Unified the visual card footprint across every view: Deals of the Day, Flash Sale, Key Category carousels, Category Page, Medicines Catalog, Offers / Best Sellers, and Search Results.

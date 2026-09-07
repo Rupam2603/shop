@@ -305,16 +305,22 @@ function CategorySection({
           />
         ))}
         <button
+          type="button"
           onClick={onViewAll}
-          className="w-[110px] sm:w-[130px] lg:w-auto shrink-0 snap-start rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5 p-3 hover:bg-white transition-all group min-h-[150px] sm:min-h-[170px] cursor-pointer"
-          style={{ borderColor: item.iconBg }}
+          className="w-[96px] sm:w-[110px] max-w-[115px] justify-self-start shrink-0 snap-start self-stretch rounded-2xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-[#ff3366]/40 hover:shadow-xs flex flex-col items-center justify-center gap-2 p-2.5 transition-all duration-200 group cursor-pointer"
+          title={`View all ${item.cat}`}
         >
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform" style={{ backgroundColor: item.lightBg, color: item.accent }}>
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-200/70 shadow-2xs flex items-center justify-center text-slate-500 group-hover:bg-[#ff3366] group-hover:text-white group-hover:border-[#ff3366] group-hover:scale-105 transition-all duration-200">
             <ArrowRight />
           </div>
-          <p className="text-[11px] sm:text-xs font-bold text-center px-1" style={{ color: item.accent }}>
-            See all {item.short}
-          </p>
+          <div className="flex flex-col items-center text-center">
+            <span className="text-[11px] sm:text-xs font-bold text-slate-800 group-hover:text-[#ff3366] transition-colors leading-tight">
+              View All
+            </span>
+            <span className="text-[9px] font-medium text-slate-400 mt-0.5 truncate max-w-[80px]">
+              {item.short || item.cat}
+            </span>
+          </div>
         </button>
       </div>
     </section>
