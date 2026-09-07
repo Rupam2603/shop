@@ -245,7 +245,9 @@ export async function updateUserAccountStatus(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const isApproving = newStatus === "active";
-    const finalAdminId = adminId === "00000000-0000-0000-0000-000000000000" || adminId === "admin_fixed_id" ? null : adminId;
+    const NON_UUID_ADMIN_IDS = ["00000000-0000-0000-0000-000000000000", "admin_fixed_id", "admin_subhonehealthgroup_id"];
+    const isValidUuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const finalAdminId = NON_UUID_ADMIN_IDS.includes(adminId) || !isValidUuid(adminId) ? null : adminId;
 
     // 1. Update the users table
     if (isApproving) {

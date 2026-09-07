@@ -72,7 +72,8 @@ function getStoredUser(): AppUser | null {
         const finalName = parsed.fullName || cachedProfile?.fullName || "Store Administrator";
         const finalPhone = parsed.phone || cachedProfile?.phone || "+91 98765 43210";
         const finalAvatar = parsed.avatarUrl || cachedProfile?.avatarUrl || null;
-        const adminId = parsed.id && !parsed.id.includes("00000000") ? parsed.id : "admin_subhonehealthgroup_id";
+        const isUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+        const adminId = parsed.id && isUuid(parsed.id) ? parsed.id : "00000000-0000-0000-0000-000000000001";
 
         return {
           authUser: {
@@ -438,7 +439,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (raw) cachedProfile = JSON.parse(raw);
         } catch {}
 
-        const adminId = cleanEmail === "subhonehealthgroup@gmail.com" ? "admin_subhonehealthgroup_id" : "admin_fixed_id";
+        // Try to fetch the real admin UUID from the database
+        let adminId = "00000000-0000-0000-0000-000000000001";
+        try {
+          const { sql } = await import("@neondatabase/serverless");
+          const rows = await sql`SELECT id FROM public.users WHERE email = ${cleanEmail} AND role = 'admin' LIMIT 1`;
+          if (rows && rows.length > 0 && rows[0].id) adminId = rows[0].id;
+        } catch { /* fall through to placeholder UUID */ }
         const finalName = cachedProfile?.fullName || "Store Administrator";
         const finalPhone = cachedProfile?.phone || "+91 98765 43210";
         const finalAvatar = cachedProfile?.avatarUrl || null;
