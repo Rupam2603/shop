@@ -76,6 +76,12 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 
 ---
 
+## 6. Recent Updates & Current State
+- **Support Chatbot Knowledge & Contact Updates (`src/components/SupportChatbot.tsx`) (Sep 2026)**:
+  - Updated service dispatch location to **Satghara, Serampore, Hooghly**.
+  - Updated coverage pincodes to explicitly detail Serampore region (712201, 712202, 712203, 712204, 712248–712250 Rishra, 712223 Sheoraphuli, 712235 Konnagar).
+  - Updated direct support phone & WhatsApp care number to `+91 9836307553` with direct `tel:` and `wa.me` links.
+  - Updated support email to `subhonehealthgroup@gmail.com` and retail margin guidance to up to 50%.
 - **Profile Picture Persistence on "Save Changes" & Avatar Sync Fix (Sep 2026)**:
   - **Bug Fix in `src/App.tsx` (`handleUpdateUser`)**:
     - Previously, `handleUpdateUser` passed `avatar_url: updates.profileImage ?? null`. Because `handleSaveProfile` in `ProfilePage.tsx` passed profile edits (`{ name, phone, shopName }`) without including `profileImage`, `updates.profileImage ?? null` evaluated to `null`.

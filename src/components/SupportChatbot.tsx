@@ -16,9 +16,8 @@ type QuickReply = {
 
 const QUICK_REPLIES: QuickReply[] = [
   { id: "delivery", label: "⚡ Delivery Time & Charges", query: "delivery time & charges" },
-  { id: "pincode", label: "📍 Pincodes Served", query: "which pincodes are served" },
-  { id: "prescription", label: "💊 Prescription Policy", query: "do i need a prescription" },
-  { id: "track", label: "📦 How to Track Order", query: "how to track order" },
+  { id: "pincode", label: "📌 Pincodes Served", query: "which pincodes are served" },
+  { id: "track", label: "🚛 How to Track Order", query: "how to track order" },
   { id: "wholesale", label: "🏪 Retailer Wholesale", query: "wholesale & retailer pricing" },
   { id: "human", label: "📞 Human Support", query: "talk to human support" },
 ];
@@ -59,8 +58,7 @@ function botReplyFor(query: string): { text: string; actions?: ChatMessage["acti
         "🚀 **Fast & Reliable Delivery**:\n" +
         "• Express 30–45 minute delivery across Kolkata & Howrah metro.\n" +
         "• Standard delivery within 24 hours for other serviceable zones.\n" +
-        "• Delivery is **FREE** for orders above ₹150, or wholesale orders for verified retailers.\n" +
-        "• Live real-time temperature-monitored fleet dispatched from 14/B Central Avenue.",
+        "• Live real-time temperature-monitored fleet dispatched from Satghara, Serampore, Hooghly.",
     };
   }
 
@@ -68,21 +66,8 @@ function botReplyFor(query: string): { text: string; actions?: ChatMessage["acti
     return {
       text:
         "📍 **Service Coverage**:\n" +
-        "We serve major pincodes in West Bengal including **Kolkata (700001–700150)**, **Howrah (711101–711109)**, and surrounding medical hubs.\n\n" +
+        "We serve major pincodes in West Bengal including **712203: Mallickpara / Bahirserampore / Simla**, **712201: Serampore Head Office / Central Serampore**, **712202: Mahesh**, **712204: Chatra**, **712248 - 712250: Rishra**, **712223: Sheoraphuli**, **712235: Konnagar**, and surrounding medical hubs.\n\n" +
         "You can check your exact address anytime by tapping the **Location selector** at the top of your screen!",
-    };
-  }
-
-  if (q.includes("prescription") || q.includes("rx") || q.includes("doctor")) {
-    return {
-      text:
-        "💊 **Prescription Guidance**:\n" +
-        "• OTC wellness products, vitamins, and healthcare devices require **no prescription**.\n" +
-        "• Scheduled medicines marked with an **Rx badge** legally require a valid doctor's prescription.\n" +
-        "• You can easily upload your prescription during Checkout or through WhatsApp support.",
-      actions: [
-        { label: "💬 Send Rx on WhatsApp", href: "https://wa.me/919876543210?text=Hi%20SubhOne,%20here%20is%20my%20prescription" },
-      ],
     };
   }
 
@@ -101,7 +86,7 @@ function botReplyFor(query: string): { text: string; actions?: ChatMessage["acti
     return {
       text:
         "🏪 **SubhOne Wholesale for Pharmacies**:\n" +
-        "• Up to 35% margin on genuine certified pharmaceuticals.\n" +
+        "• Up to 50% margin on genuine certified pharmaceuticals.\n" +
         "• Direct manufacturer sourcing with GST invoices.\n" +
         "• Register as a **Retailer** on our Sign Up screen to apply for verified wholesale access.",
     };
@@ -122,13 +107,13 @@ function botReplyFor(query: string): { text: string; actions?: ChatMessage["acti
       text:
         "🤝 **Connect with SubhOne Support Desk (24/7)**:\n" +
         "Our pharmacists and care team are standing by to assist you:\n\n" +
-        "• **Direct Phone**: +91 98765 43210\n" +
-        "• **WhatsApp Care**: +91 98765 43210\n" +
-        "• **Email**: support@subhone.com\n" +
-        "• **Central Pharmacy**: 14/B Central Avenue, Kolkata",
+        "• **Direct Phone**: +91 9836307553\n" +
+        "• **WhatsApp Care**: +91 9836307553\n" +
+        "• **Email**: subhonehealthgroup@gmail.com\n" +
+        "• **Central Pharmacy**: Satghara, Serampore, Hooghly",
       actions: [
-        { label: "📞 Call +91 98765 43210", href: "tel:+919876543210" },
-        { label: "💬 Chat on WhatsApp", href: "https://wa.me/919876543210?text=Hi%20SubhOne,%20I%20need%20help%20with%20my%20order" },
+        { label: "📞 Call +91 9836307553", href: "tel:+919836307553" },
+        { label: "💬 Chat on WhatsApp", href: "https://wa.me/919836307553?text=Hi%20SubhOne,%20I%20need%20help%20with%20my%20order" },
       ],
     };
   }
@@ -139,7 +124,6 @@ function botReplyFor(query: string): { text: string; actions?: ChatMessage["acti
       "Hello! I am your SubhOne 24/7 Health Assistant. You can ask me anything about:\n" +
       "• ⚡ Delivery times & fees\n" +
       "• 📍 Serviceable pincodes\n" +
-      "• 💊 Prescription requirements\n" +
       "• 📦 Live order tracking\n" +
       "• 🏪 Retailer wholesale access\n\n" +
       "Or type **'human support'** to reach our round-the-clock desk!",
@@ -218,7 +202,7 @@ export default function SupportChatbot({ onTrackOrder }: { onTrackOrder?: () => 
       {/* ── Chat Window Overlay / Container ── */}
       {open && (
         <div className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-[1000] w-[calc(100vw-24px)] sm:w-96 bg-white/98 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#d6e4d8] overflow-hidden flex flex-col max-h-[82vh] h-[520px] animate-in slide-in-from-bottom-5 duration-200">
-          
+
           {/* Header */}
           <div className="bg-gradient-to-r from-[#006a39] to-[#047857] text-white px-4 py-3.5 flex items-center justify-between shadow-xs select-none">
             <div className="flex items-center gap-2.5">
@@ -252,11 +236,10 @@ export default function SupportChatbot({ onTrackOrder }: { onTrackOrder?: () => 
                 className={`flex flex-col ${m.from === "user" ? "items-end" : "items-start"}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed shadow-2xs ${
-                    m.from === "user"
-                      ? "bg-[#006a39] text-white rounded-br-xs"
-                      : "bg-white text-[#073b4c] border border-[#e2ece0] rounded-bl-xs"
-                  }`}
+                  className={`max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed shadow-2xs ${m.from === "user"
+                    ? "bg-[#006a39] text-white rounded-br-xs"
+                    : "bg-white text-[#073b4c] border border-[#e2ece0] rounded-bl-xs"
+                    }`}
                 >
                   <p className="whitespace-pre-line">{m.text}</p>
 
@@ -295,9 +278,8 @@ export default function SupportChatbot({ onTrackOrder }: { onTrackOrder?: () => 
                   )}
 
                   <span
-                    className={`block text-[9px] mt-1.5 font-medium ${
-                      m.from === "user" ? "text-white/70 text-right" : "text-[#7b8f7e]"
-                    }`}
+                    className={`block text-[9px] mt-1.5 font-medium ${m.from === "user" ? "text-white/70 text-right" : "text-[#7b8f7e]"
+                      }`}
                   >
                     {m.time}
                   </span>
