@@ -77,6 +77,11 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 ---
 
 ## 6. Recent Updates & Current State
+- **Deals of the Day Authoritative Database Filtering (Sep 2026)**:
+  - Removed legacy hardcoded fallback array `defaultDeals` from `src/pages/HomePage.tsx` which previously leaked unlisted/mock products (`Crocin Advance`, `Accu-Chek 50 Strips`, and `Dolo-650 Tablet` with broken images) into the "Deals of the Day" storefront section.
+  - Re-architected `dealsOfTheDayList` in `HomePage.tsx` to strictly query and filter active `dbProducts` where `p.is_listed !== false`.
+  - Automatically sorts and prioritizes the top 4 genuine products with the highest discounts (`discount_percent` / `retailer_discount_percent`) or maximum rupee savings against MRP.
+  - Dynamically calculates customer vs retailer discounted pricing and return policies, gracefully handling empty states without hardcoded fallbacks.
 - **Simple Minimalist Fast Loading Screen UI/UX (Sep 2026)**:
   - Streamlined `src/components/ModernLoadingScreen.tsx` into a lightweight, high-performance minimalist design inspired by Apple and Stripe.
   - Eliminated heavy multi-layer SVG filters, complex keyframe overhead, and simulated ramp hold intervals to ensure instantaneous rendering and page transitions.

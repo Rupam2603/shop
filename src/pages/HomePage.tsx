@@ -454,111 +454,59 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
   }, [dbProducts, isRetailer]);
 
   const dealsOfTheDayList = useMemo(() => {
-    const defaultDeals = [
-      {
-        name: "Dettol Liquid 250ml",
-        sub: "Antiseptic Disinfectant Liquid",
-        price: 110,
-        origPrice: 155,
-        disc: "29% OFF",
-        img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80",
-        brand: "Dettol",
-        cat: "Monsoon Health & Antiseptics",
-      },
-      {
-        name: "Crocin Advance",
-        sub: "Fast Relief Paracetamol 500mg",
-        price: 45,
-        origPrice: 60,
-        disc: "25% OFF",
-        img: "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=300&q=80",
-        brand: "Crocin",
-        cat: "Pain Relief & Muscle Care",
-      },
-      {
-        name: "Accu-Chek 50 Strips",
-        sub: "Active Blood Glucose Test Strips",
-        price: 849,
-        origPrice: 965,
-        disc: "12% OFF",
-        img: "https://images.unsplash.com/photo-1583912267670-6575ad472688?w=300&q=80",
-        brand: "Accu-Chek",
-        cat: "Medical Supplies & Devices",
-      },
-      {
-        name: "Dolo-650 Tablet",
-        sub: "Paracetamol 650mg Antipyretic",
-        price: 18,
-        origPrice: 20,
-        disc: "10% OFF",
-        img: "https://images.unsplash.com/photo-1550572017-ed20015ade08?w=300&q=80",
-        brand: "Micro Labs",
-        cat: "Pain Relief & Muscle Care",
-      },
-    ];
+    if (!dbProducts || dbProducts.length === 0) return [];
 
-    if (!dbProducts || dbProducts.length === 0) {
-      return defaultDeals.map((d, idx) => ({
-        id: idx + 101,
-        numeric_id: idx + 101,
-        dbId: `deal-${idx}`,
-        name: d.name,
-        sub: d.sub,
-        price: `₹${d.price}`,
-        orig: `₹${d.origPrice}`,
-        disc: d.disc,
-        rawPrice: d.price,
-        rawOrig: d.origPrice,
-        brand: d.brand,
-        cat: d.cat,
-        img: d.img,
-        stock: 50,
-      }));
-    }
+    // Strictly filter products that are explicitly listed by the administrator
+    const listed = dbProducts.filter((p) => p.is_listed !== false);
+    if (listed.length === 0) return [];
 
-    return defaultDeals.map((d, idx) => {
-      const match = dbProducts.find((p) => p.name.toLowerCase().includes(d.name.split(" ")[0].toLowerCase()));
-      if (match) {
-        const pPrice = Math.round(match.retailer_price || match.customer_price || d.price);
-        const pMrp = Math.round(match.mrp || d.origPrice);
-        return {
-          id: match.numeric_id || idx + 101,
-          numeric_id: match.numeric_id || idx + 101,
-          dbId: match.id,
-          name: match.name,
-          sub: match.details || match.subtitle || d.sub,
-          price: `₹${pPrice}`,
-          orig: pMrp > pPrice ? `₹${pMrp}` : `₹${d.origPrice}`,
-          disc: match.discount_percent ? `${match.discount_percent}% OFF` : d.disc,
-          rawPrice: pPrice,
-          rawOrig: pMrp,
-          brand: match.brand || d.brand,
-          cat: match.category_name || d.cat,
-          img: match.image_url || d.img,
-          stock: match.stock ?? 50,
-          customer_price: match.customer_price,
-          retailer_price: match.retailer_price,
-          return_policy: match.return_policy || "Non-Returnable",
-        };
-      }
+    // Prioritize products with highest discounts or largest savings
+    const sortedDeals = [...listed].sort((a, b) => {
+      const discA = isRetailer
+        ? (a.retailer_discount_percent ?? a.discount_percent ?? 0)
+        : (a.discount_percent ?? 0);
+      const discB = isRetailer
+        ? (b.retailer_discount_percent ?? b.discount_percent ?? 0)
+        : (b.discount_percent ?? 0);
+
+      if (discB !== discA) return discB - discA;
+
+      const priceA = isRetailer ? (a.retailer_price || a.customer_price) : a.customer_price;
+      const priceB = isRetailer ? (b.retailer_price || b.customer_price) : b.customer_price;
+      const savingsA = (a.mrp || 0) - priceA;
+      const savingsB = (b.mrp || 0) - priceB;
+      return savingsB - savingsA;
+    });
+
+    return sortedDeals.slice(0, 4).map((p) => {
+      const effectivePrice = Math.round(isRetailer ? (p.retailer_price || p.customer_price) : p.customer_price);
+      const mrp = Math.round(p.mrp || 0);
+      const discountPercent = isRetailer
+        ? Math.round(p.retailer_discount_percent || p.discount_percent || (mrp > effectivePrice ? ((mrp - effectivePrice) / mrp) * 100 : 0))
+        : Math.round(p.discount_percent || (mrp > effectivePrice ? ((mrp - effectivePrice) / mrp) * 100 : 0));
+
       return {
-        id: idx + 101,
-        numeric_id: idx + 101,
-        dbId: `deal-${idx}`,
-        name: d.name,
-        sub: d.sub,
-        price: `₹${d.price}`,
-        orig: `₹${d.origPrice}`,
-        disc: d.disc,
-        rawPrice: d.price,
-        rawOrig: d.origPrice,
-        brand: d.brand,
-        cat: d.cat,
-        img: d.img,
-        stock: 50,
+        id: p.numeric_id,
+        numeric_id: p.numeric_id,
+        dbId: p.id,
+        name: p.name,
+        sub: p.details || p.subtitle || p.brand,
+        price: `₹${effectivePrice}`,
+        orig: mrp > effectivePrice ? `₹${mrp}` : undefined,
+        disc: discountPercent > 0 ? `${discountPercent}% OFF` : "Deal",
+        rawPrice: effectivePrice,
+        rawOrig: mrp,
+        brand: p.brand,
+        cat: p.category_name,
+        subCat: p.sub_category_name || "",
+        img: p.image_url || p.web_image_url || "",
+        stock: p.stock ?? 50,
+        customer_price: p.customer_price,
+        retailer_price: p.retailer_price,
+        return_policy: p.return_policy || "Non-Returnable",
       };
     });
-  }, [dbProducts]);
+  }, [dbProducts, isRetailer]);
 
   const handleAddToCartFromCategory = (p: HomeCategoryProduct, cat: string) => {
     addToCart({
@@ -707,61 +655,67 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-              {dealsOfTheDayList.map((deal) => (
-                <div
-                  key={deal.name}
-                  onClick={() => setSelectedProduct({
-                    id: deal.numeric_id || deal.id,
-                    dbId: deal.dbId,
-                    name: deal.name,
-                    sub: deal.sub,
-                    brand: deal.brand,
-                    cat: deal.cat,
-                    price: deal.price,
-                    customer_price: (deal as any).customer_price || deal.rawPrice,
-                    retailer_price: (deal as any).retailer_price,
-                    orig: deal.orig,
-                    disc: deal.disc,
-                    img: deal.img,
-                    stock: deal.stock,
-                    return_policy: (deal as any).return_policy || "Non-Returnable",
-                  })}
-                  className="group bg-white rounded-2xl border border-slate-200/80 hover:border-rose-300/80 p-2.5 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer relative overflow-hidden"
-                >
-                  {/* Discount Badge */}
-                  <div className="absolute top-2 left-2 z-10">
-                    <span className="bg-emerald-600 text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded shadow-2xs">
-                      {deal.disc}
-                    </span>
-                  </div>
-
-                  <div className="w-full h-24 sm:h-28 flex items-center justify-center p-1 bg-slate-50/50 rounded-xl overflow-hidden mt-3 mb-2">
-                    <img
-                      src={deal.img}
-                      alt={deal.name}
-                      className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-0.5">
-                    <h3 className="text-xs sm:text-[13px] font-bold text-slate-900 group-hover:text-[#ff3366] line-clamp-1 transition-colors">
-                      {deal.name}
-                    </h3>
-                    <div className="flex items-baseline gap-1.5 mt-0.5">
-                      <span className="text-xs sm:text-sm font-extrabold text-slate-900">
-                        {deal.price}
+            {dealsOfTheDayList.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+                {dealsOfTheDayList.map((deal) => (
+                  <div
+                    key={deal.name}
+                    onClick={() => setSelectedProduct({
+                      id: deal.numeric_id || deal.id,
+                      dbId: deal.dbId,
+                      name: deal.name,
+                      sub: deal.sub,
+                      brand: deal.brand,
+                      cat: deal.cat,
+                      price: deal.price,
+                      customer_price: (deal as any).customer_price || deal.rawPrice,
+                      retailer_price: (deal as any).retailer_price,
+                      orig: deal.orig,
+                      disc: deal.disc,
+                      img: deal.img,
+                      stock: deal.stock,
+                      return_policy: (deal as any).return_policy || "Non-Returnable",
+                    })}
+                    className="group bg-white rounded-2xl border border-slate-200/80 hover:border-rose-300/80 p-2.5 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer relative overflow-hidden"
+                  >
+                    {/* Discount Badge */}
+                    <div className="absolute top-2 left-2 z-10">
+                      <span className="bg-emerald-600 text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded shadow-2xs">
+                        {deal.disc}
                       </span>
-                      {deal.orig && (
-                        <span className="text-[10px] sm:text-xs text-slate-400 line-through">
-                          {deal.orig}
+                    </div>
+
+                    <div className="w-full h-24 sm:h-28 flex items-center justify-center p-1 bg-slate-50/50 rounded-xl overflow-hidden mt-3 mb-2">
+                      <img
+                        src={deal.img}
+                        alt={deal.name}
+                        className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-0.5">
+                      <h3 className="text-xs sm:text-[13px] font-bold text-slate-900 group-hover:text-[#ff3366] line-clamp-1 transition-colors">
+                        {deal.name}
+                      </h3>
+                      <div className="flex items-baseline gap-1.5 mt-0.5">
+                        <span className="text-xs sm:text-sm font-extrabold text-slate-900">
+                          {deal.price}
                         </span>
-                      )}
+                        {deal.orig && (
+                          <span className="text-[10px] sm:text-xs text-slate-400 line-through">
+                            {deal.orig}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center flex flex-col items-center justify-center gap-2 text-slate-400">
+                <span className="text-xs font-semibold">No featured deals currently listed.</span>
+              </div>
+            )}
           </section>
         </div>
 
