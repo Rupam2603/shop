@@ -245,9 +245,21 @@ export async function updateUserAccountStatus(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const isApproving = newStatus === "active";
-    const NON_UUID_ADMIN_IDS = ["00000000-0000-0000-0000-000000000000", "admin_fixed_id", "admin_subhonehealthgroup_id"];
-    const isValidUuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-    const finalAdminId = NON_UUID_ADMIN_IDS.includes(adminId) || !isValidUuid(adminId) ? null : adminId;
+
+    // Verify the admin UUID is both a valid UUID format AND exists in public.users.
+    // If either check fails we fall back to null so the FK constraint is never violated.
+    const isValidUuidFormat = (id: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    let finalAdminId: string | null = null;
+    if (adminId && isValidUuidFormat(adminId)) {
+      try {
+        const rows = await sql`SELECT 1 FROM public.users WHERE id = ${adminId} LIMIT 1`;
+        if (rows && rows.length > 0) finalAdminId = adminId;
+      } catch {
+        // If the lookup itself fails, keep finalAdminId as null — safer than crashing the approval
+      }
+    }
 
     // 1. Update the users table
     if (isApproving) {
@@ -280,15 +292,19 @@ export async function updateUserAccountStatus(
     }
 
     // 2. Try to update retailer_approval_requests if it exists for this user
-    await sql`
-      UPDATE public.retailer_approval_requests
-      SET 
-        status = ${newStatus}, 
-        reviewed_at = NOW(), 
-        reviewed_by = ${finalAdminId},
-        notes = COALESCE(${notes || null}, notes)
-      WHERE user_id = ${userId}
-    `;
+    try {
+      await sql`
+        UPDATE public.retailer_approval_requests
+        SET 
+          status = ${newStatus}, 
+          reviewed_at = NOW(), 
+          reviewed_by = ${finalAdminId},
+          notes = COALESCE(${notes || null}, notes)
+        WHERE user_id = ${userId}
+      `;
+    } catch {
+      // retailer_approval_requests table may not exist — not critical
+    }
 
     return { success: true };
   } catch (err: any) {
@@ -296,6 +312,7 @@ export async function updateUserAccountStatus(
     return { success: false, error: err?.message || "Failed to update status" };
   }
 }
+
 
 export async function softDeleteUser(userId: string): Promise<{ success: boolean; error?: string }> {
   try {
