@@ -272,9 +272,9 @@ export default function App() {
   const handleUpdateUser = async (updates: Partial<CurrentUser>) => {
     await updateProfile({
       full_name: updates.name,
-      phone: updates.phone ?? null,
-      shop_name: updates.shopName ?? null,
-      avatar_url: updates.profileImage ?? null,
+      phone: updates.phone !== undefined ? updates.phone : undefined,
+      shop_name: updates.shopName !== undefined ? updates.shopName : undefined,
+      avatar_url: updates.profileImage !== undefined ? updates.profileImage : undefined,
     });
   };
 

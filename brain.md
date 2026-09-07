@@ -76,7 +76,15 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 
 ---
 
-## 6. Recent Updates & Current State
+- **Profile Picture Persistence on "Save Changes" & Avatar Sync Fix (Sep 2026)**:
+  - **Bug Fix in `src/App.tsx` (`handleUpdateUser`)**:
+    - Previously, `handleUpdateUser` passed `avatar_url: updates.profileImage ?? null`. Because `handleSaveProfile` in `ProfilePage.tsx` passed profile edits (`{ name, phone, shopName }`) without including `profileImage`, `updates.profileImage ?? null` evaluated to `null`.
+    - In `src/lib/users.ts` (`saveUserProfileToDb`), passing `avatar_url: null` evaluated `${avatarUrl !== undefined}` as `true`, executing `SET avatar_url = null` and wiping out the newly uploaded picture upon clicking "Save Changes".
+    - Fixed by passing `avatar_url: updates.profileImage !== undefined ? updates.profileImage : undefined` (and similarly for `phone` and `shop_name`), preventing accidental nullification of unchanged fields.
+  - **Component State Synchronization (`src/pages/ProfilePage.tsx`)**:
+    - Added an `avatarPreview` state that initializes and syncs with `user.profileImage`.
+    - On upload, `setAvatarPreview(finalImage)` provides an instant visual update on both the profile header avatar and edit card.
+    - Updated `handleSaveProfile` to explicitly submit `profileImage: avatarPreview !== undefined ? avatarPreview : user.profileImage`, guaranteeing the picture is always preserved when submitting profile updates.
 - **Retailer Profile Picture Device Upload & Database Persistence (Admin Dashboard & Profile Page) (Sep 2026)**:
   - **Database Schema & Synchronization**:
     - Ensured `avatar_url TEXT` column exists across Neon PostgreSQL tables: `public.users`, `public.profiles`, and `public.retailer_approvals`.

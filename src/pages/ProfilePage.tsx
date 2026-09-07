@@ -191,12 +191,17 @@ export default function ProfilePage({
   const [editName, setEditName] = useState(user.name);
   const [editPhone, setEditPhone] = useState(user.phone ?? "");
   const [editShop, setEditShop] = useState(user.shopName ?? "");
+  const [avatarPreview, setAvatarPreview] = useState<string | undefined>(user.profileImage);
   const [saved, setSaved] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileMsg, setProfileMsg] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoMsg, setPhotoMsg] = useState("");
   const imageRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setAvatarPreview(user.profileImage);
+  }, [user.profileImage]);
 
   const handleProfileImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -247,6 +252,8 @@ export default function ProfilePage({
           }
         } catch {}
 
+        setAvatarPreview(finalImage);
+
         try {
           await onUpdateUser({ profileImage: finalImage });
           setPhotoMsg("Profile picture saved to database!");
@@ -261,6 +268,7 @@ export default function ProfilePage({
       };
 
       img.onerror = async () => {
+        setAvatarPreview(rawDataUrl);
         try {
           await onUpdateUser({ profileImage: rawDataUrl });
           setPhotoMsg("Profile picture saved to database!");
@@ -288,6 +296,7 @@ export default function ProfilePage({
         name: editName.trim() || user.name,
         phone: editPhone,
         shopName: user.role === "retailer" ? editShop : undefined,
+        profileImage: avatarPreview !== undefined ? avatarPreview : user.profileImage,
       });
       setSaved(true);
       setProfileMsg("Profile updated successfully in database!");
@@ -493,8 +502,8 @@ export default function ProfilePage({
                 style={{ backgroundColor: accent }}
                 title="Click to upload profile picture from your device"
               >
-                {user.profileImage ? (
-                  <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+                {(avatarPreview || user.profileImage) ? (
+                  <img src={avatarPreview || user.profileImage} alt={user.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-white text-2xl sm:text-3xl">
                     {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
@@ -631,8 +640,8 @@ export default function ProfilePage({
                     style={{ backgroundColor: accent }}
                     title="Upload profile picture from device"
                   >
-                    {user.profileImage ? (
-                      <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+                    {(avatarPreview || user.profileImage) ? (
+                      <img src={avatarPreview || user.profileImage} alt={user.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-white text-xl sm:text-2xl">
                         {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
@@ -669,7 +678,7 @@ export default function ProfilePage({
                   className="self-start sm:self-center px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 text-slate-800 font-bold text-xs shadow-2xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   <span>📷</span>
-                  <span>{uploadingPhoto ? "Saving to Database…" : user.profileImage ? "Change Picture" : "Upload Picture"}</span>
+                  <span>{uploadingPhoto ? "Saving to Database…" : (avatarPreview || user.profileImage) ? "Change Picture" : "Upload Picture"}</span>
                 </button>
               </div>
 
