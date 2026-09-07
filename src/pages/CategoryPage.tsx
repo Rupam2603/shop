@@ -367,74 +367,74 @@ export default function CategoryPage({
                       retailer_price: (p as any).retailer_price,
                       return_policy: (p as any).return_policy || "Non-Returnable",
                     })}
-                    className={`bg-white/90 backdrop-blur-xl rounded-3xl border ${
+                    className={`bg-white rounded-2xl border ${
                       isOutOfStock ? "border-rose-200/80 opacity-75" : "border-slate-200/85 hover:border-[#ff3366]/40"
-                    } hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer shadow-2xs`}
+                    } hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer shadow-2xs`}
                   >
                     {/* Image & Badge */}
-                    <div className="relative bg-slate-50/70 h-32 sm:h-38 overflow-hidden flex items-center justify-center p-3">
+                    <div className="relative bg-slate-50/60 h-24 sm:h-28 overflow-hidden flex items-center justify-center p-2">
                       {p.disc && (
                         <span
-                          className="absolute top-2.5 left-2.5 z-10 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase shadow-xs bg-[#ff3366]"
+                          className="absolute top-2 left-2 z-10 text-white text-[8px] sm:text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow-2xs bg-[#ff3366]"
                         >
                           {p.disc} OFF
                         </span>
                       )}
                       {isOutOfStock ? (
-                        <span className="absolute top-2.5 right-2.5 z-10 bg-rose-50 text-rose-700 border border-rose-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs backdrop-blur-md">
+                        <span className="absolute top-2 right-2 z-10 bg-rose-50 text-rose-700 border border-rose-200 text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-2xs">
                           {isRetailer ? "Stock Out" : "Out of Stock"}
                         </span>
                       ) : isLowStock ? (
-                        <span className="absolute top-2.5 right-2.5 z-10 bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase animate-pulse shadow-2xs backdrop-blur-md">
-                          {isRetailer ? `Low (${p.stock})` : `Only ${p.stock} Left`}
+                        <span className="absolute top-2 right-2 z-10 bg-amber-50 text-amber-800 border border-amber-200 text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase animate-pulse shadow-2xs">
+                          {isRetailer ? `Low (${p.stock})` : `Only ${p.stock}`}
                         </span>
                       ) : (
-                        <span className="absolute top-2.5 right-2.5 z-10 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[8px] font-bold px-2 py-0.5 rounded-full shadow-2xs backdrop-blur-md">
-                          {isRetailer ? `📦 ${p.stock} units` : `${p.stock} in stock`}
+                        <span className="absolute top-2 right-2 z-10 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[8px] font-semibold px-1.5 py-0.5 rounded-full shadow-2xs">
+                          {isRetailer ? `📦 ${p.stock}` : `${p.stock} in stock`}
                         </span>
                       )}
                       <img
                         src={p.img}
                         alt={p.name}
-                        className="h-full w-full object-contain mix-blend-multiply group-hover:scale-108 transition-transform duration-300"
+                        className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-200"
                         onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }}
                       />
                     </div>
 
-                    <div className="p-3.5 flex flex-col gap-1 flex-1 bg-white">
-                      <p className="text-[9px] font-black uppercase tracking-[0.6px] text-[#003b6d]">
+                    <div className="p-2 sm:p-2.5 flex flex-col gap-0.5 flex-1 bg-white">
+                      <p className="text-[9px] font-black uppercase tracking-[0.5px] text-[#003b6d] truncate">
                         {p.brand}
                       </p>
-                      <p className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[34px] group-hover:text-[#ff3366] transition-colors">
+                      <p className="font-['Manrope',sans-serif] font-bold text-slate-900 text-xs sm:text-[12.5px] leading-tight line-clamp-2 min-h-[28px] group-hover:text-[#ff3366] transition-colors">
                         {p.name}
                       </p>
                       <div className="flex flex-wrap items-center gap-1 mt-0.5">
                         {p.subCat && (
-                          <span className="inline-block text-[9px] font-bold bg-sky-50 text-sky-700 border border-sky-200/80 px-2 py-0.5 rounded-full leading-none w-fit">
+                          <span className="inline-block text-[8px] font-bold bg-sky-50 text-sky-700 border border-sky-200/80 px-1.5 py-0.2 rounded-full leading-none w-fit">
                             {p.subCat}
                           </span>
                         )}
                         {p.sub && (
-                          <span className="inline-block text-[9px] font-bold bg-slate-50 text-slate-600 border border-slate-200/80 px-2 py-0.5 rounded-full leading-none w-fit truncate max-w-[150px]">
+                          <span className="inline-block text-[8px] font-medium bg-slate-50 text-slate-600 border border-slate-200/80 px-1.5 py-0.2 rounded-full leading-none w-fit truncate max-w-[120px]">
                             {p.sub}
                           </span>
                         )}
                       </div>
 
-                      <div className="mt-auto pt-2.5 border-t border-slate-100 flex items-center justify-between">
-                        <div>
-                          <span className="font-['Manrope',sans-serif] font-black text-slate-900 text-sm sm:text-base">
+                      <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <div className="flex items-baseline gap-1">
+                          <span className="font-['Manrope',sans-serif] font-black text-slate-900 text-xs sm:text-sm">
                             {p.price}
                           </span>
                           {p.orig && (
-                            <span className="text-slate-400 text-[10px] line-through ml-1 font-semibold">
-                              MRP {p.orig}
+                            <span className="text-slate-400 text-[9px] sm:text-[10px] line-through font-semibold">
+                              {p.orig}
                             </span>
                           )}
                         </div>
 
                         {isOutOfStock ? (
-                          <span className="text-[9px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                          <span className="text-[8px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-full">
                             Out
                           </span>
                         ) : (

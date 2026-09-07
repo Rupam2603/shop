@@ -77,6 +77,16 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 ---
 
 ## 6. Recent Updates & Current State
+- **Key Categories Section UI/UX Redesign & Compact Product Sizing (Sep 2026)**:
+  - **Modernized Key Category Headings (`src/pages/HomePage.tsx`)**:
+    - Replaced the bulky pill banner with a sleek glassmorphic container (`bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-2xl shadow-2xs px-3.5 sm:px-4.5 py-2.5 sm:py-3`).
+    - Added a vibrant rose/pink gradient category icon badge (`w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-rose-50 to-pink-100/80 border border-rose-200/50`).
+    - Enhanced typography using `font-['Manrope'] font-black text-sm sm:text-base text-slate-900` with clean subtitle and a live count badge (e.g., `4 Items`).
+    - Upgraded the "View All" CTA into a modern pill button with hover micro-transitions (`group-hover:translate-x-0.5`).
+  - **Compact Product Card Sizing Across Store (`src/pages/HomePage.tsx`, `src/pages/CategoryPage.tsx`)**:
+    - Significantly tightened product card dimensions (`w-[135px] sm:w-[160px] lg:w-auto`) with a compact image container height reduced from `h-28 sm:h-36` to `h-22 sm:h-26`.
+    - Compacted padding (`p-2 sm:p-2.5`), badges (`text-[9px] sm:text-[10px]`), title typography (`text-xs sm:text-[13px] line-clamp-2`), price displays, and the add-to-cart action button (`w-6.5 h-6.5 sm:w-7 sm:h-7`).
+    - Expanded responsive grid from 4 to 5 columns (`sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5`) to maximize viewport real estate and present an ultra-clean, modern e-commerce storefront.
 - **Deals of the Day Authoritative Database Filtering (Sep 2026)**:
   - Removed legacy hardcoded fallback array `defaultDeals` from `src/pages/HomePage.tsx` which previously leaked unlisted/mock products (`Crocin Advance`, `Accu-Chek 50 Strips`, and `Dolo-650 Tablet` with broken images) into the "Deals of the Day" storefront section.
   - Re-architected `dealsOfTheDayList` in `HomePage.tsx` to strictly query and filter active `dbProducts` where `p.is_listed !== false`.

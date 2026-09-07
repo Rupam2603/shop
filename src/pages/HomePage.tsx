@@ -144,64 +144,64 @@ function ProductCard({
   return (
     <div
       onClick={onClick}
-      className={`w-[155px] sm:w-[195px] lg:w-auto shrink-0 lg:shrink snap-start bg-white/90 backdrop-blur-xl rounded-3xl border ${
-        isOutOfStock ? "border-rose-200/80 opacity-75" : "border-slate-200/85 hover:border-[#ff3366]/40"
-      } shadow-2xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer`}
+      className={`w-[135px] sm:w-[160px] lg:w-auto shrink-0 lg:shrink snap-start bg-white rounded-2xl border ${
+        isOutOfStock ? "border-rose-200/80 opacity-75" : "border-slate-200/80 hover:border-[#ff3366]/40"
+      } shadow-2xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer`}
     >
-      <div className="bg-slate-50/70 h-28 sm:h-36 relative overflow-hidden flex items-center justify-center p-2.5">
+      <div className="bg-slate-50/60 h-22 sm:h-26 relative overflow-hidden flex items-center justify-center p-2">
         {p.disc && (
           <span
-            className="absolute top-2.5 left-2.5 z-10 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase shadow-xs bg-[#ff3366]"
+            className="absolute top-2 left-2 z-10 text-white text-[8px] sm:text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow-2xs bg-[#ff3366]"
           >
             {p.disc} OFF
           </span>
         )}
         {isOutOfStock ? (
-          <span className="absolute top-2.5 right-2.5 z-10 bg-rose-50 text-rose-700 border border-rose-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase shadow-2xs backdrop-blur-md">
+          <span className="absolute top-2 right-2 z-10 bg-rose-50 text-rose-700 border border-rose-200 text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-2xs">
             {isRetailer ? "Stock Out" : "Out of Stock"}
           </span>
         ) : isLowStock ? (
-          <span className="absolute top-2.5 right-2.5 z-10 bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase animate-pulse shadow-2xs backdrop-blur-md">
-            {isRetailer ? `Low (${p.stock})` : `Only ${p.stock} Left`}
+          <span className="absolute top-2 right-2 z-10 bg-amber-50 text-amber-800 border border-amber-200 text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-2xs animate-pulse">
+            {isRetailer ? `Low (${p.stock})` : `Only ${p.stock}`}
           </span>
         ) : (
-          <span className="absolute top-2.5 right-2.5 z-10 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[8px] font-bold px-2 py-0.5 rounded-full shadow-2xs backdrop-blur-md">
-            {isRetailer ? `📦 ${p.stock} units` : `${p.stock} in stock`}
+          <span className="absolute top-2 right-2 z-10 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[8px] font-semibold px-1.5 py-0.5 rounded-full shadow-2xs">
+            {isRetailer ? `📦 ${p.stock}` : `${p.stock} in stock`}
           </span>
         )}
         <img
           src={p.img}
           alt={p.name}
-          className="h-full w-full object-contain mix-blend-multiply group-hover:scale-108 transition-transform duration-300"
+          className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-200"
           onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.15"; }}
         />
       </div>
-      <div className="p-3 sm:p-3.5 flex flex-col gap-1 flex-1 bg-white">
-        <p className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[34px] group-hover:text-[#ff3366] transition-colors">
+      <div className="p-2 sm:p-2.5 flex flex-col gap-0.5 flex-1 bg-white">
+        <p className="font-['Manrope',sans-serif] font-bold text-slate-900 text-xs sm:text-[12.5px] leading-tight line-clamp-2 min-h-[28px] group-hover:text-[#ff3366] transition-colors">
           {p.name}
         </p>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <p className="text-slate-400 text-[10px] sm:text-[11px] truncate font-medium">{p.sub}</p>
+        <div className="flex items-center gap-1 flex-wrap">
+          <p className="text-slate-400 text-[9.5px] sm:text-[10px] truncate font-medium max-w-[100px]">{p.sub}</p>
           {p.subCat && (
-            <span className="text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.2 rounded-full">
+            <span className="text-[8px] font-bold text-slate-600 bg-slate-100 border border-slate-200/80 px-1 py-0.2 rounded">
               {p.subCat}
             </span>
           )}
         </div>
 
-        <div className="flex items-center justify-between mt-auto pt-2.5 border-t border-slate-100">
-          <div>
-            <span className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-sm sm:text-base">
+        <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-100">
+          <div className="flex items-baseline gap-1">
+            <span className="font-['Manrope',sans-serif] font-black text-slate-900 text-xs sm:text-sm">
               {p.price}
             </span>
             {p.orig && (
-              <span className="text-slate-400 text-[10px] sm:text-xs line-through ml-1 font-semibold">
-                MRP {p.orig}
+              <span className="text-slate-400 text-[9px] sm:text-[10px] line-through font-semibold">
+                {p.orig}
               </span>
             )}
           </div>
           {isOutOfStock ? (
-            <span className="text-[9px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+            <span className="text-[8px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-full">
               Out
             </span>
           ) : (
@@ -210,7 +210,7 @@ function ProductCard({
                 e.stopPropagation();
                 onAddToCart?.();
               }}
-              className="w-8 h-8 rounded-2xl flex items-center justify-center text-white shrink-0 hover:scale-110 active:scale-95 transition-all shadow-md bg-[#ff3366] hover:bg-[#e02958] cursor-pointer"
+              className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-xl flex items-center justify-center text-white shrink-0 hover:scale-110 active:scale-95 transition-all shadow-xs bg-[#ff3366] hover:bg-[#e02958] cursor-pointer"
               title="Add to cart"
             >
               <PlusIcon />
@@ -236,35 +236,48 @@ function CategorySection({
   onAddToCart: (p: HomeCategoryProduct, cat: string) => void;
 }) {
   return (
-    <section className="flex flex-col gap-3 sm:gap-4">
+    <section className="flex flex-col gap-2.5 sm:gap-3">
+      {/* ── Modern Sleek Category Section Header ── */}
       <div
-        className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3.5 sm:py-4.5 rounded-3xl bg-white/95 backdrop-blur-xl border border-slate-200/80 shadow-2xs"
+        className="flex items-center justify-between gap-3 px-3.5 sm:px-4.5 py-2.5 sm:py-3 rounded-2xl bg-white/95 backdrop-blur-xl border border-slate-200/80 shadow-2xs hover:border-slate-300/80 transition-colors"
       >
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+          {/* Category Accent Icon */}
           <div
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-xs border border-rose-100 bg-rose-50 text-[#ff3366] group-hover:scale-105 transition-transform"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs border border-rose-100 bg-gradient-to-br from-rose-50 to-pink-50 text-[#ff3366] group-hover:scale-105 transition-transform"
           >
             {item.icon}
           </div>
           <div className="min-w-0">
-            <h2 className="font-['Manrope',sans-serif] font-extrabold text-base sm:text-xl text-slate-900 truncate">
-              {item.cat}
-            </h2>
-            <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 font-medium truncate">
+            <div className="flex items-center gap-2">
+              <h2
+                onClick={onViewAll}
+                className="font-['Manrope',sans-serif] font-black text-sm sm:text-base text-slate-900 truncate hover:text-[#ff3366] transition-colors cursor-pointer"
+              >
+                {item.cat}
+              </h2>
+              <span className="hidden sm:inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/70 leading-none shrink-0">
+                {item.products.length} Items
+              </span>
+            </div>
+            <p className="text-slate-400 text-[10.5px] sm:text-xs font-medium truncate mt-0.5">
               {item.tagline ? item.tagline : `${item.count} certified medicines · Express Dispatch`}
             </p>
           </div>
         </div>
+
+        {/* View All Pill Action */}
         <button
           onClick={onViewAll}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-rose-50 hover:bg-rose-100 text-[#ff3366] text-xs sm:text-sm font-extrabold shadow-2xs hover:shadow-xs border border-rose-200/80 transition-all cursor-pointer shrink-0 whitespace-nowrap active:scale-95"
+          className="group flex items-center gap-1.5 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-xs font-bold text-[#ff3366] bg-rose-50/80 hover:bg-[#ff3366] hover:text-white border border-rose-200/80 transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
         >
           <span>View All</span>
-          <ArrowRight />
+          <span className="text-xs transition-transform duration-200 group-hover:translate-x-0.5">→</span>
         </button>
       </div>
 
-      <div className="flex lg:grid lg:grid-cols-4 gap-3 sm:gap-4 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
+      {/* ── Compact Product Cards Grid ── */}
+      <div className="flex sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
         {item.products.map((p) => (
           <ProductCard
             key={p.name}
@@ -293,13 +306,15 @@ function CategorySection({
         ))}
         <button
           onClick={onViewAll}
-          className="w-[140px] sm:w-[160px] lg:w-auto shrink-0 snap-start rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 p-4 hover:bg-white transition-all group min-h-[190px] sm:min-h-[220px]"
+          className="w-[110px] sm:w-[130px] lg:w-auto shrink-0 snap-start rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5 p-3 hover:bg-white transition-all group min-h-[150px] sm:min-h-[170px] cursor-pointer"
           style={{ borderColor: item.iconBg }}
         >
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform" style={{ backgroundColor: item.lightBg, color: item.accent }}>
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform" style={{ backgroundColor: item.lightBg, color: item.accent }}>
             <ArrowRight />
           </div>
-          <p className="text-xs font-semibold text-center" style={{ color: item.accent }}>See all {item.short}</p>
+          <p className="text-[11px] sm:text-xs font-bold text-center px-1" style={{ color: item.accent }}>
+            See all {item.short}
+          </p>
         </button>
       </div>
     </section>
