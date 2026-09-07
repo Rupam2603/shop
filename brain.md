@@ -77,18 +77,15 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 ---
 
 ## 6. Recent Updates & Current State
-- **Modern Animated Website Loading Screen UI/UX (Sep 2026)**:
-  - Designed and implemented `src/components/ModernLoadingScreen.tsx`, delivering an award-winning (Awwwards / luxury tech) animated loading experience for SubhOne Health Group.
-  - Features dynamic visual stagecraft:
-    - Multi-layered living aurora canvas with 3 shifting gradient orbs (emerald, electric royal blue, and soft rose blush) and subtle radial dot matrix mesh overlay.
-    - Ambient rising micro-sparkles and translucent medical crosses (`+`, `✦`) with physics-inspired float animation.
-    - Central Gyroscope Orbital Core: Counter-rotating orbital rings with dual-tone laser comet trails (`#006a39` -> `#10b981` -> `#06b6d4` -> `#2563eb`), Gaussian bloom glow filters, and ECG heartbeat wave pulse.
-    - Elevated glassmorphic shield housing the official SubhOne brand logo (`/logo.png`) with animated diagonal specular reflection sweep.
-    - Precision telemetry progress bar with travelling laser gleam, right-side tip beacon, and real-time numeric percentage counter (`0%` -> `100%`).
-    - Dynamic rotating live status ticker ("Connecting to secure health cloud…", "Verifying certified pharmaceutical catalog…", "Calibrating real-time delivery network…", "SubhOne Health Group • Ready").
-    - Top status capsule with pulsing radar dot (`SUBHONE 24/7 HEALTH CLOUD`) and bottom security trust pills (`256-Bit SSL Encrypted`, `10-15 Min Express`, `100% Genuine Care`).
-  - Upgraded `src/components/InfinityLoader.tsx` with multi-chromatic laser beams, bloom filters, and high-end typography, modernizing loaders across `HomePage.tsx`, `CheckoutModal.tsx`, and `OrderTrackingModal.tsx`.
-  - Wired into `src/App.tsx` initial session boot and supported interactive preview mode (`?preview=loading` / `#preview=loading`).
+- **Simple Minimalist Fast Loading Screen UI/UX (Sep 2026)**:
+  - Streamlined `src/components/ModernLoadingScreen.tsx` into a lightweight, high-performance minimalist design inspired by Apple and Stripe.
+  - Eliminated heavy multi-layer SVG filters, complex keyframe overhead, and simulated ramp hold intervals to ensure instantaneous rendering and page transitions.
+  - Features a crisp, focused design:
+    - Delicate emerald/mint gradient spinner ring orbiting a soft rounded logo card with subtle breathing pulse.
+    - Minimalist typography: `SubhOne +` with `Health Group` subtitle in clean geometric typography.
+    - Non-intrusive animated 3-dot pulse (`Loading...`).
+    - Ultra-lightweight DOM and 60fps CSS animation with zero GPU thrashing.
+  - Removed sticky `preview=loading` URL check from `src/App.tsx`, resolving delayed page transitions so the app loads immediately upon session resolution.
 - **Luxury Glassmorphic Login & Signup UI/UX**:
   - Completely redesigned `LoginPage.tsx` matching the user reference design with luxury typography (`Plus Jakarta Sans` & `Manrope`) and multi-layered glassmorphic styling (`bg-white/95 backdrop-blur-2xl border-white/90 shadow-2xl shadow-blue-950/10`).
   - Left hero column features:

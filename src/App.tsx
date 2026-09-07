@@ -226,13 +226,8 @@ export default function App() {
   // ── Password reset link landing page (works regardless of auth state) ────
   if (resetToken) return <ResetPasswordScreen token={resetToken} />;
 
-  const isPreviewLoading =
-    typeof window !== "undefined" &&
-    (new URLSearchParams(window.location.search).get("preview") === "loading" ||
-      window.location.hash.includes("preview=loading"));
-
-  // ── Show modern loading screen while resolving the session or in preview mode ──
-  if (loading || isPreviewLoading) return <LoadingScreen />;
+  // ── Show minimalist loading screen while resolving the session ──
+  if (loading) return <LoadingScreen />;
 
   // ── Not logged in → show Login page ──────────────────────────────────────
   if (!appUser) {
