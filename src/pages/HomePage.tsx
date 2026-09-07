@@ -7,6 +7,7 @@ import { KEY_CATEGORIES_CONFIG, isProductInCategory } from "../lib/keyCategories
 import InsuranceModal from "../components/InsuranceModal";
 import { useCart } from "../contexts/CartContext";
 import { fetchProducts, DbProduct, subscribeToProductsRealtime } from "../lib/products";
+import InfinityLoader from "../components/InfinityLoader";
 import imgHeroBg from "@/assets/hero-banner.jpg";
 import imgPromoShelf from "@/assets/pharmacy-shelf.jpg";
 import imgProduct1 from "@/imports/SubhOneHomeYourWellnessPartner/ed2cee3d70ea8b6d972ea44b1746b961d47ff5b3.png";
@@ -785,9 +786,8 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
 
         {/* Loading state indicator */}
         {dbProducts === null && (
-          <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-[#e4ede2] p-8 text-center flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-3 border-[#006a39] border-t-transparent rounded-full animate-spin" />
-            <p className="text-xs font-semibold text-[#073b4c]">Loading medicines and healthcare catalog...</p>
+          <div className="bg-white/80 backdrop-blur-md rounded-3xl border border-[#e4ede2] p-10 text-center flex flex-col items-center justify-center my-6 shadow-sm">
+            <InfinityLoader size={100} text="Loading verified medicines & healthcare catalog…" variant="brand" />
           </div>
         )}
 

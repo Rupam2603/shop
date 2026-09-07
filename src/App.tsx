@@ -17,6 +17,7 @@ import CartDrawer from "./components/CartDrawer";
 import CheckoutModal from "./components/CheckoutModal";
 import OrderTrackingModal from "./components/OrderTrackingModal";
 import InfinityLoader from "./components/InfinityLoader";
+import ModernLoadingScreen from "./components/ModernLoadingScreen";
 import SupportChatbot from "./components/SupportChatbot";
 import { useAuth, toLegacyUser } from "./contexts/AuthContext";
 import { parseHashToState, pushPageState, replacePageState } from "./lib/navigation";
@@ -77,9 +78,11 @@ function ConsultPage() {
  */
 function LoadingScreen() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fbfcfd]">
-      <InfinityLoader size={130} text="Loading SubhOne…" />
-    </div>
+    <ModernLoadingScreen
+      title="SubhOne"
+      subtitle="Health Group • Pharmacy & Diagnostic"
+      fullScreen={true}
+    />
   );
 }
 
@@ -223,8 +226,13 @@ export default function App() {
   // ── Password reset link landing page (works regardless of auth state) ────
   if (resetToken) return <ResetPasswordScreen token={resetToken} />;
 
-  // ── Show spinner while resolving the session (max 1s due to timeout in AuthContext) ──
-  if (loading) return <LoadingScreen />;
+  const isPreviewLoading =
+    typeof window !== "undefined" &&
+    (new URLSearchParams(window.location.search).get("preview") === "loading" ||
+      window.location.hash.includes("preview=loading"));
+
+  // ── Show modern loading screen while resolving the session or in preview mode ──
+  if (loading || isPreviewLoading) return <LoadingScreen />;
 
   // ── Not logged in → show Login page ──────────────────────────────────────
   if (!appUser) {

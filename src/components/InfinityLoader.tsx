@@ -3,13 +3,13 @@ import React from "react";
 export interface InfinityLoaderProps {
   /**
    * Visual variant:
-   * - "neon": The luminous violet/purple/blue glowing beam as shown in the preview GIF.
-   * - "brand": The healthcare emerald/mint glowing beam.
+   * - "neon": Luminous violet, electric cyan, and royal blue comet beam.
+   * - "brand": High-end healthcare emerald, mint, and cyan glowing beam.
    */
   variant?: "neon" | "brand";
   /**
    * Predefined or custom pixel width for the infinity loop.
-   * "sm" = 70px, "md" = 110px, "lg" = 160px, or a numeric width.
+   * "sm" = 72px, "md" = 110px, "lg" = 160px, or a numeric width.
    */
   size?: "sm" | "md" | "lg" | number;
   /**
@@ -28,7 +28,7 @@ export interface InfinityLoaderProps {
 }
 
 export default function InfinityLoader({
-  variant = "neon",
+  variant = "brand",
   size = "md",
   text = "Loading...",
   fullScreen = false,
@@ -45,19 +45,16 @@ export default function InfinityLoader({
       : 110;
 
   const height = Math.round(width * 0.5);
-
   const isBrand = variant === "brand";
 
-  // Gradient & color palette based on variant
-  const glowColor = isBrand ? "rgba(16, 185, 129, 0.85)" : "rgba(168, 85, 247, 0.85)";
-  const trackColor = isBrand ? "rgba(0, 106, 57, 0.12)" : "rgba(139, 92, 246, 0.15)";
-  const textColor = isBrand ? "#006a39" : "#6b7280";
+  const textColor = isBrand ? "#006a39" : "#4f46e5";
+  const trackColor = isBrand ? "rgba(0, 106, 57, 0.12)" : "rgba(99, 102, 241, 0.14)";
 
   const loaderContent = (
-    <div className={`flex flex-col items-center justify-center gap-3 select-none ${className}`}>
-      {/* Inline styles for the loop animation */}
+    <div className={`flex flex-col items-center justify-center gap-3.5 select-none ${className}`}>
+      {/* High-Performance Smooth Animation Keyframes */}
       <style>{`
-        @keyframes infinity-dash {
+        @keyframes inf-dash-glide {
           0% {
             stroke-dashoffset: 0;
           }
@@ -65,44 +62,48 @@ export default function InfinityLoader({
             stroke-dashoffset: -100;
           }
         }
-        @keyframes infinity-pulse-glow {
+        @keyframes inf-halo-pulse {
           0%, 100% {
-            opacity: 0.75;
-            transform: scale(0.98);
+            opacity: 0.45;
+            transform: scale(0.92);
+          }
+          50% {
+            opacity: 0.85;
+            transform: scale(1.08);
+          }
+        }
+        @keyframes inf-text-glow {
+          0%, 100% {
+            opacity: 0.7;
+            letter-spacing: 0.05em;
           }
           50% {
             opacity: 1;
-            transform: scale(1.02);
+            letter-spacing: 0.08em;
           }
         }
-        @keyframes infinity-text-pulse {
-          0%, 100% {
-            opacity: 0.65;
-          }
-          50% {
-            opacity: 1;
-          }
+        .anim-inf-dash {
+          animation: inf-dash-glide 1.9s linear infinite;
         }
-        .animate-infinity-loop {
-          animation: infinity-dash 1.8s linear infinite;
+        .anim-inf-halo {
+          animation: inf-halo-pulse 2.6s ease-in-out infinite;
         }
-        .animate-infinity-glow {
-          animation: infinity-dash 1.8s linear infinite, infinity-pulse-glow 2.4s ease-in-out infinite;
-        }
-        .animate-infinity-text {
-          animation: infinity-text-pulse 2s ease-in-out infinite;
+        .anim-inf-text {
+          animation: inf-text-glow 2.2s ease-in-out infinite;
         }
       `}</style>
 
-      {/* SVG Infinity Loop (Lemniscate) */}
+      {/* SVG Infinity Loop Stage */}
       <div className="relative flex items-center justify-center">
-        {/* Ambient radial blur behind the loop */}
+        {/* Ambient Multi-Stop Diffuse Backlight */}
         <div
-          className="absolute rounded-full pointer-events-none blur-2xl transition-all"
+          className="absolute rounded-full pointer-events-none blur-2xl anim-inf-halo"
           style={{
-            width: `${Math.round(width * 0.9)}px`,
-            height: `${Math.round(height * 1.1)}px`,
-            backgroundColor: isBrand ? "rgba(16, 185, 129, 0.2)" : "rgba(168, 85, 247, 0.22)",
+            width: `${Math.round(width * 1.1)}px`,
+            height: `${Math.round(height * 1.3)}px`,
+            background: isBrand
+              ? "radial-gradient(circle, rgba(16,185,129,0.3) 0%, rgba(6,182,212,0.15) 60%, transparent 80%)"
+              : "radial-gradient(circle, rgba(168,85,247,0.3) 0%, rgba(59,130,246,0.18) 60%, transparent 80%)",
           }}
         />
 
@@ -115,36 +116,38 @@ export default function InfinityLoader({
           className="relative z-10 overflow-visible"
         >
           <defs>
-            {/* Filter for bloom / glow */}
-            <filter id={`inf-glow-${variant}`} x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur1" />
-              <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur2" />
+            {/* Multi-layered Gaussian Bloom Filter */}
+            <filter id={`inf-glow-bloom-${variant}`} x="-35%" y="-35%" width="170%" height="170%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blurSmall" />
+              <feGaussianBlur in="SourceGraphic" stdDeviation="6.5" result="blurLarge" />
               <feMerge>
-                <feMergeNode in="blur2" />
-                <feMergeNode in="blur1" />
+                <feMergeNode in="blurLarge" />
+                <feMergeNode in="blurSmall" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
 
-            {/* Linear gradient along the loop */}
+            {/* High-Luminance Multi-Tone Linear Gradients */}
             {isBrand ? (
               <linearGradient id={`inf-grad-${variant}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#059669" stopOpacity="0.2" />
-                <stop offset="60%" stopColor="#10b981" stopOpacity="0.9" />
-                <stop offset="95%" stopColor="#34d399" stopOpacity="1" />
+                <stop offset="0%" stopColor="#059669" stopOpacity="0.05" />
+                <stop offset="45%" stopColor="#10b981" stopOpacity="0.75" />
+                <stop offset="85%" stopColor="#06b6d4" stopOpacity="1" />
+                <stop offset="96%" stopColor="#38bdf8" stopOpacity="1" />
                 <stop offset="100%" stopColor="#ffffff" stopOpacity="1" />
               </linearGradient>
             ) : (
               <linearGradient id={`inf-grad-${variant}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#6366f1" stopOpacity="0.2" />
-                <stop offset="50%" stopColor="#8b5cf6" stopOpacity="0.8" />
-                <stop offset="88%" stopColor="#c084fc" stopOpacity="1" />
+                <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.05" />
+                <stop offset="45%" stopColor="#8b5cf6" stopOpacity="0.75" />
+                <stop offset="85%" stopColor="#c084fc" stopOpacity="1" />
+                <stop offset="96%" stopColor="#38bdf8" stopOpacity="1" />
                 <stop offset="100%" stopColor="#ffffff" stopOpacity="1" />
               </linearGradient>
             )}
           </defs>
 
-          {/* Background Infinity Track */}
+          {/* 1. Base Subtle Geometric Track */}
           <path
             d="M 100,50 C 125,20 175,20 175,50 C 175,80 125,80 100,50 C 75,20 25,20 25,50 C 25,80 75,80 100,50 Z"
             stroke={trackColor}
@@ -153,49 +156,59 @@ export default function InfinityLoader({
             fill="none"
           />
 
-          {/* Outer Glowing Comet Beam */}
+          {/* 2. Outer Glowing Laser Bloom Beam */}
           <path
             d="M 100,50 C 125,20 175,20 175,50 C 175,80 125,80 100,50 C 75,20 25,20 25,50 C 25,80 75,80 100,50 Z"
             stroke={`url(#inf-grad-${variant})`}
-            strokeWidth="8"
+            strokeWidth="9"
             strokeLinecap="round"
-            strokeDasharray="26 74"
+            strokeDasharray="28 72"
             pathLength="100"
-            filter={`url(#inf-glow-${variant})`}
+            filter={`url(#inf-glow-bloom-${variant})`}
             fill="none"
-            className="animate-infinity-glow"
+            className="anim-inf-dash opacity-90"
           />
 
-          {/* Inner Sharp Luminous Beam */}
+          {/* 3. Core Sharp Ion Beam */}
           <path
             d="M 100,50 C 125,20 175,20 175,50 C 175,80 125,80 100,50 C 75,20 25,20 25,50 C 25,80 75,80 100,50 Z"
             stroke={`url(#inf-grad-${variant})`}
             strokeWidth="4.5"
             strokeLinecap="round"
-            strokeDasharray="26 74"
+            strokeDasharray="28 72"
             pathLength="100"
             fill="none"
-            className="animate-infinity-loop"
+            className="anim-inf-dash"
           />
         </svg>
       </div>
 
-      {/* Loading Text */}
+      {/* Modern High-End Typography */}
       {text && (
-        <p
-          className="text-xs sm:text-sm font-semibold tracking-wide animate-infinity-text"
-          style={{ color: textColor }}
-        >
-          {text}
-        </p>
+        <div className="flex flex-col items-center gap-1">
+          <p
+            className="font-['Manrope',sans-serif] text-xs sm:text-sm font-bold tracking-wider anim-inf-text text-center px-3"
+            style={{ color: textColor }}
+          >
+            {text}
+          </p>
+          <div className="flex items-center gap-1">
+            <span className="w-1 h-1 rounded-full bg-emerald-500 animate-ping" />
+            <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400">
+              Live Secure Sync
+            </span>
+          </div>
+        </div>
       )}
     </div>
   );
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-xl transition-all duration-300">
-        {loaderContent}
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/85 backdrop-blur-2xl transition-all duration-300">
+        <div className="p-8 sm:p-10 rounded-3xl bg-white/80 border border-white/90 shadow-[0_20px_50px_-15px_rgba(0,106,57,0.15)] flex flex-col items-center">
+          {loaderContent}
+        </div>
       </div>
     );
   }
