@@ -16,7 +16,7 @@ import type { Page } from "../App";
 interface NavBarProps {
   activePage: Page;
   onNavigate: (page: Page, category?: string, query?: string) => void;
-  user?: { role: string; name: string; email: string; id?: string } | null;
+  user?: { role: string; name: string; email: string; id?: string; profileImage?: string } | null;
   onLogout?: () => void;
   onProfile?: () => void;
   onTrackOrder?: (orderNumber?: string) => void;
@@ -447,9 +447,13 @@ export default function NavBar({
                 aria-label="Profile"
               >
                 <div
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-['Manrope',sans-serif] font-black text-xs text-white shrink-0 shadow-2xs bg-[#ff3366]"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-['Manrope',sans-serif] font-black text-xs text-white shrink-0 shadow-2xs bg-[#ff3366] overflow-hidden"
                 >
-                  {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
+                  {user.profileImage ? (
+                    <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    (user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()
+                  )}
                 </div>
                 <div className="hidden sm:flex flex-col leading-tight text-left max-w-[100px] md:max-w-[130px]">
                   <span className="text-xs font-black text-slate-800 truncate group-hover:text-[#ff3366]">
@@ -651,9 +655,13 @@ export default function NavBar({
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors text-left"
                 >
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center font-['Manrope',sans-serif] font-black text-sm text-white shrink-0 shadow-xs bg-[#ff3366]"
+                    className="w-10 h-10 rounded-full flex items-center justify-center font-['Manrope',sans-serif] font-black text-sm text-white shrink-0 shadow-xs bg-[#ff3366] overflow-hidden"
                   >
-                    {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
+                    {user.profileImage ? (
+                      <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+                    ) : (
+                      (user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-black text-slate-900 truncate">{user.name}</p>

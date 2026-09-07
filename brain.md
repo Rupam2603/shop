@@ -77,6 +77,13 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 ---
 
 ## 6. Recent Updates & Current State
+- **Retailer Profile Theme Redesign & Top Navbar Avatar Support (Sep 2026)**:
+  - **Color Theme Refresh (`src/pages/ProfilePage.tsx`)**:
+    - Replaced all legacy dark green (`#006a39`), greenish borders (`#e4ede2`), and background (`#f5fbf2`) across the retailer account section with the store's primary brand theme (`#ff3366`, clean neutral slate background `#f8fafc`, modern slate borders `#e2e8f0`).
+    - Updated active sidebar navigation tabs, "Save Changes" button, "Add Address" button, default address badges, order status pills, and delivery partner actions to use dynamic brand `accent` (`#ff3366` for retailers).
+  - **Top-Most Navigation Bar Avatar Visibility (`src/components/NavBar.tsx`)**:
+    - Updated `NavBarProps` to include `profileImage?: string`.
+    - Both desktop and mobile profile pills now render the user's uploaded `user.profileImage` with smooth circular cover and graceful fallback to uppercase initials when no photo is uploaded.
 - **Support Chatbot Knowledge & Contact Updates (`src/components/SupportChatbot.tsx`) (Sep 2026)**:
   - Updated service dispatch location to **Satghara, Serampore, Hooghly**.
   - Updated coverage pincodes to explicitly detail Serampore region (712201, 712202, 712203, 712204, 712248–712250 Rishra, 712223 Sheoraphuli, 712235 Konnagar).

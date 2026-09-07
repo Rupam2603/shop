@@ -49,7 +49,7 @@ function orderStatusStyle(s: string): { color: string; bg: string } {
 }
 
 const ADDR_LABEL_COLORS: Record<string, { color: string; bg: string }> = {
-  "Home":  { color: "#006a39", bg: "#e8f5ee" },
+  "Home":  { color: "#ff3366", bg: "#fff1f2" },
   "Work":  { color: "#0369a1", bg: "#e0f2fe" },
   "Shop":  { color: "#d97706", bg: "#fef3c7" },
   "Other": { color: "#374151", bg: "#f3f4f6" },
@@ -60,7 +60,7 @@ const emptyAddr = (): Partial<Address> => ({
   city: "", state: "", pincode: "", isDefault: false,
 });
 
-const INPUT_CLS = "w-full bg-[#f8fafb] border border-[#e4ede2] rounded-xl px-3.5 py-2.5 text-sm text-[#073b4c] focus:outline-none transition-colors placeholder:text-[#c0ccc0]";
+const INPUT_CLS = "w-full bg-[#f8fafc] border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none transition-colors placeholder:text-slate-400";
 
 export default function ProfilePage({
   user,
@@ -146,7 +146,7 @@ export default function ProfilePage({
     };
   }, [user.id]);
 
-  const accent = user.role === "retailer" ? "#006a39" : "#0369a1";
+  const accent = user.role === "retailer" ? "#ff3366" : "#0369a1";
 
   // Combine live db addresses with fallback to legacy user.addresses
   const addresses: Address[] = dbAddresses.length > 0
@@ -474,11 +474,11 @@ export default function ProfilePage({
   ];
 
   return (
-    <div className="min-h-screen bg-[#f5fbf2]">
+    <div className="min-h-screen bg-[#f8fafc]">
       {/* ── Header ── */}
       <div
         className="relative overflow-hidden"
-        style={{ background: "linear-gradient(140deg, #073b4c 0%, #0a5568 55%, " + accent + " 100%)" }}
+        style={{ background: user.role === "retailer" ? "linear-gradient(140deg, #1e1b4b 0%, #0f172a 50%, #ff3366 100%)" : "linear-gradient(140deg, #073b4c 0%, #0a5568 55%, " + accent + " 100%)" }}
       >
         <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full opacity-[0.06]" style={{ backgroundColor: "white" }} />
         <div className="absolute top-6 -left-28 w-56 h-56 rounded-full opacity-[0.04]" style={{ backgroundColor: "white" }} />
@@ -531,9 +531,9 @@ export default function ProfilePage({
                 title="Upload profile picture from device"
               >
                 {uploadingPhoto ? (
-                  <div className="w-3.5 h-3.5 border-2 border-slate-300 border-t-emerald-600 rounded-full animate-spin" />
+                  <div className="w-3.5 h-3.5 border-2 border-slate-300 border-t-rose-600 rounded-full animate-spin" />
                 ) : (
-                  <svg width="14" height="13" viewBox="0 0 20 18" fill="#006a39">
+                  <svg width="14" height="13" viewBox="0 0 20 18" fill={accent}>
                     <path d="M7 1H13L14.5 3H19C19.55 3 20 3.45 20 4V16C20 16.55 19.55 17 19 17H1C0.45 17 0 16.55 0 16V4C0 3.45 0.45 3 1 3H5.5L7 1Z"/>
                     <circle cx="10" cy="10" r="3" fill="white"/>
                   </svg>
@@ -592,12 +592,12 @@ export default function ProfilePage({
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 flex flex-col md:flex-row gap-5 sm:gap-7">
         {/* Sidebar Tabs */}
         <aside className="w-full md:w-56 shrink-0">
-          <div className="bg-white rounded-2xl border border-[#e4ede2] overflow-hidden flex md:flex-col overflow-x-auto md:overflow-visible sticky top-20">
+          <div className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden flex md:flex-col overflow-x-auto md:overflow-visible sticky top-20">
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setSection(item.id)}
-                className="flex items-center gap-2 sm:gap-3 px-3.5 sm:px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold transition-all border-b md:border-b border-r md:border-r-0 border-[#f0f4f0] last:border-0 shrink-0 md:w-full"
+                className="flex items-center gap-2 sm:gap-3 px-3.5 sm:px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold transition-all border-b md:border-b border-r md:border-r-0 border-[#f1f5f9] last:border-0 shrink-0 md:w-full"
                 style={section === item.id
                   ? { color: accent, backgroundColor: accent + "0f" }
                   : { color: "#6d7a6f" }
@@ -606,7 +606,7 @@ export default function ProfilePage({
                 <span style={{ color: section === item.id ? accent : "#c0ccc0" }}>{item.icon}</span>
                 <span className="text-left whitespace-nowrap">{item.label}</span>
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto" style={{ backgroundColor: section === item.id ? accent + "20" : "#f0f4f0", color: section === item.id ? accent : "#9aa89b" }}>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto" style={{ backgroundColor: section === item.id ? accent + "20" : "#f1f5f9", color: section === item.id ? accent : "#9aa89b" }}>
                     {item.badge}
                   </span>
                 )}
@@ -620,7 +620,7 @@ export default function ProfilePage({
 
           {/* ════ MY PROFILE ════ */}
           {section === "profile" && (
-            <div className="bg-white rounded-2xl border border-[#e4ede2] p-5 sm:p-7">
+            <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 sm:p-7">
               <div className="flex items-center justify-between mb-5 sm:mb-6">
                 <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg sm:text-xl">My Profile</h2>
                 {saved && (
@@ -632,7 +632,7 @@ export default function ProfilePage({
               </div>
 
               {/* Avatar row */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 sm:pb-7 mb-5 sm:mb-7 border-b border-[#f0f4f0] bg-slate-50/70 p-4 sm:p-5 rounded-2xl border border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 sm:pb-7 mb-5 sm:mb-7 border-b border-slate-200/70 bg-slate-50/70 p-4 sm:p-5 rounded-2xl border border-slate-100">
                 <div className="flex items-center gap-4">
                   <div
                     onClick={() => !uploadingPhoto && imageRef.current?.click()}
@@ -660,12 +660,12 @@ export default function ProfilePage({
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg leading-none">{user.name}</p>
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: accent + "18", color: accent, border: `1px solid ${accent}35` }}>
                         {user.role}
                       </span>
                     </div>
-                    <p className="text-[#657969] text-xs mt-1 font-mono">{user.email}</p>
-                    <p className="text-[11px] text-emerald-700 font-medium mt-1">
+                    <p className="text-slate-500 text-xs mt-1 font-mono">{user.email}</p>
+                    <p className="text-[11px] font-medium mt-1" style={{ color: accent }}>
                       ✓ Profile picture is saved to database & visible in Admin Dashboard
                     </p>
                   </div>
@@ -675,7 +675,7 @@ export default function ProfilePage({
                   type="button"
                   onClick={() => !uploadingPhoto && imageRef.current?.click()}
                   disabled={uploadingPhoto}
-                  className="self-start sm:self-center px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 text-slate-800 font-bold text-xs shadow-2xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="self-start sm:self-center px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-[#ff3366] hover:bg-rose-50/50 text-slate-800 font-bold text-xs shadow-2xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   <span>📷</span>
                   <span>{uploadingPhoto ? "Saving to Database…" : (avatarPreview || user.profileImage) ? "Change Picture" : "Upload Picture"}</span>
@@ -687,7 +687,7 @@ export default function ProfilePage({
                 <div>
                   <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Full Name</label>
                   <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className={INPUT_CLS}
-                    onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
+                    onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")} />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Email Address</label>
@@ -696,18 +696,18 @@ export default function ProfilePage({
                 <div>
                   <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Phone Number</label>
                   <input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value.replace(/[^0-9+]/g, ""))} placeholder="9876543210 (10-digit number)" className={INPUT_CLS}
-                    onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
+                    onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")} />
                 </div>
                 {user.role === "retailer" && (
                   <div>
                     <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Shop / Business Name</label>
                     <input type="text" value={editShop} onChange={(e) => setEditShop(e.target.value)} className={INPUT_CLS}
-                      onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
+                      onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")} />
                   </div>
                 )}
               </div>
 
-              <div className="mt-6 pt-5 border-t border-[#f0f4f0] flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="mt-6 pt-5 border-t border-[#f1f5f9] flex flex-col sm:flex-row items-center justify-between gap-3">
                 {profileMsg ? (
                   <p className={`text-xs font-semibold ${saved ? "text-green-600" : "text-red-500"}`}>
                     {profileMsg}
@@ -752,7 +752,7 @@ export default function ProfilePage({
               </div>
 
               {addresses.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-[#e4ede2] py-16 sm:py-20 flex flex-col items-center gap-4 px-4 text-center">
+                <div className="bg-white rounded-2xl border border-[#e2e8f0] py-16 sm:py-20 flex flex-col items-center gap-4 px-4 text-center">
                   <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: accent + "15" }}>
                     <svg width="28" height="34" viewBox="0 0 28 34" fill="none"><path d="M14 1C7.37 1 2 6.37 2 13C2 22.25 14 33 14 33C14 33 26 22.25 26 13C26 6.37 20.63 1 14 1ZM14 17.5C11.51 17.5 9.5 15.49 9.5 13C9.5 10.51 11.51 8.5 14 8.5C16.49 8.5 18.5 10.51 18.5 13C18.5 15.49 16.49 17.5 14 17.5Z" fill={accent} fillOpacity="0.35"/></svg>
                   </div>
@@ -769,7 +769,7 @@ export default function ProfilePage({
                   {addresses.map((addr, idx) => {
                     const lc = ADDR_LABEL_COLORS[addr.label] ?? ADDR_LABEL_COLORS["Other"];
                     return (
-                      <div key={addr.id} className="bg-white rounded-2xl border-2 p-4 sm:p-5 transition-all" style={{ borderColor: addr.isDefault ? accent : "#e4ede2" }}>
+                      <div key={addr.id} className="bg-white rounded-2xl border-2 p-4 sm:p-5 transition-all" style={{ borderColor: addr.isDefault ? accent : "#e2e8f0" }}>
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full" style={{ color: lc.color, backgroundColor: lc.bg }}>{addr.label}</span>
@@ -824,7 +824,7 @@ export default function ProfilePage({
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0"
                       style={orderFilter === f
                         ? { backgroundColor: accent, color: "white" }
-                        : { backgroundColor: "white", color: "#6d7a6f", border: "1px solid #e4ede2" }}>
+                        : { backgroundColor: "white", color: "#6d7a6f", border: "1px solid #e2e8f0" }}>
                       {f}
                     </button>
                   ))}
@@ -832,7 +832,7 @@ export default function ProfilePage({
               </div>
 
               {filteredOrders.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-[#e4ede2] py-12 text-center">
+                <div className="bg-white rounded-2xl border border-[#e2e8f0] py-12 text-center">
                   <p className="text-[#9aa89b] text-sm">No orders with this status.</p>
                 </div>
               ) : (
@@ -840,7 +840,7 @@ export default function ProfilePage({
                   {filteredOrders.map((o) => {
                     const st = orderStatusStyle(o.status);
                     return (
-                      <div key={o.id} className="bg-white rounded-2xl border border-[#e4ede2] p-5 hover:shadow-sm transition-shadow">
+                      <div key={o.id} className="bg-white rounded-2xl border border-[#e2e8f0] p-5 hover:shadow-sm transition-shadow">
                         <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2.5 mb-2 flex-wrap">
@@ -850,7 +850,7 @@ export default function ProfilePage({
 
                               {/* Delivery Partner Strip (only when assigned) */}
                               {(o as any).deliveryPartnerId && (
-                                <div className="inline-flex items-center gap-2 bg-[#f0f7ee] border border-[#c3dec0] rounded-full px-2.5 py-0.5 text-xs font-semibold text-[#006a39]">
+                                <div className="inline-flex items-center gap-2 rounded-full px-2.5 py-0.5 text-xs font-semibold" style={{ backgroundColor: accent + "12", border: `1px solid ${accent}25`, color: accent }}>
                                   <span className="text-[11px]">🛵</span>
                                   <span>
                                     {(o as any).deliveryStatus === "picked_up"
@@ -863,7 +863,8 @@ export default function ProfilePage({
                                   {(o as any).deliveryPartnerPhone ? (
                                     <a
                                       href={`tel:${(o as any).deliveryPartnerPhone}`}
-                                      className="w-6 h-6 rounded-full bg-[#006a39] hover:bg-[#005a30] text-white flex items-center justify-center transition-all cursor-pointer active:scale-90 shadow-2xs"
+                                      className="w-6 h-6 rounded-full text-white flex items-center justify-center transition-all cursor-pointer active:scale-90 shadow-2xs"
+                                      style={{ backgroundColor: accent }}
                                       title={`Call ${(o as any).deliveryPartnerName || "Partner"} (${(o as any).deliveryPartnerPhone})`}
                                     >
                                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -876,7 +877,7 @@ export default function ProfilePage({
                             </div>
                             <div className="flex flex-wrap items-center gap-2 mb-3">
                               {o.items.map((item) => (
-                                <div key={item} className="flex items-center gap-1.5 bg-[#f8fafb] border border-[#e4ede2] px-2.5 py-1 rounded-lg">
+                                <div key={item} className="flex items-center gap-1.5 bg-[#f8fafb] border border-[#e2e8f0] px-2.5 py-1 rounded-lg">
                                   <span className="text-xs text-[#073b4c] font-medium">{item}</span>
                                   {o.status === "Delivered" && (
                                     <button
@@ -890,7 +891,8 @@ export default function ProfilePage({
                                           submitting: false,
                                         })
                                       }
-                                      className="text-[10px] font-bold text-[#006a39] bg-[#d1fae5] hover:bg-[#a7f3d0] px-1.5 py-0.5 rounded transition-colors"
+                                      className="text-[10px] font-bold px-1.5 py-0.5 rounded transition-colors"
+                                      style={{ color: accent, backgroundColor: accent + "18" }}
                                       title="Review this product"
                                     >
                                       ★ Review
@@ -904,7 +906,8 @@ export default function ProfilePage({
                             <div className="flex items-center gap-2 flex-wrap">
                               <button
                                 onClick={() => onTrackOrder?.(o.id)}
-                                className="flex items-center gap-1.5 bg-[#006a39] hover:bg-[#005a30] text-white text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95"
+                                className="flex items-center gap-1.5 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95"
+                                style={{ backgroundColor: accent }}
                               >
                                 <span>🚚</span>
                                 <span>Track Live Status</span>
@@ -975,7 +978,7 @@ export default function ProfilePage({
                                     });
                                   }
                                 }}
-                                className="flex items-center gap-1 bg-[#f0f7ee] hover:bg-[#c3dec0] text-[#006a39] text-xs font-bold px-3 py-1.5 rounded-xl transition-all border border-[#c3dec0] cursor-pointer"
+                                className="flex items-center gap-1 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-xl transition-all border border-slate-200 cursor-pointer"
                                 title="Download / Print Invoice Bill PDF"
                               >
                                 <span>🧾</span>
@@ -1026,8 +1029,8 @@ export default function ProfilePage({
               </div>
 
               {dbReviews.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-[#e4ede2] py-16 flex flex-col items-center gap-3 text-center px-4">
-                  <div className="w-14 h-14 rounded-2xl bg-[#f0fdf4] text-[#006a39] flex items-center justify-center">
+                <div className="bg-white rounded-2xl border border-slate-200 py-16 flex flex-col items-center gap-3 text-center px-4">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: accent + "15", color: accent }}>
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
@@ -1042,7 +1045,7 @@ export default function ProfilePage({
               ) : (
                 <div className="flex flex-col gap-3">
                   {dbReviews.map((rev) => (
-                    <div key={rev.id} className="bg-white rounded-2xl border border-[#e4ede2] p-5 shadow-xs flex flex-col gap-2.5">
+                    <div key={rev.id} className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-xs flex flex-col gap-2.5">
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
@@ -1066,7 +1069,7 @@ export default function ProfilePage({
                             </span>
                           </div>
                         </div>
-                        <span className="text-xs text-[#6d7a6f] bg-[#f8fafb] border border-[#e4ede2] px-2.5 py-1 rounded-lg">
+                        <span className="text-xs text-[#6d7a6f] bg-[#f8fafb] border border-[#e2e8f0] px-2.5 py-1 rounded-lg">
                           👍 {rev.helpful_count} helpful
                         </span>
                       </div>
@@ -1098,8 +1101,8 @@ export default function ProfilePage({
               </div>
 
               {dbLabBookings.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-[#e4ede2] py-16 flex flex-col items-center gap-3 text-center px-4">
-                  <div className="w-14 h-14 rounded-2xl bg-[#f0fdf4] text-[#006a39] flex items-center justify-center">
+                <div className="bg-white rounded-2xl border border-slate-200 py-16 flex flex-col items-center gap-3 text-center px-4">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: accent + "15", color: accent }}>
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 3H6v6L2 15c-.83 1.39-.83 3.08 0 4.47C2.83 20.86 4.33 22 6 22h12c1.67 0 3.17-1.14 4-2.53.83-1.39.83-3.08 0-4.47L18 9V3h-3M9 3v6l-4 6h14L15 9V3M9 3h6"/></svg>
                   </div>
                   <p className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-lg">No Lab Test Bookings Yet</p>
@@ -1119,11 +1122,11 @@ export default function ProfilePage({
                   {dbLabBookings.map((b) => {
                     const isCompleted = b.status === "Completed" || b.status === "Report Generated";
                     return (
-                      <div key={b.id} className="bg-white rounded-2xl border border-[#e4ede2] p-5 hover:shadow-xs transition-shadow">
+                      <div key={b.id} className="bg-white rounded-2xl border border-[#e2e8f0] p-5 hover:shadow-xs transition-shadow">
                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-2.5 mb-2 flex-wrap">
-                              <span className="font-mono text-sm font-bold text-[#006a39]">{b.booking_number}</span>
+                              <span className="font-mono text-sm font-bold" style={{ color: accent }}>{b.booking_number}</span>
                               <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
                                 b.status === "Scheduled" ? "bg-[#fef3c7] text-[#b45309]" :
                                 b.status === "Sample Collected" ? "bg-[#e0f2fe] text-[#0369a1]" :
@@ -1149,13 +1152,13 @@ export default function ProfilePage({
                             </p>
                           </div>
 
-                          <div className="text-left sm:text-right shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-[#f0f4f0]">
+                          <div className="text-left sm:text-right shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-[#f1f5f9]">
                             <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xl">₹{Number(b.total_amount).toLocaleString()}</p>
-                            <span className="inline-block text-[10px] text-[#6d7a6f] font-semibold bg-[#f0f4f0] px-2 py-0.5 rounded-md mt-1">
+                            <span className="inline-block text-[10px] text-[#6d7a6f] font-semibold bg-[#f1f5f9] px-2 py-0.5 rounded-md mt-1">
                               {b.payment_method}
                             </span>
                             {isCompleted && (
-                              <button className="block w-full sm:w-auto text-xs font-bold text-[#006a39] mt-2 underline">
+                              <button className="block w-full sm:w-auto text-xs font-bold mt-2 underline" style={{ color: accent }}>
                                 📥 Download Report
                               </button>
                             )}
@@ -1173,7 +1176,7 @@ export default function ProfilePage({
           {section === "security" && (
             <div className="flex flex-col gap-5 max-w-lg">
               {/* Change Password */}
-              <div className="bg-white rounded-2xl border border-[#e4ede2] p-5 sm:p-7">
+              <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 sm:p-7">
                 <h2 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-xl mb-5">Change Password</h2>
                 <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
                   {[
@@ -1184,7 +1187,7 @@ export default function ProfilePage({
                     <div key={label}>
                       <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">{label}</label>
                       <input type="password" value={val} onChange={(e) => set(e.target.value)} placeholder="••••••••" className={INPUT_CLS}
-                        onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
+                        onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")} />
                     </div>
                   ))}
                   {passMsg && (
@@ -1197,7 +1200,7 @@ export default function ProfilePage({
               </div>
 
               {/* Notifications */}
-              <div className="bg-white rounded-2xl border border-[#e4ede2] p-5 sm:p-7">
+              <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 sm:p-7">
                 <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base mb-5">Notification Preferences</h3>
                 <div className="flex flex-col gap-5">
                   {[
@@ -1239,11 +1242,11 @@ export default function ProfilePage({
       {addrModal.open && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={closeAddrModal}>
           <div className="bg-white rounded-2xl w-full max-w-[500px] shadow-2xl my-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 sm:px-7 py-4 sm:py-5 border-b border-[#e4ede2]">
+            <div className="flex items-center justify-between px-5 sm:px-7 py-4 sm:py-5 border-b border-[#e2e8f0]">
               <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg">
                 {addrModal.mode === "add" ? "Add New Address" : "Edit Address"}
               </h3>
-              <button onClick={closeAddrModal} className="w-8 h-8 rounded-full bg-[#f0f4f0] flex items-center justify-center hover:bg-[#e4ede2] transition-colors">
+              <button onClick={closeAddrModal} className="w-8 h-8 rounded-full bg-[#f1f5f9] flex items-center justify-center hover:bg-[#e2e8f0] transition-colors">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1L11 11M11 1L1 11" stroke="#073b4c" strokeWidth="1.5" strokeLinecap="round"/></svg>
               </button>
             </div>
@@ -1259,7 +1262,7 @@ export default function ProfilePage({
                     return (
                       <button key={lbl} type="button" onClick={() => setAddrField("label", lbl)}
                         className="px-4 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all"
-                        style={active ? { borderColor: lc.color, backgroundColor: lc.bg, color: lc.color } : { borderColor: "#e4ede2", backgroundColor: "white", color: "#6d7a6f" }}>
+                        style={active ? { borderColor: lc.color, backgroundColor: lc.bg, color: lc.color } : { borderColor: "#e2e8f0", backgroundColor: "white", color: "#6d7a6f" }}>
                         {lbl}
                       </button>
                     );
@@ -1272,13 +1275,13 @@ export default function ProfilePage({
                   <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Full Name *</label>
                   <input type="text" value={addrModal.form.name ?? ""} onChange={(e) => setAddrField("name", e.target.value)}
                     placeholder="Name on address" className={INPUT_CLS}
-                    onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
+                    onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")} />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Phone Number</label>
                   <input type="tel" value={addrModal.form.phone ?? ""} onChange={(e) => setAddrField("phone", e.target.value.replace(/[^0-9+]/g, ""))}
                     placeholder="9876543210 (10-digit number)" className={INPUT_CLS}
-                    onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
+                    onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")} />
                 </div>
               </div>
 
@@ -1286,7 +1289,7 @@ export default function ProfilePage({
                 <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">Address Line 1 *</label>
                 <input type="text" value={addrModal.form.line1 ?? ""} onChange={(e) => setAddrField("line1", e.target.value)}
                   placeholder="Flat/House No., Building, Street" className={INPUT_CLS}
-                  onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
+                  onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")} />
               </div>
 
               <div>
@@ -1295,7 +1298,7 @@ export default function ProfilePage({
                 </label>
                 <input type="text" value={addrModal.form.line2 ?? ""} onChange={(e) => setAddrField("line2", e.target.value)}
                   placeholder="Area, Landmark, Colony" className={INPUT_CLS}
-                  onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
+                  onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")} />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1308,7 +1311,7 @@ export default function ProfilePage({
                     <label className="text-[10px] font-bold text-[#073b4c] uppercase tracking-[0.8px] block mb-1.5">{f.label}</label>
                     <input type="text" value={(addrModal.form as Record<string, string>)[f.key] ?? ""} onChange={(e) => setAddrField(f.key, e.target.value)}
                       placeholder={f.ph} className={INPUT_CLS}
-                      onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e4ede2")} />
+                      onFocus={(e) => (e.target.style.borderColor = accent)} onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")} />
                   </div>
                 ))}
               </div>
@@ -1332,7 +1335,7 @@ export default function ProfilePage({
                 type="button"
                 disabled={addrSaving}
                 onClick={closeAddrModal}
-                className="flex-1 py-3 rounded-xl border-2 border-[#e4ede2] text-[#073b4c] text-sm font-bold hover:bg-[#f0f4f0] transition-colors disabled:opacity-50"
+                className="flex-1 py-3 rounded-xl border-2 border-[#e2e8f0] text-[#073b4c] text-sm font-bold hover:bg-[#f1f5f9] transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -1367,7 +1370,7 @@ export default function ProfilePage({
             className="bg-white rounded-2xl w-full max-w-[520px] shadow-2xl my-4 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[#e4ede2]">
+            <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[#e2e8f0]">
               <div>
                 <h3 className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg">
                   Write Product Review
@@ -1376,7 +1379,7 @@ export default function ProfilePage({
               </div>
               <button
                 onClick={() => setReviewModal((p) => ({ ...p, open: false }))}
-                className="w-8 h-8 rounded-full bg-[#f0f4f0] flex items-center justify-center hover:bg-[#e4ede2] transition-colors"
+                className="w-8 h-8 rounded-full bg-[#f1f5f9] flex items-center justify-center hover:bg-[#e2e8f0] transition-colors"
               >
                 ✕
               </button>
@@ -1468,7 +1471,7 @@ export default function ProfilePage({
                 <button
                   type="button"
                   onClick={() => setReviewModal((p) => ({ ...p, open: false }))}
-                  className="flex-1 py-2.5 rounded-xl border border-[#e4ede2] text-xs sm:text-sm font-bold text-[#6d7a6f] hover:bg-[#f0f4f0] transition-colors"
+                  className="flex-1 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm font-bold text-[#6d7a6f] hover:bg-[#f1f5f9] transition-colors"
                 >
                   Cancel
                 </button>
