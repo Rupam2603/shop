@@ -3767,6 +3767,13 @@ function UsersTab({
               <div key={u.id} className="p-4 sm:p-5 hover:bg-white/80 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 {/* User Identity Info */}
                 <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                  {u.avatarUrl ? (
+                    <img
+                      src={u.avatarUrl}
+                      alt={u.fullName}
+                      className="w-12 h-12 rounded-2xl object-cover border border-slate-200 shadow-xs shrink-0"
+                    />
+                  ) : (
                     <div
                       className={`w-12 h-12 rounded-2xl flex items-center justify-center font-extrabold text-lg shrink-0 shadow-xs ${
                         u.role === "admin"
@@ -3778,6 +3785,7 @@ function UsersTab({
                     >
                       {(u.fullName?.[0] || u.email[0] || "U").toUpperCase()}
                     </div>
+                  )}
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -4090,11 +4098,19 @@ function UsersTab({
           <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl animate-in zoom-in-95">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-                  <Icons.User className="w-5 h-5" />
-                </div>
+                {detailsModalUser.avatarUrl ? (
+                  <img
+                    src={detailsModalUser.avatarUrl}
+                    alt={detailsModalUser.fullName}
+                    className="w-12 h-12 rounded-2xl object-cover border-2 border-emerald-200 shadow-xs shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                    <Icons.User className="w-5 h-5" />
+                  </div>
+                )}
                 <div>
-                  <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-base">User Account Details</h3>
+                  <h3 className="font-['Manrope',sans-serif] font-extrabold text-slate-900 text-base">{detailsModalUser.fullName}</h3>
                   <p className="text-[11px] text-[#657969]">ID: {detailsModalUser.id}</p>
                 </div>
               </div>
@@ -4108,6 +4124,14 @@ function UsersTab({
             </div>
 
             <div className="flex flex-col gap-3 text-xs text-slate-900">
+              {detailsModalUser.avatarUrl && (
+                <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                  <span className="text-[#657969]">Profile Picture:</span>
+                  <span className="text-emerald-700 font-bold flex items-center gap-1">
+                    <span>✓ Uploaded</span>
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between py-1.5 border-b border-slate-100">
                 <span className="text-[#657969]">Full Name:</span>
                 <span className="font-bold">{detailsModalUser.fullName}</span>

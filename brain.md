@@ -77,6 +77,23 @@ The application reads configuration through `import.meta.env` (defined in `.env`
 ---
 
 ## 6. Recent Updates & Current State
+- **Retailer Profile Picture Device Upload & Database Persistence (Admin Dashboard & Profile Page) (Sep 2026)**:
+  - **Database Schema & Synchronization**:
+    - Ensured `avatar_url TEXT` column exists across Neon PostgreSQL tables: `public.users`, `public.profiles`, and `public.retailer_approvals`.
+    - `src/lib/users.ts`: Updated `fetchAllUsers()` to resolve avatars using `COALESCE(u.avatar_url, p.avatar_url, r.avatar_url) as avatar_url` and attached `avatarUrl` to `ManagedUser`.
+    - `src/lib/users.ts`: Updated `saveUserProfileToDb()` to synchronize `avatar_url` across `public.profiles`, `public.users`, `public.retailer_approvals`, and `subhone_active_user_session`.
+    - `src/lib/retailers.ts`: Extended `RetailerAccount` interface with `avatarUrl?: string | null` and mapped `avatar_url` in `fetchAllRetailers()` and `registerOrUpdateRetailer()`.
+  - **Session & Auth Layer (`src/contexts/AuthContext.tsx`)**:
+    - Fixed `getStoredUser()` to preserve `avatar_url` from saved user session instead of hardcoding `null`, ensuring instant avatar restoration on page reload.
+    - Updated `updateProfile()` to sync local session cache and PostgreSQL state simultaneously.
+  - **Retailer Profile UI (`src/pages/ProfilePage.tsx`)**:
+    - Enhanced avatar banner with an explicit camera action pill button for mobile and desktop devices.
+    - Removed restrictive camera capture constraint (`capture="user"`) so users can freely choose between device photo library, files, or camera.
+    - Added real-time upload progress state (`uploadingPhoto`) with spinner overlay and database confirmation toast (`photoMsg`).
+    - Added a dedicated Profile Picture management section inside the Profile Information edit tab.
+  - **Admin Dashboard & Retailer Verification (`src/pages/AdminDashboard.tsx` & `src/components/RetailerApprovalsManager.tsx`)**:
+    - Added user avatar rendering directly into the User Accounts directory table, supporting uploaded retailer photos with role-colored fallback initials.
+    - Enhanced the User Account Details modal (`detailsModalUser`) to display the user's uploaded avatar image and `✓ Uploaded` profile picture status badge.
 - **Minimalist & Compact Trailing "View All" Category Card (`src/pages/HomePage.tsx`)**:
   - Replaced the oversized, bulky dashed pink placeholder card with a sleek, minimalist action tile (`w-[96px] sm:w-[110px] max-w-[115px] justify-self-start rounded-2xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-[#ff3366]/40 hover:shadow-xs`).
   - Integrated a clean circular arrow action icon (`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-200/70 shadow-2xs group-hover:bg-[#ff3366] group-hover:text-white`) and subtle typography (`View All` + category name).

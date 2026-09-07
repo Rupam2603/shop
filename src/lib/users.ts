@@ -13,6 +13,7 @@ export interface ManagedUser {
   approvedAt: string | null;
   approvedBy: string | null;
   tokenVersion?: number;
+  avatarUrl?: string | null;
 }
 
 // ─── Cryptographic Password Hashing (SHA-256 Mock) ─────────────────────────
@@ -71,10 +72,14 @@ export async function verifyPasswordHash(password: string, storedHash: string): 
 export async function fetchAllUsers(): Promise<ManagedUser[]> {
   try {
     const rows = await sql`
-      SELECT id, name, email, role, status, business_name, created_at, approved_at, approved_by, token_version
-      FROM public.users
-      WHERE deleted_at IS NULL
-      ORDER BY created_at DESC
+      SELECT 
+        u.id, u.name, u.email, u.role, u.status, u.business_name, u.created_at, u.approved_at, u.approved_by, u.token_version,
+        COALESCE(u.avatar_url, p.avatar_url, r.avatar_url) as avatar_url
+      FROM public.users u
+      LEFT JOIN public.profiles p ON (p.id::text = u.id::text OR LOWER(p.email) = LOWER(u.email))
+      LEFT JOIN public.retailer_approvals r ON (r.user_id::text = u.id::text OR LOWER(r.email) = LOWER(u.email))
+      WHERE u.deleted_at IS NULL
+      ORDER BY u.created_at DESC
     `;
 
     return rows.map((u: any) => ({
@@ -88,6 +93,7 @@ export async function fetchAllUsers(): Promise<ManagedUser[]> {
       approvedAt: u.approved_at,
       approvedBy: u.approved_by,
       tokenVersion: u.token_version,
+      avatarUrl: u.avatar_url || null,
     }));
   } catch (err) {
     console.error("Error fetching all users from Neon:", err);
@@ -476,6 +482,7 @@ export async function saveUserProfileToDb(
             full_name = CASE WHEN ${fullName !== undefined} THEN ${fullName} ELSE full_name END,
             phone = CASE WHEN ${phone !== undefined} THEN ${phone} ELSE phone END,
             shop_name = CASE WHEN ${shopName !== undefined} THEN ${shopName} ELSE shop_name END,
+            avatar_url = CASE WHEN ${avatarUrl !== undefined} THEN ${avatarUrl} ELSE avatar_url END,
             updated_at = ${now}
           WHERE user_id = ${userId} OR LOWER(email) = ${cleanEmail}
         `;
@@ -486,6 +493,7 @@ export async function saveUserProfileToDb(
             full_name = CASE WHEN ${fullName !== undefined} THEN ${fullName} ELSE full_name END,
             phone = CASE WHEN ${phone !== undefined} THEN ${phone} ELSE phone END,
             shop_name = CASE WHEN ${shopName !== undefined} THEN ${shopName} ELSE shop_name END,
+            avatar_url = CASE WHEN ${avatarUrl !== undefined} THEN ${avatarUrl} ELSE avatar_url END,
             updated_at = ${now}
           WHERE LOWER(email) = ${cleanEmail}
         `;
@@ -502,6 +510,7 @@ export async function saveUserProfileToDb(
           SET 
             name = CASE WHEN ${fullName !== undefined} THEN ${fullName} ELSE name END,
             business_name = CASE WHEN ${shopName !== undefined} THEN ${shopName} ELSE business_name END,
+            avatar_url = CASE WHEN ${avatarUrl !== undefined} THEN ${avatarUrl} ELSE avatar_url END,
             updated_at = ${now}
           WHERE LOWER(email) = ${cleanEmail}
         `;
@@ -511,6 +520,7 @@ export async function saveUserProfileToDb(
           SET 
             name = CASE WHEN ${fullName !== undefined} THEN ${fullName} ELSE name END,
             business_name = CASE WHEN ${shopName !== undefined} THEN ${shopName} ELSE business_name END,
+            avatar_url = CASE WHEN ${avatarUrl !== undefined} THEN ${avatarUrl} ELSE avatar_url END,
             updated_at = ${now}
           WHERE id = ${userId}
         `;
@@ -524,12 +534,14 @@ export async function saveUserProfileToDb(
       const raw = localStorage.getItem("subhone_active_user_session");
       if (raw) {
         const parsed = JSON.parse(raw);
+        const nextAvatar = avatarUrl !== undefined ? avatarUrl : (parsed.avatarUrl || parsed.avatar_url || null);
         localStorage.setItem("subhone_active_user_session", JSON.stringify({
           ...parsed,
           fullName: fullName !== undefined ? fullName : parsed.fullName,
           phone: phone !== undefined ? phone : parsed.phone,
           businessName: shopName !== undefined ? shopName : parsed.businessName,
-          avatarUrl: avatarUrl !== undefined ? avatarUrl : parsed.avatarUrl,
+          avatarUrl: nextAvatar,
+          avatar_url: nextAvatar,
         }));
       }
     } catch {}

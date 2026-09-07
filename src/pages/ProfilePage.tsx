@@ -194,19 +194,34 @@ export default function ProfilePage({
   const [saved, setSaved] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileMsg, setProfileMsg] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoMsg, setPhotoMsg] = useState("");
   const imageRef = useRef<HTMLInputElement>(null);
 
   const handleProfileImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!file.type.startsWith("image/")) {
+      setPhotoMsg("Please choose an image file (PNG, JPG, or WebP).");
+      setTimeout(() => setPhotoMsg(""), 4000);
+      return;
+    }
+
+    setUploadingPhoto(true);
+    setPhotoMsg("Optimizing and saving photo to database...");
+
     const reader = new FileReader();
     reader.onload = (ev) => {
       const rawDataUrl = ev.target?.result as string;
-      if (!rawDataUrl) return;
+      if (!rawDataUrl) {
+        setUploadingPhoto(false);
+        return;
+      }
 
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
+        let finalImage = rawDataUrl;
         try {
           const canvas = document.createElement("canvas");
           const MAX_SIZE = 360;
@@ -228,14 +243,37 @@ export default function ProfilePage({
           const ctx = canvas.getContext("2d");
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            const optimized = canvas.toDataURL("image/jpeg", 0.88);
-            onUpdateUser({ profileImage: optimized });
-            return;
+            finalImage = canvas.toDataURL("image/jpeg", 0.88);
           }
         } catch {}
-        onUpdateUser({ profileImage: rawDataUrl });
+
+        try {
+          await onUpdateUser({ profileImage: finalImage });
+          setPhotoMsg("Profile picture saved to database!");
+          setTimeout(() => setPhotoMsg(""), 4000);
+        } catch (err: any) {
+          console.error("Failed to save photo:", err);
+          setPhotoMsg("Failed to save photo to database: " + (err?.message || "Error"));
+          setTimeout(() => setPhotoMsg(""), 4000);
+        } finally {
+          setUploadingPhoto(false);
+        }
       };
-      img.onerror = () => onUpdateUser({ profileImage: rawDataUrl });
+
+      img.onerror = async () => {
+        try {
+          await onUpdateUser({ profileImage: rawDataUrl });
+          setPhotoMsg("Profile picture saved to database!");
+          setTimeout(() => setPhotoMsg(""), 4000);
+        } catch (err: any) {
+          console.error("Failed to save photo:", err);
+          setPhotoMsg("Failed to save photo to database.");
+          setTimeout(() => setPhotoMsg(""), 4000);
+        } finally {
+          setUploadingPhoto(false);
+        }
+      };
+
       img.src = rawDataUrl;
     };
     reader.readAsDataURL(file);
@@ -447,12 +485,13 @@ export default function ProfilePage({
           </button>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 sm:gap-6">
-            {/* Avatar */}
+            {/* Avatar with Camera Button & Device Upload */}
             <div className="relative shrink-0">
               <div
-                onClick={() => imageRef.current?.click()}
+                onClick={() => !uploadingPhoto && imageRef.current?.click()}
                 className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-white/20 overflow-hidden cursor-pointer group relative shadow-md"
                 style={{ backgroundColor: accent }}
+                title="Click to upload profile picture from your device"
               >
                 {user.profileImage ? (
                   <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
@@ -461,11 +500,38 @@ export default function ProfilePage({
                     {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
                   </div>
                 )}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <svg width="20" height="18" viewBox="0 0 20 18" fill="white"><path d="M7 1H13L14.5 3H19C19.55 3 20 3.45 20 4V16C20 16.55 19.55 17 19 17H1C0.45 17 0 16.55 0 16V4C0 3.45 0.45 3 1 3H5.5L7 1Z"/><circle cx="10" cy="10" r="3" fill="rgba(0,0,0,0.35)" stroke="white" strokeWidth="1.5"/></svg>
-                </div>
+                {uploadingPhoto ? (
+                  <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-1">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span className="text-[9px] text-white font-bold tracking-tight">Saving…</span>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                    <svg width="20" height="18" viewBox="0 0 20 18" fill="white"><path d="M7 1H13L14.5 3H19C19.55 3 20 3.45 20 4V16C20 16.55 19.55 17 19 17H1C0.45 17 0 16.55 0 16V4C0 3.45 0.45 3 1 3H5.5L7 1Z"/><circle cx="10" cy="10" r="3" fill="rgba(0,0,0,0.35)" stroke="white" strokeWidth="1.5"/></svg>
+                    <span className="text-[9px] text-white font-bold">Upload</span>
+                  </div>
+                )}
               </div>
-              <input ref={imageRef} type="file" accept="image/*" capture="user" className="hidden" onChange={handleProfileImage} />
+
+              {/* Explicit camera pill button for desktop & mobile device upload */}
+              <button
+                type="button"
+                onClick={() => !uploadingPhoto && imageRef.current?.click()}
+                disabled={uploadingPhoto}
+                className="absolute -bottom-1 -right-1 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-slate-800 shadow-md flex items-center justify-center cursor-pointer border-2 border-slate-100 hover:scale-110 active:scale-95 transition-all z-10"
+                title="Upload profile picture from device"
+              >
+                {uploadingPhoto ? (
+                  <div className="w-3.5 h-3.5 border-2 border-slate-300 border-t-emerald-600 rounded-full animate-spin" />
+                ) : (
+                  <svg width="14" height="13" viewBox="0 0 20 18" fill="#006a39">
+                    <path d="M7 1H13L14.5 3H19C19.55 3 20 3.45 20 4V16C20 16.55 19.55 17 19 17H1C0.45 17 0 16.55 0 16V4C0 3.45 0.45 3 1 3H5.5L7 1Z"/>
+                    <circle cx="10" cy="10" r="3" fill="white"/>
+                  </svg>
+                )}
+              </button>
+
+              <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={handleProfileImage} />
             </div>
 
             {/* Name + meta */}
@@ -484,7 +550,15 @@ export default function ProfilePage({
                   {user.shopName}
                 </p>
               )}
-              {user.joinedDate && <p className="text-white/40 text-[11px] mt-1">Member since {user.joinedDate}</p>}
+              {photoMsg && (
+                <div className="mt-2 text-xs font-semibold px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white inline-flex items-center gap-1.5 animate-in fade-in">
+                  <span>{uploadingPhoto ? "⏳" : "✓"}</span>
+                  <span>{photoMsg}</span>
+                </div>
+              )}
+              {!photoMsg && user.joinedDate && (
+                <p className="text-white/40 text-[11px] mt-1">Member since {user.joinedDate}</p>
+              )}
             </div>
 
             {/* Quick stats */}
@@ -549,30 +623,54 @@ export default function ProfilePage({
               </div>
 
               {/* Avatar row */}
-              <div className="flex items-center gap-4 sm:gap-5 pb-5 sm:pb-7 mb-5 sm:mb-7 border-b border-[#f0f4f0]">
-                <div
-                  onClick={() => imageRef.current?.click()}
-                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden cursor-pointer group relative shrink-0"
-                  style={{ backgroundColor: accent }}
-                >
-                  {user.profileImage ? (
-                    <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-white text-xl sm:text-2xl">
-                      {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 sm:pb-7 mb-5 sm:mb-7 border-b border-[#f0f4f0] bg-slate-50/70 p-4 sm:p-5 rounded-2xl border border-slate-100">
+                <div className="flex items-center gap-4">
+                  <div
+                    onClick={() => !uploadingPhoto && imageRef.current?.click()}
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden cursor-pointer group relative shrink-0 border-2 border-white shadow-xs"
+                    style={{ backgroundColor: accent }}
+                    title="Upload profile picture from device"
+                  >
+                    {user.profileImage ? (
+                      <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center font-['Manrope',sans-serif] font-extrabold text-white text-xl sm:text-2xl">
+                        {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
+                      </div>
+                    )}
+                    {uploadingPhoto ? (
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      </div>
+                    ) : (
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <svg width="18" height="16" viewBox="0 0 20 18" fill="white"><path d="M7 1H13L14.5 3H19C19.55 3 20 3.45 20 4V16C20 16.55 19.55 17 19 17H1C0.45 17 0 16.55 0 16V4C0 3.45 0.45 3 1 3H5.5L7 1Z"/><circle cx="10" cy="10" r="2.8" fill="rgba(0,0,0,0.4)" stroke="white" strokeWidth="1.5"/></svg>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg leading-none">{user.name}</p>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        {user.role}
+                      </span>
                     </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <svg width="18" height="16" viewBox="0 0 20 18" fill="white"><path d="M7 1H13L14.5 3H19C19.55 3 20 3.45 20 4V16C20 16.55 19.55 17 19 17H1C0.45 17 0 16.55 0 16V4C0 3.45 0.45 3 1 3H5.5L7 1Z"/><circle cx="10" cy="10" r="2.8" fill="rgba(0,0,0,0.4)" stroke="white" strokeWidth="1.5"/></svg>
+                    <p className="text-[#657969] text-xs mt-1 font-mono">{user.email}</p>
+                    <p className="text-[11px] text-emerald-700 font-medium mt-1">
+                      ✓ Profile picture is saved to database & visible in Admin Dashboard
+                    </p>
                   </div>
                 </div>
-                <div>
-                  <p className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-base sm:text-lg leading-none">{user.name}</p>
-                  <p className="text-[#9aa89b] text-xs sm:text-sm mt-1">{user.email}</p>
-                  <button onClick={() => imageRef.current?.click()} className="mt-1.5 text-xs font-semibold hover:underline transition-colors" style={{ color: accent }}>
-                    Change profile photo
-                  </button>
-                </div>
+
+                <button
+                  type="button"
+                  onClick={() => !uploadingPhoto && imageRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  className="self-start sm:self-center px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 text-slate-800 font-bold text-xs shadow-2xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <span>📷</span>
+                  <span>{uploadingPhoto ? "Saving to Database…" : user.profileImage ? "Change Picture" : "Upload Picture"}</span>
+                </button>
               </div>
 
               {/* Form */}

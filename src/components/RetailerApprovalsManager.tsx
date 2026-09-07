@@ -115,9 +115,17 @@ export default function RetailerApprovalsManager({ currentUserId, isDeliveryPart
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-800 flex items-center justify-center font-extrabold text-lg border border-emerald-200 shrink-0">
-                    {(u.fullName?.[0] || "R").toUpperCase()}
-                  </div>
+                  {u.avatarUrl ? (
+                    <img
+                      src={u.avatarUrl}
+                      alt={u.fullName}
+                      className="w-12 h-12 rounded-2xl object-cover border border-emerald-200 shrink-0 shadow-2xs"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-800 flex items-center justify-center font-extrabold text-lg border border-emerald-200 shrink-0">
+                      {(u.fullName?.[0] || "R").toUpperCase()}
+                    </div>
+                  )}
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="font-['Manrope',sans-serif] font-bold text-sm sm:text-base text-[#073b4c]">

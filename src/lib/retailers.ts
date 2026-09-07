@@ -12,6 +12,7 @@ export interface RetailerAccount {
   updatedAt: string;
   approvedAt?: string | null;
   clerkId?: string | null;
+  avatarUrl?: string | null;
 }
 
 const RETAILERS_STORAGE_KEY = "subhone_retailers_registry_v3";
@@ -76,6 +77,7 @@ export async function fetchAllRetailers(): Promise<RetailerAccount[]> {
           updatedAt: row.updated_at || new Date().toISOString(),
           approvedAt: row.approved_at || (status === "approved" ? row.created_at : null),
           clerkId: row.clerk_id || null,
+          avatarUrl: row.avatar_url || (row as any).profile_image || null,
         };
         map.set(rec.id, rec);
         if (emailKey) map.set(emailKey, rec);
@@ -108,6 +110,7 @@ export async function fetchAllRetailers(): Promise<RetailerAccount[]> {
           updatedAt: p.updated_at || existing?.updatedAt || new Date().toISOString(),
           approvedAt: status === "approved" ? existing?.approvedAt || p.created_at : null,
           clerkId: (p as any).clerk_id || existing?.clerkId || null,
+          avatarUrl: p.avatar_url || (p as any).profile_image || existing?.avatarUrl || null,
         };
 
         map.set(p.id, rec);
@@ -151,6 +154,7 @@ export async function registerOrUpdateRetailer(data: {
   shopName: string;
   approvalStatus?: "pending" | "approved" | "rejected";
   clerkId?: string | null;
+  avatarUrl?: string | null;
 }): Promise<RetailerAccount> {
   const localList = getLocalRetailers();
   const emailKey = data.email.toLowerCase().trim();
@@ -173,6 +177,7 @@ export async function registerOrUpdateRetailer(data: {
     updatedAt: new Date().toISOString(),
     approvedAt: status === "approved" ? existing?.approvedAt || new Date().toISOString() : null,
     clerkId: data.clerkId || existing?.clerkId || null,
+    avatarUrl: data.avatarUrl !== undefined ? data.avatarUrl : (existing?.avatarUrl || null),
   };
 
   // 1. Update local registry
@@ -192,6 +197,7 @@ export async function registerOrUpdateRetailer(data: {
       shop_name: updatedRec.shopName,
       approval_status: status,
       clerk_id: data.clerkId || null,
+      avatar_url: updatedRec.avatarUrl || null,
       updated_at: new Date().toISOString(),
     }, { onConflict: "email" });
 
@@ -213,6 +219,7 @@ export async function registerOrUpdateRetailer(data: {
         phone: data.phone || null,
         shop_name: updatedRec.shopName,
         approval_status: status,
+        avatar_url: updatedRec.avatarUrl || null,
         updated_at: new Date().toISOString(),
       });
     } catch (err) {
@@ -445,6 +452,7 @@ export async function lookupRetailerApprovalStatus(
         updatedAt: data.updated_at || new Date().toISOString(),
         approvedAt: data.approved_at || null,
         clerkId: data.clerk_id || null,
+        avatarUrl: data.avatar_url || (data as any).profile_image || null,
       };
       return { found: true, retailer: rec };
     }

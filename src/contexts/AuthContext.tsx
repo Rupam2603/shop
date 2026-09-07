@@ -113,6 +113,7 @@ function getStoredUser(): AppUser | null {
               full_name: parsed.fullName || "User",
               phone: parsed.phone,
               shop_name: parsed.shopName,
+              avatar_url: parsed.avatarUrl || parsed.avatar_url || null,
               approval_status: parsed.approvalStatus || "approved",
             },
           },
@@ -123,7 +124,7 @@ function getStoredUser(): AppUser | null {
             role: parsed.role || "customer",
             phone: parsed.phone || null,
             shop_name: parsed.shopName || null,
-            avatar_url: null,
+            avatar_url: parsed.avatarUrl || parsed.avatar_url || null,
             approval_status: parsed.approvalStatus || "approved",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -141,7 +142,11 @@ function getStoredUser(): AppUser | null {
             id: parsed.id,
             phone: parsed.phone,
             email: parsed.email,
-            user_metadata: { role: parsed.role || "customer", full_name: parsed.fullName || "User" },
+            user_metadata: {
+              role: parsed.role || "customer",
+              full_name: parsed.fullName || "User",
+              avatar_url: parsed.avatarUrl || parsed.avatar_url || null,
+            },
           },
           profile: {
             id: parsed.id,
@@ -149,7 +154,7 @@ function getStoredUser(): AppUser | null {
             role: parsed.role || "customer",
             phone: parsed.phone,
             shop_name: parsed.shopName || null,
-            avatar_url: null,
+            avatar_url: parsed.avatarUrl || parsed.avatar_url || null,
             approval_status: "approved",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -804,7 +809,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.from("profiles").update(updates).eq("id", appUser.authUser.id);
     } catch {}
 
-    // 3. Update React AppUser state
+    // 3. Sync local storage session
+    try {
+      const raw = localStorage.getItem("subhone_active_user_session");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        localStorage.setItem("subhone_active_user_session", JSON.stringify({
+          ...parsed,
+          fullName: updates.full_name !== undefined ? updates.full_name : parsed.fullName,
+          phone: updates.phone !== undefined ? updates.phone : parsed.phone,
+          shopName: updates.shop_name !== undefined ? updates.shop_name : parsed.shopName,
+          businessName: updates.shop_name !== undefined ? updates.shop_name : parsed.businessName,
+          avatarUrl: updates.avatar_url !== undefined ? updates.avatar_url : parsed.avatarUrl,
+          avatar_url: updates.avatar_url !== undefined ? updates.avatar_url : parsed.avatar_url,
+        }));
+      }
+    } catch {}
+
+    // 4. Update React AppUser state
     setAppUser((prev) => {
       if (!prev) return prev;
       return {
