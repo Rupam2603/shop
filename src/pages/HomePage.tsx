@@ -672,59 +672,122 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
 
             {dealsOfTheDayList.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-                {dealsOfTheDayList.map((deal) => (
-                  <div
-                    key={deal.name}
-                    onClick={() => setSelectedProduct({
-                      id: deal.numeric_id || deal.id,
-                      dbId: deal.dbId,
-                      name: deal.name,
-                      sub: deal.sub,
-                      brand: deal.brand,
-                      cat: deal.cat,
-                      price: deal.price,
-                      customer_price: (deal as any).customer_price || deal.rawPrice,
-                      retailer_price: (deal as any).retailer_price,
-                      orig: deal.orig,
-                      disc: deal.disc,
-                      img: deal.img,
-                      stock: deal.stock,
-                      return_policy: (deal as any).return_policy || "Non-Returnable",
-                    })}
-                    className="group bg-white rounded-2xl border border-slate-200/80 hover:border-rose-300/80 p-2.5 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer relative overflow-hidden"
-                  >
-                    {/* Discount Badge */}
-                    <div className="absolute top-2 left-2 z-10">
-                      <span className="bg-emerald-600 text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded shadow-2xs">
-                        {deal.disc}
-                      </span>
-                    </div>
-
-                    <div className="w-full h-24 sm:h-28 flex items-center justify-center p-1 bg-slate-50/50 rounded-xl overflow-hidden mt-3 mb-2">
-                      <img
-                        src={deal.img}
-                        alt={deal.name}
-                        className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-0.5">
-                      <h3 className="text-xs sm:text-[13px] font-bold text-slate-900 group-hover:text-[#ff3366] line-clamp-1 transition-colors">
-                        {deal.name}
-                      </h3>
-                      <div className="flex items-baseline gap-1.5 mt-0.5">
-                        <span className="text-xs sm:text-sm font-extrabold text-slate-900">
-                          {deal.price}
-                        </span>
-                        {deal.orig && (
-                          <span className="text-[10px] sm:text-xs text-slate-400 line-through">
-                            {deal.orig}
+                {dealsOfTheDayList.map((deal) => {
+                  const isOutOfStock = deal.stock !== undefined && deal.stock <= 0;
+                  const isLowStock = deal.stock !== undefined && deal.stock > 0 && deal.stock <= (isRetailer ? 20 : 10);
+                  return (
+                    <div
+                      key={deal.name}
+                      onClick={() => setSelectedProduct({
+                        id: deal.numeric_id || deal.id,
+                        dbId: deal.dbId,
+                        name: deal.name,
+                        sub: deal.sub,
+                        brand: deal.brand,
+                        cat: deal.cat,
+                        price: deal.price,
+                        customer_price: (deal as any).customer_price || deal.rawPrice,
+                        retailer_price: (deal as any).retailer_price,
+                        orig: deal.orig,
+                        disc: deal.disc,
+                        img: deal.img,
+                        stock: deal.stock,
+                        return_policy: (deal as any).return_policy || "Non-Returnable",
+                      })}
+                      className={`group bg-white rounded-2xl border ${
+                        isOutOfStock ? "border-rose-200/80 opacity-75" : "border-slate-200/80 hover:border-[#ff3366]/40"
+                      } shadow-2xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col cursor-pointer relative`}
+                    >
+                      {/* Image & Discount Badge */}
+                      <div className="bg-slate-50/60 h-22 sm:h-26 relative overflow-hidden flex items-center justify-center p-2">
+                        {deal.disc && (
+                          <span className="absolute top-2 left-2 z-10 text-white text-[8px] sm:text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow-2xs bg-[#ff3366]">
+                            {deal.disc.includes("OFF") ? deal.disc : `${deal.disc} OFF`}
                           </span>
                         )}
+                        {isOutOfStock ? (
+                          <span className="absolute top-2 right-2 z-10 bg-rose-50 text-rose-700 border border-rose-200 text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-2xs">
+                            {isRetailer ? "Stock Out" : "Out of Stock"}
+                          </span>
+                        ) : isLowStock ? (
+                          <span className="absolute top-2 right-2 z-10 bg-amber-50 text-amber-800 border border-amber-200 text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-2xs animate-pulse">
+                            {isRetailer ? `Low (${deal.stock})` : `Only ${deal.stock}`}
+                          </span>
+                        ) : (
+                          <span className="absolute top-2 right-2 z-10 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[8px] font-semibold px-1.5 py-0.5 rounded-full shadow-2xs">
+                            {isRetailer ? `📦 ${deal.stock}` : `${deal.stock} in stock`}
+                          </span>
+                        )}
+                        <img
+                          src={deal.img}
+                          alt={deal.name}
+                          className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-200"
+                          onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.15"; }}
+                        />
+                      </div>
+
+                      <div className="p-2 sm:p-2.5 flex flex-col gap-0.5 flex-1 bg-white justify-between">
+                        <div>
+                          <p className="font-['Manrope',sans-serif] font-bold text-slate-900 text-xs sm:text-[12.5px] leading-tight line-clamp-2 min-h-[28px] group-hover:text-[#ff3366] transition-colors">
+                            {deal.name}
+                          </p>
+                          <div className="flex items-center gap-1 flex-wrap mt-0.5">
+                            {deal.sub && (
+                              <p className="text-slate-400 text-[9.5px] sm:text-[10px] truncate font-medium max-w-[100px]">{deal.sub}</p>
+                            )}
+                            {deal.cat && (
+                              <span className="text-[8px] font-bold text-slate-600 bg-slate-100 border border-slate-200/80 px-1 py-0.2 rounded truncate max-w-[70px]">
+                                {deal.cat}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-100">
+                          <div className="flex items-baseline gap-1">
+                            <span className="font-['Manrope',sans-serif] font-black text-slate-900 text-xs sm:text-sm">
+                              {deal.price}
+                            </span>
+                            {deal.orig && (
+                              <span className="text-slate-400 text-[9px] sm:text-[10px] line-through font-semibold">
+                                {deal.orig}
+                              </span>
+                            )}
+                          </div>
+                          {isOutOfStock ? (
+                            <span className="text-[8px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-full">
+                              Out
+                            </span>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                addToCart({
+                                  id: deal.numeric_id || deal.id,
+                                  dbId: deal.dbId,
+                                  numeric_id: deal.numeric_id,
+                                  name: deal.name,
+                                  sub: deal.sub,
+                                  cat: deal.cat,
+                                  brand: deal.brand,
+                                  price: (deal as any).retailer_price ?? (deal as any).customer_price ?? deal.price,
+                                  customer_price: (deal as any).customer_price,
+                                  retailer_price: (deal as any).retailer_price,
+                                  orig: deal.orig,
+                                  img: deal.img,
+                                });
+                              }}
+                              className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-xl flex items-center justify-center text-white shrink-0 hover:scale-110 active:scale-95 transition-all shadow-xs bg-[#ff3366] hover:bg-[#e02958] cursor-pointer"
+                              title="Add to cart"
+                            >
+                              <PlusIcon />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="py-8 text-center flex flex-col items-center justify-center gap-2 text-slate-400">
@@ -809,7 +872,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
                 </div>
                 <button onClick={() => onNavigate("offers")} className="font-bold text-[#006a39] text-xs sm:text-sm hover:underline">View All</button>
               </div>
-              <div className="flex lg:grid lg:grid-cols-4 gap-3 sm:gap-4 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
+              <div className="flex sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-visible no-scrollbar pb-2 pt-0.5 snap-x">
                 {flashSaleData.map((p) => {
                   const isOutOfStock = (p as any).stock !== undefined && (p as any).stock <= 0;
                   const isLowStock = (p as any).stock !== undefined && (p as any).stock > 0 && (p as any).stock <= (isRetailer ? 20 : 10);
@@ -835,43 +898,49 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
                         retailer_price: (p as any).retailer_price,
                         return_policy: (p as any).return_policy || "Non-Returnable",
                       })}
-                      className={`w-[170px] sm:w-[220px] lg:w-auto shrink-0 snap-start bg-white rounded-2xl border ${isOutOfStock ? "border-red-200 opacity-80" : "border-[rgba(189,202,188,0.4)]"} overflow-hidden flex flex-col group hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer`}
+                      className={`w-[135px] sm:w-[160px] lg:w-auto shrink-0 lg:shrink snap-start bg-white rounded-2xl border ${
+                        isOutOfStock ? "border-rose-200/80 opacity-75" : "border-slate-200/80 hover:border-[#ff3366]/40"
+                      } shadow-2xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer`}
                     >
-                      <div className="bg-[#f8fafb] h-32 sm:h-40 relative overflow-hidden flex items-center justify-center">
-                        <span className="absolute top-2 left-2 z-10 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm" style={{ backgroundColor: p.color }}>{p.badge}</span>
+                      <div className="bg-slate-50/60 h-22 sm:h-26 relative overflow-hidden flex items-center justify-center p-2">
+                        <span className="absolute top-2 left-2 z-10 text-white text-[8px] sm:text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow-2xs uppercase" style={{ backgroundColor: p.color || "#ff3366" }}>
+                          {p.badge}
+                        </span>
                         {isOutOfStock ? (
-                          <span className="absolute top-2 right-2 z-10 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase shadow-sm">
+                          <span className="absolute top-2 right-2 z-10 bg-rose-50 text-rose-700 border border-rose-200 text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-2xs">
                             {isRetailer ? "Stock Out" : "Out of Stock"}
                           </span>
                         ) : isLowStock ? (
-                          <span className="absolute top-2 right-2 z-10 bg-[#fef3c7] text-[#b45309] border border-[#fde68a] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase animate-pulse shadow-sm">
-                            {isRetailer ? `Low (${pStock})` : `Only ${pStock} Left`}
+                          <span className="absolute top-2 right-2 z-10 bg-amber-50 text-amber-800 border border-amber-200 text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-2xs animate-pulse">
+                            {isRetailer ? `Low (${pStock})` : `Only ${pStock}`}
                           </span>
                         ) : (
-                          <span className="absolute top-2 right-2 z-10 bg-[#d1fae5]/90 text-[#047857] text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">
-                            {isRetailer ? `📦 ${pStock} units` : `${pStock} in stock`}
+                          <span className="absolute top-2 right-2 z-10 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[8px] font-semibold px-1.5 py-0.5 rounded-full shadow-2xs">
+                            {isRetailer ? `📦 ${pStock}` : `${pStock} in stock`}
                           </span>
                         )}
-                        <img src={p.img} alt={p.name} className="h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
+                        <img src={p.img} alt={p.name} className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-200" />
                       </div>
-                      <div className="p-3 sm:p-4 flex flex-col gap-1 flex-1">
-                        <p className="font-bold text-[#073b4c] text-xs sm:text-sm leading-5 line-clamp-2">{p.name}</p>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="text-[#3e4a3f] text-[10px] sm:text-xs">{p.sub}</p>
-                          {((p as any).subCat || (p as any).sub_category_name) && (
-                            <span className="text-[9px] font-bold text-[#0f766e] bg-teal-50 border border-teal-200/70 px-1.5 py-0.2 rounded-full">
-                              {(p as any).subCat || (p as any).sub_category_name}
-                            </span>
-                          )}
+                      <div className="p-2 sm:p-2.5 flex flex-col gap-0.5 flex-1 bg-white justify-between">
+                        <div>
+                          <p className="font-['Manrope',sans-serif] font-bold text-slate-900 text-xs sm:text-[12.5px] leading-tight line-clamp-2 min-h-[28px] group-hover:text-[#ff3366] transition-colors">{p.name}</p>
+                          <div className="flex items-center gap-1 flex-wrap mt-0.5">
+                            <p className="text-slate-400 text-[9.5px] sm:text-[10px] truncate font-medium max-w-[100px]">{p.sub}</p>
+                            {((p as any).subCat || (p as any).sub_category_name) && (
+                              <span className="text-[8px] font-bold text-slate-600 bg-slate-100 border border-slate-200/80 px-1 py-0.2 rounded truncate max-w-[70px]">
+                                {(p as any).subCat || (p as any).sub_category_name}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="flex items-end justify-between mt-auto pt-2">
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="font-['Manrope',sans-serif] font-bold text-[#073b4c] text-sm sm:text-lg">{p.price}</span>
-                            {p.orig && <span className="text-[#9aa89b] text-[10px] sm:text-xs line-through">MRP {p.orig}</span>}
+                        <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-100">
+                          <div className="flex items-baseline gap-1">
+                            <span className="font-['Manrope',sans-serif] font-black text-slate-900 text-xs sm:text-sm">{p.price}</span>
+                            {p.orig && <span className="text-slate-400 text-[9px] sm:text-[10px] line-through font-semibold">{p.orig}</span>}
                           </div>
                           {isOutOfStock ? (
-                            <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">Out</span>
+                            <span className="text-[8px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-full">Out</span>
                           ) : (
                             <button
                               onClick={(e) => {
@@ -891,7 +960,7 @@ export default function HomePage({ onNavigate, userRole }: HomePageProps) {
                                   img: p.img,
                                 });
                               }}
-                              className="w-7 h-7 sm:w-8 sm:h-8 bg-[#e9f0e7] rounded-full flex items-center justify-center hover:bg-[#006a39] hover:text-white text-[#006a39] transition-colors"
+                              className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-xl flex items-center justify-center text-white shrink-0 hover:scale-110 active:scale-95 transition-all shadow-xs bg-[#ff3366] hover:bg-[#e02958] cursor-pointer"
                               aria-label="Add to cart"
                             >
                               <PlusIcon />

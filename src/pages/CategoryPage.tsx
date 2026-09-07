@@ -372,7 +372,7 @@ export default function CategoryPage({
                     } hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer shadow-2xs`}
                   >
                     {/* Image & Badge */}
-                    <div className="relative bg-slate-50/60 h-24 sm:h-28 overflow-hidden flex items-center justify-center p-2">
+                    <div className="relative bg-slate-50/60 h-22 sm:h-26 overflow-hidden flex items-center justify-center p-2">
                       {p.disc && (
                         <span
                           className="absolute top-2 left-2 z-10 text-white text-[8px] sm:text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow-2xs bg-[#ff3366]"

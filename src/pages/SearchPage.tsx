@@ -366,7 +366,7 @@ export default function SearchPage({
           </div>
         ) : (
           /* Products Grid */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-2.5 sm:gap-3">
             {displayedItems.map((item) => {
               const p = item.product;
               const accentColor = CAT_COLORS[p.category_name] || "#006a39";
@@ -379,26 +379,25 @@ export default function SearchPage({
                 <div
                   key={p.id}
                   onClick={() => handleCardClick(p)}
-                  className={`bg-white/90 backdrop-blur-xl rounded-3xl border ${
+                  className={`bg-white rounded-2xl border ${
                     isOutOfStock
                       ? "border-rose-200/80 opacity-75"
-                      : "border-white/90 hover:border-emerald-300/80"
-                  } hover:shadow-xl hover:shadow-emerald-950/8 hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer relative`}
+                      : "border-slate-200/85 hover:border-[#ff3366]/40"
+                  } hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col group cursor-pointer relative shadow-2xs`}
                 >
                   {/* Top Badges */}
-                  <div className="relative bg-gradient-to-b from-white/90 to-slate-50/50 h-32 sm:h-38 overflow-hidden flex items-center justify-center p-3">
+                  <div className="relative bg-slate-50/60 h-22 sm:h-26 overflow-hidden flex items-center justify-center p-2">
                     {/* Discount or Similarity Tag */}
-                    <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1 items-start">
+                    <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 items-start">
                       {p.discount_percent > 0 && (
                         <span
-                          className="text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase shadow-xs border border-white/30 backdrop-blur-md"
-                          style={{ backgroundColor: accentColor }}
+                          className="text-white text-[8px] sm:text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow-2xs bg-[#ff3366]"
                         >
                           {p.discount_percent}% OFF
                         </span>
                       )}
                       {item.isSimilar && !item.isExact && (
-                        <span className="bg-blue-600/90 text-white text-[8px] font-extrabold px-1.5 py-0.2 rounded-full uppercase tracking-wider shadow-xs backdrop-blur-md">
+                        <span className="bg-blue-600/90 text-white text-[7.5px] font-extrabold px-1 py-0.2 rounded uppercase tracking-wider shadow-2xs">
                           {item.similarityReason === "brand" ? "Same Brand" : "Similar"}
                         </span>
                       )}
@@ -406,15 +405,15 @@ export default function SearchPage({
 
                     {/* Stock Status */}
                     {isOutOfStock ? (
-                      <span className="absolute top-2.5 right-2.5 z-10 bg-rose-50/90 text-rose-700 border border-rose-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs backdrop-blur-md">
+                      <span className="absolute top-2 right-2 z-10 bg-rose-50 text-rose-700 border border-rose-200 text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-2xs">
                         Out of Stock
                       </span>
                     ) : isLowStock ? (
-                      <span className="absolute top-2.5 right-2.5 z-10 bg-amber-50/90 text-amber-800 border border-amber-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase animate-pulse shadow-2xs backdrop-blur-md">
+                      <span className="absolute top-2 right-2 z-10 bg-amber-50 text-amber-800 border border-amber-200 text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase animate-pulse shadow-2xs">
                         Only {p.stock} Left
                       </span>
                     ) : (
-                      <span className="absolute top-2.5 right-2.5 z-10 bg-emerald-50/90 text-emerald-800 border border-emerald-200 text-[8px] font-bold px-2 py-0.5 rounded-full shadow-2xs backdrop-blur-md">
+                      <span className="absolute top-2 right-2 z-10 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[8px] font-semibold px-1.5 py-0.5 rounded-full shadow-2xs">
                         {p.stock} in stock
                       </span>
                     )}
@@ -422,7 +421,7 @@ export default function SearchPage({
                     <img
                       src={p.image_url}
                       alt={p.name}
-                      className="h-full w-full object-contain mix-blend-multiply group-hover:scale-108 transition-transform duration-300"
+                      className="max-h-full max-w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-200"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src =
                           "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&q=80";
@@ -431,77 +430,63 @@ export default function SearchPage({
                   </div>
 
                   {/* Body Content */}
-                  <div className="p-3.5 flex flex-col gap-1 flex-1 bg-white/70 backdrop-blur-md">
-                    <p
-                      className="text-[9px] font-black uppercase tracking-[0.6px]"
-                      style={{ color: accentColor }}
-                    >
-                      {p.brand}
-                    </p>
-                    <p className="font-['Manrope',sans-serif] font-extrabold text-[#073b4c] text-xs sm:text-[13px] leading-snug line-clamp-2 min-h-[34px] group-hover:text-[#006a39] transition-colors">
-                      {p.name}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-1 mt-0.5">
-                      {p.sub_category_name && (
-                        <span className="inline-block text-[9px] font-bold bg-teal-50 text-teal-700 border border-teal-200/80 px-2 py-0.5 rounded-full leading-none w-fit">
-                          {p.sub_category_name}
-                        </span>
-                      )}
-                      {(p.details || p.subtitle) && (
-                        <span className="inline-block text-[9px] font-bold bg-emerald-50/80 text-[#006a39] border border-emerald-200/80 px-2 py-0.5 rounded-full leading-none mt-0.5 w-fit truncate max-w-full">
-                          {p.details || p.subtitle}
-                        </span>
-                      )}
+                  <div className="p-2 sm:p-2.5 flex flex-col gap-0.5 flex-1 bg-white justify-between">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.5px] text-[#003b6d] truncate">
+                        {p.brand}
+                      </p>
+                      <p className="font-['Manrope',sans-serif] font-bold text-slate-900 text-xs sm:text-[12.5px] leading-tight line-clamp-2 min-h-[28px] group-hover:text-[#ff3366] transition-colors">
+                        {p.name}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                        {p.sub_category_name && (
+                          <span className="inline-block text-[8px] font-bold bg-sky-50 text-sky-700 border border-sky-200/80 px-1.5 py-0.2 rounded-full leading-none w-fit">
+                            {p.sub_category_name}
+                          </span>
+                        )}
+                        {(p.details || p.subtitle) && (
+                          <span className="inline-block text-[8px] font-medium bg-slate-50 text-slate-600 border border-slate-200/80 px-1.5 py-0.2 rounded-full leading-none truncate max-w-[110px]">
+                            {p.details || p.subtitle}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Price & Action Row */}
-                    <div className="mt-auto pt-2.5 border-t border-[#f0f5f1]">
-                      <div className="flex flex-col gap-0.5 mb-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-['Manrope',sans-serif] font-black text-sm text-[#006a39]">
-                            ₹{Math.round(p.retailer_price || p.customer_price)}
-                          </span>
-                          {p.mrp > (p.retailer_price || p.customer_price) && (
-                            <span className="text-[10px] text-[#728575] line-through">
-                              ₹{Math.round(p.mrp)}
-                            </span>
-                          )}
-                          <span className="text-[8px] bg-sky-100 text-sky-800 font-extrabold px-1 rounded uppercase">
-                            B2B
-                          </span>
-                        </div>
+                    <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between">
+                      <div className="flex items-baseline gap-1">
+                        <span className="font-['Manrope',sans-serif] font-black text-slate-900 text-xs sm:text-sm">
+                          ₹{Math.round(p.retailer_price || p.customer_price)}
+                        </span>
                         {p.mrp > (p.retailer_price || p.customer_price) && (
-                          <span className="text-[9px] font-bold text-emerald-700">
-                            Wholesale Margin: ₹{Math.round(p.mrp - (p.retailer_price || p.customer_price))}
+                          <span className="text-slate-400 text-[9px] sm:text-[10px] line-through font-semibold">
+                            ₹{Math.round(p.mrp)}
                           </span>
                         )}
                       </div>
 
                       {/* Add to Cart Button / Quantity Stepper */}
                       {isOutOfStock ? (
-                        <button
-                          disabled
-                          className="w-full py-1.5 rounded-xl bg-slate-100 text-slate-400 text-xs font-bold cursor-not-allowed text-center"
-                        >
-                          Out of Stock
-                        </button>
+                        <span className="text-[8px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-full">
+                          Out
+                        </span>
                       ) : inCartQty > 0 ? (
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className="flex items-center justify-between bg-emerald-50 border border-[#006a39] rounded-xl px-2 py-1"
+                          className="flex items-center gap-1 bg-rose-50 border border-rose-200 rounded-lg px-1.5 py-0.5"
                         >
                           <button
                             onClick={() => updateQuantity(String(p.id), inCartQty - 1)}
-                            className="w-5 h-5 rounded-lg bg-white text-[#006a39] font-black text-xs flex items-center justify-center hover:bg-emerald-100 transition-colors shadow-2xs"
+                            className="w-4.5 h-4.5 rounded bg-white text-[#ff3366] font-black text-[10px] flex items-center justify-center hover:bg-rose-100 transition-colors"
                           >
                             -
                           </button>
-                          <span className="text-xs font-black text-[#006a39]">
+                          <span className="text-[10px] font-black text-slate-900 px-0.5">
                             {inCartQty}
                           </span>
                           <button
                             onClick={() => updateQuantity(String(p.id), inCartQty + 1)}
-                            className="w-5 h-5 rounded-lg bg-[#006a39] text-white font-black text-xs flex items-center justify-center hover:bg-[#005a30] transition-colors shadow-2xs"
+                            className="w-4.5 h-4.5 rounded bg-[#ff3366] text-white font-black text-[10px] flex items-center justify-center hover:bg-[#e02958] transition-colors"
                           >
                             +
                           </button>
@@ -519,14 +504,18 @@ export default function SearchPage({
                               category_name: p.category_name,
                               customer_price: p.customer_price,
                               retailer_price: p.retailer_price,
-                              price: unitPrice,
+                              price: p.customer_price,
                               mrp: p.mrp,
                               image_url: p.image_url,
+                              stock: p.stock ?? 50,
                             });
                           }}
-                          className="w-full py-1.5 rounded-xl bg-[#006a39] hover:bg-[#005a30] text-white text-xs font-bold shadow-xs hover:shadow-md transition-all flex items-center justify-center gap-1 cursor-pointer"
+                          className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-xl flex items-center justify-center text-white shrink-0 hover:scale-110 active:scale-95 transition-all shadow-xs bg-[#ff3366] hover:bg-[#e02958] cursor-pointer"
+                          title="Add to cart"
                         >
-                          <span>+</span> Add to Cart
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M6 1V11M1 6H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                          </svg>
                         </button>
                       )}
                     </div>
